@@ -2,39 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Sri Mandir Spiritual Design System
+All colors MUST be HSL and based on traditional Indian spiritual palette
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Spiritual Color Palette */
+    --background: 45 100% 97%; /* Soft cream background */
+    --foreground: 25 25% 20%; /* Deep brown text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%; /* Pure white cards */
+    --card-foreground: 25 25% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 25 25% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Saffron Yellow - Primary spiritual color */
+    --primary: 45 100% 55%; /* Warm saffron yellow */
+    --primary-foreground: 25 25% 20%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Temple Red - Sacred color */
+    --secondary: 0 75% 50%; /* Deep temple red */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Soft neutrals for content */
+    --muted: 45 50% 90%; /* Light cream */
+    --muted-foreground: 25 25% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Marigold accent */
+    --accent: 35 100% 60%; /* Marigold orange */
+    --accent-foreground: 25 25% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Gentle borders and inputs */
+    --border: 45 30% 85%;
+    --input: 45 30% 95%;
+    --ring: 45 100% 55%;
+
+    /* Spiritual gradients */
+    --gradient-spiritual: linear-gradient(135deg, hsl(45 100% 55%), hsl(35 100% 60%));
+    --gradient-sacred: linear-gradient(135deg, hsl(0 75% 50%), hsl(15 80% 45%));
+    --shadow-divine: 0 8px 32px hsl(45 100% 55% / 0.15);
 
     --radius: 0.5rem;
 
@@ -101,5 +112,18 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .spiritual-glow {
+    box-shadow: var(--shadow-divine);
+  }
+
+  .gradient-spiritual {
+    background: var(--gradient-spiritual);
+  }
+
+  .gradient-sacred {
+    background: var(--gradient-sacred);
   }
 }

@@ -38,23 +38,13 @@ const Index = () => {
           <Button
             onClick={() => setIsSolutionFinderOpen(true)}
             size="lg"
-            className="spiritual-glow gradient-spiritual hover:scale-105 transition-transform duration-200 text-lg px-8 py-6"
+            className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-xl px-12 py-8 h-auto"
           >
-            🔮 My Solution Finder
+            My Solution Finder
           </Button>
         </div>
       </main>
 
-      {/* Floating CTA Button - Alternative position */}
-      <div className="fixed bottom-8 right-8 z-50">
-        <Button
-          onClick={() => setIsSolutionFinderOpen(true)}
-          className="spiritual-glow gradient-sacred text-white shadow-lg hover:scale-110 transition-transform duration-200"
-          size="lg"
-        >
-          🙏 Find My Solution
-        </Button>
-      </div>
 
       {/* Solution Finder Modal */}
       <SolutionFinder 

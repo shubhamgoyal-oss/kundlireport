@@ -65,49 +65,66 @@ const pujaRecommendations: Record<string, PujaRecommendation[]> = {
 const lifeAreas = [
   { key: "Health", label: "Health", icon: Heart, color: "text-red-500" },
   { key: "Career", label: "Career", icon: Sparkles, color: "text-blue-500" },
-  { key: "Love / Relationships", label: "Love / Relationships", icon: Heart, color: "text-pink-500" },
-  { key: "Family Issues", label: "Family Issues", icon: Home, color: "text-green-500" },
-  { key: "Finances", label: "Finances", icon: DollarSign, color: "text-yellow-600" },
-  { key: "Peace of Mind", label: "Peace of Mind", icon: Brain, color: "text-purple-500" },
-  { key: "Child Well-being", label: "Child Well-being", icon: Baby, color: "text-orange-500" }
+  { key: "Love / Relationships", label: "Love / Relationships", icon: Heart, color: "text-pink-500" }
 ];
 
 const specificPujas = [
+  // Health pujas
   {
     id: 1,
-    name: "Last Sawan Ekadashi Harihar Special",
-    description: "108 Sahasra Kamal Archana, Vishnu Sahashranama Poojan, and Rin Mukti Shiva Havan for Abundance of Wealth and Prosperity",
-    deity: "Lord Vishnu & Lord Shiva",
-    categories: ["Finances", "Career"],
-    url: "https://www.srimandir.com/epuja/3309-last-sawan-ekadashi-haridwar-special-5th-august-25",
-    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
+    name: "Grishneshwar Rudrabhishek and 1,00,008 Shiv Panchakshari Mantra Jaap",
+    description: "Blessings against Ill Health, Evil Eye and Negative Energies",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/6990-11-brahmin-special-9th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1753945844009.webp"
   },
   {
     id: 2,
-    name: "Shani Til Tel Abhishek and Shiva Rudra Abhishek",
-    description: "Mahakaal Ki Nagri Special for Resolving Legal Battles, Attaining Victory and Removing Enmity",
-    deity: "Lord Shiva & Shani Dev",
-    categories: ["Peace of Mind", "Career"],
-    url: "https://www.srimandir.com/epuja/2290-363493-kuber-bhairav-9th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+    name: "21 Dravya Maha Rudrabhishek and 1,00,008 Shiv Panchakshari Mantra Jaap",
+    description: "For Blessings of Health, Wealth, Prosperity and Removal of Obstacles",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/21-sawan-last-monday-21dravya-09th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754031018446.webp"
   },
   {
     id: 3,
-    name: "Sawan Shani Purnima Special",
-    description: "Shani Sade Sati Peeda Shanti, Shani Til Tel Abhishek and Mahadasha Shanti Mahapuja for Overcoming Challenges",
-    deity: "Shani Dev",
-    categories: ["Peace of Mind", "Health"],
-    url: "https://www.srimandir.com/epuja/sawan-shani-purnima-special-9th-august-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
+    name: "Grishneshwar Jyotirlinga Shiv Rudrabhishek",
+    description: "Blessings against Ill Health, Evil Eye and Negative Energies",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/363493-grishneshwar-jyotirlinga-9-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1753958188822.webp"
   },
   {
     id: 4,
-    name: "Sawan Purnima 3 Moksha Tirth Special",
-    description: "Kashi-Rameshwaram-Gokarna Amavasya Pitru Shanti Puja and Yagya for Ancestral Karmic Relief",
-    deity: "Divine Ancestors",
-    categories: ["Family Issues", "Peace of Mind"],
-    url: "https://www.srimandir.com/epuja/6478-sawan-purnima-pitru-dosh-09th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
+    name: "Omkareshwar 11,000 Mahamrityunjaya Maha Anushthan & Panchamrit Rudrabhishek",
+    description: "For Healing, Longevity, and Protection From Illness and Untimely Death",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/omkareshwar-11000-special-11th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754340753224.webp"
+  },
+  // Career puja
+  {
+    id: 5,
+    name: "Career Breakthrough Ritual & Dream Job Attraction Yagya",
+    description: "To Rise Above Workplace Negativity and Restore Career Confidence",
+    deity: "Goddess Lakshmi",
+    categories: ["Career"],
+    url: "https://www.srimandir.com/epuja/4567-career-and-job-puja-8th-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1753705066351.webp"
+  },
+  // Love / Relationships puja
+  {
+    id: 6,
+    name: "Brihaspati Guru Graha Yagya, Vishnu Sahasranama and Banana Tree Puja",
+    description: "To Avoid Delays in Marriage and Find a Suitable Partner",
+    deity: "Lord Brihaspati & Lord Vishnu",
+    categories: ["Love / Relationships"],
+    url: "https://www.srimandir.com/epuja/9977-brihaspati-guru-graha-yagya-14th-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1754413663898.webp"
   }
 ];
 
@@ -227,8 +244,8 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       </div>
 
       <div className="text-center">
-        <p className="text-sm text-gray-600">
-          My Solution Finder is a simple 4-step tool that guides you to the most suitable puja based on your birth details and life concerns. You start by entering your date of birth, which helps us calculate your Rashi and Moolank in the background. Then, you select the area of life where you seek blessings — like health, career, or relationships. Based on this, the system recommends personalised pujas, and with one click, you're guided to the right puja to book.
+        <p className="text-sm text-muted-foreground">
+          My Solution Finder is a 4-step tool that recommends the most suitable puja based on your birth details and life concerns. Enter your date of birth, select the area for which you need blessings, and receive personalised puja recommendations. With one click, book the puja that's right for you.
         </p>
       </div>
       

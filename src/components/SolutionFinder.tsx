@@ -69,14 +69,52 @@ const lifeAreas = [
   { key: "Family Issues", label: "Family Issues", icon: Home, color: "text-green-500" },
   { key: "Finances", label: "Finances", icon: DollarSign, color: "text-yellow-600" },
   { key: "Peace of Mind", label: "Peace of Mind", icon: Brain, color: "text-purple-500" },
-  { key: "Child Well-being", label: "Child Well-being", icon: Baby, color: "text-orange-500" },
-  { key: "Other", label: "Other", icon: Plus, color: "text-gray-500" }
+  { key: "Child Well-being", label: "Child Well-being", icon: Baby, color: "text-orange-500" }
+];
+
+const specificPujas = [
+  {
+    id: 1,
+    name: "Last Sawan Ekadashi Harihar Special",
+    description: "108 Sahasra Kamal Archana, Vishnu Sahashranama Poojan, and Rin Mukti Shiva Havan for Abundance of Wealth and Prosperity",
+    deity: "Lord Vishnu & Lord Shiva",
+    categories: ["Finances", "Career"],
+    url: "https://www.srimandir.com/epuja/3309-last-sawan-ekadashi-haridwar-special-5th-august-25",
+    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
+  },
+  {
+    id: 2,
+    name: "Shani Til Tel Abhishek and Shiva Rudra Abhishek",
+    description: "Mahakaal Ki Nagri Special for Resolving Legal Battles, Attaining Victory and Removing Enmity",
+    deity: "Lord Shiva & Shani Dev",
+    categories: ["Peace of Mind", "Career"],
+    url: "https://www.srimandir.com/epuja/2290-363493-kuber-bhairav-9th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+  },
+  {
+    id: 3,
+    name: "Sawan Shani Purnima Special",
+    description: "Shani Sade Sati Peeda Shanti, Shani Til Tel Abhishek and Mahadasha Shanti Mahapuja for Overcoming Challenges",
+    deity: "Shani Dev",
+    categories: ["Peace of Mind", "Health"],
+    url: "https://www.srimandir.com/epuja/sawan-shani-purnima-special-9th-august-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
+  },
+  {
+    id: 4,
+    name: "Sawan Purnima 3 Moksha Tirth Special",
+    description: "Kashi-Rameshwaram-Gokarna Amavasya Pitru Shanti Puja and Yagya for Ancestral Karmic Relief",
+    deity: "Divine Ancestors",
+    categories: ["Family Issues", "Peace of Mind"],
+    url: "https://www.srimandir.com/epuja/6478-sawan-purnima-pitru-dosh-09th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
+  }
 ];
 
 export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps) {
   const [step, setStep] = useState(1);
   const [birthDate, setBirthDate] = useState({ day: '', month: '', year: '' });
-  const [selectedArea, setSelectedArea] = useState('');
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [concern, setConcern] = useState('');
   const [isCalculating, setIsCalculating] = useState(false);
   const [rashi, setRashi] = useState('');
@@ -85,6 +123,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const handleNext = () => {
     if (step === 1) {
       setIsCalculating(true);
+      setStep(2);
       // Calculate Rashi and Moolank based on birth date
       setTimeout(() => {
         const rashis = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
@@ -94,19 +133,23 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         setRashi(calculatedRashi);
         setMoolank(calculatedMoolank.toString());
         setIsCalculating(false);
-        setStep(2);
+        setStep(3);
       }, 2000);
-    } else if (step === 2) {
-      setStep(3);
-    } else if (step === 3 && selectedArea) {
+    } else if (step === 3) {
       setStep(4);
+    } else if (step === 4 && selectedAreas.length > 0) {
+      setStep(5);
     } else {
       setStep(step + 1);
     }
   };
 
   const handleAreaSelect = (area: string) => {
-    setSelectedArea(area);
+    setSelectedAreas(prev => 
+      prev.includes(area) 
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
   };
 
   const handleBack = () => {
@@ -116,10 +159,11 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const handleClose = () => {
     setStep(1);
     setBirthDate({ day: '', month: '', year: '' });
-    setSelectedArea('');
+    setSelectedAreas([]);
     setConcern('');
     setRashi('');
     setMoolank('');
+    setIsCalculating(false);
     onClose();
   };
 
@@ -188,130 +232,147 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         </p>
       </div>
       
-      <Button 
-        onClick={handleNext} 
-        disabled={!isDateValid}
-        className="w-full bg-primary hover:bg-primary/90 text-white"
-      >
-        Next <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      <div className="flex gap-4">
+        {step > 1 && (
+          <Button variant="outline" onClick={handleBack} className="flex-1">
+            Back
+          </Button>
+        )}
+        <Button 
+          onClick={handleNext} 
+          disabled={!isDateValid}
+          className={`${step > 1 ? 'flex-1' : 'w-full'} bg-primary hover:bg-primary/90 text-white`}
+        >
+          Next <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 
   const renderStep2 = () => (
     <div className="text-center space-y-6 py-8">
-      {isCalculating ? (
-        <>
-          <div className="animate-spin w-16 h-16 mx-auto mb-4">
-            <Sparkles className="w-16 h-16 text-primary" />
-          </div>
-          <h3 className="text-2xl font-semibold text-primary">
-            Consulting the Cosmos for You...
-          </h3>
-          <div className="flex justify-center space-x-2">
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-          </div>
-        </>
-      ) : (
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold">Your Astrological Details</h3>
-          <div className="bg-accent/20 rounded-lg p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">Your Rashi</p>
-                <p className="text-lg font-semibold text-primary">{rashi}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">Your Moolank</p>
-                <p className="text-lg font-semibold text-primary">{moolank}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handleBack} className="flex-1">
-              Back
-            </Button>
-            <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-              Next <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <h3 className="text-2xl font-semibold text-primary">
+        Reading Your Celestial Map...
+      </h3>
+      <div className="flex justify-center">
+        <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
     </div>
   );
 
   const renderStep3 = () => (
-    <div className="space-y-6">
+    <div className="text-center space-y-6 py-8">
+      <h3 className="text-xl font-semibold">Your Astrological Details</h3>
+      <div className="bg-accent/20 rounded-lg p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">Your Rashi</p>
+            <p className="text-lg font-semibold text-primary">{rashi}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">Your Moolank</p>
+            <p className="text-lg font-semibold text-primary">{moolank}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-4">
+        <Button variant="outline" onClick={handleBack} className="flex-1">
+          Back
+        </Button>
+        <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
+          Next <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  const renderStep4 = () => (
+    <div className="space-y-6 max-h-96 overflow-y-auto">
       <div className="text-center">
         <h3 className="text-xl font-semibold mb-2">What area of life do you need blessings for?</h3>
+        <p className="text-sm text-muted-foreground">You can select multiple areas</p>
       </div>
       
       <div className="grid grid-cols-2 gap-3">
         {lifeAreas.map((area) => {
           const IconComponent = area.icon;
+          const isSelected = selectedAreas.includes(area.key);
           return (
             <Button
               key={area.key}
-              variant={selectedArea === area.key ? "default" : "outline"}
+              variant={isSelected ? "default" : "outline"}
               className={`h-auto p-4 flex flex-col items-center space-y-2 hover:bg-muted ${
-                selectedArea === area.key ? 'bg-primary text-white hover:bg-primary/90' : ''
+                isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
               }`}
               onClick={() => handleAreaSelect(area.key)}
             >
-              <IconComponent className={`w-6 h-6 ${selectedArea === area.key ? 'text-white' : area.color}`} />
+              <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
               <span className="text-sm font-medium">{area.label}</span>
             </Button>
           );
         })}
       </div>
       
-      {selectedArea && (
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={handleBack} className="flex-1">
-            Back
-          </Button>
+      <div className="flex gap-4">
+        <Button variant="outline" onClick={handleBack} className="flex-1">
+          Back
+        </Button>
+        {selectedAreas.length > 0 && (
           <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
             Next <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 
-  const renderStep4 = () => {
-    const recommendations = pujaRecommendations[selectedArea] || [];
+  const renderStep5 = () => {
+    const recommendations = specificPujas.filter(puja => 
+      puja.categories.some(category => selectedAreas.includes(category))
+    );
     
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 max-h-96 overflow-y-auto">
         <div className="text-center">
           <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
           <p className="text-sm text-muted-foreground">
-            Based on your birth details and concern: <span className="font-medium text-primary">{selectedArea}</span>
+            Based on your birth details and selected areas: <span className="font-medium text-primary">{selectedAreas.join(', ')}</span>
           </p>
         </div>
         
         <div className="space-y-4">
-          {recommendations.map((puja, index) => (
-            <Card key={index} className="border border-border hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">{puja.name}</CardTitle>
-                <CardDescription className="text-sm text-muted-foreground">
-                  Dedicated to {puja.deity}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-sm mb-4">{puja.description}</p>
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-white"
-                  onClick={() => window.open('https://www.srimandir.com/', '_blank')}
-                >
-                  Book Now
-                </Button>
-              </CardContent>
+          {recommendations.length > 0 ? recommendations.map((puja) => (
+            <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">
+              <div className="flex gap-4 p-4">
+                <img 
+                  src={puja.image} 
+                  alt={puja.name}
+                  className="w-20 h-20 object-cover rounded-lg"
+                />
+                <div className="flex-1">
+                  <CardHeader className="p-0 pb-2">
+                    <CardTitle className="text-lg">{puja.name}</CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      Dedicated to {puja.deity}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <p className="text-sm mb-4">{puja.description}</p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 text-white"
+                      onClick={() => window.open(puja.url, '_blank')}
+                    >
+                      Book Now
+                    </Button>
+                  </CardContent>
+                </div>
+              </div>
             </Card>
-          ))}
+          )) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No specific pujas found for your selected areas. Please try selecting different areas.</p>
+            </div>
+          )}
         </div>
         
         <div className="flex gap-4">
@@ -337,6 +398,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
+          {step === 5 && renderStep5()}
         </div>
       </DialogContent>
     </Dialog>

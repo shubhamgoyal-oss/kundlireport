@@ -65,7 +65,11 @@ const pujaRecommendations: Record<string, PujaRecommendation[]> = {
 const lifeAreas = [
   { key: "Health", label: "Health", icon: Heart, color: "text-red-500" },
   { key: "Career", label: "Career", icon: Sparkles, color: "text-blue-500" },
-  { key: "Love / Relationships", label: "Love / Relationships", icon: Heart, color: "text-pink-500" }
+  { key: "Love / Relationships", label: "Love / Relationships", icon: Heart, color: "text-pink-500" },
+  { key: "Family Issues", label: "Family Issues", icon: Home, color: "text-green-500" },
+  { key: "Finances", label: "Finances", icon: DollarSign, color: "text-yellow-600" },
+  { key: "Peace of Mind", label: "Peace of Mind", icon: Brain, color: "text-purple-500" },
+  { key: "Child Well-being", label: "Child Well-being", icon: Baby, color: "text-orange-500" }
 ];
 
 const specificPujas = [
@@ -125,6 +129,43 @@ const specificPujas = [
     categories: ["Love / Relationships"],
     url: "https://www.srimandir.com/epuja/9977-brihaspati-guru-graha-yagya-14th-aug-2025",
     image: "https://srm-cdn.a4b.io/yoda/1754413663898.webp"
+  },
+  // Previous pujas for other categories (keeping them for now)
+  {
+    id: 7,
+    name: "Satyanarayan Puja",
+    description: "For family peace and prosperity",
+    deity: "Lord Vishnu",
+    categories: ["Family Issues"],
+    url: "https://www.srimandir.com/",
+    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
+  },
+  {
+    id: 8,
+    name: "Lakshmi Puja",
+    description: "For wealth and abundance",
+    deity: "Goddess Lakshmi",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+  },
+  {
+    id: 9,
+    name: "Shiva Abhishek",
+    description: "For inner peace and tranquility",
+    deity: "Lord Shiva",
+    categories: ["Peace of Mind"],
+    url: "https://www.srimandir.com/",
+    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
+  },
+  {
+    id: 10,
+    name: "Bal Gopal Puja",
+    description: "For child's health and happiness",
+    deity: "Bal Gopal",
+    categories: ["Child Well-being"],
+    url: "https://www.srimandir.com/",
+    image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
   }
 ];
 

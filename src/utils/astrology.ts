@@ -3,18 +3,18 @@
 // Vedic Rashi (Moon Sign) calculation based on date ranges
 // This is a simplified approach - for full accuracy, you'd need time and location
 const rashiDates = [
-  { name: "Mesha (Aries)", start: { month: 4, day: 14 }, end: { month: 5, day: 14 } },
-  { name: "Vrishabha (Taurus)", start: { month: 5, day: 15 }, end: { month: 6, day: 14 } },
-  { name: "Mithuna (Gemini)", start: { month: 6, day: 15 }, end: { month: 7, day: 16 } },
-  { name: "Karka (Cancer)", start: { month: 7, day: 17 }, end: { month: 8, day: 16 } },
-  { name: "Simha (Leo)", start: { month: 8, day: 17 }, end: { month: 9, day: 16 } },
-  { name: "Kanya (Virgo)", start: { month: 9, day: 17 }, end: { month: 10, day: 16 } },
-  { name: "Tula (Libra)", start: { month: 10, day: 17 }, end: { month: 11, day: 15 } },
-  { name: "Vrishchika (Scorpio)", start: { month: 11, day: 16 }, end: { month: 12, day: 15 } },
-  { name: "Dhanu (Sagittarius)", start: { month: 12, day: 16 }, end: { month: 1, day: 14 } },
-  { name: "Makara (Capricorn)", start: { month: 1, day: 15 }, end: { month: 2, day: 12 } },
-  { name: "Kumbha (Aquarius)", start: { month: 2, day: 13 }, end: { month: 3, day: 14 } },
-  { name: "Meena (Pisces)", start: { month: 3, day: 15 }, end: { month: 4, day: 13 } }
+  { name: "मेष (Aries)", start: { month: 4, day: 14 }, end: { month: 5, day: 14 } },
+  { name: "वृषभ (Taurus)", start: { month: 5, day: 15 }, end: { month: 6, day: 14 } },
+  { name: "मिथुन (Gemini)", start: { month: 6, day: 15 }, end: { month: 7, day: 16 } },
+  { name: "कर्क (Cancer)", start: { month: 7, day: 17 }, end: { month: 8, day: 16 } },
+  { name: "सिंह (Leo)", start: { month: 8, day: 17 }, end: { month: 9, day: 16 } },
+  { name: "कन्या (Virgo)", start: { month: 9, day: 17 }, end: { month: 10, day: 16 } },
+  { name: "तुला (Libra)", start: { month: 10, day: 17 }, end: { month: 11, day: 15 } },
+  { name: "वृश्चिक (Scorpio)", start: { month: 11, day: 16 }, end: { month: 12, day: 15 } },
+  { name: "धनु (Sagittarius)", start: { month: 12, day: 16 }, end: { month: 1, day: 14 } },
+  { name: "मकर (Capricorn)", start: { month: 1, day: 15 }, end: { month: 2, day: 12 } },
+  { name: "कुम्भ (Aquarius)", start: { month: 2, day: 13 }, end: { month: 3, day: 14 } },
+  { name: "मीन (Pisces)", start: { month: 3, day: 15 }, end: { month: 4, day: 13 } }
 ];
 
 export function calculateRashi(day: number, month: number, year: number): string {
@@ -45,7 +45,7 @@ export function calculateRashi(day: number, month: number, year: number): string
     }
   }
   
-  return "Mesha (Aries)"; // Default fallback
+  return "मेष (Aries)"; // Default fallback
 }
 
 export function calculateMoolank(day: number, month: number, year: number): number {

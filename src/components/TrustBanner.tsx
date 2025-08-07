@@ -1,0 +1,28 @@
+export default function TrustBanner() {
+  return (
+    <div className="bg-orange-500 text-white py-3 overflow-hidden">
+      <div className="animate-banner-scroll">
+        <div className="flex whitespace-nowrap">
+          <span className="text-lg font-semibold mr-16">
+            Trusted by 30 million+ people
+          </span>
+          <span className="text-lg font-semibold mr-16">
+            India's largest app for Hindu devotees
+          </span>
+          <span className="text-lg font-semibold mr-16">
+            100% secure
+          </span>
+          <span className="text-lg font-semibold mr-16">
+            Trusted by 30 million+ people
+          </span>
+          <span className="text-lg font-semibold mr-16">
+            India's largest app for Hindu devotees
+          </span>
+          <span className="text-lg font-semibold mr-16">
+            100% secure
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

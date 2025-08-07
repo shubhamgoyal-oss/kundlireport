@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
 import LanguageSelector from '@/components/LanguageSelector';
 import ReviewTiles from '@/components/ReviewTiles';
+import TrustBanner from '@/components/TrustBanner';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
@@ -68,9 +70,14 @@ const Index = () => {
         </div>
       </main>
 
+      {/* Trust Banner */}
+      <TrustBanner />
 
       {/* Reviews Section */}
       <ReviewTiles />
+
+      {/* Footer */}
+      <Footer />
 
       {/* Solution Finder Modal */}
       <SolutionFinder 

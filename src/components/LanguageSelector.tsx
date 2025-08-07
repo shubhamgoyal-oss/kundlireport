@@ -5,14 +5,7 @@ import { Globe } from 'lucide-react';
 
 const languages = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
-  { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা' },
-  { code: 'gu', name: 'Gujarati', nativeName: 'ગુજરાતી' },
-  { code: 'ta', name: 'Tamil', nativeName: 'தமிழ்' },
-  { code: 'te', name: 'Telugu', nativeName: 'తెలుగు' },
-  { code: 'ml', name: 'Malayalam', nativeName: 'മലയാളം' },
-  { code: 'kn', name: 'Kannada', nativeName: 'ಕನ್ನಡ' }
+  { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' }
 ];
 
 interface LanguageSelectorProps {

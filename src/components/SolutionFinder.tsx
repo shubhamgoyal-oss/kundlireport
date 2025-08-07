@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Sparkles, Heart, Home, DollarSign, Brain, Baby, Plus } from 'lucide-react';
+import { calculateRashi, calculateMoolank } from '@/utils/astrology';
 
 interface SolutionFinderProps {
   isOpen: boolean;
@@ -182,11 +183,14 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     if (step === 1) {
       setIsCalculating(true);
       setStep(2);
-      // Calculate Rashi and Moolank based on birth date
+      // Calculate accurate Rashi and Moolank based on birth date
       setTimeout(() => {
-        const rashis = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-        const calculatedRashi = rashis[parseInt(birthDate.month) - 1] || 'Aries';
-        const calculatedMoolank = (parseInt(birthDate.day) % 9) + 1;
+        const day = parseInt(birthDate.day);
+        const month = parseInt(birthDate.month);
+        const year = parseInt(birthDate.year);
+        
+        const calculatedRashi = calculateRashi(day, month, year);
+        const calculatedMoolank = calculateMoolank(day, month, year);
         
         setRashi(calculatedRashi);
         setMoolank(calculatedMoolank.toString());

@@ -12,14 +12,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Logo and Language Selector */}
+      {/* Header with Language Selector */}
       <header className="w-full p-6">
-        <div className="flex items-center justify-between">
-          <img 
-            src="/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png" 
-            alt="Sri Mandir" 
-            className="h-12 w-auto"
-          />
+        <div className="flex items-center justify-end">
           <LanguageSelector 
             selectedLanguage={selectedLanguage}
             onLanguageChange={setSelectedLanguage}
@@ -33,7 +28,14 @@ const Index = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
             {/* Left Content */}
             <div className="space-y-8">
-              <div>
+              <div className="text-center lg:text-left">
+                <div className="mb-8">
+                  <img 
+                    src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
+                    alt="Sri Mandir" 
+                    className="h-20 w-auto mx-auto lg:mx-0"
+                  />
+                </div>
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground mb-6">
                   Find Your Perfect
                   <span className="gradient-spiritual bg-clip-text text-transparent block">

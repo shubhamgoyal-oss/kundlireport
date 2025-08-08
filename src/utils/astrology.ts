@@ -1,26 +1,20 @@
-// Accurate Vedic Astrology and Numerology Calculations
-
-// Vedic Rashi (Moon Sign) calculation based on date ranges
-// This is a simplified approach - for full accuracy, you'd need time and location
+// Western Astrology Rashi (Zodiac Sign) calculation based on date ranges
 const rashiDates = [
-  { name: "मेष (Aries)", start: { month: 4, day: 14 }, end: { month: 5, day: 14 } },
-  { name: "वृषभ (Taurus)", start: { month: 5, day: 15 }, end: { month: 6, day: 14 } },
-  { name: "मिथुन (Gemini)", start: { month: 6, day: 15 }, end: { month: 7, day: 16 } },
-  { name: "कर्क (Cancer)", start: { month: 7, day: 17 }, end: { month: 8, day: 16 } },
-  { name: "सिंह (Leo)", start: { month: 8, day: 17 }, end: { month: 9, day: 16 } },
-  { name: "कन्या (Virgo)", start: { month: 9, day: 17 }, end: { month: 10, day: 16 } },
-  { name: "तुला (Libra)", start: { month: 10, day: 17 }, end: { month: 11, day: 15 } },
-  { name: "वृश्चिक (Scorpio)", start: { month: 11, day: 16 }, end: { month: 12, day: 15 } },
-  { name: "धनु (Sagittarius)", start: { month: 12, day: 16 }, end: { month: 1, day: 14 } },
-  { name: "मकर (Capricorn)", start: { month: 1, day: 15 }, end: { month: 2, day: 12 } },
-  { name: "कुम्भ (Aquarius)", start: { month: 2, day: 13 }, end: { month: 3, day: 14 } },
-  { name: "मीन (Pisces)", start: { month: 3, day: 15 }, end: { month: 4, day: 13 } }
+  { name: "मेष (Aries)", start: { month: 3, day: 21 }, end: { month: 4, day: 19 } },
+  { name: "वृषभ (Taurus)", start: { month: 4, day: 20 }, end: { month: 5, day: 20 } },
+  { name: "मिथुन (Gemini)", start: { month: 5, day: 21 }, end: { month: 6, day: 20 } },
+  { name: "कर्क (Cancer)", start: { month: 6, day: 21 }, end: { month: 7, day: 22 } },
+  { name: "सिंह (Leo)", start: { month: 7, day: 23 }, end: { month: 8, day: 22 } },
+  { name: "कन्या (Virgo)", start: { month: 8, day: 23 }, end: { month: 9, day: 22 } },
+  { name: "तुला (Libra)", start: { month: 9, day: 23 }, end: { month: 10, day: 22 } },
+  { name: "वृश्चिक (Scorpio)", start: { month: 10, day: 23 }, end: { month: 11, day: 21 } },
+  { name: "धनु (Sagittarius)", start: { month: 11, day: 22 }, end: { month: 12, day: 21 } },
+  { name: "मकर (Capricorn)", start: { month: 12, day: 22 }, end: { month: 1, day: 19 } },
+  { name: "कुम्भ (Aquarius)", start: { month: 1, day: 20 }, end: { month: 2, day: 18 } },
+  { name: "मीन (Pisces)", start: { month: 2, day: 19 }, end: { month: 3, day: 20 } }
 ];
 
 export function calculateRashi(day: number, month: number, year: number): string {
-  // Simple approach based on approximate Vedic dates
-  // For more accuracy, would need time, location and proper ephemeris calculations
-  
   for (const rashi of rashiDates) {
     const startMonth = rashi.start.month;
     const startDay = rashi.start.day;
@@ -35,7 +29,7 @@ export function calculateRashi(day: number, month: number, year: number): string
         return rashi.name;
       }
     } else {
-      // Cross year boundary (like Sagittarius to Capricorn)
+      // Cross year boundary (like Capricorn to Aquarius)
       if ((month === startMonth && day >= startDay) || 
           (month > startMonth) ||
           (month < endMonth) ||
@@ -49,12 +43,12 @@ export function calculateRashi(day: number, month: number, year: number): string
 }
 
 export function calculateMoolank(day: number, month: number, year: number): number {
-  // Convert to string to work with individual digits
-  const dateString = `${day.toString().padStart(2, '0')}${month.toString().padStart(2, '0')}${year}`;
-  
-  // Sum all digits
+  // Only use day digits for Moolank calculation
   let sum = 0;
-  for (const char of dateString) {
+  const dayString = day.toString();
+  
+  // Sum all digits of the day
+  for (const char of dayString) {
     sum += parseInt(char);
   }
   
@@ -71,7 +65,6 @@ export function calculateMoolank(day: number, month: number, year: number): numb
 }
 
 // Example calculations for testing:
-// Birthday: 15/03/1995
-// Digits: 1+5+0+3+1+9+9+5 = 33
-// Reduce: 3+3 = 6
+// Birthday day: 24
+// Digits: 2+4 = 6
 // Moolank: 6

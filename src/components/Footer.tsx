@@ -6,11 +6,11 @@ export default function Footer() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Logo and Description */}
-          <div className="md:col-span-1">
+          <div className="md:col-span-2">
             <img 
-              src="/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png" 
+              src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
               alt="Sri Mandir" 
-              className="h-12 w-auto mb-4 filter brightness-0 invert"
+              className="h-16 w-auto mb-4"
             />
             <p className="text-sm leading-relaxed">
               Sri Mandir has brought religious services to the masses in India by connecting devotees, pundits, and temples. Partnering with over 50 renowned temples, we provide exclusive pujas and offerings services performed by expert pandits and share videos of the completed puja rituals.
@@ -18,7 +18,7 @@ export default function Footer() {
           </div>
 
           {/* Company Links */}
-          <div>
+          <div className="md:ml-8">
             <h3 className="font-semibold text-lg mb-4">Company</h3>
             <ul className="space-y-2">
               <li>
@@ -45,7 +45,7 @@ export default function Footer() {
           </div>
 
           {/* Services */}
-          <div>
+          <div className="md:ml-4">
             <h3 className="font-semibold text-lg mb-4">Our Services</h3>
             <ul className="space-y-2">
               <li><span className="text-sm">Puja</span></li>
@@ -53,11 +53,8 @@ export default function Footer() {
               <li><span className="text-sm">Panchang</span></li>
               <li><span className="text-sm">Temples</span></li>
             </ul>
-          </div>
-
-          {/* Address */}
-          <div>
-            <h3 className="font-semibold text-lg mb-4">Our Address</h3>
+            
+            <h3 className="font-semibold text-lg mb-4 mt-8">Our Address</h3>
             <p className="text-sm leading-relaxed">
               Firstprinciple AppsForBharat Pvt. Ltd. 435, 1st Floor 17th Cross, 
               19th Main Rd, above Axis Bank, Sector 4, HSR Layout, Bengaluru, 

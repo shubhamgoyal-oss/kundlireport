@@ -148,14 +148,15 @@ All colors MUST be HSL and based on traditional Indian spiritual palette
   /* Trust banner scrolling animation */
   @keyframes banner-scroll {
     0% {
-      transform: translateX(100%);
+      transform: translateX(0);
     }
     100% {
-      transform: translateX(-100%);
+      transform: translateX(-50%);
     }
   }
 
   .animate-banner-scroll {
-    animation: banner-scroll 20s linear infinite;
+    animation: banner-scroll 30s linear infinite;
+    will-change: transform;
   }
 }

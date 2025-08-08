@@ -121,15 +121,24 @@ const specificPujas = [
     url: "https://www.srimandir.com/epuja/4567-career-and-job-puja-8th-aug-2025",
     image: "https://srm-cdn.a4b.io/yoda/1753705066351.webp"
   },
-  // Love / Relationships puja
+  // Love / Relationships pujas
   {
     id: 6,
     name: "Brihaspati Guru Graha Yagya, Vishnu Sahasranama and Banana Tree Puja",
     description: "To Avoid Delays in Marriage and Find a Suitable Partner",
     deity: "Lord Brihaspati & Lord Vishnu",
     categories: ["Love / Relationships"],
-    url: "https://www.srimandir.com/epuja/9977-brihaspati-guru-graha-yagya-14th-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1754413663898.webp"
+    url: "https://www.srimandir.com/en-US/epuja/9977-brihaspati-guru-graha-yagya-14th-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1754413659956.webp"
+  },
+  {
+    id: 11,
+    name: "Divine Union Puja & Ritual for Healing Relationships",
+    description: "To Strengthen Relationships and Heal Emotional Wounds",
+    deity: "Shiva and Shakti",
+    categories: ["Love / Relationships"],
+    url: "https://www.srimandir.com/en-US/epuja/3198-divine-love-and-union-11th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1750782252068.webp"
   },
   // Previous pujas for other categories (keeping them for now)
   {

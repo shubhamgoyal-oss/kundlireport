@@ -1,26 +1,17 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
-import LanguageSelector from '@/components/LanguageSelector';
+
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
 import Footer from '@/components/Footer';
 
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Language Selector */}
-      <header className="w-full p-6">
-        <div className="flex items-center justify-end">
-          <LanguageSelector 
-            selectedLanguage={selectedLanguage}
-            onLanguageChange={setSelectedLanguage}
-          />
-        </div>
-      </header>
 
       {/* Hero Section - Medium.com inspired layout */}
       <main className="flex-1">

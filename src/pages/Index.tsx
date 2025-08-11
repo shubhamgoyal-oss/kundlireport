@@ -27,7 +27,7 @@ const Index = () => {
                     className="h-20 w-auto mx-auto lg:mx-0"
                   />
                 </div>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground mb-6">
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground mb-6">
                   Find Your Perfect
                   <span className="gradient-spiritual bg-clip-text text-transparent block">
                     Spiritual Solution
@@ -42,7 +42,7 @@ const Index = () => {
               <Button
                 onClick={() => setIsSolutionFinderOpen(true)}
                 size="lg"
-                className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto"
+                className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-xl px-12 py-8 h-auto rounded-full"
               >
                 My Solution Finder
               </Button>

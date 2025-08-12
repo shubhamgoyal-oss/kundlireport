@@ -361,41 +361,47 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   );
 
   const renderStep4 = () => (
-    <div className="space-y-6 max-h-96 overflow-y-auto">
-      <div className="text-center">
+    <div className="flex flex-col h-full">
+      <div className="shrink-0 text-center">
         <h3 className="text-xl font-semibold mb-2">What area of life do you need blessings for?</h3>
         <p className="text-sm text-muted-foreground">You can select multiple areas</p>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
-        {lifeAreas.map((area) => {
-          const IconComponent = area.icon;
-          const isSelected = selectedAreas.includes(area.key);
-          return (
-            <Button
-              key={area.key}
-              variant={isSelected ? "default" : "outline"}
-              className={`h-auto p-4 flex flex-col items-center space-y-2 hover:bg-muted ${
-                isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
-              }`}
-              onClick={() => handleAreaSelect(area.key)}
-            >
-              <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
-              <span className="text-sm font-medium">{area.label}</span>
-            </Button>
-          );
-        })}
+      <div className="mt-4 flex-1 overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {lifeAreas.map((area) => {
+            const IconComponent = area.icon;
+            const isSelected = selectedAreas.includes(area.key);
+            return (
+              <Button
+                key={area.key}
+                variant={isSelected ? "default" : "outline"}
+                className={`w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 hover:bg-muted ${
+                  isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
+                }`}
+                onClick={() => handleAreaSelect(area.key)}
+              >
+                <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
+                <span className="text-center text-sm font-medium whitespace-normal break-words">
+                  {area.label}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
       </div>
       
-      <div className="flex gap-4">
-        <Button variant="outline" onClick={handleBack} className="flex-1">
-          Back
-        </Button>
-        {selectedAreas.length > 0 && (
-          <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-            Next <ArrowRight className="ml-2 h-4 w-4" />
+      <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={handleBack} className="flex-1">
+            Back
           </Button>
-        )}
+          {selectedAreas.length > 0 && (
+            <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
+              Next <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -460,14 +466,14 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-center text-primary">
             My Solution Finder
           </DialogTitle>
         </DialogHeader>
         
-        <div className="mt-4">
+        <div className="mt-4 flex-1 flex flex-col">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}

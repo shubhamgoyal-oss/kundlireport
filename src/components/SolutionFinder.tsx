@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Sparkles, Heart, Home, DollarSign, Brain, Baby, Plus } from 'lucide-react';
 import { calculateRashi, calculateMoolank } from '@/utils/astrology';
 import { trackEvent } from '@/lib/analytics';
+import { useTranslation } from 'react-i18next';
 
 interface SolutionFinderProps {
   isOpen: boolean;
@@ -188,6 +189,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const [isCalculating, setIsCalculating] = useState(false);
   const [rashi, setRashi] = useState('');
   const [moolank, setMoolank] = useState('');
+  const { t } = useTranslation();
 
   const handleNext = () => {
     if (step === 1) {
@@ -243,17 +245,27 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   const isDateValid = birthDate.day && birthDate.month && birthDate.year;
 
+  const areaKeyMap: Record<string, string> = {
+    'Health': 'health',
+    'Career': 'career',
+    'Love / Relationships': 'love',
+    'Family Issues': 'family',
+    'Finances': 'finances',
+    'Peace of Mind': 'peace',
+    'Child Well-being': 'child',
+  };
+
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold mb-2">Enter your DOB</h3>
+        <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.enterDob')}</h3>
       </div>
       
       <div className="grid grid-cols-3 gap-4">
         <div>
           <Select value={birthDate.day} onValueChange={(value) => setBirthDate(prev => ({ ...prev, day: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Day" />
+              <SelectValue placeholder={t('solutionFinder.day')} />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 31 }, (_, i) => (
@@ -268,7 +280,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div>
           <Select value={birthDate.month} onValueChange={(value) => setBirthDate(prev => ({ ...prev, month: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Month" />
+              <SelectValue placeholder={t('solutionFinder.month')} />
             </SelectTrigger>
             <SelectContent>
               {['January', 'February', 'March', 'April', 'May', 'June',
@@ -284,7 +296,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div>
           <Select value={birthDate.year} onValueChange={(value) => setBirthDate(prev => ({ ...prev, year: value }))}>
             <SelectTrigger>
-              <SelectValue placeholder="Year" />
+              <SelectValue placeholder={t('solutionFinder.year')} />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 76 }, (_, i) => {
@@ -302,14 +314,14 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
       <div className="text-center">
         <p className="text-sm text-muted-foreground">
-          My Solution Finder is a 4-step tool that recommends the most suitable puja based on your birth details and life concerns. Enter your date of birth, select the area for which you need blessings, and receive personalised puja recommendations. With one click, book the puja that's right for you.
+          {t('solutionFinder.description')}
         </p>
       </div>
       
       <div className="flex gap-4">
         {step > 1 && (
           <Button variant="outline" onClick={handleBack} className="flex-1">
-            Back
+            {t('common.back')}
           </Button>
         )}
         <Button 
@@ -317,7 +329,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           disabled={!isDateValid}
           className={`${step > 1 ? 'flex-1' : 'w-full'} bg-primary hover:bg-primary/90 text-white`}
         >
-          Next <ArrowRight className="ml-2 h-4 w-4" />
+          {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -326,7 +338,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const renderStep2 = () => (
     <div className="text-center space-y-6 py-8">
       <h3 className="text-2xl font-semibold text-primary">
-        Reading Your Celestial Map...
+        {t('solutionFinder.readingMap')}
       </h3>
       <div className="flex justify-center">
         <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -336,25 +348,25 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   const renderStep3 = () => (
     <div className="text-center space-y-6 py-8">
-      <h3 className="text-xl font-semibold">Your Astrological Details</h3>
+      <h3 className="text-xl font-semibold">{t('solutionFinder.astrologicalDetails')}</h3>
       <div className="bg-accent/20 rounded-lg p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Your Rashi</p>
+            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourRashi')}</p>
             <p className="text-lg font-semibold text-primary">{rashi}</p>
           </div>
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">Your Moolank</p>
+            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourMoolank')}</p>
             <p className="text-lg font-semibold text-primary">{moolank}</p>
           </div>
         </div>
       </div>
       <div className="flex gap-4">
         <Button variant="outline" onClick={handleBack} className="flex-1">
-          Back
+          {t('common.back')}
         </Button>
         <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-          Next <ArrowRight className="ml-2 h-4 w-4" />
+          {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -363,8 +375,8 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const renderStep4 = () => (
     <div className="flex flex-col h-full">
       <div className="shrink-0 text-center">
-        <h3 className="text-xl font-semibold mb-2">What area of life do you need blessings for?</h3>
-        <p className="text-sm text-muted-foreground">You can select multiple areas</p>
+        <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.selectAreasHeading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('solutionFinder.selectAreasSub')}</p>
       </div>
       
       <div className="mt-4 flex-1 overflow-y-auto pr-1">
@@ -381,10 +393,10 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                 }`}
                 onClick={() => handleAreaSelect(area.key)}
               >
-                <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
-                <span className="text-center text-sm font-medium whitespace-normal break-words">
-                  {area.label}
-                </span>
+              <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
+              <span className="text-center text-sm font-medium whitespace-normal break-words">
+                {t(`solutionFinder.areas.${areaKeyMap[area.key]}`)}
+              </span>
               </Button>
             );
           })}
@@ -394,11 +406,11 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
         <div className="flex gap-4">
           <Button variant="outline" onClick={handleBack} className="flex-1">
-            Back
+            {t('common.back')}
           </Button>
           {selectedAreas.length > 0 && (
             <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-              Next <ArrowRight className="ml-2 h-4 w-4" />
+              {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
         </div>
@@ -414,9 +426,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     return (
       <div className="space-y-6 max-h-96 overflow-y-auto">
         <div className="text-center">
-          <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
+          <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.recommendedTitle')}</h3>
           <p className="text-sm text-muted-foreground">
-            Based on your birth details and selected areas: <span className="font-medium text-primary">{selectedAreas.join(', ')}</span>
+            {t('solutionFinder.basedOn', { areas: selectedAreas.join(', ') })}
           </p>
         </div>
         
@@ -442,7 +454,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                       className="w-full bg-primary hover:bg-primary/90 text-white"
                       onClick={() => { trackEvent('book_now_click', { page: 'solution_finder', step: 5, puja_id: puja.id, puja_name: puja.name }); window.open(puja.url, '_blank'); }}
                     >
-                      Book Now
+                      {t('common.bookNow')}
                     </Button>
                   </CardContent>
                 </div>
@@ -450,14 +462,14 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             </Card>
           )) : (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No specific pujas found for your selected areas. Please try selecting different areas.</p>
+              <p className="text-muted-foreground">{t('solutionFinder.noPujas')}</p>
             </div>
           )}
         </div>
         
         <div className="flex gap-4">
           <Button variant="outline" onClick={handleBack} className="flex-1">
-            Back
+            {t('common.back')}
           </Button>
         </div>
       </div>
@@ -469,7 +481,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-center text-primary">
-            My Solution Finder
+            {t('solutionFinder.title')}
           </DialogTitle>
         </DialogHeader>
         

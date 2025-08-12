@@ -1,6 +1,8 @@
 import { Youtube, Instagram, Linkedin, MessageCircle, Twitter, Facebook } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="bg-orange-500 text-white pt-12 pb-8">
       <div className="container mx-auto px-6">
@@ -19,7 +21,7 @@ export default function Footer() {
 
           {/* Company Links */}
           <div className="md:ml-8">
-            <h3 className="font-semibold text-lg mb-4">Company</h3>
+            <h3 className="font-semibold text-lg mb-4">{t('footer.company')}</h3>
             <ul className="space-y-2">
               <li>
                 <a 
@@ -28,7 +30,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm hover:underline"
                 >
-                  About Us
+                  {t('footer.aboutUs')}
                 </a>
               </li>
               <li>
@@ -38,7 +40,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm hover:underline"
                 >
-                  Contact Us
+                  {t('footer.contactUs')}
                 </a>
               </li>
             </ul>
@@ -46,7 +48,7 @@ export default function Footer() {
 
           {/* Services */}
           <div className="md:ml-4">
-            <h3 className="font-semibold text-lg mb-4">Our Services</h3>
+            <h3 className="font-semibold text-lg mb-4">{t('footer.ourServices')}</h3>
             <ul className="space-y-2">
               <li><span className="text-sm">Puja</span></li>
               <li><span className="text-sm">Chadhava</span></li>
@@ -54,7 +56,7 @@ export default function Footer() {
               <li><span className="text-sm">Temples</span></li>
             </ul>
             
-            <h3 className="font-semibold text-lg mb-4 mt-8">Our Address</h3>
+            <h3 className="font-semibold text-lg mb-4 mt-8">{t('footer.ourAddress')}</h3>
             <p className="text-sm leading-relaxed">
               Firstprinciple AppsForBharat Pvt. Ltd. 435, 1st Floor 17th Cross, 
               19th Main Rd, above Axis Bank, Sector 4, HSR Layout, Bengaluru, 
@@ -159,7 +161,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="hover:underline"
             >
-              Privacy Policy
+              {t('footer.privacyPolicy')}
             </a>
             <span className="hidden sm:inline">•</span>
             <a 
@@ -168,11 +170,11 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="hover:underline"
             >
-              Terms and Conditions
+              {t('footer.terms')}
             </a>
           </div>
           <p className="text-sm mt-4 opacity-80">
-            © 2024 Sri Mandir. All rights reserved.
+            {t('footer.copyright')}
           </p>
         </div>
       </div>

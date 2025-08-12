@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
 import { trackEvent } from '@/lib/analytics';
+import { useTranslation } from 'react-i18next';
 
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
@@ -9,7 +10,7 @@ import Footer from '@/components/Footer';
 
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
-  
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,13 +30,13 @@ const Index = () => {
                   />
                 </div>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground mb-6">
-                  Find Your Perfect
+                  {t('index.heroTitlePart1')}
                   <span className="gradient-spiritual bg-clip-text text-transparent block">
-                    Spiritual Solution
+                    {t('index.heroTitlePart2')}
                   </span>
                 </h1>
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Get personalized puja recommendations to guide your spiritual practice.
+                  {t('index.heroSubtitle')}
                 </p>
               </div>
 
@@ -45,7 +46,7 @@ const Index = () => {
                 size="lg"
                 className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto"
               >
-                My Solution Finder
+                {t('index.cta')}
               </Button>
             </div>
 

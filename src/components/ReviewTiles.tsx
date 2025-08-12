@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from 'react-i18next';
 
 const reviews = [
   {
@@ -54,14 +55,15 @@ const StarRating = ({ stars }: { stars: number }) => {
 };
 
 export default function ReviewTiles() {
+  const { t } = useTranslation();
   return (
     <div className="w-full bg-muted/50 py-12 overflow-hidden">
       <div className="container mx-auto px-6 mb-8">
         <h2 className="text-2xl font-bold text-center text-foreground mb-2">
-          What Our Devotees Say
+          {t('reviews.heading')}
         </h2>
         <p className="text-muted-foreground text-center">
-          Trusted by thousands of families across India
+          {t('reviews.subheading')}
         </p>
       </div>
       

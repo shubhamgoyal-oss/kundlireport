@@ -76,6 +76,20 @@ export async function trackEvent(event_name: string, payload: TrackEventPayload 
   try {
     const session_id = getSessionId();
     const visitor_id = getVisitorId();
+
+    const now = new Date();
+    const nowUtcIso = now.toISOString();
+    const event_time_ist_str = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }).format(now);
+
     await supabase.from("analytics_events").insert([
       {
         event_name,
@@ -83,7 +97,13 @@ export async function trackEvent(event_name: string, payload: TrackEventPayload 
         step: payload.step ?? null,
         puja_id: payload.puja_id ?? null,
         puja_name: payload.puja_name ?? null,
-        metadata: payload.metadata ?? null,
+        metadata: {
+          ...(payload.metadata ?? {}),
+          event_time_utc: nowUtcIso,
+          event_time_ist: event_time_ist_str,
+          tz: "Asia/Kolkata",
+          tz_offset_min: 330,
+        },
         session_id,
         visitor_id,
         user_id: null,

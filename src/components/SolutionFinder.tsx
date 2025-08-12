@@ -324,18 +324,18 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   );
 
   const renderStep2 = () => (
-    <div className="text-center space-y-4 py-6">
-      <h3 className="text-xl font-semibold">
+    <div className="text-center space-y-6 py-8">
+      <h3 className="text-2xl font-semibold text-primary">
         Reading Your Celestial Map...
       </h3>
       <div className="flex justify-center">
-        <div className="animate-spin w-10 h-10 sm:w-12 sm:h-12 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
       </div>
     </div>
   );
 
   const renderStep3 = () => (
-    <div className="text-center space-y-4 py-6">
+    <div className="text-center space-y-6 py-8">
       <h3 className="text-xl font-semibold">Your Astrological Details</h3>
       <div className="bg-accent/20 rounded-lg p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -375,13 +375,13 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             <Button
               key={area.key}
               variant={isSelected ? "default" : "outline"}
-              className={`h-16 sm:h-20 md:h-24 p-2.5 sm:p-3 md:p-4 flex flex-col items-center justify-center space-y-1 sm:space-y-1.5 hover:bg-muted ${
+              className={`h-20 sm:h-24 p-3 sm:p-4 flex flex-col items-center justify-center space-y-1.5 hover:bg-muted ${
                 isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
               }`}
               onClick={() => handleAreaSelect(area.key)}
             >
-              <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 ${isSelected ? 'text-white' : area.color}`} />
-              <span className="text-[11px] sm:text-sm font-medium text-center leading-snug break-words whitespace-normal">{area.label}</span>
+              <IconComponent className={`w-5 h-5 sm:w-6 sm:h-6 ${isSelected ? 'text-white' : area.color}`} />
+              <span className="text-sm font-medium">{area.label}</span>
             </Button>
           );
         })}

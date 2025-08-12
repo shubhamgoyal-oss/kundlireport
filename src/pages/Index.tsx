@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
+import { trackEvent } from '@/lib/analytics';
 
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
@@ -40,7 +41,7 @@ const Index = () => {
 
               {/* Main CTA Button */}
               <Button
-                onClick={() => setIsSolutionFinderOpen(true)}
+                onClick={() => { trackEvent('cta_my_solution_finder_click', { page: 'home' }); setIsSolutionFinderOpen(true); }}
                 size="lg"
                 className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto"
               >

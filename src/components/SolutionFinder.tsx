@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowRight, Sparkles, Heart, Home, DollarSign, Brain, Baby, Plus } from 'lucide-react';
 import { calculateRashi, calculateMoolank } from '@/utils/astrology';
+import { trackEvent } from '@/lib/analytics';
 
 interface SolutionFinderProps {
   isOpen: boolean;
@@ -190,6 +191,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   const handleNext = () => {
     if (step === 1) {
+      trackEvent('next_dob_click', { page: 'solution_finder', step: 1 });
       setIsCalculating(true);
       setStep(2);
       // Calculate accurate Rashi and Moolank based on birth date
@@ -207,14 +209,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         setStep(3);
       }, 2000);
     } else if (step === 3) {
+      trackEvent('next_astrological_details_click', { page: 'solution_finder', step: 3 });
       setStep(4);
     } else if (step === 4 && selectedAreas.length > 0) {
+      trackEvent('next_life_areas_click', { page: 'solution_finder', step: 4, metadata: { selectedAreas } });
       setStep(5);
     } else {
       setStep(step + 1);
     }
   };
-
   const handleAreaSelect = (area: string) => {
     setSelectedAreas(prev => 
       prev.includes(area) 
@@ -431,7 +434,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                     <p className="text-sm mb-4">{puja.description}</p>
                     <Button 
                       className="w-full bg-primary hover:bg-primary/90 text-white"
-                      onClick={() => window.open(puja.url, '_blank')}
+                      onClick={() => { trackEvent('book_now_click', { page: 'solution_finder', step: 5, puja_id: puja.id, puja_name: puja.name }); window.open(puja.url, '_blank'); }}
                     >
                       Book Now
                     </Button>

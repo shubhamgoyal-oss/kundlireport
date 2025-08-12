@@ -361,13 +361,13 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   );
 
   const renderStep4 = () => (
-    <div className="space-y-6 max-h-96 overflow-y-auto">
+    <div className="space-y-4">
       <div className="text-center">
         <h3 className="text-xl font-semibold mb-2">What area of life do you need blessings for?</h3>
         <p className="text-sm text-muted-foreground">You can select multiple areas</p>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
         {lifeAreas.map((area) => {
           const IconComponent = area.icon;
           const isSelected = selectedAreas.includes(area.key);
@@ -375,12 +375,12 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             <Button
               key={area.key}
               variant={isSelected ? "default" : "outline"}
-              className={`h-auto p-4 flex flex-col items-center space-y-2 hover:bg-muted ${
+              className={`h-20 sm:h-24 p-3 sm:p-4 flex flex-col items-center justify-center space-y-1.5 hover:bg-muted ${
                 isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
               }`}
               onClick={() => handleAreaSelect(area.key)}
             >
-              <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
+              <IconComponent className={`w-5 h-5 sm:w-6 sm:h-6 ${isSelected ? 'text-white' : area.color}`} />
               <span className="text-sm font-medium">{area.label}</span>
             </Button>
           );
@@ -460,7 +460,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:w-auto sm:max-w-[720px] md:max-w-[880px] lg:max-w-[960px] max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-center text-primary">
             My Solution Finder

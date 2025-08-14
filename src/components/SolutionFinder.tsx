@@ -78,105 +78,133 @@ const specificPujas = [
   // Health pujas
   {
     id: 1,
-    name: "Grishneshwar Rudrabhishek and 1,00,008 Shiv Panchakshari Mantra Jaap",
-    description: "Blessings against Ill Health, Evil Eye and Negative Energies",
+    name: "Physical and Mental Well-being Special Health and Wellness Special Puja and Yagya",
+    description: "Invite Shiva's Divine Healing for Health and Longevity",
     deity: "Lord Shiva",
     categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/6990-11-brahmin-special-9th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1753945844009.webp"
+    url: "https://www.srimandir.com/epuja/6122-shiv-rudrabhishek-18th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1750792116008.webp"
   },
   {
     id: 2,
-    name: "21 Dravya Maha Rudrabhishek and 1,00,008 Shiv Panchakshari Mantra Jaap",
-    description: "For Blessings of Health, Wealth, Prosperity and Removal of Obstacles",
+    name: "Grishneshwar Jyotirlinga Monday Shiv Aradhana Special",
+    description: "To Destroy Ill Health, Evil Eye and Negative Energies",
     deity: "Lord Shiva",
     categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/21-sawan-last-monday-21dravya-09th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754031018446.webp"
+    url: "https://www.srimandir.com/epuja/grishneshwar-jyotirlinga-special-18th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754582216693.webp"
   },
   {
     id: 3,
-    name: "Grishneshwar Jyotirlinga Shiv Rudrabhishek",
-    description: "Blessings against Ill Health, Evil Eye and Negative Energies",
+    name: "Grishneshwar Jyotirling Special Rudrabhishek",
+    description: "Divine blessings for health and protection from negative energies",
     deity: "Lord Shiva",
     categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/363493-grishneshwar-jyotirlinga-9-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1753958188822.webp"
+    url: "https://www.srimandir.com/epuja/3342-grishneshwar-jyotirling-special-18th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754582221692.webp"
   },
   {
     id: 4,
-    name: "Omkareshwar 11,000 Mahamrityunjaya Maha Anushthan & Panchamrit Rudrabhishek",
+    name: "Omkareshwar 11,000 Mahamrityunjaya Maha Anushthan",
     description: "For Healing, Longevity, and Protection From Illness and Untimely Death",
     deity: "Lord Shiva",
     categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/omkareshwar-11000-special-11th-aug-25",
+    url: "https://www.srimandir.com/epuja/omkareshwar-11000-special-18th-aug-25",
     image: "https://srm-cdn.a4b.io/yoda/1754340753224.webp"
   },
   // Career puja
   {
     id: 5,
-    name: "Career Breakthrough Ritual & Dream Job Attraction Yagya",
-    description: "To Rise Above Workplace Negativity and Restore Career Confidence",
-    deity: "Goddess Lakshmi",
+    name: "Academic & Creative Excellence Fire Ceremony",
+    description: "For Students and Learners to Succeed in Exams, Academics, or Creative Fields",
+    deity: "Goddess Saraswati",
     categories: ["Career"],
-    url: "https://www.srimandir.com/epuja/4567-career-and-job-puja-8th-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1753705066351.webp"
+    url: "https://www.srimandir.com/epuja/1121-academic-creative-excellence-21st-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1750681502152.webp"
   },
   // Love / Relationships pujas
   {
     id: 6,
-    name: "Brihaspati Guru Graha Yagya, Vishnu Sahasranama and Banana Tree Puja",
+    name: "Brihaspati Guru Graha Havan, Vishnu Sahasranama and Banana Tree Puja",
     description: "To Avoid Delays in Marriage and Find a Suitable Partner",
     deity: "Lord Brihaspati & Lord Vishnu",
     categories: ["Love / Relationships"],
-    url: "https://www.srimandir.com/en-US/epuja/9977-brihaspati-guru-graha-yagya-14th-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1754413659956.webp"
+    url: "https://www.srimandir.com/epuja/6656-brihaspati-guru-graha-yagya-vishnu-sahasranama-puja-21st-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1754996720927.webp"
   },
-  {
-    id: 11,
-    name: "Divine Union Puja & Ritual for Healing Relationships",
-    description: "To Strengthen Relationships and Heal Emotional Wounds",
-    deity: "Shiva and Shakti",
-    categories: ["Love / Relationships"],
-    url: "https://www.srimandir.com/en-US/epuja/3198-divine-love-and-union-11th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1750782252068.webp"
-  },
-  // Previous pujas for other categories (keeping them for now)
   {
     id: 7,
-    name: "Satyanarayan Puja",
-    description: "For family peace and prosperity",
-    deity: "Lord Vishnu",
-    categories: ["Family Issues"],
-    url: "https://www.srimandir.com/",
-    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
+    name: "Marriage Blessing Puja",
+    description: "Special blessings for harmonious relationships and marriage",
+    deity: "Divine Mother",
+    categories: ["Love / Relationships"],
+    url: "https://www.srimandir.com/epuja/1122-marriage-blessing-puja-21st-aug-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1750681504954.webp"
   },
+  // Finances pujas
   {
     id: 8,
-    name: "Lakshmi Puja",
-    description: "For wealth and abundance",
-    deity: "Goddess Lakshmi",
+    name: "Bagalamukhi Tantra Yukta Hawan and 18,000 Rahu Mool Mantra Jaap",
+    description: "Overcome Financial Crisis and Business Setbacks with Baglamukhi and Rahu's Divine Power",
+    deity: "Goddess Bagalamukhi",
     categories: ["Finances"],
-    url: "https://www.srimandir.com/",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+    url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754997096971.webp"
   },
   {
     id: 9,
-    name: "Shiva Abhishek",
-    description: "For inner peace and tranquility",
+    name: "21 Somvar Jyotirlinga Special Puja",
+    description: "For financial stability and prosperity",
     deity: "Lord Shiva",
-    categories: ["Peace of Mind"],
-    url: "https://www.srimandir.com/",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/21-somvar-jyotirlinga-special-18th-aug-25",
     image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
   },
   {
     id: 10,
-    name: "Bal Gopal Puja",
-    description: "For child's health and happiness",
-    deity: "Bal Gopal",
-    categories: ["Child Well-being"],
-    url: "https://www.srimandir.com/",
+    name: "Rin Nashak Special Puja",
+    description: "For debt relief and financial freedom",
+    deity: "Lord Ganesha",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/3389-rin-nashak-special-20th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+  },
+  {
+    id: 11,
+    name: "Omkareshwar Jyotirling Special Puja",
+    description: "For wealth and financial growth",
+    deity: "Lord Shiva",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/omkareshwar-jyotirling-special-11th-aug-25-1754907631",
+    image: "https://srm-cdn.a4b.io/yoda/1754340753224.webp"
+  },
+  // Peace of Mind pujas
+  {
+    id: 12,
+    name: "Rahu Shanti Jaap Havan",
+    description: "For mental peace and removal of negative planetary effects",
+    deity: "Lord Vishnu",
+    categories: ["Peace of Mind"],
+    url: "https://www.srimandir.com/epuja/1111-rahu-shanti-jaap-havan-19th-aug-2025",
     image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
+  },
+  {
+    id: 13,
+    name: "Last Day Sawan Special Puja",
+    description: "For inner peace and spiritual well-being",
+    deity: "Lord Shiva",
+    categories: ["Peace of Mind"],
+    url: "https://www.srimandir.com/epuja/3975-last-day-sawan-special-18th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
+  },
+  {
+    id: 14,
+    name: "Datta Mala Mantra Puja",
+    description: "For mental clarity and spiritual peace",
+    deity: "Lord Dattatreya",
+    categories: ["Peace of Mind"],
+    url: "https://www.srimandir.com/epuja/5509-datta-mala-mantra-19th-august-2025",
+    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
   }
 ];
 
@@ -221,12 +249,12 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     }
   };
   const handleAreaSelect = (area: string) => {
-    const categorySlug = areaKeyMap[area];
-    if (categorySlug) {
-      trackEvent('category_selected', { page: 'solution_finder' });
-      handleClose(); // Close the modal
-      navigate(`/category/${categorySlug}`); // Navigate to category page
+    if (selectedAreas.includes(area)) {
+      setSelectedAreas(selectedAreas.filter(a => a !== area));
+    } else {
+      setSelectedAreas([area]); // Only allow single selection
     }
+    trackEvent('category_selected', { page: 'solution_finder' });
   };
 
   const handleBack = () => {
@@ -385,11 +413,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             return (
               <Button
                 key={area.key}
-                variant="outline"
-                className="w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 hover:bg-primary hover:text-white transition-colors"
+                variant={selectedAreas.includes(area.key) ? "default" : "outline"}
+                className={`w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 transition-colors ${
+                  selectedAreas.includes(area.key) 
+                    ? 'bg-primary text-white' 
+                    : 'hover:bg-primary hover:text-white'
+                }`}
                 onClick={() => handleAreaSelect(area.key)}
               >
-              <IconComponent className={`w-6 h-6 ${area.color}`} />
+              <IconComponent className={`w-6 h-6 ${selectedAreas.includes(area.key) ? 'text-white' : area.color}`} />
               <span className="text-center text-sm font-medium whitespace-normal break-words">
                 {area.label}
               </span>
@@ -403,6 +435,13 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div className="flex gap-4">
           <Button variant="outline" onClick={handleBack} className="flex-1">
             {t('common.back')}
+          </Button>
+          <Button 
+            onClick={handleNext} 
+            disabled={selectedAreas.length === 0}
+            className={`flex-1 ${selectedAreas.length > 0 ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
+          >
+            {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -443,7 +482,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                     <p className="text-sm mb-4">{puja.description}</p>
                     <Button 
                       className="w-full bg-primary hover:bg-primary/90 text-white"
-                      onClick={() => { trackEvent('book_now_click', { page: 'solution_finder', step: 5, puja_id: puja.id, puja_name: puja.name }); window.open(puja.url, '_blank'); }}
+                      onClick={() => { trackEvent('book_now_click', { page: 'solution_finder' }); window.open(puja.url, '_blank', 'noopener,noreferrer'); }}
                     >
                       {t('common.bookNow')}
                     </Button>

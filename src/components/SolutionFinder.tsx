@@ -459,15 +459,17 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     
     return (
       <div className="flex flex-col h-full">
-        <div className="text-center sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10 pb-4 pt-2">
+        {/* Fixed Header */}
+        <div className="shrink-0 text-center bg-background/95 backdrop-blur-sm border-b border-border pb-4 pt-2">
           <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
           <p className="text-sm text-muted-foreground">
             Based on your birth details and selected areas: {selectedAreas.join(', ')}
           </p>
         </div>
         
-        <div className="flex-1 overflow-y-auto pt-4">
-          <div className="space-y-4">
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="p-4 space-y-4">
             {recommendations.length > 0 ? recommendations.map((puja) => (
               <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">
                 <div className="flex gap-4 p-4">
@@ -503,7 +505,8 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           </div>
         </div>
         
-        <div className="flex gap-4 pt-4 border-t border-border">
+        {/* Fixed Footer */}
+        <div className="shrink-0 flex gap-4 pt-4 border-t border-border">
           <Button variant="outline" onClick={handleBack} className="flex-1">
             {t('common.back')}
           </Button>

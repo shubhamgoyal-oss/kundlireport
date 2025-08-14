@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,10 +70,8 @@ const lifeAreas = [
   { key: "Health", label: "Health", icon: Heart, color: "text-red-500" },
   { key: "Career", label: "Career", icon: Sparkles, color: "text-blue-500" },
   { key: "Love / Relationships", label: "Love / Relationships", icon: Heart, color: "text-pink-500" },
-  { key: "Family Issues", label: "Family Issues", icon: Home, color: "text-green-500" },
   { key: "Finances", label: "Finances", icon: DollarSign, color: "text-yellow-600" },
-  { key: "Peace of Mind", label: "Peace of Mind", icon: Brain, color: "text-purple-500" },
-  { key: "Child Well-being", label: "Child Well-being", icon: Baby, color: "text-orange-500" }
+  { key: "Peace of Mind", label: "Peace of Mind", icon: Brain, color: "text-purple-500" }
 ];
 
 const specificPujas = [
@@ -190,6 +189,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const [rashi, setRashi] = useState('');
   const [moolank, setMoolank] = useState('');
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const handleNext = () => {
     if (step === 1) {
@@ -221,11 +221,12 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     }
   };
   const handleAreaSelect = (area: string) => {
-    setSelectedAreas(prev => 
-      prev.includes(area) 
-        ? prev.filter(a => a !== area)
-        : [...prev, area]
-    );
+    const categorySlug = areaKeyMap[area];
+    if (categorySlug) {
+      trackEvent('category_selected', { page: 'solution_finder' });
+      handleClose(); // Close the modal
+      navigate(`/category/${categorySlug}`); // Navigate to category page
+    }
   };
 
   const handleBack = () => {
@@ -248,11 +249,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const areaKeyMap: Record<string, string> = {
     'Health': 'health',
     'Career': 'career',
-    'Love / Relationships': 'love',
-    'Family Issues': 'family',
+    'Love / Relationships': 'love-relationships',
     'Finances': 'finances',
-    'Peace of Mind': 'peace',
-    'Child Well-being': 'child',
+    'Peace of Mind': 'peace-of-mind',
   };
 
   const renderStep1 = () => (
@@ -383,19 +382,16 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {lifeAreas.map((area) => {
             const IconComponent = area.icon;
-            const isSelected = selectedAreas.includes(area.key);
             return (
               <Button
                 key={area.key}
-                variant={isSelected ? "default" : "outline"}
-                className={`w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 hover:bg-muted ${
-                  isSelected ? 'bg-primary text-white hover:bg-primary/90' : ''
-                }`}
+                variant="outline"
+                className="w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 hover:bg-primary hover:text-white transition-colors"
                 onClick={() => handleAreaSelect(area.key)}
               >
-              <IconComponent className={`w-6 h-6 ${isSelected ? 'text-white' : area.color}`} />
+              <IconComponent className={`w-6 h-6 ${area.color}`} />
               <span className="text-center text-sm font-medium whitespace-normal break-words">
-                {t(`solutionFinder.areas.${areaKeyMap[area.key]}`)}
+                {area.label}
               </span>
               </Button>
             );
@@ -408,11 +404,6 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           <Button variant="outline" onClick={handleBack} className="flex-1">
             {t('common.back')}
           </Button>
-          {selectedAreas.length > 0 && (
-            <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-              {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
         </div>
       </div>
     </div>

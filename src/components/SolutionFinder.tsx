@@ -252,13 +252,17 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     if (selectedAreas.includes(area)) {
       setSelectedAreas(selectedAreas.filter(a => a !== area));
     } else {
-      setSelectedAreas([area]); // Only allow single selection
+      setSelectedAreas([...selectedAreas, area]); // Allow multiple selections
     }
     trackEvent('category_selected', { page: 'solution_finder' });
   };
 
   const handleBack = () => {
-    setStep(step - 1);
+    if (step === 3) {
+      setStep(1); // Skip step 2 (loading screen) when going back from step 3
+    } else {
+      setStep(step - 1);
+    }
   };
 
   const handleClose = () => {

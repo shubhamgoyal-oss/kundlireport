@@ -459,7 +459,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     
     return (
       <div className="flex flex-col h-full">
-        <div className="text-center sticky top-0 bg-background z-10 pb-4">
+        <div className="text-center sticky top-0 bg-background/95 backdrop-blur-sm border-b border-border z-10 pb-4 pt-2">
           <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
           <p className="text-sm text-muted-foreground">
             Based on your birth details and selected areas: {selectedAreas.join(', ')}

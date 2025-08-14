@@ -458,20 +458,16 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     );
     
     return (
-      <div className="flex flex-col h-full overflow-hidden">
-        {/* Fixed Header */}
-        <div className="flex-none bg-background border-b border-border px-4 py-4">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
-            <p className="text-sm text-muted-foreground">
-              Based on your birth details and selected areas: {selectedAreas.join(', ')}
-            </p>
-          </div>
+      <div className="flex flex-col h-full">
+        <div className="text-center sticky top-0 bg-background z-10 pb-4">
+          <h3 className="text-xl font-semibold mb-2">Your Recommended Pujas</h3>
+          <p className="text-sm text-muted-foreground">
+            Based on your birth details and selected areas: {selectedAreas.join(', ')}
+          </p>
         </div>
         
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto pt-4">
+          <div className="space-y-4">
             {recommendations.length > 0 ? recommendations.map((puja) => (
               <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">
                 <div className="flex gap-4 p-4">
@@ -507,13 +503,10 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           </div>
         </div>
         
-        {/* Fixed Footer */}
-        <div className="flex-none border-t border-border px-4 py-4">
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={handleBack} className="flex-1">
-              {t('common.back')}
-            </Button>
-          </div>
+        <div className="flex gap-4 pt-4 border-t border-border">
+          <Button variant="outline" onClick={handleBack} className="flex-1">
+            {t('common.back')}
+          </Button>
         </div>
       </div>
     );

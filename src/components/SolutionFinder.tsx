@@ -289,7 +289,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.enterDob')}</h3>
+        <h3 className="text-xl font-semibold mb-2">Enter your Date of Birth</h3>
       </div>
       
       <div className="grid grid-cols-3 gap-4">

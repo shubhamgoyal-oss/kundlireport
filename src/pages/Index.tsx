@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
 import { trackEvent } from '@/lib/analytics';
@@ -11,6 +11,10 @@ import Footer from '@/components/Footer';
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    trackEvent('page_view', { page: 'home' });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">

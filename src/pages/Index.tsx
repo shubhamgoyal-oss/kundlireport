@@ -51,9 +51,12 @@ const Index = () => {
                 size="lg"
                 className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto group"
               >
-                <span className="flex items-center gap-3">
-                  <span>Click here - {t('index.cta')}</span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" />
+                <span className="flex flex-col items-center gap-1">
+                  <span>{t('index.cta')}</span>
+                  <span className="flex items-center gap-2 text-xs opacity-90">
+                    <span>Click here</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" />
+                  </span>
                 </span>
               </Button>
             </div>

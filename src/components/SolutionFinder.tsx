@@ -117,39 +117,30 @@ const specificPujas = [
   // Finances pujas
   {
     id: 10,
-    name: "Rin Nashak Special Puja",
-    description: "For debt relief and financial freedom",
-    deity: "Lord Ganesha",
+    name: "Rahu-Baglamukhi Ekadashi Special Bagalamukhi Tantra Yukta Hawan",
+    description: "Overcome Financial Crisis and Business Setbacks with Baglamukhi and Rahu's Divine Power",
+    deity: "Goddess Baglamukhi",
     categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/3389-rin-nashak-special-20th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+    url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754997096971.webp"
   },
   {
     id: 15,
-    name: "Wealth and Prosperity Puja",
-    description: "For attracting wealth and abundance",
-    deity: "Goddess Lakshmi",
+    name: "Monday Abhijit Muhurat Jyotirlinga Special Somvar",
+    description: "Omkareshwar Maha Rudrabhishek for Fulfilment of all wishes And Financial Stability",
+    deity: "Lord Shiva",
     categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/8195-wealth-and-prosperity-puja-22nd-july-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+    url: "https://www.srimandir.com/epuja/21-somvar-jyotirlinga-special-18th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754585589596.webp"
   },
   {
     id: 16,
-    name: "Surya Gayatri Mantra Puja",
-    description: "For financial growth and success",
-    deity: "Lord Surya",
+    name: "Omkareshwar Jyotirlinga Special Rudrabhishek",
+    description: "For Fulfilment of all wishes And Financial Stability",
+    deity: "Lord Shiva",
     categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
-  },
-  {
-    id: 17,
-    name: "11 Brahmin Special Puja",
-    description: "For financial prosperity and blessings",
-    deity: "Lord Vishnu",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/2434-11-brahmin-special-22nd-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+    url: "https://www.srimandir.com/epuja/omkareshwar-jyotirling-special-11th-aug-25-1754907631",
+    image: "https://srm-cdn.a4b.io/yoda/1754328431564.webp"
   },
   // Peace of Mind pujas
   {
@@ -347,7 +338,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       <div className="bg-accent/20 rounded-lg p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourRashi')}</p>
+            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourRashi')} (Sun Sign)</p>
             <p className="text-lg font-semibold text-primary">{rashi}</p>
           </div>
           <div className="text-center">
@@ -432,7 +423,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         </div>
         
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto mt-4 pr-1">
+        <div className="flex-1 overflow-y-auto mt-4 pr-1 max-h-[400px]">
           <div className="space-y-4">
             {recommendations.length > 0 ? recommendations.map((puja) => (
               <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">

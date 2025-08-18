@@ -78,39 +78,12 @@ const specificPujas = [
   // Health pujas
   {
     id: 1,
-    name: "Physical and Mental Well-being Special Health and Wellness Special Puja and Yagya",
-    description: "Invite Shiva's Divine Healing for Health and Longevity",
+    name: "Grishneshwar Jyotirlinga Special",
+    description: "Divine blessings for health and spiritual well-being",
     deity: "Lord Shiva",
     categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/6122-shiv-rudrabhishek-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1750792116008.webp"
-  },
-  {
-    id: 2,
-    name: "Grishneshwar Jyotirlinga Monday Shiv Aradhana Special",
-    description: "To Destroy Ill Health, Evil Eye and Negative Energies",
-    deity: "Lord Shiva",
-    categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/grishneshwar-jyotirlinga-special-18th-aug-25",
+    url: "https://www.srimandir.com/epuja/6678-grishneshwar-jyotirlinga-special-21st-aug-25",
     image: "https://srm-cdn.a4b.io/yoda/1754582216693.webp"
-  },
-  {
-    id: 3,
-    name: "Grishneshwar Jyotirling Special Rudrabhishek",
-    description: "Divine blessings for health and protection from negative energies",
-    deity: "Lord Shiva",
-    categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/3342-grishneshwar-jyotirling-special-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754582221692.webp"
-  },
-  {
-    id: 4,
-    name: "Omkareshwar 11,000 Mahamrityunjaya Maha Anushthan",
-    description: "For Healing, Longevity, and Protection From Illness and Untimely Death",
-    deity: "Lord Shiva",
-    categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/omkareshwar-11000-special-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754340753224.webp"
   },
   // Career puja
   {
@@ -143,24 +116,6 @@ const specificPujas = [
   },
   // Finances pujas
   {
-    id: 8,
-    name: "Bagalamukhi Tantra Yukta Hawan and 18,000 Rahu Mool Mantra Jaap",
-    description: "Overcome Financial Crisis and Business Setbacks with Baglamukhi and Rahu's Divine Power",
-    deity: "Goddess Bagalamukhi",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754997096971.webp"
-  },
-  {
-    id: 9,
-    name: "21 Somvar Jyotirlinga Special Puja",
-    description: "For financial stability and prosperity",
-    deity: "Lord Shiva",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/21-somvar-jyotirlinga-special-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
-  },
-  {
     id: 10,
     name: "Rin Nashak Special Puja",
     description: "For debt relief and financial freedom",
@@ -170,13 +125,31 @@ const specificPujas = [
     image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
   },
   {
-    id: 11,
-    name: "Omkareshwar Jyotirling Special Puja",
-    description: "For wealth and financial growth",
-    deity: "Lord Shiva",
+    id: 15,
+    name: "Wealth and Prosperity Puja",
+    description: "For attracting wealth and abundance",
+    deity: "Goddess Lakshmi",
     categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/omkareshwar-jyotirling-special-11th-aug-25-1754907631",
-    image: "https://srm-cdn.a4b.io/yoda/1754340753224.webp"
+    url: "https://www.srimandir.com/epuja/8195-wealth-and-prosperity-puja-22nd-july-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+  },
+  {
+    id: 16,
+    name: "Surya Gayatri Mantra Puja",
+    description: "For financial growth and success",
+    deity: "Lord Surya",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
+  },
+  {
+    id: 17,
+    name: "11 Brahmin Special Puja",
+    description: "For financial prosperity and blessings",
+    deity: "Lord Vishnu",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/2434-11-brahmin-special-22nd-aug-25",
+    image: "https://srm-cdn.a4b.io/yoda/1754049894309.webp"
   },
   // Peace of Mind pujas
   {
@@ -187,15 +160,6 @@ const specificPujas = [
     categories: ["Peace of Mind"],
     url: "https://www.srimandir.com/epuja/1111-rahu-shanti-jaap-havan-19th-aug-2025",
     image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
-  },
-  {
-    id: 13,
-    name: "Last Day Sawan Special Puja",
-    description: "For inner peace and spiritual well-being",
-    deity: "Lord Shiva",
-    categories: ["Peace of Mind"],
-    url: "https://www.srimandir.com/epuja/3975-last-day-sawan-special-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754032384191.webp"
   },
   {
     id: 14,
@@ -249,6 +213,16 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     }
   };
   const handleAreaSelect = (area: string) => {
+    // For Health and Finances, redirect to category page
+    if (area === 'Health' || area === 'Finances') {
+      trackEvent('category_selected', { page: 'solution_finder' });
+      const categoryPath = area === 'Health' ? 'health' : 'finances';
+      navigate(`/category/${categoryPath}`);
+      handleClose(); // Close the modal when navigating
+      return;
+    }
+    
+    // For other categories, continue with existing behavior
     if (selectedAreas.includes(area)) {
       setSelectedAreas(selectedAreas.filter(a => a !== area));
     } else {

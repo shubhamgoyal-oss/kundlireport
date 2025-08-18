@@ -7,24 +7,9 @@ import { useTranslation } from "react-i18next";
 const categoryPujas = {
   health: [
     {
-      name: "Shiv Rudrabhishek",
-      description: "Powerful healing and protection puja for health and well-being",
-      url: "https://www.srimandir.com/epuja/6122-shiv-rudrabhishek-18th-aug-25"
-    },
-    {
       name: "Grishneshwar Jyotirlinga Special",
-      description: "Sacred blessing for complete health and protection",
-      url: "https://www.srimandir.com/epuja/grishneshwar-jyotirlinga-special-18th-aug-25"
-    },
-    {
-      name: "Grishneshwar Jyotirling Special",
-      description: "Divine intervention for health and spiritual healing",
-      url: "https://www.srimandir.com/epuja/3342-grishneshwar-jyotirling-special-18th-aug-25"
-    },
-    {
-      name: "Omkareshwar 11000 Special",
-      description: "Supreme healing puja for physical and mental wellness",
-      url: "https://www.srimandir.com/epuja/omkareshwar-11000-special-18th-aug-25"
+      description: "Divine blessings for health and spiritual well-being",
+      url: "https://www.srimandir.com/epuja/6678-grishneshwar-jyotirlinga-special-21st-aug-25"
     }
   ],
   career: [
@@ -48,24 +33,24 @@ const categoryPujas = {
   ],
   finances: [
     {
-      name: "Bagalamukhi Tantra Yukta Hawan",
-      description: "Powerful puja for financial stability and wealth attraction",
-      url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25"
-    },
-    {
-      name: "21 Somvar Jyotirlinga Special",
-      description: "Sacred ritual for financial abundance and prosperity",
-      url: "https://www.srimandir.com/epuja/21-somvar-jyotirlinga-special-18th-aug-25"
-    },
-    {
-      name: "Rin Nashak Special",
-      description: "Debt removal and financial freedom puja",
+      name: "Rin Nashak Special Puja",
+      description: "For debt relief and financial freedom",
       url: "https://www.srimandir.com/epuja/3389-rin-nashak-special-20th-aug-25"
     },
     {
-      name: "Omkareshwar Jyotirling Special",
-      description: "Divine blessings for wealth and financial growth",
-      url: "https://www.srimandir.com/epuja/omkareshwar-jyotirling-special-11th-aug-25-1754907631"
+      name: "Wealth and Prosperity Puja",
+      description: "For attracting wealth and abundance",
+      url: "https://www.srimandir.com/epuja/8195-wealth-and-prosperity-puja-22nd-july-25"
+    },
+    {
+      name: "Surya Gayatri Mantra Puja",
+      description: "For financial growth and success",
+      url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25"
+    },
+    {
+      name: "11 Brahmin Special Puja",
+      description: "For financial prosperity and blessings",
+      url: "https://www.srimandir.com/epuja/2434-11-brahmin-special-22nd-aug-25"
     }
   ],
   "peace-of-mind": [
@@ -73,11 +58,6 @@ const categoryPujas = {
       name: "Rahu Shanti Jaap Havan",
       description: "For mental peace, removing anxiety and negative influences",
       url: "https://www.srimandir.com/epuja/1111-rahu-shanti-jaap-havan-19th-aug-2025"
-    },
-    {
-      name: "Last Day Sawan Special",
-      description: "Sacred puja for inner peace and spiritual tranquility",
-      url: "https://www.srimandir.com/epuja/3975-last-day-sawan-special-18th-aug-25"
     },
     {
       name: "Datta Mala Mantra",

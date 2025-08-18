@@ -124,24 +124,6 @@ const specificPujas = [
     url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25",
     image: "https://srm-cdn.a4b.io/yoda/1754997096971.webp"
   },
-  {
-    id: 15,
-    name: "Monday Abhijit Muhurat Jyotirlinga Special Somvar",
-    description: "Omkareshwar Maha Rudrabhishek for Fulfilment of all wishes And Financial Stability",
-    deity: "Lord Shiva",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/21-somvar-jyotirlinga-special-18th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754585589596.webp"
-  },
-  {
-    id: 16,
-    name: "Omkareshwar Jyotirlinga Special Rudrabhishek",
-    description: "For Fulfilment of all wishes And Financial Stability",
-    deity: "Lord Shiva",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/omkareshwar-jyotirling-special-11th-aug-25-1754907631",
-    image: "https://srm-cdn.a4b.io/yoda/1754328431564.webp"
-  },
   // Peace of Mind pujas
   {
     id: 12,

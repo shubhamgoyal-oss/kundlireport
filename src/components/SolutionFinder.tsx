@@ -213,16 +213,6 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     }
   };
   const handleAreaSelect = (area: string) => {
-    // For Health and Finances, redirect to category page
-    if (area === 'Health' || area === 'Finances') {
-      trackEvent('category_selected', { page: 'solution_finder' });
-      const categoryPath = area === 'Health' ? 'health' : 'finances';
-      navigate(`/category/${categoryPath}`);
-      handleClose(); // Close the modal when navigating
-      return;
-    }
-    
-    // For other categories, continue with existing behavior
     if (selectedAreas.includes(area)) {
       setSelectedAreas(selectedAreas.filter(a => a !== area));
     } else {
@@ -432,53 +422,63 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     );
     
     return (
-      <div className="space-y-6 max-h-96 overflow-y-auto">
-        <div className="text-center">
+      <div className="flex flex-col h-full">
+        {/* Fixed Header */}
+        <div className="shrink-0 text-center pb-4 border-b border-border">
           <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.recommendedTitle')}</h3>
           <p className="text-sm text-muted-foreground">
             {t('solutionFinder.basedOn', { areas: selectedAreas.join(', ') })}
           </p>
         </div>
         
-        <div className="space-y-4">
-          {recommendations.length > 0 ? recommendations.map((puja) => (
-            <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">
-              <div className="flex gap-4 p-4">
-                <img 
-                  src={puja.image} 
-                  alt={puja.name}
-                  className="w-20 h-20 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <CardHeader className="p-0 pb-2">
-                    <CardTitle className="text-lg">{puja.name}</CardTitle>
-                    <CardDescription className="text-sm text-muted-foreground">
-                      Dedicated to {puja.deity}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <p className="text-sm mb-4">{puja.description}</p>
-                    <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-white"
-                      onClick={() => { trackEvent('book_now_click', { page: 'solution_finder' }); window.open(puja.url, '_blank', 'noopener,noreferrer'); }}
-                    >
-                      {t('common.bookNow')}
-                    </Button>
-                  </CardContent>
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto mt-4 pr-1">
+          <div className="space-y-4">
+            {recommendations.length > 0 ? recommendations.map((puja) => (
+              <Card key={puja.id} className="border border-border hover:shadow-lg transition-shadow">
+                <div className="flex gap-4 p-4">
+                  <img 
+                    src={puja.image} 
+                    alt={puja.name}
+                    className="w-20 h-20 object-cover rounded-lg shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <CardHeader className="p-0 pb-2">
+                      <CardTitle className="text-lg leading-tight">{puja.name}</CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground">
+                        Dedicated to {puja.deity}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <p className="text-sm mb-4 line-clamp-2">{puja.description}</p>
+                      <Button 
+                        className="w-full bg-primary hover:bg-primary/90 text-white"
+                        onClick={() => { 
+                          trackEvent('book_now_click', { page: 'solution_finder' }); 
+                          window.open(puja.url, '_blank', 'noopener,noreferrer'); 
+                        }}
+                      >
+                        {t('common.bookNow')}
+                      </Button>
+                    </CardContent>
+                  </div>
                 </div>
+              </Card>
+            )) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">{t('solutionFinder.noPujas')}</p>
               </div>
-            </Card>
-          )) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">{t('solutionFinder.noPujas')}</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
         
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={handleBack} className="flex-1">
-            {t('common.back')}
-          </Button>
+        {/* Fixed Footer */}
+        <div className="shrink-0 border-t border-border pt-4 mt-4">
+          <div className="flex gap-4">
+            <Button variant="outline" onClick={handleBack} className="flex-1">
+              {t('common.back')}
+            </Button>
+          </div>
         </div>
       </div>
     );

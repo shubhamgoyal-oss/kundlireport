@@ -22,6 +22,7 @@ const resources = {
         heroTitlePart2: 'Spiritual Solution',
         heroSubtitle: 'Get personalized puja recommendations to guide your spiritual practice.',
         cta: 'My Solution Finder',
+        clickHere: 'Click here',
       },
       trust: {
         trust1: 'Trusted by 30 million+ people',
@@ -86,6 +87,7 @@ const resources = {
         heroTitlePart2: 'आध्यात्मिक समाधान',
         heroSubtitle: 'अपनी आध्यात्मिक यात्रा के लिए व्यक्तिगत पूजा सिफ़ारिशें प्राप्त करें।',
         cta: 'मेरा समाधान खोजक',
+        clickHere: 'यहाँ क्लिक करें',
       },
       trust: {
         trust1: '3 करोड़+ लोगों का भरोसा',

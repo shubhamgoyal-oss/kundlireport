@@ -54,7 +54,7 @@ const Index = () => {
                 <span className="flex flex-col items-center gap-1">
                   <span>{t('index.cta')}</span>
                   <span className="flex items-center gap-2 text-xs opacity-90">
-                    <span>Click here</span>
+                    <span>{t('index.clickHere')}</span>
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" />
                   </span>
                 </span>

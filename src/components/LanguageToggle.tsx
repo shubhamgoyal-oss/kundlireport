@@ -8,6 +8,17 @@ export default function LanguageToggle() {
 
   const toggle = () => {
     const next = isHindi ? 'en' : 'hi';
+    
+    // Track GTM event
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: `language_toggle_${next}_click`,
+        buttonId: 'language-toggle-btn',
+        language: next,
+        buttonType: 'language-toggle'
+      });
+    }
+    
     i18n.changeLanguage(next);
   };
 

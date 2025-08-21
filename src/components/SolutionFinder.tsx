@@ -158,6 +158,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   const handleNext = () => {
     if (step === 1) {
+      // Track GTM event
+      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'solution_finder_step1_next_click',
+          buttonId: 'solution-finder-step1-next-btn',
+          buttonType: 'navigation-next',
+          step: 1
+        });
+      }
       trackEvent('next_dob_click', { page: 'solution_finder', step: 1 });
       setIsCalculating(true);
       setStep(2);
@@ -176,9 +185,28 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         setStep(3);
       }, 2000);
     } else if (step === 3) {
+      // Track GTM event
+      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'solution_finder_step3_next_click',
+          buttonId: 'solution-finder-step3-next-btn',
+          buttonType: 'navigation-next',
+          step: 3
+        });
+      }
       trackEvent('next_astrological_details_click', { page: 'solution_finder', step: 3 });
       setStep(4);
     } else if (step === 4 && selectedAreas.length > 0) {
+      // Track GTM event
+      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'solution_finder_step4_next_click',
+          buttonId: 'solution-finder-step4-next-btn',
+          buttonType: 'navigation-next',
+          step: 4,
+          selectedAreas: selectedAreas
+        });
+      }
       trackEvent('next_life_areas_click', { page: 'solution_finder', step: 4, metadata: { selectedAreas } });
       setStep(5);
     } else {
@@ -186,6 +214,17 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     }
   };
   const handleAreaSelect = (area: string) => {
+    // Track GTM event
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: `solution_finder_area_${area.toLowerCase().replace(/\s+/g, '_').replace(/\//g, '_')}_click`,
+        buttonId: `solution-finder-area-${area.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')}-btn`,
+        buttonType: 'area-selection',
+        area: area,
+        step: 4
+      });
+    }
+    
     if (selectedAreas.includes(area)) {
       setSelectedAreas(selectedAreas.filter(a => a !== area));
     } else {
@@ -195,6 +234,16 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   };
 
   const handleBack = () => {
+    // Track GTM event
+    if (typeof window !== 'undefined' && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: `solution_finder_step${step}_back_click`,
+        buttonId: `solution-finder-step${step}-back-btn`,
+        buttonType: 'navigation-back',
+        step: step
+      });
+    }
+    
     if (step === 3) {
       setStep(1); // Skip step 2 (loading screen) when going back from step 3
     } else {
@@ -472,6 +521,17 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                         id={`solution-finder-book-puja-${puja.id}-btn`}
                         className="w-full bg-primary hover:bg-primary/90 text-white"
                         onClick={() => { 
+                          // Track GTM event
+                          if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                            (window as any).dataLayer.push({
+                              event: `solution_finder_book_puja_${puja.id}_click`,
+                              buttonId: `solution-finder-book-puja-${puja.id}-btn`,
+                              buttonType: 'book-puja',
+                              pujaId: puja.id,
+                              pujaName: puja.name,
+                              step: 5
+                            });
+                          }
                           trackEvent('book_now_click', { page: 'solution_finder' }); 
                           window.open(puja.url, '_blank', 'noopener,noreferrer'); 
                         }}

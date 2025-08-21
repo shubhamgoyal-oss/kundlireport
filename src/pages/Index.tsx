@@ -49,7 +49,19 @@ const Index = () => {
               {/* Main CTA Button */}
               <Button
                 id="solution-finder-cta-btn"
-                onClick={() => { trackEvent('cta_my_solution_finder_click', { page: 'home' }); setIsSolutionFinderOpen(true); }}
+                onClick={() => { 
+                  // Track GTM event
+                  if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                    (window as any).dataLayer.push({
+                      event: 'solution_finder_cta_click',
+                      buttonId: 'solution-finder-cta-btn',
+                      buttonType: 'main-cta',
+                      page: 'home'
+                    });
+                  }
+                  trackEvent('cta_my_solution_finder_click', { page: 'home' }); 
+                  setIsSolutionFinderOpen(true); 
+                }}
                 size="lg"
                 className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto group"
                 data-gtm-button-id="solution-finder-cta-btn"

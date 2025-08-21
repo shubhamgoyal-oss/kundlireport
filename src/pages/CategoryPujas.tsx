@@ -90,7 +90,18 @@ export default function CategoryPujas() {
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Category Not Found</h1>
             <Button 
               id="category-pujas-not-found-back-btn" 
-              onClick={() => navigate("/")} 
+              onClick={() => {
+                // Track GTM event
+                if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                  (window as any).dataLayer.push({
+                    event: 'category_pujas_not_found_back_click',
+                    buttonId: 'category-pujas-not-found-back-btn',
+                    buttonType: 'navigation',
+                    page: 'category-not-found'
+                  });
+                }
+                navigate("/");
+              }} 
               variant="outline"
               data-gtm-button-id="category-pujas-not-found-back-btn"
               data-gtm-button-type="navigation"
@@ -111,7 +122,18 @@ export default function CategoryPujas() {
           <div className="flex items-center gap-4 mb-8">
             <Button 
               id="category-pujas-header-back-btn"
-              onClick={() => navigate("/")} 
+              onClick={() => {
+                // Track GTM event
+                if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                  (window as any).dataLayer.push({
+                    event: 'category_pujas_header_back_click',
+                    buttonId: 'category-pujas-header-back-btn',
+                    buttonType: 'navigation',
+                    page: 'category-pujas'
+                  });
+                }
+                navigate("/");
+              }} 
               variant="outline"
               size="sm"
               data-gtm-button-id="category-pujas-header-back-btn"
@@ -144,7 +166,20 @@ export default function CategoryPujas() {
                 <CardContent>
                   <Button 
                     id={`category-pujas-book-${index}-btn`}
-                    onClick={() => window.open(puja.url, '_blank', 'noopener,noreferrer')}
+                    onClick={() => {
+                      // Track GTM event
+                      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                        (window as any).dataLayer.push({
+                          event: `category_pujas_book_${index}_click`,
+                          buttonId: `category-pujas-book-${index}-btn`,
+                          buttonType: 'book-puja',
+                          category: category,
+                          pujaName: puja.name,
+                          page: 'category-pujas'
+                        });
+                      }
+                      window.open(puja.url, '_blank', 'noopener,noreferrer');
+                    }}
                     className="w-full"
                     data-gtm-button-id={`category-pujas-book-${index}-btn`}
                     data-gtm-button-type="book-puja"

@@ -88,7 +88,14 @@ export default function CategoryPujas() {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Category Not Found</h1>
-          <Button id="category-pujas-not-found-back-btn" onClick={() => navigate("/")} variant="outline">
+            <Button 
+              id="category-pujas-not-found-back-btn" 
+              onClick={() => navigate("/")} 
+              variant="outline"
+              data-gtm-button-id="category-pujas-not-found-back-btn"
+              data-gtm-button-type="navigation"
+              data-gtm-page="category-not-found"
+            >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Button>
@@ -107,6 +114,9 @@ export default function CategoryPujas() {
               onClick={() => navigate("/")} 
               variant="outline"
               size="sm"
+              data-gtm-button-id="category-pujas-header-back-btn"
+              data-gtm-button-type="navigation"
+              data-gtm-page="category-pujas"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Home
@@ -136,6 +146,11 @@ export default function CategoryPujas() {
                     id={`category-pujas-book-${index}-btn`}
                     onClick={() => window.open(puja.url, '_blank', 'noopener,noreferrer')}
                     className="w-full"
+                    data-gtm-button-id={`category-pujas-book-${index}-btn`}
+                    data-gtm-button-type="book-puja"
+                    data-gtm-category={category}
+                    data-gtm-puja-name={puja.name}
+                    data-gtm-page="category-pujas"
                   >
                     Book Puja
                     <ExternalLink className="ml-2 h-4 w-4" />

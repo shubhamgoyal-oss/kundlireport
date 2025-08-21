@@ -288,7 +288,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       
       <div className="flex gap-4">
         {step > 1 && (
-          <Button id="solution-finder-step1-back-btn" variant="outline" onClick={handleBack} className="flex-1">
+          <Button 
+            id="solution-finder-step1-back-btn" 
+            variant="outline" 
+            onClick={handleBack} 
+            className="flex-1"
+            data-gtm-button-id="solution-finder-step1-back-btn"
+            data-gtm-button-type="navigation-back"
+            data-gtm-step="1"
+          >
             {t('common.back')}
           </Button>
         )}
@@ -297,6 +305,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
           onClick={handleNext} 
           disabled={!isDateValid}
           className={`${step > 1 ? 'flex-1' : 'w-full'} bg-primary hover:bg-primary/90 text-white`}
+          data-gtm-button-id="solution-finder-step1-next-btn"
+          data-gtm-button-type="navigation-next"
+          data-gtm-step="1"
         >
           {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
@@ -331,10 +342,25 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         </div>
       </div>
       <div className="flex gap-4">
-        <Button id="solution-finder-step3-back-btn" variant="outline" onClick={handleBack} className="flex-1">
+        <Button 
+          id="solution-finder-step3-back-btn" 
+          variant="outline" 
+          onClick={handleBack} 
+          className="flex-1"
+          data-gtm-button-id="solution-finder-step3-back-btn"
+          data-gtm-button-type="navigation-back"
+          data-gtm-step="3"
+        >
           {t('common.back')}
         </Button>
-        <Button id="solution-finder-step3-next-btn" onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
+        <Button 
+          id="solution-finder-step3-next-btn" 
+          onClick={handleNext} 
+          className="flex-1 bg-primary hover:bg-primary/90 text-white"
+          data-gtm-button-id="solution-finder-step3-next-btn"
+          data-gtm-button-type="navigation-next"
+          data-gtm-step="3"
+        >
           {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -363,6 +389,10 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                     : 'hover:bg-primary hover:text-white'
                 }`}
                 onClick={() => handleAreaSelect(area.key)}
+                data-gtm-button-id={`solution-finder-area-${area.key.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')}-btn`}
+                data-gtm-button-type="area-selection"
+                data-gtm-area={area.key}
+                data-gtm-step="4"
               >
               <IconComponent className={`w-6 h-6 ${selectedAreas.includes(area.key) ? 'text-white' : area.color}`} />
               <span className="text-center text-sm font-medium whitespace-normal break-words">
@@ -376,7 +406,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       
       <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
         <div className="flex gap-4">
-          <Button id="solution-finder-step4-back-btn" variant="outline" onClick={handleBack} className="flex-1">
+          <Button 
+            id="solution-finder-step4-back-btn" 
+            variant="outline" 
+            onClick={handleBack} 
+            className="flex-1"
+            data-gtm-button-id="solution-finder-step4-back-btn"
+            data-gtm-button-type="navigation-back"
+            data-gtm-step="4"
+          >
             {t('common.back')}
           </Button>
           <Button 
@@ -384,6 +422,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             onClick={handleNext} 
             disabled={selectedAreas.length === 0}
             className={`flex-1 ${selectedAreas.length > 0 ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
+            data-gtm-button-id="solution-finder-step4-next-btn"
+            data-gtm-button-type="navigation-next"
+            data-gtm-step="4"
           >
             {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -434,6 +475,11 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                           trackEvent('book_now_click', { page: 'solution_finder' }); 
                           window.open(puja.url, '_blank', 'noopener,noreferrer'); 
                         }}
+                        data-gtm-button-id={`solution-finder-book-puja-${puja.id}-btn`}
+                        data-gtm-button-type="book-puja"
+                        data-gtm-puja-id={puja.id}
+                        data-gtm-puja-name={puja.name}
+                        data-gtm-step="5"
                       >
                         {t('common.bookNow')}
                       </Button>
@@ -452,7 +498,15 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         {/* Fixed Footer */}
         <div className="shrink-0 border-t border-border pt-4 mt-4">
           <div className="flex gap-4">
-            <Button id="solution-finder-step5-back-btn" variant="outline" onClick={handleBack} className="flex-1">
+            <Button 
+              id="solution-finder-step5-back-btn" 
+              variant="outline" 
+              onClick={handleBack} 
+              className="flex-1"
+              data-gtm-button-id="solution-finder-step5-back-btn"
+              data-gtm-button-type="navigation-back"
+              data-gtm-step="5"
+            >
               {t('common.back')}
             </Button>
           </div>

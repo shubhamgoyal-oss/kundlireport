@@ -52,6 +52,9 @@ const Index = () => {
                 onClick={() => { trackEvent('cta_my_solution_finder_click', { page: 'home' }); setIsSolutionFinderOpen(true); }}
                 size="lg"
                 className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto group"
+                data-gtm-button-id="solution-finder-cta-btn"
+                data-gtm-button-type="main-cta"
+                data-gtm-page="home"
               >
                 <span className="flex flex-col items-center gap-1">
                   <span>{t('index.cta')}</span>

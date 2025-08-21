@@ -22,7 +22,7 @@ const Index = () => {
 
       {/* Hero Section - Medium.com inspired layout */}
       <main className="flex-1">
-        <!-- Meta Pixel Code -->
+      </main>-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

@@ -13,7 +13,7 @@ export default function LanguageToggle() {
 
   return (
     <div className="fixed top-4 right-4 z-50">
-      <Button variant="secondary" size="sm" onClick={toggle} className="gap-2">
+      <Button id="language-toggle-btn" variant="secondary" size="sm" onClick={toggle} className="gap-2">
         <Globe className="h-4 w-4" />
         {isHindi ? t('common.switchToEnglish') : t('common.switchToHindi')}
       </Button>

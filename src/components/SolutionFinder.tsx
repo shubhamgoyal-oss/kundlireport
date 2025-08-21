@@ -288,11 +288,12 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       
       <div className="flex gap-4">
         {step > 1 && (
-          <Button variant="outline" onClick={handleBack} className="flex-1">
+          <Button id="solution-finder-step1-back-btn" variant="outline" onClick={handleBack} className="flex-1">
             {t('common.back')}
           </Button>
         )}
         <Button 
+          id="solution-finder-step1-next-btn"
           onClick={handleNext} 
           disabled={!isDateValid}
           className={`${step > 1 ? 'flex-1' : 'w-full'} bg-primary hover:bg-primary/90 text-white`}
@@ -330,10 +331,10 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         </div>
       </div>
       <div className="flex gap-4">
-        <Button variant="outline" onClick={handleBack} className="flex-1">
+        <Button id="solution-finder-step3-back-btn" variant="outline" onClick={handleBack} className="flex-1">
           {t('common.back')}
         </Button>
-        <Button onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
+        <Button id="solution-finder-step3-next-btn" onClick={handleNext} className="flex-1 bg-primary hover:bg-primary/90 text-white">
           {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
@@ -353,6 +354,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
             const IconComponent = area.icon;
             return (
               <Button
+                id={`solution-finder-area-${area.key.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')}-btn`}
                 key={area.key}
                 variant={selectedAreas.includes(area.key) ? "default" : "outline"}
                 className={`w-full h-auto min-h-[84px] p-3 sm:p-4 flex flex-col items-center justify-center gap-2 transition-colors ${
@@ -374,10 +376,11 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       
       <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
         <div className="flex gap-4">
-          <Button variant="outline" onClick={handleBack} className="flex-1">
+          <Button id="solution-finder-step4-back-btn" variant="outline" onClick={handleBack} className="flex-1">
             {t('common.back')}
           </Button>
           <Button 
+            id="solution-finder-step4-next-btn"
             onClick={handleNext} 
             disabled={selectedAreas.length === 0}
             className={`flex-1 ${selectedAreas.length > 0 ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
@@ -425,6 +428,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                     <CardContent className="p-0">
                       <p className="text-sm mb-4 line-clamp-2">{puja.description}</p>
                       <Button 
+                        id={`solution-finder-book-puja-${puja.id}-btn`}
                         className="w-full bg-primary hover:bg-primary/90 text-white"
                         onClick={() => { 
                           trackEvent('book_now_click', { page: 'solution_finder' }); 
@@ -448,7 +452,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         {/* Fixed Footer */}
         <div className="shrink-0 border-t border-border pt-4 mt-4">
           <div className="flex gap-4">
-            <Button variant="outline" onClick={handleBack} className="flex-1">
+            <Button id="solution-finder-step5-back-btn" variant="outline" onClick={handleBack} className="flex-1">
               {t('common.back')}
             </Button>
           </div>

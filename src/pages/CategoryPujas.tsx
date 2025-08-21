@@ -88,7 +88,7 @@ export default function CategoryPujas() {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Category Not Found</h1>
-          <Button onClick={() => navigate("/")} variant="outline">
+          <Button id="category-pujas-not-found-back-btn" onClick={() => navigate("/")} variant="outline">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Button>
@@ -103,6 +103,7 @@ export default function CategoryPujas() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <Button 
+              id="category-pujas-header-back-btn"
               onClick={() => navigate("/")} 
               variant="outline"
               size="sm"
@@ -132,6 +133,7 @@ export default function CategoryPujas() {
                 </CardHeader>
                 <CardContent>
                   <Button 
+                    id={`category-pujas-book-${index}-btn`}
                     onClick={() => window.open(puja.url, '_blank', 'noopener,noreferrer')}
                     className="w-full"
                   >

@@ -37,8 +37,8 @@ fbq('track', 'PageView');
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=194243889879467&ev=PageView&noscript=1"
-/></noscript>
-<!-- End Meta Pixel Code --> */}
+/></noscript> */}
+// <!-- End Meta Pixel Code -->
         <div className="container mx-auto px-6 py-12">
           <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
             {/* Left Content */}

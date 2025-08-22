@@ -75,74 +75,7 @@ const lifeAreas = [
 ];
 
 const specificPujas = [
-  // Health pujas
-  {
-    id: 1,
-    name: "Grishneshwar Jyotirlinga Special",
-    description: "Divine blessings for health and spiritual well-being",
-    deity: "Lord Shiva",
-    categories: ["Health"],
-    url: "https://www.srimandir.com/epuja/6678-grishneshwar-jyotirlinga-special-21st-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754582216693.webp"
-  },
-  // Career puja
-  {
-    id: 5,
-    name: "Academic & Creative Excellence Fire Ceremony",
-    description: "For Students and Learners to Succeed in Exams, Academics, or Creative Fields",
-    deity: "Goddess Saraswati",
-    categories: ["Career"],
-    url: "https://www.srimandir.com/epuja/1121-academic-creative-excellence-21st-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1750681502152.webp"
-  },
-  // Love / Relationships pujas
-  {
-    id: 6,
-    name: "Brihaspati Guru Graha Havan, Vishnu Sahasranama and Banana Tree Puja",
-    description: "To Avoid Delays in Marriage and Find a Suitable Partner",
-    deity: "Lord Brihaspati & Lord Vishnu",
-    categories: ["Love / Relationships"],
-    url: "https://www.srimandir.com/epuja/6656-brihaspati-guru-graha-yagya-vishnu-sahasranama-puja-21st-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1754996720927.webp"
-  },
-  {
-    id: 7,
-    name: "Marriage Blessing Puja",
-    description: "Special blessings for harmonious relationships and marriage",
-    deity: "Divine Mother",
-    categories: ["Love / Relationships"],
-    url: "https://www.srimandir.com/epuja/1122-marriage-blessing-puja-21st-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1750681504954.webp"
-  },
-  // Finances pujas
-  {
-    id: 10,
-    name: "Rahu-Baglamukhi Ekadashi Special Bagalamukhi Tantra Yukta Hawan",
-    description: "Overcome Financial Crisis and Business Setbacks with Baglamukhi and Rahu's Divine Power",
-    deity: "Goddess Baglamukhi",
-    categories: ["Finances"],
-    url: "https://www.srimandir.com/epuja/bagalamukhi-tantra-yukta-hawan-19th-aug-25",
-    image: "https://srm-cdn.a4b.io/yoda/1754997096971.webp"
-  },
-  // Peace of Mind pujas
-  {
-    id: 12,
-    name: "Rahu Shanti Jaap Havan",
-    description: "For mental peace and removal of negative planetary effects",
-    deity: "Lord Vishnu",
-    categories: ["Peace of Mind"],
-    url: "https://www.srimandir.com/epuja/1111-rahu-shanti-jaap-havan-19th-aug-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1753884337613.webp"
-  },
-  {
-    id: 14,
-    name: "Datta Mala Mantra Puja",
-    description: "For mental clarity and spiritual peace",
-    deity: "Lord Dattatreya",
-    categories: ["Peace of Mind"],
-    url: "https://www.srimandir.com/epuja/5509-datta-mala-mantra-19th-august-2025",
-    image: "https://srm-cdn.a4b.io/yoda/1753959826895.webp"
-  }
+  // Other category pujas can be added here for categories outside the five mentioned
 ];
 
 export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps) {

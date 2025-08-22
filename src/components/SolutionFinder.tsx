@@ -202,19 +202,22 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         setIsCalculating(false);
         setStep(3);
       }, 2000);
-    } else if (step === 3 && selectedAreas.length > 0) {
+    } else if (step === 3) {
+      // Move from astrological details to life areas selection
+      setStep(4);
+    } else if (step === 4 && selectedAreas.length > 0) {
       // Track GTM event for life areas selection
       if (typeof window !== 'undefined' && (window as any).dataLayer) {
         (window as any).dataLayer.push({
-          event: 'solution_finder_step3_next_click',
-          buttonId: 'solution-finder-step3-next-btn',
+          event: 'solution_finder_step4_next_click',
+          buttonId: 'solution-finder-step4-next-btn',
           buttonType: 'navigation-next',
-          step: 3,
+          step: 4,
           selectedAreas: selectedAreas
         });
       }
-      trackEvent('next_life_areas_click', { page: 'solution_finder', step: 3, metadata: { selectedAreas } });
-      setStep(4);
+      trackEvent('next_life_areas_click', { page: 'solution_finder', step: 4, metadata: { selectedAreas } });
+      setStep(5);
     } else {
       setStep(step + 1);
     }
@@ -253,7 +256,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     if (step === 3) {
       setStep(1); // Skip step 2 (loading screen) when going back from step 3
     } else if (step === 4) {
-      setStep(3); // Go back to life areas selection
+      setStep(3); // Go back to astrological details
+    } else if (step === 5) {
+      setStep(4); // Go back to life areas selection
     } else {
       setStep(step - 1);
     }
@@ -384,47 +389,6 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
   );
 
   const renderStep3 = () => (
-    <div className="text-center space-y-6 py-8">
-      <h3 className="text-xl font-semibold">{t('solutionFinder.astrologicalDetails')}</h3>
-      <div className="bg-accent/20 rounded-lg p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourRashi')} (Sun Sign)</p>
-            <p className="text-lg font-semibold text-primary">{rashi}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourMoolank')}</p>
-            <p className="text-lg font-semibold text-primary">{moolank}</p>
-          </div>
-        </div>
-      </div>
-      <div className="flex gap-4">
-        <Button 
-          id="solution-finder-step3-back-btn" 
-          variant="outline" 
-          onClick={handleBack} 
-          className="flex-1"
-          data-gtm-button-id="solution-finder-step3-back-btn"
-          data-gtm-button-type="navigation-back"
-          data-gtm-step="3"
-        >
-          {t('common.back')}
-        </Button>
-        <Button 
-          id="solution-finder-step3-next-btn" 
-          onClick={handleNext} 
-          className="flex-1 bg-primary hover:bg-primary/90 text-white"
-          data-gtm-button-id="solution-finder-step3-next-btn"
-          data-gtm-button-type="navigation-next"
-          data-gtm-step="3"
-        >
-          {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderStep4 = () => (
     <div className="flex flex-col h-full">
       <div className="shrink-0 text-center">
         <h3 className="text-xl font-semibold mb-2">{t('solutionFinder.selectAreasHeading')}</h3>
@@ -461,7 +425,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         </div>
       </div>
       
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
+      <div className="shrink-0 border-t border-border pt-4 mt-4">
         <div className="flex gap-4">
           <Button 
             id="solution-finder-step3-back-btn" 
@@ -490,7 +454,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     </div>
   );
 
-  const renderStep5 = () => {
+  const renderStep4 = () => {
     const recommendations = specificPujas.filter(puja => 
       puja.categories.some(category => selectedAreas.includes(category))
     );
@@ -583,6 +547,47 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     );
   };
 
+  const renderAstrologicalDetails = () => (
+    <div className="text-center space-y-6 py-8">
+      <h3 className="text-xl font-semibold">{t('solutionFinder.astrologicalDetails')}</h3>
+      <div className="bg-accent/20 rounded-lg p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourRashi')} (Sun Sign)</p>
+            <p className="text-lg font-semibold text-primary">{rashi}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">{t('solutionFinder.yourMoolank')}</p>
+            <p className="text-lg font-semibold text-primary">{moolank}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-4">
+        <Button 
+          id="solution-finder-step2-back-btn" 
+          variant="outline" 
+          onClick={handleBack} 
+          className="flex-1"
+          data-gtm-button-id="solution-finder-step2-back-btn"
+          data-gtm-button-type="navigation-back"
+          data-gtm-step="2"
+        >
+          {t('common.back')}
+        </Button>
+        <Button 
+          id="solution-finder-step2-next-btn" 
+          onClick={handleNext} 
+          className="flex-1 bg-primary hover:bg-primary/90 text-white"
+          data-gtm-button-id="solution-finder-step2-next-btn"
+          data-gtm-button-type="navigation-next"
+          data-gtm-step="2"
+        >
+          {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col">
@@ -595,8 +600,9 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div className="mt-4 flex-1 flex flex-col">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
-          {step === 3 && renderStep4()}
-          {step === 4 && renderStep5()}
+          {step === 3 && renderAstrologicalDetails()}
+          {step === 4 && renderStep3()}
+          {step === 5 && renderStep4()}
         </div>
       </DialogContent>
     </Dialog>

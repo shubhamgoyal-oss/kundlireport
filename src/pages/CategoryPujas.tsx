@@ -97,48 +97,61 @@ export default function CategoryPujas() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {pujas.map((puja, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-                <CardHeader>
-                  <CardTitle className="text-xl font-semibold text-gray-800">
-                    {puja.name}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600">
-                    {puja.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    id={`category-pujas-book-${index}-btn`}
-                    onClick={() => {
-                      // Track GTM event
-                      if (typeof window !== 'undefined' && (window as any).dataLayer) {
-                        (window as any).dataLayer.push({
-                          event: `category_pujas_book_${index}_click`,
-                          buttonId: `category-pujas-book-${index}-btn`,
-                          buttonType: 'book-puja',
-                          category: category,
-                          pujaName: puja.name,
-                          page: 'category-pujas'
-                        });
-                      }
-                      window.open(puja.url, '_blank', 'noopener,noreferrer');
-                    }}
-                    className="w-full"
-                    data-gtm-button-id={`category-pujas-book-${index}-btn`}
-                    data-gtm-button-type="book-puja"
-                    data-gtm-category={category}
-                    data-gtm-puja-name={puja.name}
-                    data-gtm-page="category-pujas"
-                  >
-                    Book Puja
-                    <ExternalLink className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {pujas.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <h3 className="text-xl font-semibold text-gray-700 mb-3">
+                  Coming Soon
+                </h3>
+                <p className="text-gray-600">
+                  We're curating the best pujas for this category. Please check back soon for personalized recommendations.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {pujas.map((puja, index) => (
+                <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-semibold text-gray-800">
+                      {puja.name}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600">
+                      {puja.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      id={`category-pujas-book-${index}-btn`}
+                      onClick={() => {
+                        // Track GTM event
+                        if (typeof window !== 'undefined' && (window as any).dataLayer) {
+                          (window as any).dataLayer.push({
+                            event: `category_pujas_book_${index}_click`,
+                            buttonId: `category-pujas-book-${index}-btn`,
+                            buttonType: 'book-puja',
+                            category: category,
+                            pujaName: puja.name,
+                            page: 'category-pujas'
+                          });
+                        }
+                        window.open(puja.url, '_blank', 'noopener,noreferrer');
+                      }}
+                      className="w-full"
+                      data-gtm-button-id={`category-pujas-book-${index}-btn`}
+                      data-gtm-button-type="book-puja"
+                      data-gtm-category={category}
+                      data-gtm-puja-name={puja.name}
+                      data-gtm-page="category-pujas"
+                    >
+                      Book Puja
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

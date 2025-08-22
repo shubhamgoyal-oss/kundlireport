@@ -75,7 +75,92 @@ const lifeAreas = [
 ];
 
 const specificPujas = [
-  // Other category pujas can be added here for categories outside the five mentioned
+  // Health pujas
+  {
+    id: 1,
+    name: "3 Jyotirlinga Rudra Homam",
+    description: "Divine blessings for health and spiritual well-being",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/3-jyotirlinga-rudra-homam-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png"
+  },
+  {
+    id: 2,
+    name: "Grishneshwar Jyotirlinga Monday Shiv Special",
+    description: "Special Monday blessings for health and protection",
+    deity: "Lord Shiva",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/3-grishneshwar-jyotirlinga-monday-shiv-special-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/5cbf3c9a-c161-4411-bb68-f5d06531bbd9.png"
+  },
+  {
+    id: 3,
+    name: "Health & Wellness Special Puja and Yagya",
+    description: "Comprehensive health and wellness rituals",
+    deity: "Divine Healers",
+    categories: ["Health"],
+    url: "https://www.srimandir.com/epuja/health-wellness-special-puja-and-yagya-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/a398c33a-4475-4e18-ba7d-367b95f5c4c8.png"
+  },
+  // Finance pujas
+  {
+    id: 4,
+    name: "Surya Gayatri Mantra Puja",
+    description: "Solar blessings for financial prosperity",
+    deity: "Lord Surya",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png"
+  },
+  {
+    id: 5,
+    name: "Rin Nashak Special",
+    description: "Special ritual for debt removal and financial stability",
+    deity: "Lord Ganesha",
+    categories: ["Finances"],
+    url: "https://www.srimandir.com/epuja/2678-rin-nashak-special-27th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/cbeff861-08ec-47c1-8450-0878f7dbe47c.png"
+  },
+  // Love/Relationships pujas
+  {
+    id: 6,
+    name: "Divine Love and Union",
+    description: "Sacred rituals for love and harmonious relationships",
+    deity: "Radha Krishna",
+    categories: ["Love / Relationships"],
+    url: "https://www.srimandir.com/epuja/3198-divine-love-and-union-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png"
+  },
+  // Career pujas
+  {
+    id: 7,
+    name: "Rin Nashak Special for Career",
+    description: "Remove career obstacles and achieve professional success",
+    deity: "Lord Ganesha",
+    categories: ["Career"],
+    url: "https://www.srimandir.com/epuja/6509-rin-nashak-special-27th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/5cbf3c9a-c161-4411-bb68-f5d06531bbd9.png"
+  },
+  {
+    id: 8,
+    name: "Career and Job Puja",
+    description: "Special blessings for career growth and job opportunities",
+    deity: "Goddess Saraswati",
+    categories: ["Career"],
+    url: "https://www.srimandir.com/epuja/4567-career-and-job-puja-29th-aug-2025?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/a398c33a-4475-4e18-ba7d-367b95f5c4c8.png"
+  },
+  // Peace of Mind pujas
+  {
+    id: 9,
+    name: "Peace of Mind Puja",
+    description: "Divine blessings for mental peace and tranquility",
+    deity: "Lord Shiva",
+    categories: ["Peace of Mind"],
+    url: "https://www.srimandir.com/epuja/21-puja-peace-of-mind-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
+    image: "/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png"
+  }
 ];
 
 export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps) {
@@ -117,31 +202,19 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         setIsCalculating(false);
         setStep(3);
       }, 2000);
-    } else if (step === 3) {
-      // Track GTM event
+    } else if (step === 3 && selectedAreas.length > 0) {
+      // Track GTM event for life areas selection
       if (typeof window !== 'undefined' && (window as any).dataLayer) {
         (window as any).dataLayer.push({
           event: 'solution_finder_step3_next_click',
           buttonId: 'solution-finder-step3-next-btn',
           buttonType: 'navigation-next',
-          step: 3
-        });
-      }
-      trackEvent('next_astrological_details_click', { page: 'solution_finder', step: 3 });
-      setStep(4);
-    } else if (step === 4 && selectedAreas.length > 0) {
-      // Track GTM event
-      if (typeof window !== 'undefined' && (window as any).dataLayer) {
-        (window as any).dataLayer.push({
-          event: 'solution_finder_step4_next_click',
-          buttonId: 'solution-finder-step4-next-btn',
-          buttonType: 'navigation-next',
-          step: 4,
+          step: 3,
           selectedAreas: selectedAreas
         });
       }
-      trackEvent('next_life_areas_click', { page: 'solution_finder', step: 4, metadata: { selectedAreas } });
-      setStep(5);
+      trackEvent('next_life_areas_click', { page: 'solution_finder', step: 3, metadata: { selectedAreas } });
+      setStep(4);
     } else {
       setStep(step + 1);
     }
@@ -154,7 +227,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         buttonId: `solution-finder-area-${area.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')}-btn`,
         buttonType: 'area-selection',
         area: area,
-        step: 4
+        step: 3
       });
     }
     
@@ -179,6 +252,8 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
     
     if (step === 3) {
       setStep(1); // Skip step 2 (loading screen) when going back from step 3
+    } else if (step === 4) {
+      setStep(3); // Go back to life areas selection
     } else {
       setStep(step - 1);
     }
@@ -374,7 +449,7 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                 data-gtm-button-id={`solution-finder-area-${area.key.toLowerCase().replace(/\s+/g, '-').replace(/\//g, '-')}-btn`}
                 data-gtm-button-type="area-selection"
                 data-gtm-area={area.key}
-                data-gtm-step="4"
+                data-gtm-step="3"
               >
               <IconComponent className={`w-6 h-6 ${selectedAreas.includes(area.key) ? 'text-white' : area.color}`} />
               <span className="text-center text-sm font-medium whitespace-normal break-words">
@@ -389,24 +464,24 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
       <div className="sticky bottom-0 bg-background/80 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-border pt-4">
         <div className="flex gap-4">
           <Button 
-            id="solution-finder-step4-back-btn" 
+            id="solution-finder-step3-back-btn" 
             variant="outline" 
             onClick={handleBack} 
             className="flex-1"
-            data-gtm-button-id="solution-finder-step4-back-btn"
+            data-gtm-button-id="solution-finder-step3-back-btn"
             data-gtm-button-type="navigation-back"
-            data-gtm-step="4"
+            data-gtm-step="3"
           >
             {t('common.back')}
           </Button>
           <Button 
-            id="solution-finder-step4-next-btn"
+            id="solution-finder-step3-next-btn"
             onClick={handleNext} 
             disabled={selectedAreas.length === 0}
             className={`flex-1 ${selectedAreas.length > 0 ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
-            data-gtm-button-id="solution-finder-step4-next-btn"
+            data-gtm-button-id="solution-finder-step3-next-btn"
             data-gtm-button-type="navigation-next"
-            data-gtm-step="4"
+            data-gtm-step="3"
           >
             {t('common.next')} <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
@@ -462,17 +537,17 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
                               buttonType: 'book-puja',
                               pujaId: puja.id,
                               pujaName: puja.name,
-                              step: 5
-                            });
-                          }
-                          trackEvent('book_now_click', { page: 'solution_finder' }); 
-                          window.open(puja.url, '_blank', 'noopener,noreferrer'); 
-                        }}
-                        data-gtm-button-id={`solution-finder-book-puja-${puja.id}-btn`}
-                        data-gtm-button-type="book-puja"
-                        data-gtm-puja-id={puja.id}
-                        data-gtm-puja-name={puja.name}
-                        data-gtm-step="5"
+                               step: 4
+                             });
+                           }
+                           trackEvent('book_now_click', { page: 'solution_finder' }); 
+                           window.open(puja.url, '_blank', 'noopener,noreferrer'); 
+                         }}
+                         data-gtm-button-id={`solution-finder-book-puja-${puja.id}-btn`}
+                         data-gtm-button-type="book-puja"
+                         data-gtm-puja-id={puja.id}
+                         data-gtm-puja-name={puja.name}
+                         data-gtm-step="4"
                       >
                         {t('common.bookNow')}
                       </Button>
@@ -492,13 +567,13 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div className="shrink-0 border-t border-border pt-4 mt-4">
           <div className="flex gap-4">
             <Button 
-              id="solution-finder-step5-back-btn" 
+              id="solution-finder-step4-back-btn" 
               variant="outline" 
               onClick={handleBack} 
               className="flex-1"
-              data-gtm-button-id="solution-finder-step5-back-btn"
+              data-gtm-button-id="solution-finder-step4-back-btn"
               data-gtm-button-type="navigation-back"
-              data-gtm-step="5"
+              data-gtm-step="4"
             >
               {t('common.back')}
             </Button>
@@ -520,9 +595,8 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
         <div className="mt-4 flex-1 flex flex-col">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
-          {step === 3 && renderStep3()}
-          {step === 4 && renderStep4()}
-          {step === 5 && renderStep5()}
+          {step === 3 && renderStep4()}
+          {step === 4 && renderStep5()}
         </div>
       </DialogContent>
     </Dialog>

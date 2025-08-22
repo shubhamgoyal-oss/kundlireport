@@ -78,12 +78,12 @@ const specificPujas = [
   // Health pujas
   {
     id: 1,
-    name: "3 Jyotirlinga Rudra Homam",
-    description: "Divine blessings for health and spiritual well-being",
+    name: "3 - Jyotirlinga - Trimbakeshwar, Omkareshwar and Ghrishneshwar Rudrabhishek and Rudra Homam",
+    description: "Blessings for Longevity and Better Health",
     deity: "Lord Shiva",
     categories: ["Health"],
     url: "https://www.srimandir.com/epuja/3-jyotirlinga-rudra-homam-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755134243723.webp"
   },
   {
     id: 2,
@@ -92,35 +92,35 @@ const specificPujas = [
     deity: "Lord Shiva",
     categories: ["Health"],
     url: "https://www.srimandir.com/epuja/3-grishneshwar-jyotirlinga-monday-shiv-special-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/5cbf3c9a-c161-4411-bb68-f5d06531bbd9.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755134251808.webp"
   },
   {
     id: 3,
-    name: "Health & Wellness Special Puja and Yagya",
-    description: "Comprehensive health and wellness rituals",
-    deity: "Divine Healers",
+    name: "Health and Wellness Special Puja and Yagya",
+    description: "Invite Shiva's Divine Healing for Health and Longevity",
+    deity: "Lord Shiva",
     categories: ["Health"],
     url: "https://www.srimandir.com/epuja/health-wellness-special-puja-and-yagya-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/a398c33a-4475-4e18-ba7d-367b95f5c4c8.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755151602482.webp"
   },
   // Finance pujas
   {
     id: 4,
-    name: "Surya Gayatri Mantra Puja",
-    description: "Solar blessings for financial prosperity",
+    name: "51,000 Surya Gayatri Mantra Jaap and Aditya Hridaya Stotra Path",
+    description: "To Unlock Wealth & Growth in Business and Politics",
     deity: "Lord Surya",
     categories: ["Finances"],
     url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755159825392.webp"
   },
   {
     id: 5,
-    name: "Rin Nashak Special",
-    description: "Special ritual for debt removal and financial stability",
-    deity: "Lord Ganesha",
+    name: "Ganesh–Lakshmi–Saraswati Trisiddhi Puja",
+    description: "Ganesh's Divine Blessings to Attract Wealth and Wisdom",
+    deity: "Lord Ganesha, Goddess Lakshmi & Saraswati",
     categories: ["Finances"],
     url: "https://www.srimandir.com/epuja/2678-rin-nashak-special-27th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/cbeff861-08ec-47c1-8450-0878f7dbe47c.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755762520281.webp"
   },
   // Love/Relationships pujas
   {
@@ -130,7 +130,7 @@ const specificPujas = [
     deity: "Radha Krishna",
     categories: ["Love / Relationships"],
     url: "https://www.srimandir.com/epuja/3198-divine-love-and-union-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/3d7b9d6f-b1bc-4512-be16-d9dd2b31a265.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755134243723.webp"
   },
   // Career pujas
   {
@@ -140,7 +140,7 @@ const specificPujas = [
     deity: "Lord Ganesha",
     categories: ["Career"],
     url: "https://www.srimandir.com/epuja/6509-rin-nashak-special-27th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/5cbf3c9a-c161-4411-bb68-f5d06531bbd9.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755762528244.webp"
   },
   {
     id: 8,
@@ -149,7 +149,7 @@ const specificPujas = [
     deity: "Goddess Saraswati",
     categories: ["Career"],
     url: "https://www.srimandir.com/epuja/4567-career-and-job-puja-29th-aug-2025?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/a398c33a-4475-4e18-ba7d-367b95f5c4c8.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755151614089.webp"
   },
   // Peace of Mind pujas
   {
@@ -159,7 +159,7 @@ const specificPujas = [
     deity: "Lord Shiva",
     categories: ["Peace of Mind"],
     url: "https://www.srimandir.com/epuja/21-puja-peace-of-mind-25th-aug-25?utm_source=Facebook&utm_campaign=mysolutionfinder",
-    image: "/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png"
+    image: "https://srm-cdn.a4b.io/yoda/1755151620052.webp"
   }
 ];
 
@@ -590,14 +590,14 @@ export default function SolutionFinder({ isOpen, onClose }: SolutionFinderProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] h-[80vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-0">
           <DialogTitle className="text-center text-primary">
             {t('solutionFinder.title')}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="mt-4 flex-1 flex flex-col">
+        <div className="px-6 pb-6 flex-1 flex flex-col overflow-hidden">
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderAstrologicalDetails()}

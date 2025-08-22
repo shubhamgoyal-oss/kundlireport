@@ -5,66 +5,11 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const categoryPujas = {
-  health: [
-    {
-      name: "Grishneshwar Jyotirlinga Special",
-      description: "Divine blessings for health and spiritual well-being",
-      url: "https://www.srimandir.com/epuja/6678-grishneshwar-jyotirlinga-special-21st-aug-25"
-    }
-  ],
-  career: [
-    {
-      name: "Academic Creative Excellence",
-      description: "For professional growth, creativity, and career advancement",
-      url: "https://www.srimandir.com/epuja/1121-academic-creative-excellence-21st-aug-2025"
-    }
-  ],
-  "love-relationships": [
-    {
-      name: "Brihaspati Guru Graha Yagya Vishnu Sahasranama Puja",
-      description: "For harmonious relationships and marital bliss",
-      url: "https://www.srimandir.com/epuja/6656-brihaspati-guru-graha-yagya-vishnu-sahasranama-puja-21st-aug-2025"
-    },
-    {
-      name: "Marriage Blessing Puja",
-      description: "Divine blessings for love, marriage, and relationship harmony",
-      url: "https://www.srimandir.com/epuja/1122-marriage-blessing-puja-21st-aug-2025"
-    }
-  ],
-  finances: [
-    {
-      name: "Rin Nashak Special Puja",
-      description: "For debt relief and financial freedom",
-      url: "https://www.srimandir.com/epuja/3389-rin-nashak-special-20th-aug-25"
-    },
-    {
-      name: "Wealth and Prosperity Puja",
-      description: "For attracting wealth and abundance",
-      url: "https://www.srimandir.com/epuja/8195-wealth-and-prosperity-puja-22nd-july-25"
-    },
-    {
-      name: "Surya Gayatri Mantra Puja",
-      description: "For financial growth and success",
-      url: "https://www.srimandir.com/epuja/1234-surya-gayatri-mantra-puja-24th-aug-25"
-    },
-    {
-      name: "11 Brahmin Special Puja",
-      description: "For financial prosperity and blessings",
-      url: "https://www.srimandir.com/epuja/2434-11-brahmin-special-22nd-aug-25"
-    }
-  ],
-  "peace-of-mind": [
-    {
-      name: "Rahu Shanti Jaap Havan",
-      description: "For mental peace, removing anxiety and negative influences",
-      url: "https://www.srimandir.com/epuja/1111-rahu-shanti-jaap-havan-19th-aug-2025"
-    },
-    {
-      name: "Datta Mala Mantra",
-      description: "Powerful mantra for mental clarity and peace of mind",
-      url: "https://www.srimandir.com/epuja/5509-datta-mala-mantra-19th-august-2025"
-    }
-  ]
+  health: [],
+  career: [],
+  "love-relationships": [],
+  finances: [],
+  "peace-of-mind": []
 };
 
 const categoryTitles = {

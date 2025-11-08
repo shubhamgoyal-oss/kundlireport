@@ -121,6 +121,15 @@ const resources = {
         upcomingPujas: 'upcoming pujas available',
         disclaimer: '⚠️ Important: These results depend on birth-time precision and the chosen ayanamsha (Lahiri). This is an educational tool based on classical Jyotish rules; not medical, legal, or financial advice. Consult a qualified Vedic astrologer for personalized guidance.',
         educationalTool: '⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.',
+        statusValues: {
+          present: 'Present',
+          absent: 'Absent',
+          inactive: 'Inactive',
+          active: 'Active',
+          suggested: 'Suggested',
+          someDoshasActive: 'Some doshas active',
+          noDoshasFound: 'No doshas found'
+        },
         mangal: {
           name: 'Mangal Dosha (Manglik)',
           description: 'Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.',
@@ -164,6 +173,106 @@ const resources = {
             'Donate black items',
             'Do a Sade Sati Nivaran Puja.'
           ]
+        },
+        otherDoshas: {
+          title: 'Other Doshas',
+          rahuKetu: {
+            name: 'Rahu–Ketu / Grahan Dosha',
+            whatItIs: 'Sun or Moon closely aligned with Rahu/Ketu (eclipse pattern); often called Grahan Dosha.',
+            impact: 'Mood swings, detours, and anxiety; plans can feel eclipsed or delayed despite effort.',
+            remedies: [
+              'Mindfulness, stable routines, breath practices.',
+              'Charity on eclipse-related days; light devotional worship.',
+              'Do a Rahu–Ketu / Grahan Dosha Nivaran Puja.'
+            ]
+          },
+          shrapit: {
+            name: 'Shrapit Dosha (Saturn–Rahu)',
+            whatItIs: 'Saturn and Rahu together or in a strong mutual aspect.',
+            impact: 'Recurring obstacles, karmic delays, heavier duties; progress comes slowly.',
+            remedies: [
+              'Saturday discipline; service and humility.',
+              'Rudrabhishek / Shani-focused prayers.',
+              'Do a Shrapit Dosha Nivaran Puja.'
+            ]
+          },
+          guruChandal: {
+            name: 'Guru Chandal Dosha (Jupiter–Rahu/Ketu)',
+            whatItIs: 'Jupiter with Rahu or Ketu.',
+            impact: 'Judgment/mentor issues; promises vs. outcomes may misalign.',
+            remedies: [
+              'Study with grounded mentors; donation of knowledge/education items.',
+              'Guru-focused prayers.',
+              'Do a Guru Chandal Dosha Nivaran Puja.'
+            ]
+          },
+          punarphoo: {
+            name: 'Punarphoo Dosha (Saturn–Moon)',
+            whatItIs: 'Moon with Saturn or under tight Saturn influence.',
+            impact: 'On–off outcomes, emotional heaviness; delays that demand patience.',
+            remedies: [
+              'Monday calm practices; moon-soothing disciplines.',
+              'Chandra–Shani pacification prayers.',
+              'Do a Punarphoo Dosha Nivaran Puja.'
+            ]
+          },
+          kemadruma: {
+            name: 'Kemadruma Yoga (Moon isolated)',
+            whatItIs: 'Moon without planetary neighbors on either side (classical isolation).',
+            impact: 'Feelings of isolation; fluctuating support or finances.',
+            remedies: [
+              'Community seva; gratitude and consistency rituals.',
+              'Chandra pacification; Navagraha Shanti.',
+              'Do a Kemadruma Yoga Nivaran Puja.'
+            ]
+          },
+          gandmool: {
+            name: 'Gandmool Dosha (Moon in specific nakshatras)',
+            whatItIs: 'Moon in Ashwini, Ashlesha, Magha, Jyeshtha, Moola, or Revati.',
+            impact: 'Sensitive beginnings; requires mindful rites and guidance.',
+            remedies: [
+              'Gandmool Shanti with family blessings.',
+              'Do a Gandmool Dosha Nivaran Puja.'
+            ]
+          },
+          kalathra: {
+            name: 'Kalathra Dosha (7th-house/partner affliction)',
+            whatItIs: 'Strong malefic influence on the 7th house, its lord, or Venus.',
+            impact: 'Relationship friction, delays, or breaks; partnership lessons.',
+            remedies: [
+              'Friday harmony practices; counseling/mediation mindset.',
+              'Venus pacification where appropriate.',
+              'Do a Kalathra Dosha Nivaran Puja.'
+            ]
+          },
+          vishDaridra: {
+            name: 'Vish/Daridra Yoga (Mars–Saturn harsh combo)',
+            whatItIs: 'Tight Mars–Saturn conjunction/aspect in key houses.',
+            impact: 'Stop–go outcomes; conflict between drive and restraint.',
+            remedies: [
+              'Structured effort; conflict-avoidance sadhana.',
+              'Hanuman devotion; Navagraha Shanti.',
+              'Do a Vish/Daridra Yoga Nivaran Puja.'
+            ]
+          },
+          ketuNaga: {
+            name: 'Ketu/Naga (Sarpa) Dosha (non-Kaal Sarp)',
+            whatItIs: 'Ketu in key houses or afflicting Moon/Venus without full Kaal Sarp pattern.',
+            impact: 'Detachment themes; relationship coolness vs. spiritual pull.',
+            remedies: [
+              'Naga devotion where traditional; steady devotional routines.',
+              'Do a Ketu/Naga Dosha Nivaran Puja.'
+            ]
+          },
+          navagraha: {
+            name: 'Navagraha Shanti (umbrella suggestion)',
+            whatItIs: 'General graha stress when multiple minor flags appear together.',
+            impact: 'Diffuse obstacles across areas of life; benefits from balanced pacification.',
+            remedies: [
+              'Balanced discipline; regular simple worship.',
+              'Do a Navagraha Shanti Puja.'
+            ]
+          }
         }
       },
     },
@@ -282,6 +391,15 @@ const resources = {
         upcomingPujas: 'आगामी पूजाएं उपलब्ध',
         disclaimer: '⚠️ महत्वपूर्ण: ये परिणाम जन्म-समय की सटीकता और चुने गए अयनांश (लाहिड़ी) पर निर्भर करते हैं। यह शास्त्रीय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है; चिकित्सा, कानूनी या वित्तीय सलाह नहीं। व्यक्तिगत मार्गदर्शन के लिए एक योग्य वैदिक ज्योतिषी से परामर्श करें।',
         educationalTool: '⚠️ यह लोकप्रिय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है। विवेक के साथ व्याख्या करें।',
+        statusValues: {
+          present: 'उपस्थित',
+          absent: 'अनुपस्थित',
+          inactive: 'निष्क्रिय',
+          active: 'सक्रिय',
+          suggested: 'सुझाया गया',
+          someDoshasActive: 'कुछ दोष सक्रिय',
+          noDoshasFound: 'कोई दोष नहीं मिला'
+        },
         mangal: {
           name: 'मंगल दोष (मांगलिक)',
           description: 'मंगल (मांगलिक/कुजा) दोष — कुछ घरों में मंगल से जुड़ा; पारंपरिक रूप से रिश्तों में घर्षण और निर्णायकता से जुड़ा है।',
@@ -325,6 +443,106 @@ const resources = {
             'काली वस्तुओं का दान करें',
             'साढ़े साती निवारण पूजा करें।'
           ]
+        },
+        otherDoshas: {
+          title: 'अन्य दोष',
+          rahuKetu: {
+            name: 'राहु–केतु / ग्रहण दोष',
+            whatItIs: 'सूर्य या चंद्रमा राहु/केतु के साथ निकट संरेखित (ग्रहण पैटर्न); अक्सर ग्रहण दोष कहा जाता है।',
+            impact: 'मिजाज में बदलाव, विचलन, और चिंता; प्रयास के बावजूद योजनाएं ग्रहण या विलंबित महसूस हो सकती हैं।',
+            remedies: [
+              'माइंडफुलनेस, स्थिर दिनचर्या, श्वास अभ्यास।',
+              'ग्रहण संबंधी दिनों में दान; हल्की भक्ति पूजा।',
+              'राहु–केतु / ग्रहण दोष निवारण पूजा करें।'
+            ]
+          },
+          shrapit: {
+            name: 'श्रापित दोष (शनि–राहु)',
+            whatItIs: 'शनि और राहु एक साथ या मजबूत पारस्परिक दृष्टि में।',
+            impact: 'बार-बार बाधाएं, कर्म विलंब, भारी कर्तव्य; प्रगति धीरे-धीरे आती है।',
+            remedies: [
+              'शनिवार अनुशासन; सेवा और विनम्रता।',
+              'रुद्राभिषेक / शनि-केंद्रित प्रार्थना।',
+              'श्रापित दोष निवारण पूजा करें।'
+            ]
+          },
+          guruChandal: {
+            name: 'गुरु चांडाल दोष (बृहस्पति–राहु/केतु)',
+            whatItIs: 'बृहस्पति राहु या केतु के साथ।',
+            impact: 'निर्णय/गुरु मुद्दे; वादे बनाम परिणाम गलत संरेखित हो सकते हैं।',
+            remedies: [
+              'आधारित गुरुओं के साथ अध्ययन; ज्ञान/शिक्षा वस्तुओं का दान।',
+              'गुरु-केंद्रित प्रार्थनाएं।',
+              'गुरु चांडाल दोष निवारण पूजा करें।'
+            ]
+          },
+          punarphoo: {
+            name: 'पुनर्फू दोष (शनि–चंद्र)',
+            whatItIs: 'चंद्रमा शनि के साथ या तंग शनि प्रभाव के तहत।',
+            impact: 'चालू-बंद परिणाम, भावनात्मक भारीपन; धैर्य की मांग करने वाली देरी।',
+            remedies: [
+              'सोमवार शांत अभ्यास; चंद्र-शांत करने वाले अनुशासन।',
+              'चंद्र–शनि शांति प्रार्थनाएं।',
+              'पुनर्फू दोष निवारण पूजा करें।'
+            ]
+          },
+          kemadruma: {
+            name: 'केमद्रुम योग (चंद्र अलग-थलग)',
+            whatItIs: 'चंद्रमा बिना दोनों तरफ ग्रह पड़ोसियों के (शास्त्रीय अलगाव)।',
+            impact: 'अलगाव की भावनाएं; उतार-चढ़ाव समर्थन या वित्त।',
+            remedies: [
+              'सामुदायिक सेवा; कृतज्ञता और निरंतरता अनुष्ठान।',
+              'चंद्र शांति; नवग्रह शांति।',
+              'केमद्रुम योग निवारण पूजा करें।'
+            ]
+          },
+          gandmool: {
+            name: 'गण्डमूल दोष (विशिष्ट नक्षत्रों में चंद्र)',
+            whatItIs: 'अश्विनी, अश्लेषा, मघा, ज्येष्ठा, मूल, या रेवती में चंद्रमा।',
+            impact: 'संवेदनशील शुरुआत; सचेत संस्कारों और मार्गदर्शन की आवश्यकता है।',
+            remedies: [
+              'परिवार के आशीर्वाद के साथ गण्डमूल शांति।',
+              'गण्डमूल दोष निवारण पूजा करें।'
+            ]
+          },
+          kalathra: {
+            name: 'कलात्र दोष (7वां घर/साथी पीड़ा)',
+            whatItIs: '7वें घर, इसके स्वामी, या शुक्र पर मजबूत अशुभ प्रभाव।',
+            impact: 'रिश्ते में घर्षण, देरी, या ब्रेक; साझेदारी सबक।',
+            remedies: [
+              'शुक्रवार सद्भाव अभ्यास; परामर्श/मध्यस्थता मानसिकता।',
+              'जहां उपयुक्त हो शुक्र शांति।',
+              'कलात्र दोष निवारण पूजा करें।'
+            ]
+          },
+          vishDaridra: {
+            name: 'विष/दरिद्र योग (मंगल–शनि कठोर संयोजन)',
+            whatItIs: 'मुख्य घरों में तंग मंगल–शनि संयोजन/दृष्टि।',
+            impact: 'रुक-रुक कर परिणाम; ड्राइव और संयम के बीच संघर्ष।',
+            remedies: [
+              'संरचित प्रयास; संघर्ष-परिहार साधना।',
+              'हनुमान भक्ति; नवग्रह शांति।',
+              'विष/दरिद्र योग निवारण पूजा करें।'
+            ]
+          },
+          ketuNaga: {
+            name: 'केतु/नाग (सर्प) दोष (गैर-काल सर्प)',
+            whatItIs: 'मुख्य घरों में केतु या पूर्ण काल सर्प पैटर्न के बिना चंद्र/शुक्र को पीड़ित करना।',
+            impact: 'अलगाव विषय; रिश्ते में ठंडापन बनाम आध्यात्मिक खिंचाव।',
+            remedies: [
+              'जहां पारंपरिक हो नाग भक्ति; स्थिर भक्ति दिनचर्या।',
+              'केतु/नाग दोष निवारण पूजा करें।'
+            ]
+          },
+          navagraha: {
+            name: 'नवग्रह शांति (व्यापक सुझाव)',
+            whatItIs: 'सामान्य ग्रह तनाव जब कई छोटे झंडे एक साथ दिखाई देते हैं।',
+            impact: 'जीवन के क्षेत्रों में फैली बाधाएं; संतुलित शांति से लाभ।',
+            remedies: [
+              'संतुलित अनुशासन; नियमित सरल पूजा।',
+              'नवग्रह शांति पूजा करें।'
+            ]
+          }
         }
       },
     },

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +127,7 @@ const otherDoshasData = {
 
 export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   const isDoshaPresent = (status?: string) => {
     if (!status) return false;
@@ -135,7 +137,9 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
   // Check if any dosha is present
   const hasAnyDosha = Object.values(doshaFlags).some(flag => isDoshaPresent(flag?.status));
-  const statusText = hasAnyDosha ? 'Some doshas active' : 'No doshas found';
+  const statusText = hasAnyDosha 
+    ? t('doshaResults.statusValues.someDoshasActive') 
+    : t('doshaResults.statusValues.noDoshasFound');
 
   const filterPujasByKeywords = (keywords: string[]): SriMandirPuja[] => {
     return pujas.filter(puja => {
@@ -151,20 +155,29 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
     const dosha = otherDoshasData[key];
     const isPresent = isDoshaPresent(statusFlag?.status);
     const matchedPujas = getUpcomingPujas(filterPujasByKeywords(dosha.keywords));
+    
+    // Get translated dosha data
+    const doshaKey = key as 'rahuKetu' | 'shrapit' | 'guruChandal' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'vishDaridra' | 'ketuNaga' | 'navagraha';
+    const translatedDosha = t(`doshaResults.otherDoshas.${doshaKey}`, { returnObjects: true }) as {
+      name: string;
+      whatItIs: string;
+      impact: string;
+      remedies: string[];
+    };
 
     return (
       <AccordionItem value={key} className="border rounded-lg px-4" key={key}>
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3 flex-1">
             <div className="flex items-center gap-2 flex-1">
-              <h3 className="font-semibold text-lg text-left">{dosha.name}</h3>
+              <h3 className="font-semibold text-lg text-left">{translatedDosha.name}</h3>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="max-w-xs text-sm">{dosha.whatItIs}</p>
+                    <p className="max-w-xs text-sm">{translatedDosha.whatItIs}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -172,12 +185,12 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             {isPresent ? (
               <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
                 <AlertTriangle className="w-3 h-3 mr-1" />
-                Present
+                {t('doshaResults.statusValues.present')}
               </Badge>
             ) : (
               <Badge variant="outline" className="bg-success/10 text-success border-success/20">
                 <CheckCircle className="w-3 h-3 mr-1" />
-                Absent
+                {t('doshaResults.statusValues.absent')}
               </Badge>
             )}
           </div>
@@ -185,21 +198,20 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         <AccordionContent className="pt-4 space-y-4">
           {/* What it is */}
           <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-            <p className="text-sm text-muted-foreground italic">{dosha.whatItIs}</p>
-            <p className="text-sm text-muted-foreground font-medium mt-2">{dosha.impact}</p>
+            <p className="text-sm text-muted-foreground italic">{translatedDosha.whatItIs}</p>
+            <p className="text-sm text-muted-foreground font-medium mt-2">{translatedDosha.impact}</p>
           </div>
 
           {/* Traditional Remedies - Only show if present */}
           {isPresent && (
             <div>
               <h5 className="font-medium mb-2 flex items-center gap-2">
-                Traditional Remedies
+                {t('doshaResults.traditionalRemedies')}
               </h5>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                {dosha.remedies.map((remedy, i) => (
+                {translatedDosha.remedies.map((remedy, i) => (
                   <li key={i}>{remedy}</li>
                 ))}
-                <li>Do a {dosha.name} Nivaran Puja.</li>
               </ul>
             </div>
           )}
@@ -216,9 +228,9 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
       >
         <div className="flex items-center justify-between">
           <div className="text-left">
-            <h3 className="font-semibold text-lg">Other Doshas</h3>
+            <h3 className="font-semibold text-lg">{t('doshaResults.otherDoshas.title')}</h3>
             <p className="text-sm text-muted-foreground">
-              Status: {statusText}
+              {t('doshaResults.status')}: {statusText}
             </p>
           </div>
           <ChevronDown 

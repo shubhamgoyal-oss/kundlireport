@@ -24,6 +24,20 @@ const TITLE_TRANSLATIONS: Record<string, string> = {
   'राहु-सूर्य दोष निवारण पूजा': 'Rahu–Surya Dosha Nivaran Puja',
 };
 
+// Hindi to English translations for temple names
+const TEMPLE_TRANSLATIONS: Record<string, string> = {
+  'काशी विश्वनाथ मंदिर': 'Kashi Vishwanath Temple',
+  'त्र्यंबकेश्वर मंदिर': 'Trimbakeshwar Temple',
+  'त्र्यंबकेश्वर ज्योतिर्लिंग': 'Trimbakeshwar Jyotirlinga',
+  'महाकालेश्वर मंदिर': 'Mahakaleshwar Temple',
+  'सोमनाथ मंदिर': 'Somnath Temple',
+  'केदारनाथ मंदिर': 'Kedarnath Temple',
+  'बद्रीनाथ मंदिर': 'Badrinath Temple',
+  'रामेश्वरम मंदिर': 'Rameshwaram Temple',
+  'द्वारकाधीश मंदिर': 'Dwarkadhish Temple',
+  'जगन्नाथ पुरी मंदिर': 'Jagannath Puri Temple',
+};
+
 /**
  * Parse CSV and return puja objects
  */
@@ -147,6 +161,13 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
  */
 export function translateTitle(hindiTitle: string): string {
   return TITLE_TRANSLATIONS[hindiTitle] || hindiTitle;
+}
+
+/**
+ * Translate Hindi temple name to English
+ */
+export function translateTempleName(hindiName: string): string {
+  return TEMPLE_TRANSLATIONS[hindiName] || hindiName;
 }
 
 /**

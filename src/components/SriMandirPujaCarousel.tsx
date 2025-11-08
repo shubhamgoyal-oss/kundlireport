@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { SriMandirPuja, translateTitle, formatScheduleDate } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, translateTitle, translateTempleName, formatScheduleDate } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
 
 interface SriMandirPujaCarouselProps {
@@ -137,7 +137,16 @@ export const SriMandirPujaCarousel = ({
                     
                     {/* Temple Name */}
                     {puja.temple_name && (
-                      <p className="text-sm text-muted-foreground">{puja.temple_name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {translateTempleName(puja.temple_name)}
+                      </p>
+                    )}
+
+                    {/* Date */}
+                    {puja.schedule_date_ist && (
+                      <p className="text-sm font-medium text-foreground">
+                        {formatScheduleDate(puja.schedule_date_ist)}
+                      </p>
                     )}
                     
                     {/* Price */}

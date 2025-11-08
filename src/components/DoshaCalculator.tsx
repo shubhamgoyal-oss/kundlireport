@@ -256,7 +256,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 />
                 {!watch('time') && (
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-sm">
-                    hh-mm-PM
+                    hh mm PM
                   </span>
                 )}
               </div>

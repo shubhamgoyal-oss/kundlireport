@@ -48,10 +48,22 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
   };
 
   const doshaOneLiners = {
-    mangal: "Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.",
-    kaalSarp: "Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.",
-    pitra: "Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.",
-    sadeSati: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7½-year cycle emphasizing discipline and patience."
+    mangal: {
+      description: "Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.",
+      impact: "Impact if present: Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships."
+    },
+    kaalSarp: {
+      description: "Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.",
+      impact: "Impact if present: A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence."
+    },
+    pitra: {
+      description: "Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.",
+      impact: "Impact if present: Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution."
+    },
+    sadeSati: {
+      description: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7½-year cycle emphasizing discipline and patience.",
+      impact: "Impact if active: Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed."
+    }
   };
 
   return (
@@ -138,8 +150,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
-              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.mangal}</p>
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.mangal.description}</p>
+                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.mangal.impact}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                </p>
               </div>
               
               {details.mangal && (
@@ -205,8 +221,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
-              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.kaalSarp}</p>
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.kaalSarp.description}</p>
+                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.kaalSarp.impact}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                </p>
               </div>
               
               {details.kaalSarp && (
@@ -263,8 +283,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
-              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.pitra}</p>
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.pitra.description}</p>
+                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.pitra.impact}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                </p>
               </div>
               
               {details.pitra && (
@@ -322,8 +346,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             </AccordionTrigger>
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
-              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.sadeSati}</p>
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.sadeSati.description}</p>
+                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.sadeSati.impact}</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                </p>
               </div>
               
               {details.sadeSati && (

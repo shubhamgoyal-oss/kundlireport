@@ -133,7 +133,9 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
     return s === 'present' || s.includes('active') || s === 'suggested';
   };
 
-  // Section is always visible; individual panels render only if dosha is present
+  // Check if any dosha is present
+  const hasAnyDosha = Object.values(doshaFlags).some(flag => isDoshaPresent(flag?.status));
+  const statusText = hasAnyDosha ? 'Some doshas active' : 'No doshas found';
 
   const filterPujasByKeywords = (keywords: string[]): SriMandirPuja[] => {
     return pujas.filter(puja => {
@@ -221,7 +223,12 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold">Other Doshas</CardTitle>
+          <div className="text-left">
+            <h3 className="font-semibold text-lg">Other Doshas</h3>
+            <p className="text-sm text-muted-foreground">
+              Status: {statusText}
+            </p>
+          </div>
           <ChevronDown 
             className={`h-6 w-6 transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''

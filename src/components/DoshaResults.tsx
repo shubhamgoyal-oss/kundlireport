@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
+import { useTranslation } from 'react-i18next';
 
 interface DoshaResultsProps {
   summary: {
@@ -39,6 +40,7 @@ interface DoshaResultsProps {
 }
 
 const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
+  const { t } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
 
   useEffect(() => {
@@ -82,32 +84,13 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
     return <CheckCircle className="w-4 h-4 mr-1 text-success" />;
   };
 
-  const doshaOneLiners = {
-    mangal: {
-      description: "Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.",
-      impact: "Impact if present: Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships."
-    },
-    kaalSarp: {
-      description: "Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.",
-      impact: "Impact if present: A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence."
-    },
-    pitra: {
-      description: "Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.",
-      impact: "Impact if present: Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution."
-    },
-    sadeSati: {
-      description: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7½-year cycle emphasizing discipline and patience.",
-      impact: "Impact if active: Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed."
-    }
-  };
-
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
           <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
-            Your Dosha Summary
+            {t('doshaResults.summary')}
           </CardTitle>
         </CardHeader>
         
@@ -120,7 +103,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.mangal)}
-              Mangal: {summary.mangal}
+              {t('doshaResults.mangal.name')}: {summary.mangal}
               {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
             </Badge>
 
@@ -130,7 +113,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.kaalSarp)}
-              Kaal Sarp: {summary.kaalSarp}
+              {t('doshaResults.kaalSarp.name')}: {summary.kaalSarp}
               {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
             </Badge>
 
@@ -140,7 +123,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.pitra)}
-              Pitra: {summary.pitra}
+              {t('doshaResults.pitra.name')}: {summary.pitra}
             </Badge>
 
             {/* Sade Sati Chip */}
@@ -149,8 +132,8 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.shaniSadeSati)}
-              Sade Sati: {summary.shaniSadeSati}
-              {summary.shaniPhase && ` (Phase ${summary.shaniPhase})`}
+              {t('doshaResults.sadeSati.name')}: {summary.shaniSadeSati}
+              {summary.shaniPhase && ` (${t('doshaResults.phase')} ${summary.shaniPhase})`}
             </Badge>
           </div>
         </CardContent>
@@ -160,10 +143,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
       <Card className="spiritual-glow">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
-            Detailed Analysis & Remedies
+            {t('doshaResults.detailedAnalysis')}
           </CardTitle>
           <CardDescription className="text-center">
-            Based on your birth chart calculations
+            {t('doshaResults.basedOnChart')}
           </CardDescription>
         </CardHeader>
         
@@ -175,10 +158,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               <div className="flex items-center gap-3">
                 <Flame className="w-5 h-5 text-destructive" />
                 <div className="text-left">
-                  <h3 className="font-semibold text-lg">Mangal Dosha (Manglik)</h3>
+                  <h3 className="font-semibold text-lg">{t('doshaResults.mangal.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.mangal}
-                    {summary.mangalSeverity && ` • Severity: ${summary.mangalSeverity}`}
+                    {t('doshaResults.status')}: {summary.mangal}
+                    {summary.mangalSeverity && ` • ${t('doshaResults.severity')}: ${summary.mangalSeverity}`}
                   </p>
                 </div>
               </div>
@@ -186,10 +169,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
               <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.mangal.description}</p>
-                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.mangal.impact}</p>
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
+                <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.mangal.impact')}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                  {t('doshaResults.educationalTool')}
                 </p>
               </div>
               
@@ -198,14 +181,14 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Info className="w-4 h-4" />
-                      Explanation
+                      {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground">{details.mangal.explanation}</p>
                   </div>
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">Placements</h4>
+                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.mangal.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -225,13 +208,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Flame className="w-4 h-4" />
-                        Traditional Remedies
+                        {t('doshaResults.traditionalRemedies')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {details.mangal.remedies.map((remedy, i) => (
+                        {(t('doshaResults.mangal.remedies', { returnObjects: true }) as string[]).map((remedy: string, i: number) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                          <li>Do a Mangal Dosha Nivaran Puja.</li>
                       </ul>
                     </div>
 
@@ -257,10 +239,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
               <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.kaalSarp.description}</p>
-                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.kaalSarp.impact}</p>
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
+                <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.kaalSarp.impact')}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                  {t('doshaResults.educationalTool')}
                 </p>
               </div>
               
@@ -319,10 +301,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
               <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.pitra.description}</p>
-                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.pitra.impact}</p>
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
+                <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.pitra.impact')}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                  {t('doshaResults.educationalTool')}
                 </p>
               </div>
               
@@ -382,10 +364,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             <AccordionContent className="pt-4 space-y-4">
               {/* One-liner */}
               <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary space-y-2">
-                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.sadeSati.description}</p>
-                <p className="text-sm text-muted-foreground font-medium">{doshaOneLiners.sadeSati.impact}</p>
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.sadeSati.description')}</p>
+                <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.sadeSati.impact')}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  ⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.
+                  {t('doshaResults.educationalTool')}
                 </p>
               </div>
               
@@ -448,10 +430,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             <div className="mt-8 space-y-4">
               <div className="text-center">
                 <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
-                  Sri Mandir Offered Remedies
+                  {t('doshaResults.sriMandirRemedies')}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-2">
-                  {getUpcomingPujas(pujas, 10).length} upcoming pujas available
+                  {getUpcomingPujas(pujas, 10).length} {t('doshaResults.upcomingPujas')}
                 </p>
               </div>
               <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
@@ -461,9 +443,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
           {/* Disclaimer */}
           <div className="mt-6 p-4 bg-accent/10 border border-accent/30 rounded-md">
             <p className="text-xs text-muted-foreground">
-              ⚠️ <strong>Important:</strong> These results depend on birth-time precision and the chosen ayanamsha (Lahiri). 
-              This is an educational tool based on classical Jyotish rules; not medical, legal, or financial advice. 
-              Consult a qualified Vedic astrologer for personalized guidance.
+              {t('doshaResults.disclaimer')}
             </p>
           </div>
         </CardContent>

@@ -106,6 +106,66 @@ const resources = {
         calculationSuccess: 'Doshas calculated successfully!',
         calculationError: 'Failed to calculate doshas. Please try again.',
       },
+      doshaResults: {
+        summary: 'Your Dosha Summary',
+        detailedAnalysis: 'Detailed Analysis & Remedies',
+        basedOnChart: 'Based on your birth chart calculations',
+        status: 'Status',
+        severity: 'Severity',
+        type: 'Type',
+        phase: 'Phase',
+        explanation: 'Explanation',
+        placements: 'Placements',
+        traditionalRemedies: 'Traditional Remedies',
+        sriMandirRemedies: 'Sri Mandir Offered Remedies',
+        upcomingPujas: 'upcoming pujas available',
+        disclaimer: '⚠️ Important: These results depend on birth-time precision and the chosen ayanamsha (Lahiri). This is an educational tool based on classical Jyotish rules; not medical, legal, or financial advice. Consult a qualified Vedic astrologer for personalized guidance.',
+        educationalTool: '⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.',
+        mangal: {
+          name: 'Mangal Dosha (Manglik)',
+          description: 'Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.',
+          impact: 'Impact if present: Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships.',
+          remedies: [
+            'Recite Hanuman Chalisa',
+            'Fast on Tuesdays',
+            'Donate red items',
+            'Do a Mangal Dosha Nivaran Puja.'
+          ]
+        },
+        kaalSarp: {
+          name: 'Kaal Sarp Dosha',
+          description: 'Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.',
+          impact: 'Impact if present: A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence.',
+          remedies: [
+            'Visit Trimbakeshwar temple',
+            'Recite Maha Mrityunjaya Mantra',
+            'Feed stray dogs',
+            'Do a Kaal Sarp Dosha Nivaran Puja.'
+          ]
+        },
+        pitra: {
+          name: 'Pitra Dosha',
+          description: 'Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.',
+          impact: 'Impact if present: Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution.',
+          remedies: [
+            'Perform Shraddha ceremony',
+            'Feed brahmins on amavasya',
+            'Recite Pitra Gayatri',
+            'Do a Pitra Dosha Nivaran Puja.'
+          ]
+        },
+        sadeSati: {
+          name: 'Shani Sade Sati',
+          description: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7.5-year cycle emphasizing discipline and patience.",
+          impact: 'Impact if active: Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed.',
+          remedies: [
+            'Recite Shani mantra',
+            'Light mustard oil lamp on Saturdays',
+            'Donate black items',
+            'Do a Sade Sati Nivaran Puja.'
+          ]
+        }
+      },
     },
   },
   hi: {
@@ -206,6 +266,66 @@ const resources = {
         enterTimeError: 'कृपया जन्म समय दर्ज करें या इसे अज्ञात के रूप में चिह्नित करें',
         calculationSuccess: 'दोष सफलतापूर्वक गणना की गई!',
         calculationError: 'दोष गणना विफल रही। कृपया पुनः प्रयास करें।',
+      },
+      doshaResults: {
+        summary: 'आपका दोष सारांश',
+        detailedAnalysis: 'विस्तृत विश्लेषण और उपचार',
+        basedOnChart: 'आपके जन्म चार्ट गणना के आधार पर',
+        status: 'स्थिति',
+        severity: 'गंभीरता',
+        type: 'प्रकार',
+        phase: 'चरण',
+        explanation: 'व्याख्या',
+        placements: 'स्थान',
+        traditionalRemedies: 'पारंपरिक उपचार',
+        sriMandirRemedies: 'श्री मंदिर की पेशकश किए गए उपचार',
+        upcomingPujas: 'आगामी पूजाएं उपलब्ध',
+        disclaimer: '⚠️ महत्वपूर्ण: ये परिणाम जन्म-समय की सटीकता और चुने गए अयनांश (लाहिड़ी) पर निर्भर करते हैं। यह शास्त्रीय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है; चिकित्सा, कानूनी या वित्तीय सलाह नहीं। व्यक्तिगत मार्गदर्शन के लिए एक योग्य वैदिक ज्योतिषी से परामर्श करें।',
+        educationalTool: '⚠️ यह लोकप्रिय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है। विवेक के साथ व्याख्या करें।',
+        mangal: {
+          name: 'मंगल दोष (मांगलिक)',
+          description: 'मंगल (मांगलिक/कुजा) दोष — कुछ घरों में मंगल से जुड़ा; पारंपरिक रूप से रिश्तों में घर्षण और निर्णायकता से जुड़ा है।',
+          impact: 'यदि उपस्थित हो तो प्रभाव: करीबी रिश्तों में घर्षण की अधिक संभावना, अधीरता/क्रोध के झटके, या विवाह या साझेदारी में देरी और रुक-रुक कर शुरुआत।',
+          remedies: [
+            'हनुमान चालीसा का पाठ करें',
+            'मंगलवार को व्रत रखें',
+            'लाल वस्तुओं का दान करें',
+            'मंगल दोष निवारण पूजा करें।'
+          ]
+        },
+        kaalSarp: {
+          name: 'काल सर्प दोष',
+          description: 'काल सर्प दोष — सभी ग्रह राहु और केतु के बीच फंसे; अक्सर आंतरिक तनाव और परिवर्तन के पैटर्न के रूप में तैयार किया जाता है।',
+          impact: 'यदि उपस्थित हो तो प्रभाव: आंतरिक बेचैनी और आवधिक असफलताओं का एक पैटर्न; प्रयास के बावजूद योजनाएं अवरुद्ध या विलंबित हो सकती हैं, अतिरिक्त दृढ़ता की आवश्यकता है।',
+          remedies: [
+            'त्रिम्बकेश्वर मंदिर जाएं',
+            'महा मृत्युंजय मंत्र का जाप करें',
+            'आवारा कुत्तों को खाना खिलाएं',
+            'काल सर्प दोष निवारण पूजा करें।'
+          ]
+        },
+        pitra: {
+          name: 'पितृ दोष',
+          description: 'पितृ (पितृ) दोष — 9वें घर और सूर्य-नोड लिंक के आसपास पारंपरिक संकेतक; कर्तव्यों, वंश और मार्गदर्शन से जुड़े।',
+          impact: 'यदि उपस्थित हो तो प्रभाव: परिवार या बड़ों के प्रति बार-बार कर्तव्य/दायित्व; अपराधबोध, विवाद, या विरासत के मुद्दे सामने आ सकते हैं और समाधान की मांग कर सकते हैं।',
+          remedies: [
+            'श्राद्ध समारोह करें',
+            'अमावस्या को ब्राह्मणों को भोजन कराएं',
+            'पितृ गायत्री का पाठ करें',
+            'पितृ दोष निवारण पूजा करें।'
+          ]
+        },
+        sadeSati: {
+          name: 'शनि साढ़े साती',
+          description: 'शनि साढ़े साती — जन्म चंद्रमा के पड़ोस में शनि का संक्रमण; अनुशासन और धैर्य पर जोर देने वाला 7.5 साल का चक्र।',
+          impact: 'यदि सक्रिय हो तो प्रभाव: भारी जिम्मेदारियां, धीमी प्रगति, और धैर्य की परीक्षा; गति के बजाय लगातार अनुशासन के साथ परिणाम आते हैं।',
+          remedies: [
+            'शनि मंत्र का जाप करें',
+            'शनिवार को सरसों के तेल का दीपक जलाएं',
+            'काली वस्तुओं का दान करें',
+            'साढ़े साती निवारण पूजा करें।'
+          ]
+        }
       },
     },
   },

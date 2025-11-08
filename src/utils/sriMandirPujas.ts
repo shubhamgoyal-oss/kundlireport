@@ -14,29 +14,39 @@ export interface SriMandirPuja {
 
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1erweJnzoGMXOiA8HfZ7w9ZOA1nv2Mbt3ejiaUthfTNY/export?format=csv&gid=0';
 
-// Hindi to English translations for puja titles
-const TITLE_TRANSLATIONS: Record<string, string> = {
-  'पितृ दोष निवारण महायज्ञ एवं काशी गंगा महाआरती': 'Pitru Dosha Nivaran Mahayagya & Kashi Ganga Maha Aarti',
-  'पितृ दोष शांति महापूजा एवं काशी गंगा आरती': 'Pitra Dosha Shanti Mahapuja & Kashi Ganga Aarti',
-  'पितृ दोष निवारण पूजा और काशी गंगा आरती': 'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti',
-  'त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक और काल सर्प दोष निवारण पूजा': 'Trimbakeshwar Jyotirlinga Rudrabhishek & Kaal Sarp Dosha Nivaran Puja',
-  'काल सर्प दोष निवारण पूजा एवं त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक': 'Kaal Sarp Dosha Nivaran Puja & Trimbakeshwar Jyotirlinga Rudrabhishek',
-  'राहु-सूर्य दोष निवारण पूजा': 'Rahu–Surya Dosha Nivaran Puja',
+// English to Hindi translations for puja titles
+const ENGLISH_TO_HINDI_TITLES: Record<string, string> = {
+  'Pitru Dosha Nivaran Mahayagya & Kashi Ganga Maha Aarti': 'पितृ दोष निवारण महायज्ञ एवं काशी गंगा महाआरती',
+  'Pitra Dosha Shanti Mahapuja & Kashi Ganga Aarti': 'पितृ दोष शांति महापूजा एवं काशी गंगा आरती',
+  'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti': 'पितृ दोष निवारण पूजा और काशी गंगा आरती',
+  'Trimbakeshwar Jyotirlinga Rudrabhishek & Kaal Sarp Dosha Nivaran Puja': 'त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक और काल सर्प दोष निवारण पूजा',
+  'Kaal Sarp Dosha Nivaran Puja & Trimbakeshwar Jyotirlinga Rudrabhishek': 'काल सर्प दोष निवारण पूजा एवं त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक',
+  'Rahu–Surya Dosha Nivaran Puja': 'राहु-सूर्य दोष निवारण पूजा',
 };
 
-// Hindi to English translations for temple names
-const TEMPLE_TRANSLATIONS: Record<string, string> = {
-  'काशी विश्वनाथ मंदिर': 'Kashi Vishwanath Temple',
-  'त्र्यंबकेश्वर मंदिर': 'Trimbakeshwar Temple',
-  'त्र्यंबकेश्वर ज्योतिर्लिंग': 'Trimbakeshwar Jyotirlinga',
-  'महाकालेश्वर मंदिर': 'Mahakaleshwar Temple',
-  'सोमनाथ मंदिर': 'Somnath Temple',
-  'केदारनाथ मंदिर': 'Kedarnath Temple',
-  'बद्रीनाथ मंदिर': 'Badrinath Temple',
-  'रामेश्वरम मंदिर': 'Rameshwaram Temple',
-  'द्वारकाधीश मंदिर': 'Dwarkadhish Temple',
-  'जगन्नाथ पुरी मंदिर': 'Jagannath Puri Temple',
+// Hindi to English translations for puja titles (reverse mapping)
+const HINDI_TO_ENGLISH_TITLES: Record<string, string> = Object.fromEntries(
+  Object.entries(ENGLISH_TO_HINDI_TITLES).map(([en, hi]) => [hi, en])
+);
+
+// English to Hindi translations for temple names
+const ENGLISH_TO_HINDI_TEMPLES: Record<string, string> = {
+  'Kashi Vishwanath Temple': 'काशी विश्वनाथ मंदिर',
+  'Trimbakeshwar Temple': 'त्र्यंबकेश्वर मंदिर',
+  'Trimbakeshwar Jyotirlinga': 'त्र्यंबकेश्वर ज्योतिर्लिंग',
+  'Mahakaleshwar Temple': 'महाकालेश्वर मंदिर',
+  'Somnath Temple': 'सोमनाथ मंदिर',
+  'Kedarnath Temple': 'केदारनाथ मंदिर',
+  'Badrinath Temple': 'बद्रीनाथ मंदिर',
+  'Rameshwaram Temple': 'रामेश्वरम मंदिर',
+  'Dwarkadhish Temple': 'द्वारकाधीश मंदिर',
+  'Jagannath Puri Temple': 'जगन्नाथ पुरी मंदिर',
 };
+
+// Hindi to English translations for temple names (reverse mapping)
+const HINDI_TO_ENGLISH_TEMPLES: Record<string, string> = Object.fromEntries(
+  Object.entries(ENGLISH_TO_HINDI_TEMPLES).map(([en, hi]) => [hi, en])
+);
 
 /**
  * Parse CSV and return puja objects
@@ -186,40 +196,42 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
 
 /**
  * Get the puja title in the specified language
- * @param hindiTitle - The original Hindi title from the CSV
- * @param language - The current language ('en' or 'hi')
+ * Handles both Hindi and English source titles
  */
-export function getPujaTitle(hindiTitle: string, language: string): string {
+export function getPujaTitle(originalTitle: string, language: string): string {
   if (language === 'hi') {
-    return hindiTitle; // Return original Hindi title
+    // If already in Hindi, return as is; otherwise translate from English to Hindi
+    return ENGLISH_TO_HINDI_TITLES[originalTitle] || originalTitle;
   }
-  return TITLE_TRANSLATIONS[hindiTitle] || hindiTitle; // Return English translation
+  // If already in English, return as is; otherwise translate from Hindi to English
+  return HINDI_TO_ENGLISH_TITLES[originalTitle] || originalTitle;
 }
 
 /**
  * Get the temple name in the specified language
- * @param hindiName - The original Hindi temple name
- * @param language - The current language ('en' or 'hi')
+ * Handles both Hindi and English source names
  */
-export function getTempleName(hindiName: string, language: string): string {
+export function getTempleName(originalName: string, language: string): string {
   if (language === 'hi') {
-    return hindiName; // Return original Hindi name
+    // If already in Hindi, return as is; otherwise translate from English to Hindi
+    return ENGLISH_TO_HINDI_TEMPLES[originalName] || originalName;
   }
-  return TEMPLE_TRANSLATIONS[hindiName] || hindiName; // Return English translation
+  // If already in English, return as is; otherwise translate from Hindi to English
+  return HINDI_TO_ENGLISH_TEMPLES[originalName] || originalName;
 }
 
 /**
  * Translate Hindi title to English (kept for backwards compatibility)
  */
 export function translateTitle(hindiTitle: string): string {
-  return TITLE_TRANSLATIONS[hindiTitle] || hindiTitle;
+  return HINDI_TO_ENGLISH_TITLES[hindiTitle] || hindiTitle;
 }
 
 /**
  * Translate Hindi temple name to English (kept for backwards compatibility)
  */
 export function translateTempleName(hindiName: string): string {
-  return TEMPLE_TRANSLATIONS[hindiName] || hindiName;
+  return HINDI_TO_ENGLISH_TEMPLES[hindiName] || hindiName;
 }
 
 /**

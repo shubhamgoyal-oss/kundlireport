@@ -14,9 +14,15 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
   const { i18n, t } = useTranslation();
   const currentLang = i18n.language;
   
+  // Debug log to see what we're getting
+  console.log('Puja title from CSV:', puja.pooja_title);
+  console.log('Current language:', currentLang);
+  
   const displayTitle = getPujaTitle(puja.pooja_title, currentLang);
   const displayTempleName = getTempleName(puja.temple_name, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
+  
+  console.log('Display title after translation:', displayTitle);
 
   const handleBookClick = () => {
     trackEvent('srimandir_puja_click', {

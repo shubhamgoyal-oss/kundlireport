@@ -446,9 +446,14 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
           {/* Sri Mandir Offered Remedies Carousel */}
           {pujas.length > 0 && (
             <div className="mt-8 space-y-4">
-              <h2 className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
-                Sri Mandir Offered Remedies
-              </h2>
+              <div className="text-center">
+                <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
+                  Sri Mandir Offered Remedies
+                </h2>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {getUpcomingPujas(pujas, 10).length} upcoming pujas available
+                </p>
+              </div>
               <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
             </div>
           )}

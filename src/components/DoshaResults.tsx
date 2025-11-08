@@ -201,7 +201,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {details.mangal.remedies.length > 0 && (
+                  {(details.mangal.remedies.length > 0 || isDoshaPresent(summary.mangal)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Flame className="w-4 h-4" />
@@ -282,7 +282,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {details.kaalSarp.remedies.length > 0 && (
+                  {(details.kaalSarp.remedies.length > 0 || isDoshaPresent(summary.kaalSarp)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Waves className="w-4 h-4" />
@@ -362,7 +362,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {details.pitra.remedies.length > 0 && (
+                  {(details.pitra.remedies.length > 0 || isDoshaPresent(summary.pitra)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Users className="w-4 h-4" />
@@ -440,7 +440,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {details.sadeSati.remedies.length > 0 && (
+                  {(details.sadeSati.remedies.length > 0 || isDoshaPresent(summary.shaniSadeSati)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Moon className="w-4 h-4" />

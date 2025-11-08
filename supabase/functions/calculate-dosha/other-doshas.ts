@@ -78,25 +78,20 @@ export function calculateGrahanDosha(chart: any) {
 
   // Determine severity
   let severity: string | null = null;
-  let subtype: string | undefined;
   const hasSun = triggeredBy.some(t => t.includes('Sun'));
   const hasMoon = triggeredBy.some(t => t.includes('Moon'));
   
   if (hasSun && hasMoon) {
     severity = 'strong';
-    subtype = 'both';
   } else if (hasMoon) {
     severity = 'moderate';
-    subtype = 'rahu-chandra';
   } else if (hasSun) {
     severity = 'mild';
-    subtype = 'rahu-surya';
   }
 
   return {
     present: triggeredBy.length > 0 ? 'present' : 'absent',
     severity,
-    subtype,
     triggeredBy,
     placements,
     notes,
@@ -444,116 +439,27 @@ export function calculateKetuNagaDosha(chart: any) {
   };
 }
 
-// Rahu-Surya Dosha (subset of Grahan, Sun-Rahu alignment)
-export function checkRahuSuryaDosha(chart: any): any {
-  const sun = chart.grahas.Sun;
-  const rahu = chart.grahas.Rahu;
-
-  if (!sun || !rahu) {
-    return { summary: 'absent', details: null };
-  }
-
-  const diff = getConjunctionDistance(sun.lon, rahu.lon);
-  const present = diff <= DOSHA_CONFIG.orb.standard;
-  const strong = diff <= 3;
-
-  return {
-    summary: present ? 'present' : 'absent',
-    details: present ? {
-      triggeredBy: ['Sun–Rahu conjunction'],
-      placements: [
-        `Sun at ${sun.lon.toFixed(2)}° in ${sun.sign}`,
-        `Rahu at ${rahu.lon.toFixed(2)}° in ${rahu.sign}`,
-        `Δ = ${diff.toFixed(2)}°`
-      ],
-      notes: strong ? ['Very tight conjunction (≤3°); strong influence.'] : [],
-      explanation: 'Sun closely aligned with Rahu creates an eclipse pattern affecting pride, ego, and recognition.',
-      remedies: [
-        'Humility practices; steady routine over hype.',
-        'Sunday charity or Surya-focused devotion.',
-        'Mindfulness around visibility and ego triggers.'
-      ]
-    } : null
-  };
-}
-
-// Naag (Naga/Sarpa) Dosha - General serpent dosha patterns
-export function checkNaagDosha(chart: any): any {
-  const ketu = chart.grahas.Ketu;
-  const rahu = chart.grahas.Rahu;
-  const moon = chart.grahas.Moon;
-
-  if (!ketu || !rahu || !moon) {
-    return { summary: 'absent', details: null };
-  }
-
-  const triggers: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  // Rule A: Ketu closely conjunct Moon (no time needed)
-  const ketuMoonDiff = getConjunctionDistance(ketu.lon, moon.lon);
-  if (ketuMoonDiff <= DOSHA_CONFIG.orb.standard) {
-    triggers.push('Ketu–Moon conjunction');
-    placements.push(
-      `Ketu at ${ketu.lon.toFixed(2)}° in ${ketu.sign}`,
-      `Moon at ${moon.lon.toFixed(2)}° in ${moon.sign}`,
-      `Δ = ${ketuMoonDiff.toFixed(2)}°`
-    );
-  }
-
-  // Rule B: Rahu-Ketu axis afflicting 1st or 8th house (needs Lagna)
-  if (chart.ascendant && ketu.house && rahu.house) {
-    if (rahu.house === 1 || rahu.house === 8 || ketu.house === 1 || ketu.house === 8) {
-      triggers.push('Rahu/Ketu in house 1 or 8');
-      if (rahu.house) placements.push(`Rahu in house ${rahu.house}`);
-      if (ketu.house) placements.push(`Ketu in house ${ketu.house}`);
-    }
-  } else if (triggers.length === 0) {
-    notes.push('Birth time required for complete house-based checks.');
-  }
-
-  const present = triggers.length > 0;
-
-  return {
-    summary: present ? 'present' : (notes.length > 0 ? 'partial' : 'absent'),
-    details: present || notes.length > 0 ? {
-      triggeredBy: triggers,
-      placements,
-      notes,
-      explanation: 'Serpent (Naga) dosha patterns involving Rahu/Ketu create karmic themes around detachment, spirituality, and ancestral influences.',
-      remedies: [
-        'Naga devotion where traditional; serpent deity worship.',
-        'Steady devotional routines; detachment practices.',
-        'Ancestral healing rituals where appropriate.'
-      ]
-    } : null
-  };
-}
-
 /**
- * J) Navagraha Shanti (umbrella suggestion)
- * Rule: If ≥2 minor doshas are present, suggest umbrella pacification
+ * J) Navagraha Shanti (umbrella)
+ * Suggested if ≥2 of the above minor doshas are present
  */
-export function calculateNavagrahaUmbrella(doshas: any) {
-  const presentDoshas = Object.values(doshas).filter((d: any) => 
-    d && (d.present === 'present' || d.present === true)
-  );
+export function calculateNavagrahaUmbrella(otherDoshas: any) {
+  const presentCount = Object.values(otherDoshas)
+    .filter((d: any) => d.present === 'present')
+    .length;
 
-  const present = presentDoshas.length >= 2 ? 'suggested' : 'not_suggested';
+  const suggested = presentCount >= 2;
 
   return {
-    present,
-    triggeredBy: present === 'suggested' ? ['Multiple minor doshas detected'] : [],
+    present: suggested ? 'suggested' : 'not_suggested',
+    triggeredBy: suggested ? [`${presentCount} minor doshas present`] : [],
     placements: [],
-    notes: present === 'suggested' 
-      ? [`${presentDoshas.length} doshas detected; balanced pacification recommended.`]
-      : [],
-    explanation: present === 'suggested'
-      ? 'Multiple minor planetary stresses suggest balanced Navagraha Shanti for comprehensive relief.'
-      : 'No need for umbrella pacification.',
-    remedies: present === 'suggested'
-      ? ['Balanced discipline; regular simple worship.', 'Navagraha Shanti puja for comprehensive pacification.']
+    notes: suggested ? ['Multiple doshas indicate diffuse stress across life areas'] : [],
+    explanation: suggested
+      ? `Navagraha Shanti suggested: ${presentCount} minor doshas detected.`
+      : 'Navagraha Shanti not needed.',
+    remedies: suggested
+      ? ['Balanced discipline; regular simple worship.']
       : []
   };
 }

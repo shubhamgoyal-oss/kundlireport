@@ -126,17 +126,6 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right Image */}
-            <div className="relative flex justify-center lg:justify-end">
-              <div className="relative w-full max-w-md lg:max-w-lg">
-                <img 
-                  src="/lovable-uploads/5cbf3c9a-c161-4411-bb68-f5d06531bbd9.png"
-                  alt="Spiritual Devotee"
-                  className="w-full h-auto rounded-2xl shadow-2xl"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent rounded-2xl"></div>
-              </div>
-            </div>
           </div>
         </div>
       </main>

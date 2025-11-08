@@ -12,7 +12,7 @@ export interface SriMandirPuja {
   schedule_date_ist: string;
 }
 
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1aI5s6TbBYCLVLVlPVLuORrRDqhS8rp_eSkuH2YXdXvQ/export?format=csv&gid=863050072';
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1erweJnzoGMXOiA8HfZ7w9ZOA1nv2Mbt3ejiaUthfTNY/export?format=csv&gid=0';
 
 // Hindi to English translations for puja titles
 const TITLE_TRANSLATIONS: Record<string, string> = {

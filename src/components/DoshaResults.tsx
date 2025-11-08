@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { SriMandirPujaCard } from '@/components/SriMandirPujaCard';
+import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 
 interface DoshaResultsProps {
@@ -29,7 +29,15 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
 
   useEffect(() => {
+    // Initial fetch
     fetchSriMandirPujas().then(setPujas);
+
+    // Set up hourly refresh
+    const intervalId = setInterval(() => {
+      fetchSriMandirPujas().then(setPujas);
+    }, 60 * 60 * 1000); // 1 hour
+
+    return () => clearInterval(intervalId);
   }, []);
 
   const isDoshaPresent = (status: string) => {
@@ -220,11 +228,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     return mangalPujas.length > 0 ? (
                       <div className="mt-6 space-y-3">
                         <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <div className="space-y-3">
-                          {mangalPujas.map((puja) => (
-                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="mangal" />
-                          ))}
-                        </div>
+                        <SriMandirPujaCarousel pujas={mangalPujas} doshaType="mangal" />
                       </div>
                     ) : null;
                   })()}
@@ -297,11 +301,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     return kaalSarpPujas.length > 0 ? (
                       <div className="mt-6 space-y-3">
                         <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <div className="space-y-3">
-                          {kaalSarpPujas.map((puja) => (
-                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="kaalSarp" />
-                          ))}
-                        </div>
+                        <SriMandirPujaCarousel pujas={kaalSarpPujas} doshaType="kaalSarp" />
                       </div>
                     ) : null;
                   })()}
@@ -373,11 +373,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     return pitraPujas.length > 0 ? (
                       <div className="mt-6 space-y-3">
                         <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <div className="space-y-3">
-                          {pitraPujas.map((puja) => (
-                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="pitra" />
-                          ))}
-                        </div>
+                        <SriMandirPujaCarousel pujas={pitraPujas} doshaType="pitra" />
                       </div>
                     ) : null;
                   })()}
@@ -447,11 +443,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     return sadeSatiPujas.length > 0 ? (
                       <div className="mt-6 space-y-3">
                         <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <div className="space-y-3">
-                          {sadeSatiPujas.map((puja) => (
-                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="sadeSati" />
-                          ))}
-                        </div>
+                        <SriMandirPujaCarousel pujas={sadeSatiPujas} doshaType="sadeSati" />
                       </div>
                     ) : null;
                   })()}

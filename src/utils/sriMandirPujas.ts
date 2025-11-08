@@ -60,20 +60,37 @@ function parseCSV(csvText: string): SriMandirPuja[] {
 }
 
 /**
- * Fetch pujas from Google Sheet
+ * Fetch pujas from Google Sheet with caching
  */
+let cachedPujas: SriMandirPuja[] = [];
+let lastFetchTime = 0;
+const CACHE_DURATION = 60 * 60 * 1000; // 1 hour in milliseconds
+
 export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
+  const now = Date.now();
+  
+  // Return cached data if still fresh
+  if (cachedPujas.length > 0 && now - lastFetchTime < CACHE_DURATION) {
+    return cachedPujas;
+  }
+
   try {
     const response = await fetch(SHEET_CSV_URL);
     if (!response.ok) {
       console.warn('Failed to fetch Sri Mandir pujas');
-      return [];
+      return cachedPujas; // Return old cache if fetch fails
     }
     const csvText = await response.text();
-    return parseCSV(csvText);
+    const pujas = parseCSV(csvText);
+    
+    // Update cache
+    cachedPujas = pujas;
+    lastFetchTime = now;
+    
+    return pujas;
   } catch (error) {
     console.warn('Error fetching Sri Mandir pujas:', error);
-    return [];
+    return cachedPujas; // Return old cache on error
   }
 }
 

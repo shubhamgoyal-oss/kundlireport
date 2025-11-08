@@ -11,6 +11,7 @@ import { Calendar, Clock, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { getTimeZoneForCoordinates } from '@/utils/timezone';
+import DoshaResults from './DoshaResults';
 
 // Form validation schema
 const birthInputSchema = z.object({
@@ -36,6 +37,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const [isSearching, setIsSearching] = useState(false);
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [doshaResults, setDoshaResults] = useState<any>(null);
 
   const {
     register,
@@ -122,30 +124,26 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
       const result = await response.json();
       
-      console.log('Chart calculation result:', result);
-      toast.success('Chart calculated successfully!');
+      console.log('Dosha calculation result:', result);
+      toast.success('Doshas calculated successfully!');
       
-      // Display planetary positions in console for now
-      if (result.chart) {
-        console.table(result.chart.grahas);
-        console.log('Ascendant:', result.chart.ascendant);
-        console.log('Houses:', result.chart.houses);
-        console.log('Ayanamsha:', result.metadata.ayanamsha);
-      }
+      // Store and display results
+      setDoshaResults(result);
       
       if (onCalculate) {
         onCalculate(data);
       }
     } catch (error) {
       console.error('Calculation error:', error);
-      toast.error('An error occurred. Please try again.');
+      toast.error('Failed to calculate doshas. Please try again.');
     } finally {
       setIsCalculating(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto spiritual-glow">
+    <>
+      <Card className="w-full max-w-4xl mx-auto spiritual-glow">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
           Vedic Dosha Calculator
@@ -339,6 +337,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         </form>
       </CardContent>
     </Card>
+
+    {/* Display Results */}
+    {doshaResults && (
+      <DoshaResults 
+        summary={doshaResults.summary} 
+        details={doshaResults.details} 
+      />
+    )}
+  </>
   );
 };
 

@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'luc
 import { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
+import { OtherDoshas } from '@/components/OtherDoshas';
 
 interface DoshaResultsProps {
   summary: {
@@ -422,6 +423,13 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
             </div>
           )}
+
+          {/* Other Doshas Section */}
+          <OtherDoshas 
+            pujas={pujas}
+            // Future: backend will pass doshaFlags when computed
+            // For now, keeping all hidden since backend doesn't compute them yet
+          />
 
           {/* Disclaimer */}
           <div className="mt-6 p-4 bg-accent/10 border border-accent/30 rounded-md">

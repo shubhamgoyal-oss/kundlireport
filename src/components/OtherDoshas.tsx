@@ -203,14 +203,6 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
               </ul>
             </div>
           )}
-
-          {/* Sri Mandir Recommendations - Only show if present and has matches */}
-          {isPresent && matchedPujas.length > 0 && (
-            <div className="mt-6 space-y-3">
-              <h5 className="font-medium text-base">Sri Mandir recommended solutions</h5>
-              <SriMandirPujaCarousel pujas={matchedPujas} doshaType={key} />
-            </div>
-          )}
         </AccordionContent>
       </AccordionItem>
     );

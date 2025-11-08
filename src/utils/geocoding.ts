@@ -1,6 +1,6 @@
 /**
  * India-first geocoding with provider fallback
- * Primary: Nominatim (OSM) | Secondary: Photon | Tertiary: LocationIQ/Geoapify/OpenCage
+ * Primary: Photon | Secondary: Nominatim (OSM) | Tertiary: GeoNames
  */
 
 export interface Place {
@@ -86,28 +86,33 @@ async function searchPhoton(query: string): Promise<Place[]> {
 }
 
 /**
- * LocationIQ (Tertiary) - Requires API key
+ * GeoNames (Tertiary) - Free with username
  */
-async function searchLocationIQ(query: string, apiKey: string): Promise<Place[]> {
+async function searchGeoNames(query: string): Promise<Place[]> {
+  const username = import.meta.env.VITE_GEONAMES_USERNAME || 'demo';
   const params = new URLSearchParams({
     q: query,
-    key: apiKey,
-    countrycodes: 'IN',
-    limit: '8',
-    format: 'json',
-    addressdetails: '1',
+    country: 'IN',
+    maxRows: '8',
+    username: username,
+    featureClass: 'P', // Populated places (cities, towns, villages)
+    lang: 'en',
   });
 
   const response = await fetch(
-    `https://us1.locationiq.com/v1/search?${params}`
+    `https://secure.geonames.org/searchJSON?${params}`
   );
 
   if (!response.ok) {
-    throw new Error(`LocationIQ error: ${response.status}`);
+    throw new Error(`GeoNames error: ${response.status}`);
   }
 
   const data = await response.json();
-  return data.map((item: any) => normalizeNominatimResult(item));
+  if (!data.geonames || data.geonames.length === 0) {
+    return [];
+  }
+
+  return data.geonames.map((item: any) => normalizeGeoNamesResult(item));
 }
 
 function normalizeNominatimResult(item: any): Place {
@@ -158,6 +163,40 @@ function normalizePhotonResult(item: any): Place {
   };
 }
 
+function normalizeGeoNamesResult(item: any): Place {
+  const displayParts = [
+    item.name,
+    item.adminName1, // State
+  ].filter(Boolean);
+
+  return {
+    display_name: displayParts.join(', '),
+    lat: parseFloat(item.lat),
+    lon: parseFloat(item.lng),
+    type: item.fcode,
+    address: {
+      city: item.name,
+      state: item.adminName1,
+      country: item.countryName,
+    },
+    confidence: determineConfidenceFromFcode(item.fcode),
+  };
+}
+
+function determineConfidenceFromFcode(fcode?: string): Place['confidence'] {
+  if (!fcode) return 'other';
+  
+  const cityFcodes = ['PPLA', 'PPLC']; // Admin capital, country capital
+  const districtFcodes = ['PPLA2', 'PPLA3']; // District capitals
+  const localityFcodes = ['PPL', 'PPLL', 'PPLX']; // General populated place
+  
+  if (cityFcodes.includes(fcode)) return 'city';
+  if (districtFcodes.includes(fcode)) return 'district';
+  if (localityFcodes.includes(fcode)) return 'locality';
+  
+  return 'other';
+}
+
 function determineConfidence(type?: string, address?: any): Place['confidence'] {
   if (!type) return 'other';
   
@@ -201,31 +240,28 @@ export async function searchPlaces(query: string): Promise<Place[]> {
   let results: Place[] = [];
   let error: Error | null = null;
 
-  // Try Nominatim first
+  // Try Photon first (primary)
   try {
-    results = await searchNominatim(sanitizedQuery);
+    results = await searchPhoton(sanitizedQuery);
   } catch (e) {
     error = e as Error;
-    console.warn('Nominatim failed, trying Photon:', e);
+    console.warn('Photon failed, trying Nominatim:', e);
 
-    // Try Photon as fallback
+    // Try Nominatim as secondary fallback
     try {
-      results = await searchPhoton(sanitizedQuery);
+      results = await searchNominatim(sanitizedQuery);
       error = null;
-    } catch (photonError) {
-      console.warn('Photon failed:', photonError);
-      error = photonError as Error;
+    } catch (nominatimError) {
+      console.warn('Nominatim failed, trying GeoNames:', nominatimError);
+      error = nominatimError as Error;
 
-      // Try LocationIQ if API key is available
-      const locationIqKey = import.meta.env.VITE_LOCATIONIQ_API_KEY;
-      if (locationIqKey) {
-        try {
-          results = await searchLocationIQ(sanitizedQuery, locationIqKey);
-          error = null;
-        } catch (liqError) {
-          console.error('All providers failed');
-          error = liqError as Error;
-        }
+      // Try GeoNames as tertiary fallback
+      try {
+        results = await searchGeoNames(sanitizedQuery);
+        error = null;
+      } catch (geoNamesError) {
+        console.error('All providers failed');
+        error = geoNamesError as Error;
       }
     }
   }

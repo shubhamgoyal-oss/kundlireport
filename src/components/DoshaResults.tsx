@@ -201,7 +201,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {(details.mangal.remedies.length > 0 || isDoshaPresent(summary.mangal)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Flame className="w-4 h-4" />
@@ -211,12 +210,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.mangal.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                        {isDoshaPresent(summary.mangal) && (
                           <li>Do a Mangal Dosha Nivaran Puja.</li>
-                        )}
                       </ul>
                     </div>
-                  )}
 
                   {/* Sri Mandir Recommendations */}
                   {isDoshaPresent(summary.mangal) && (() => {
@@ -282,7 +278,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {(details.kaalSarp.remedies.length > 0 || isDoshaPresent(summary.kaalSarp)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Waves className="w-4 h-4" />
@@ -292,12 +287,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.kaalSarp.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                        {isDoshaPresent(summary.kaalSarp) && (
                           <li>Do a Kaal Sarp Dosha Nivaran Puja.</li>
-                        )}
                       </ul>
                     </div>
-                  )}
 
                   {/* Sri Mandir Recommendations */}
                   {isDoshaPresent(summary.kaalSarp) && (() => {
@@ -362,8 +354,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {(details.pitra.remedies.length > 0 || isDoshaPresent(summary.pitra)) && (
-                    <div>
+                  <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Users className="w-4 h-4" />
                         Traditional Remedies
@@ -372,12 +363,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.pitra.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                        {isDoshaPresent(summary.pitra) && (
                           <li>Do a Pitra Dosha Nivaran Puja.</li>
-                        )}
                       </ul>
                     </div>
-                  )}
 
                   {/* Sri Mandir Recommendations */}
                   {isDoshaPresent(summary.pitra) && (() => {
@@ -440,7 +428,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {(details.sadeSati.remedies.length > 0 || isDoshaPresent(summary.shaniSadeSati)) && (
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Moon className="w-4 h-4" />
@@ -450,12 +437,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.sadeSati.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                        {isDoshaPresent(summary.shaniSadeSati) && (
                           <li>Do a Sade Sati Nivaran Puja.</li>
-                        )}
                       </ul>
                     </div>
-                  )}
 
                   {/* Sri Mandir Recommendations */}
                   {isDoshaPresent(summary.shaniSadeSati) && (() => {

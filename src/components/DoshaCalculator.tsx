@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Clock, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { getTimeZoneForCoordinates } from '@/utils/timezone';
@@ -44,6 +44,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { errors },
   } = useForm<BirthInput>({
     resolver: zodResolver(birthInputSchema),
@@ -66,11 +67,20 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     setIsSearching(true);
     try {
       const results = await searchPlaces(searchTerm);
-      // Show only India results when available; otherwise fallback to all
-      const indiaOnly = results.filter(
-        (p) => p.address?.country?.toLowerCase() === 'india'
-      );
-      const finalResults = indiaOnly.length > 0 ? indiaOnly : results;
+
+      const inIndiaBounds = (p: Place) =>
+        p.lat >= 8.0667 && p.lat <= 37.1 && p.lon >= 68.1167 && p.lon <= 97.4167;
+
+      let filtered = results;
+      if (searchTerm.length <= 5) {
+        // Strictly show only within India's bounding box for short inputs
+        filtered = results.filter(inIndiaBounds);
+      }
+
+      // Prefer India country results
+      const indiaOnly = filtered.filter((p) => p.address?.country?.toLowerCase() === 'india');
+      const finalResults = searchTerm.length <= 5 ? filtered : (indiaOnly.length > 0 ? indiaOnly : filtered);
+
       setPlaceSearchResults(finalResults);
       setShowPlaceResults(true);
     } catch (error) {
@@ -149,13 +159,31 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   return (
     <>
       <Card className="w-full max-w-4xl mx-auto spiritual-glow">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
-          Vedic Dosha Calculator
-        </CardTitle>
-        <CardDescription className="text-center text-base">
-          Discover potential doshas in your birth chart based on classical Jyotish principles
-        </CardDescription>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <CardTitle className="text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
+            Vedic Dosha Calculator
+          </CardTitle>
+          <CardDescription className="text-center sm:text-left text-base">
+            Discover potential doshas in your birth chart based on classical Jyotish principles
+          </CardDescription>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="self-end sm:self-auto text-muted-foreground"
+          onClick={() => {
+            reset();
+            setPlaceSearchResults([]);
+            setShowPlaceResults(false);
+            setDoshaResults(null);
+            toast.success('Form refreshed');
+          }}
+        >
+          <RotateCcw className="w-4 h-4 mr-2" />
+          Refresh
+        </Button>
       </CardHeader>
       
       <CardContent>
@@ -228,7 +256,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 />
                 {!watch('time') && (
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-sm">
-                    hh-mm-AM/PM
+                    hh-mm-PM
                   </span>
                 )}
               </div>

@@ -1,4 +1,16 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  calculateGrahanDosha,
+  calculateShrapitDosha,
+  calculateGuruChandalDosha,
+  calculatePunarphooDosha,
+  calculateKemadrumaYoga,
+  calculateGandmoolDosha,
+  calculateKalathraDosh,
+  calculateVishDaridraYoga,
+  calculateKetuNagaDosha,
+  calculateNavagrahaUmbrella,
+} from "./other-doshas.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -312,8 +324,26 @@ function calculateAllDoshas(chart: any) {
   const pitra = calculatePitraDosha(chart);
   const sadeSati = calculateSadeSati(chart);
 
+  // Calculate new doshas
+  const grahan = calculateGrahanDosha(chart);
+  const shrapit = calculateShrapitDosha(chart);
+  const guruChandal = calculateGuruChandalDosha(chart);
+  const punarphoo = calculatePunarphooDosha(chart);
+  const kemadruma = calculateKemadrumaYoga(chart);
+  const gandmool = calculateGandmoolDosha(chart);
+  const kalathra = calculateKalathraDosh(chart);
+  const vishDaridra = calculateVishDaridraYoga(chart);
+  const ketuNaga = calculateKetuNagaDosha(chart);
+  
+  // Umbrella check
+  const navagrahaUmbrella = calculateNavagrahaUmbrella({
+    grahan, shrapit, guruChandal, punarphoo, kemadruma,
+    gandmool, kalathra, vishDaridra, ketuNaga
+  });
+
   return {
     summary: {
+      // Original doshas (backward-compatible)
       mangal: mangal.canceled ? 'canceled' : (mangal.present ? 'present' : 'absent'),
       mangalSeverity: mangal.severity || undefined,
       kaalSarp: kaalSarp.present ? 'present' : 'absent',
@@ -321,8 +351,22 @@ function calculateAllDoshas(chart: any) {
       pitra: pitra.present ? 'present' : 'absent',
       shaniSadeSati: sadeSati.active ? 'active' : 'inactive',
       shaniPhase: sadeSati.phase || undefined,
+      
+      // New doshas (add-only, optional fields)
+      grahan: grahan.present,
+      grahanSeverity: grahan.severity || undefined,
+      shrapit: shrapit.present,
+      guruChandal: guruChandal.present,
+      punarphoo: punarphoo.present,
+      kemadruma: kemadruma.present,
+      gandmool: gandmool.present,
+      kalathra: kalathra.present,
+      vishDaridra: vishDaridra.present,
+      ketuNaga: ketuNaga.present,
+      navagrahaUmbrella: navagrahaUmbrella.present,
     },
     details: {
+      // Original doshas (backward-compatible)
       mangal: {
         triggeredBy: mangal.triggeredBy,
         placements: mangal.placements,
@@ -350,6 +394,78 @@ function calculateAllDoshas(chart: any) {
         notes: sadeSati.notes,
         explanation: getSadeSatiExplanation(sadeSati),
         remedies: getSadeSatiRemedies(),
+      },
+      
+      // New doshas (add-only)
+      grahan: {
+        triggeredBy: grahan.triggeredBy,
+        placements: grahan.placements,
+        notes: grahan.notes,
+        explanation: grahan.explanation,
+        remedies: grahan.remedies,
+      },
+      shrapit: {
+        triggeredBy: shrapit.triggeredBy,
+        placements: shrapit.placements,
+        notes: shrapit.notes,
+        explanation: shrapit.explanation,
+        remedies: shrapit.remedies,
+      },
+      guruChandal: {
+        triggeredBy: guruChandal.triggeredBy,
+        placements: guruChandal.placements,
+        notes: guruChandal.notes,
+        explanation: guruChandal.explanation,
+        remedies: guruChandal.remedies,
+      },
+      punarphoo: {
+        triggeredBy: punarphoo.triggeredBy,
+        placements: punarphoo.placements,
+        notes: punarphoo.notes,
+        explanation: punarphoo.explanation,
+        remedies: punarphoo.remedies,
+      },
+      kemadruma: {
+        triggeredBy: kemadruma.triggeredBy,
+        placements: kemadruma.placements,
+        notes: kemadruma.notes,
+        explanation: kemadruma.explanation,
+        remedies: kemadruma.remedies,
+      },
+      gandmool: {
+        triggeredBy: gandmool.triggeredBy,
+        placements: gandmool.placements,
+        notes: gandmool.notes,
+        explanation: gandmool.explanation,
+        remedies: gandmool.remedies,
+      },
+      kalathra: {
+        triggeredBy: kalathra.triggeredBy,
+        placements: kalathra.placements,
+        notes: kalathra.notes,
+        explanation: kalathra.explanation,
+        remedies: kalathra.remedies,
+      },
+      vishDaridra: {
+        triggeredBy: vishDaridra.triggeredBy,
+        placements: vishDaridra.placements,
+        notes: vishDaridra.notes,
+        explanation: vishDaridra.explanation,
+        remedies: vishDaridra.remedies,
+      },
+      ketuNaga: {
+        triggeredBy: ketuNaga.triggeredBy,
+        placements: ketuNaga.placements,
+        notes: ketuNaga.notes,
+        explanation: ketuNaga.explanation,
+        remedies: ketuNaga.remedies,
+      },
+      navagrahaUmbrella: {
+        triggeredBy: navagrahaUmbrella.triggeredBy,
+        placements: navagrahaUmbrella.placements,
+        notes: navagrahaUmbrella.notes,
+        explanation: navagrahaUmbrella.explanation,
+        remedies: navagrahaUmbrella.remedies,
       },
     },
   };

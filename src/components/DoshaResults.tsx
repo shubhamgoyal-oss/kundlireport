@@ -16,6 +16,18 @@ interface DoshaResultsProps {
     pitra: string;
     shaniSadeSati: string;
     shaniPhase?: number;
+    // New doshas (optional, backward-compatible)
+    grahan?: string;
+    grahanSeverity?: string;
+    shrapit?: string;
+    guruChandal?: string;
+    punarphoo?: string;
+    kemadruma?: string;
+    gandmool?: string;
+    kalathra?: string;
+    vishDaridra?: string;
+    ketuNaga?: string;
+    navagrahaUmbrella?: string;
   };
   details: Record<string, {
     explanation: string;
@@ -427,8 +439,18 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
           {/* Other Doshas Section */}
           <OtherDoshas 
             pujas={pujas}
-            // Future: backend will pass doshaFlags when computed
-            // For now, keeping all hidden since backend doesn't compute them yet
+            doshaFlags={{
+              rahuKetu: summary.grahan ? { status: summary.grahan } : undefined,
+              shrapit: summary.shrapit ? { status: summary.shrapit } : undefined,
+              guruChandal: summary.guruChandal ? { status: summary.guruChandal } : undefined,
+              punarphoo: summary.punarphoo ? { status: summary.punarphoo } : undefined,
+              kemadruma: summary.kemadruma ? { status: summary.kemadruma } : undefined,
+              gandmool: summary.gandmool ? { status: summary.gandmool } : undefined,
+              kalathra: summary.kalathra ? { status: summary.kalathra } : undefined,
+              vishDaridra: summary.vishDaridra ? { status: summary.vishDaridra } : undefined,
+              ketuNaga: summary.ketuNaga ? { status: summary.ketuNaga } : undefined,
+              navagraha: summary.navagrahaUmbrella ? { status: summary.navagrahaUmbrella } : undefined,
+            }}
           />
 
           {/* Disclaimer */}

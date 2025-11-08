@@ -426,16 +426,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
           </AccordionItem>
           </Accordion>
 
-          {/* Sri Mandir Offered Remedies Carousel */}
-          {pujas.length > 0 && (
-            <div className="mt-8 space-y-4">
-              <h2 className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
-                Sri Mandir Offered Remedies
-              </h2>
-              <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
-            </div>
-          )}
-
           {/* Other Doshas Section */}
           <OtherDoshas 
             pujas={pujas}
@@ -452,6 +442,16 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               navagraha: summary.navagrahaUmbrella ? { status: summary.navagrahaUmbrella } : undefined,
             }}
           />
+
+          {/* Sri Mandir Offered Remedies Carousel */}
+          {pujas.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h2 className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
+                Sri Mandir Offered Remedies
+              </h2>
+              <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div className="mt-6 p-4 bg-accent/10 border border-accent/30 rounded-md">

@@ -323,12 +323,17 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             {isCalculating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Calculating Doshas...
+                Calculating...
               </>
             ) : (
-              'Calculate Doshas'
+              'Calculate My Doshas'
             )}
           </Button>
+
+          {/* Secondary Hint */}
+          <p className="text-xs text-center text-muted-foreground">
+            Takes ~1 minute. We don't store your details unless you choose to save or share.
+          </p>
 
           {/* Disclaimer */}
           <p className="text-xs text-center text-muted-foreground">

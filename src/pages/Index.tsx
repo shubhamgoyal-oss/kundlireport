@@ -4,7 +4,18 @@ import SolutionFinder from '@/components/SolutionFinder';
 import DoshaCalculator from '@/components/DoshaCalculator';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CircleDot, ChevronDown } from 'lucide-react';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
@@ -36,15 +47,67 @@ const Index = () => {
                     className="h-20 w-auto mx-auto lg:mx-0"
                   />
                 </div>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground mb-6">
-                  {t('index.heroTitlePart1')}
-                  <span className="gradient-spiritual bg-clip-text text-transparent block">
-                    {t('index.heroTitlePart2')}
-                  </span>
-                </h1>
-                <p className="text-xl text-muted-foreground leading-relaxed">
-                  {t('index.heroSubtitle')}
+                
+                {/* Hero Heading with Icon */}
+                <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
+                  <CircleDot className="w-8 h-8 text-primary opacity-70" strokeWidth={1.5} />
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
+                    Identify Your Dosha
+                  </h1>
+                </div>
+                
+                <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+                  Share your birth details to find out which doshas (if any) appear in your Vedic chart—and see gentle, traditional remedies.
                 </p>
+
+                {/* Learn the Basics - Collapsible FAQ */}
+                <Collapsible className="mb-6">
+                  <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors group">
+                    <span>What is a dosha?</span>
+                    <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="mt-4 bg-card border border-border rounded-lg p-4">
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger className="text-sm font-medium">
+                            <span className="flex items-center gap-2">
+                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                              What is a dosha?
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-sm text-muted-foreground">
+                            In Vedic astrology, a dosha is a specific planetary pattern believed to create challenges or imbalances in life.
+                          </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="item-2">
+                          <AccordionTrigger className="text-sm font-medium">
+                            <span className="flex items-center gap-2">
+                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                              Why is it important?
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-sm text-muted-foreground">
+                            Identifying doshas helps you understand potential friction points and explore time-tested, gentle remedies.
+                          </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="item-3">
+                          <AccordionTrigger className="text-sm font-medium">
+                            <span className="flex items-center gap-2">
+                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                              How can it impact life?
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent className="text-sm text-muted-foreground">
+                            Traditionally, doshas are linked to areas like relationships, career, health, and peace of mind—always interpreted with discretion.
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </div>
 
               {/* Dosha Calculator Card - Replaces the CTA Button */}

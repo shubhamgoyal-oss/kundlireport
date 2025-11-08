@@ -10,6 +10,8 @@ import {
   calculateVishDaridraYoga,
   calculateKetuNagaDosha,
   calculateNavagrahaUmbrella,
+  checkRahuSuryaDosha,
+  checkNaagDosha,
 } from "./other-doshas.ts";
 
 const corsHeaders = {
@@ -335,6 +337,10 @@ function calculateAllDoshas(chart: any) {
   const vishDaridra = calculateVishDaridraYoga(chart);
   const ketuNaga = calculateKetuNagaDosha(chart);
   
+  // New doshas - Rahu-Surya and Naag
+  const rahuSurya = checkRahuSuryaDosha(chart);
+  const naag = checkNaagDosha(chart);
+  
   // Umbrella check
   const navagrahaUmbrella = calculateNavagrahaUmbrella({
     grahan, shrapit, guruChandal, punarphoo, kemadruma,
@@ -355,6 +361,7 @@ function calculateAllDoshas(chart: any) {
       // New doshas (add-only, optional fields)
       grahan: grahan.present,
       grahanSeverity: grahan.severity || undefined,
+      grahanSubtype: grahan.subtype || undefined,
       shrapit: shrapit.present,
       guruChandal: guruChandal.present,
       punarphoo: punarphoo.present,
@@ -363,6 +370,8 @@ function calculateAllDoshas(chart: any) {
       kalathra: kalathra.present,
       vishDaridra: vishDaridra.present,
       ketuNaga: ketuNaga.present,
+      rahuSurya: rahuSurya.summary,
+      naag: naag.summary,
       navagrahaUmbrella: navagrahaUmbrella.present,
     },
     details: {
@@ -467,6 +476,8 @@ function calculateAllDoshas(chart: any) {
         explanation: navagrahaUmbrella.explanation,
         remedies: navagrahaUmbrella.remedies,
       },
+      rahuSurya: rahuSurya.details || null,
+      naag: naag.details || null,
     },
   };
 }

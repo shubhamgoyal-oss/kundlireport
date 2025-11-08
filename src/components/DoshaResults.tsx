@@ -28,6 +28,8 @@ interface DoshaResultsProps {
     vishDaridra?: string;
     ketuNaga?: string;
     navagrahaUmbrella?: string;
+    rahuSurya?: string;
+    naag?: string;
   };
   details: Record<string, {
     explanation: string;
@@ -439,6 +441,8 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               kalathra: summary.kalathra ? { status: summary.kalathra } : undefined,
               vishDaridra: summary.vishDaridra ? { status: summary.vishDaridra } : undefined,
               ketuNaga: summary.ketuNaga ? { status: summary.ketuNaga } : undefined,
+              rahuSurya: summary.rahuSurya ? { status: summary.rahuSurya } : undefined,
+              naag: summary.naag ? { status: summary.naag } : undefined,
               navagraha: summary.navagrahaUmbrella ? { status: summary.navagrahaUmbrella } : undefined,
             }}
           />

@@ -21,6 +21,8 @@ interface OtherDoshasProps {
     vishDaridra?: { status: string };
     ketuNaga?: { status: string };
     navagraha?: { status: string };
+    rahuSurya?: { status: string };
+    naag?: { status: string };
   };
 }
 
@@ -121,6 +123,27 @@ const otherDoshasData = {
       'Balanced discipline; regular simple worship.',
     ],
     keywords: ['navagraha', 'नवग्रह'],
+  },
+  rahuSurya: {
+    name: 'Rahu–Surya Dosha',
+    whatItIs: 'Sun closely aligned with Rahu (eclipse pattern).',
+    impact: 'Can bring pride–ego tests, visibility swings, and delays in recognition; plans may start strong but face sudden detours.',
+    remedies: [
+      'Humility practices; steady routine over hype.',
+      'Sunday charity or Surya-focused devotion.',
+    ],
+    keywords: ['rahu surya', 'rahu–surya', 'sun rahu', 'राहु सूर्य', 'राहु-सूर्य', 'rahu', 'grahan'],
+  },
+  naag: {
+    name: 'Naag (Naga/Sarpa) Dosha',
+    whatItIs: 'Serpent dosha patterns involving Rahu/Ketu creating karmic themes around detachment and ancestral influences.',
+    impact: 'Karmic patterns around spirituality, detachment, and ancestral duties; may create distance in relationships or worldly pursuits.',
+    remedies: [
+      'Naga devotion where traditional; serpent deity worship.',
+      'Steady devotional routines; detachment practices.',
+      'Ancestral healing rituals where appropriate.',
+    ],
+    keywords: ['naga', 'naag', 'sarpa', 'serpent', 'नाग', 'सर्प', 'kaal sarp', 'kalsarp'],
   },
 };
 
@@ -249,6 +272,8 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             {renderDoshaPanel('kalathra', doshaFlags.kalathra)}
             {renderDoshaPanel('vishDaridra', doshaFlags.vishDaridra)}
             {renderDoshaPanel('ketuNaga', doshaFlags.ketuNaga)}
+            {renderDoshaPanel('rahuSurya', doshaFlags.rahuSurya)}
+            {renderDoshaPanel('naag', doshaFlags.naag)}
             {renderDoshaPanel('navagraha', doshaFlags.navagraha)}
           </Accordion>
         </CardContent>

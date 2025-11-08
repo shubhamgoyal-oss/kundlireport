@@ -2,6 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { SriMandirPujaCard } from '@/components/SriMandirPujaCard';
+import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 
 interface DoshaResultsProps {
   summary: {
@@ -23,6 +26,17 @@ interface DoshaResultsProps {
 }
 
 const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
+  const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
+
+  useEffect(() => {
+    fetchSriMandirPujas().then(setPujas);
+  }, []);
+
+  const isDoshaPresent = (status: string) => {
+    const s = status.toLowerCase();
+    return s === 'present' || s.includes('active');
+  };
+
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
       case 'high':
@@ -197,9 +211,27 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.mangal.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
+                        {isDoshaPresent(summary.mangal) && (
+                          <li>Do a Mangal Dosha Nivaran Puja.</li>
+                        )}
                       </ul>
                     </div>
                   )}
+
+                  {/* Sri Mandir Recommendations */}
+                  {isDoshaPresent(summary.mangal) && (() => {
+                    const mangalPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'mangal'));
+                    return mangalPujas.length > 0 ? (
+                      <div className="mt-6 space-y-3">
+                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
+                        <div className="space-y-3">
+                          {mangalPujas.map((puja) => (
+                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="mangal" />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </>
               )}
             </AccordionContent>
@@ -260,9 +292,27 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.kaalSarp.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
+                        {isDoshaPresent(summary.kaalSarp) && (
+                          <li>Do a Kaal Sarp Dosha Nivaran Puja.</li>
+                        )}
                       </ul>
                     </div>
                   )}
+
+                  {/* Sri Mandir Recommendations */}
+                  {isDoshaPresent(summary.kaalSarp) && (() => {
+                    const kaalSarpPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'kaalSarp'));
+                    return kaalSarpPujas.length > 0 ? (
+                      <div className="mt-6 space-y-3">
+                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
+                        <div className="space-y-3">
+                          {kaalSarpPujas.map((puja) => (
+                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="kaalSarp" />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </>
               )}
             </AccordionContent>
@@ -322,9 +372,27 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.pitra.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
+                        {isDoshaPresent(summary.pitra) && (
+                          <li>Do a Pitra Dosha Nivaran Puja.</li>
+                        )}
                       </ul>
                     </div>
                   )}
+
+                  {/* Sri Mandir Recommendations */}
+                  {isDoshaPresent(summary.pitra) && (() => {
+                    const pitraPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'pitra'));
+                    return pitraPujas.length > 0 ? (
+                      <div className="mt-6 space-y-3">
+                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
+                        <div className="space-y-3">
+                          {pitraPujas.map((puja) => (
+                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="pitra" />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </>
               )}
             </AccordionContent>
@@ -382,9 +450,27 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                         {details.sadeSati.remedies.map((remedy, i) => (
                           <li key={i}>{remedy}</li>
                         ))}
+                        {isDoshaPresent(summary.shaniSadeSati) && (
+                          <li>Do a Sade Sati Nivaran Puja.</li>
+                        )}
                       </ul>
                     </div>
                   )}
+
+                  {/* Sri Mandir Recommendations */}
+                  {isDoshaPresent(summary.shaniSadeSati) && (() => {
+                    const sadeSatiPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'sadeSati'));
+                    return sadeSatiPujas.length > 0 ? (
+                      <div className="mt-6 space-y-3">
+                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
+                        <div className="space-y-3">
+                          {sadeSatiPujas.map((puja) => (
+                            <SriMandirPujaCard key={puja.store_id} puja={puja} doshaType="sadeSati" />
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
                 </>
               )}
             </AccordionContent>

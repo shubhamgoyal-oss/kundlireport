@@ -246,7 +246,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </div>
             
             {!unknownTime && (
-              <div className="relative">
+              <>
                 <Input
                   id="time"
                   type="time"
@@ -254,12 +254,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                   className="bg-input"
                   required={!unknownTime}
                 />
-                {!watch('time') && (
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-sm">
-                    hh:mm AM/PM
-                  </span>
-                )}
-              </div>
+                <p className="text-xs text-muted-foreground mt-1">Format: hh:mm AM/PM</p>
+              </>
             )}
             
             {unknownTime && (

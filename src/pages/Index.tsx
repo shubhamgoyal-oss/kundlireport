@@ -124,34 +124,6 @@ const Index = () => {
                   }}
                 />
               </div>
-
-              {/* Optional: Keep Solution Finder as secondary option */}
-              <Button
-                id="solution-finder-cta-btn"
-                onClick={() => { 
-                  if (typeof window !== 'undefined' && (window as any).dataLayer) {
-                    (window as any).dataLayer.push({
-                      event: 'solution_finder_cta_click',
-                      buttonId: 'solution-finder-cta-btn',
-                      buttonType: 'secondary-cta',
-                      page: 'home'
-                    });
-                  }
-                  trackEvent('cta_my_solution_finder_click', { page: 'home' }); 
-                  setIsSolutionFinderOpen(true); 
-                }}
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto group border-primary/50 hover:border-primary"
-                data-gtm-button-id="solution-finder-cta-btn"
-                data-gtm-button-type="secondary-cta"
-                data-gtm-page="home"
-              >
-                <span className="flex items-center gap-2">
-                  <span>{t('index.cta')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
-                </span>
-              </Button>
             </div>
 
             {/* Right Image */}

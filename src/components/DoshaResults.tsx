@@ -1,151 +1,152 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertCircle, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'lucide-react';
 
 interface DoshaResultsProps {
   summary: {
-    mangal: 'present' | 'absent' | 'canceled';
-    mangalSeverity?: 'mild' | 'moderate' | 'strong';
-    kaalSarp: 'present' | 'absent';
-    kaalSarpType?: string;
-    pitra: 'present' | 'absent';
-    shaniSadeSati: 'active' | 'inactive';
-    shaniPhase?: 1 | 2 | 3;
+    mangal: { status: string; severity?: string };
+    kaalSarp: { status: string; type?: string };
+    pitra: { status: string };
+    sadeSati: { status: string; phase?: number };
   };
   details: Record<string, {
-    triggeredBy: string[];
-    placements: string[];
-    notes: string[];
     explanation: string;
+    placements?: string[];
+    notes?: string[];
     remedies: string[];
   }>;
 }
 
 const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
-  const getSeverityColor = (severity?: string) => {
-    switch (severity) {
-      case 'strong': return 'bg-destructive text-destructive-foreground';
-      case 'moderate': return 'bg-orange-500 text-white';
-      case 'mild': return 'bg-yellow-500 text-white';
-      default: return 'bg-muted text-muted-foreground';
+  const getSeverityColor = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case 'high':
+        return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'medium':
+        return 'bg-warning/10 text-warning border-warning/20';
+      case 'low':
+        return 'bg-accent/10 text-accent-foreground border-accent/20';
+      default:
+        return 'bg-muted text-muted-foreground border-muted/20';
     }
   };
 
   const getStatusIcon = (status: string) => {
-    if (status === 'present' || status === 'active') {
-      return <AlertCircle className="w-4 h-4 text-orange-500" />;
-    } else if (status === 'canceled') {
-      return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-    } else {
-      return <XCircle className="w-4 h-4 text-green-500" />;
+    if (status.toLowerCase() === 'present' || status.toLowerCase().includes('active')) {
+      return <AlertTriangle className="w-4 h-4 mr-1" />;
     }
+    return <CheckCircle className="w-4 h-4 mr-1 text-success" />;
+  };
+
+  const doshaOneLiners = {
+    mangal: "Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.",
+    kaalSarp: "Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.",
+    pitra: "Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.",
+    sadeSati: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7½-year cycle emphasizing discipline and patience."
   };
 
   return (
-    <div className="space-y-6 mt-8">
-      <Card className="border-primary/20">
+    <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
+      {/* Status Chips Summary Section */}
+      <Card className="spiritual-glow">
         <CardHeader>
-          <CardTitle className="text-2xl gradient-spiritual bg-clip-text text-transparent">
-            Your Dosha Analysis
+          <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
+            Your Dosha Summary
           </CardTitle>
-          <CardDescription>
-            Based on your birth chart, here are the traditional Jyotish dosha indicators
-          </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Summary Chips */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Mangal Dosha */}
-            <div className="flex items-center justify-between p-4 bg-card border rounded-lg">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(summary.mangal)}
-                <div>
-                  <p className="font-semibold">Mangal Dosha</p>
-                  <p className="text-sm text-muted-foreground">
-                    {summary.mangal === 'present' && summary.mangalSeverity && (
-                      <Badge className={getSeverityColor(summary.mangalSeverity)}>
-                        {summary.mangalSeverity}
-                      </Badge>
-                    )}
-                    {summary.mangal === 'canceled' && <Badge variant="outline">Canceled</Badge>}
-                    {summary.mangal === 'absent' && <Badge variant="secondary">Not Present</Badge>}
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Status Chips Row */}
+          <div className="flex flex-wrap gap-3">
+            {/* Mangal Dosha Chip */}
+            <Badge 
+              variant="outline" 
+              className={`${getSeverityColor(summary.mangal.severity || '')} px-4 py-2 text-sm font-medium`}
+            >
+              {getStatusIcon(summary.mangal.status)}
+              Mangal: {summary.mangal.status}
+              {summary.mangal.severity && ` (${summary.mangal.severity})`}
+            </Badge>
 
-            {/* Kaal Sarp Dosha */}
-            <div className="flex items-center justify-between p-4 bg-card border rounded-lg">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(summary.kaalSarp)}
-                <div>
-                  <p className="font-semibold">Kaal Sarp Dosha</p>
-                  <p className="text-sm text-muted-foreground">
-                    {summary.kaalSarp === 'present' && summary.kaalSarpType ? (
-                      <Badge variant="outline">{summary.kaalSarpType} Type</Badge>
-                    ) : (
-                      <Badge variant="secondary">Not Present</Badge>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Kaal Sarp Dosha Chip */}
+            <Badge 
+              variant="outline" 
+              className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
+            >
+              {getStatusIcon(summary.kaalSarp.status)}
+              Kaal Sarp: {summary.kaalSarp.status}
+              {summary.kaalSarp.type && ` (${summary.kaalSarp.type})`}
+            </Badge>
 
-            {/* Pitra Dosha */}
-            <div className="flex items-center justify-between p-4 bg-card border rounded-lg">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(summary.pitra)}
-                <div>
-                  <p className="font-semibold">Pitra Dosha</p>
-                  <p className="text-sm text-muted-foreground">
-                    {summary.pitra === 'present' ? (
-                      <Badge variant="outline">Present</Badge>
-                    ) : (
-                      <Badge variant="secondary">Not Present</Badge>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Pitra Dosha Chip */}
+            <Badge 
+              variant="outline" 
+              className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
+            >
+              {getStatusIcon(summary.pitra.status)}
+              Pitra: {summary.pitra.status}
+            </Badge>
 
-            {/* Sade Sati */}
-            <div className="flex items-center justify-between p-4 bg-card border rounded-lg">
-              <div className="flex items-center gap-3">
-                {getStatusIcon(summary.shaniSadeSati)}
-                <div>
-                  <p className="font-semibold">Shani Sade Sati</p>
-                  <p className="text-sm text-muted-foreground">
-                    {summary.shaniSadeSati === 'active' && summary.shaniPhase ? (
-                      <Badge variant="outline">Phase {summary.shaniPhase}</Badge>
-                    ) : (
-                      <Badge variant="secondary">Inactive</Badge>
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Sade Sati Chip */}
+            <Badge 
+              variant="outline" 
+              className={`${getSeverityColor(summary.sadeSati.phase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
+            >
+              {getStatusIcon(summary.sadeSati.status)}
+              Sade Sati: {summary.sadeSati.status}
+              {summary.sadeSati.phase && ` (Phase ${summary.sadeSati.phase})`}
+            </Badge>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Detailed Accordion */}
-          <Accordion type="single" collapsible className="w-full">
-            {/* Mangal Dosha Details */}
-            <AccordionItem value="mangal">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" />
-                  <span>Mangal Dosha Details</span>
+      {/* Detailed Analysis Section */}
+      <Card className="spiritual-glow">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
+            Detailed Analysis & Remedies
+          </CardTitle>
+          <CardDescription className="text-center">
+            Based on your birth chart calculations
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          <Accordion type="single" collapsible className="w-full space-y-4">
+          {/* Mangal Dosha Details */}
+          <AccordionItem value="mangal" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Flame className="w-5 h-5 text-destructive" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">Mangal Dosha (Manglik)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {summary.mangal.status}
+                    {summary.mangal.severity && ` • Severity: ${summary.mangal.severity}`}
+                  </p>
                 </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div>
-                  <h4 className="font-semibold mb-2">What We Detected</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{details.mangal.explanation}</p>
-                  
-                  {details.mangal.placements.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-sm font-medium mb-1">Placements:</p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              {/* One-liner */}
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.mangal}</p>
+              </div>
+              
+              {details.mangal && (
+                <>
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      Explanation
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{details.mangal.explanation}</p>
+                  </div>
+
+                  {details.mangal.placements && details.mangal.placements.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Placements</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.mangal.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -154,43 +155,65 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     </div>
                   )}
 
-                  {details.mangal.notes.length > 0 && (
-                    <div className="mt-3 p-3 bg-accent/20 rounded-md">
+                  {details.mangal.notes && details.mangal.notes.length > 0 && (
+                    <div className="p-3 bg-accent/20 rounded-md">
                       {details.mangal.notes.map((note, i) => (
                         <p key={i} className="text-sm">{note}</p>
                       ))}
                     </div>
                   )}
-                </div>
 
-                {details.mangal.remedies.length > 0 && (
+                  {details.mangal.remedies.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Flame className="w-4 h-4" />
+                        Traditional Remedies
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {details.mangal.remedies.map((remedy, i) => (
+                          <li key={i}>{remedy}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Kaal Sarp Dosha Details */}
+          <AccordionItem value="kaalSarp" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Waves className="w-5 h-5 text-primary" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">Kaal Sarp Dosha</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {summary.kaalSarp.status}
+                    {summary.kaalSarp.type && ` • Type: ${summary.kaalSarp.type}`}
+                  </p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              {/* One-liner */}
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.kaalSarp}</p>
+              </div>
+              
+              {details.kaalSarp && (
+                <>
                   <div>
-                    <h4 className="font-semibold mb-2">Traditional Remedies</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {details.mangal.remedies.map((remedy, i) => (
-                        <li key={i}>{remedy}</li>
-                      ))}
-                    </ul>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      Explanation
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{details.kaalSarp.explanation}</p>
                   </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
 
-            {/* Kaal Sarp Dosha Details */}
-            <AccordionItem value="kaalSarp">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" />
-                  <span>Kaal Sarp Dosha Details</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div>
-                  <h4 className="font-semibold mb-2">What We Detected</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{details.kaalSarp.explanation}</p>
-                  
-                  {details.kaalSarp.placements.length > 0 && (
-                    <div className="mt-3">
+                  {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Placements</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.kaalSarp.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -198,36 +221,57 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
                   )}
-                </div>
 
-                {details.kaalSarp.remedies.length > 0 && (
+                  {details.kaalSarp.remedies.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Waves className="w-4 h-4" />
+                        Traditional Remedies
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {details.kaalSarp.remedies.map((remedy, i) => (
+                          <li key={i}>{remedy}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Pitra Dosha Details */}
+          <AccordionItem value="pitra" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-accent" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">Pitra Dosha</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {summary.pitra.status}
+                  </p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              {/* One-liner */}
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.pitra}</p>
+              </div>
+              
+              {details.pitra && (
+                <>
                   <div>
-                    <h4 className="font-semibold mb-2">Traditional Remedies</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {details.kaalSarp.remedies.map((remedy, i) => (
-                        <li key={i}>{remedy}</li>
-                      ))}
-                    </ul>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      Explanation
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{details.pitra.explanation}</p>
                   </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
 
-            {/* Pitra Dosha Details */}
-            <AccordionItem value="pitra">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" />
-                  <span>Pitra Dosha Details</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div>
-                  <h4 className="font-semibold mb-2">What We Detected</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{details.pitra.explanation}</p>
-                  
-                  {details.pitra.placements.length > 0 && (
-                    <div className="mt-3">
+                  {details.pitra.placements && details.pitra.placements.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2">Placements</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.pitra.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -235,55 +279,80 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
                   )}
-                </div>
 
-                {details.pitra.remedies.length > 0 && (
+                  {details.pitra.remedies.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Traditional Remedies
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {details.pitra.remedies.map((remedy, i) => (
+                          <li key={i}>{remedy}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Sade Sati Details */}
+          <AccordionItem value="sadeSati" className="border rounded-lg px-4">
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center gap-3">
+                <Moon className="w-5 h-5 text-warning" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">Shani Sade Sati</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {summary.sadeSati.status}
+                    {summary.sadeSati.phase && ` • Phase: ${summary.sadeSati.phase}`}
+                  </p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-4 space-y-4">
+              {/* One-liner */}
+              <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
+                <p className="text-sm text-muted-foreground italic">{doshaOneLiners.sadeSati}</p>
+              </div>
+              
+              {details.sadeSati && (
+                <>
                   <div>
-                    <h4 className="font-semibold mb-2">Traditional Remedies</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {details.pitra.remedies.map((remedy, i) => (
-                        <li key={i}>{remedy}</li>
-                      ))}
-                    </ul>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Info className="w-4 h-4" />
+                      Explanation
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{details.sadeSati.explanation}</p>
                   </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
 
-            {/* Sade Sati Details */}
-            <AccordionItem value="sadeSati">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 text-primary" />
-                  <span>Shani Sade Sati Details</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="space-y-4 pt-4">
-                <div>
-                  <h4 className="font-semibold mb-2">What We Detected</h4>
-                  <p className="text-sm text-muted-foreground mb-2">{details.sadeSati.explanation}</p>
-                  
-                  {details.sadeSati.notes.length > 0 && (
-                    <div className="mt-3 p-3 bg-accent/20 rounded-md">
+                  {details.sadeSati.notes && details.sadeSati.notes.length > 0 && (
+                    <div className="p-3 bg-accent/20 rounded-md">
                       {details.sadeSati.notes.map((note, i) => (
                         <p key={i} className="text-sm">{note}</p>
                       ))}
                     </div>
                   )}
-                </div>
 
-                {details.sadeSati.remedies.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-2">Traditional Remedies</h4>
-                    <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                      {details.sadeSati.remedies.map((remedy, i) => (
-                        <li key={i}>{remedy}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
+                  {details.sadeSati.remedies.length > 0 && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Moon className="w-4 h-4" />
+                        Traditional Remedies
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                        {details.sadeSati.remedies.map((remedy, i) => (
+                          <li key={i}>{remedy}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </AccordionContent>
+          </AccordionItem>
           </Accordion>
 
           {/* Disclaimer */}

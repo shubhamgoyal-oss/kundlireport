@@ -66,7 +66,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     setIsSearching(true);
     try {
       const results = await searchPlaces(searchTerm);
-      setPlaceSearchResults(results);
+      // Prioritize India results
+      const sortedResults = results.sort((a, b) => {
+        const aIsIndia = a.display_name.toLowerCase().includes('india');
+        const bIsIndia = b.display_name.toLowerCase().includes('india');
+        if (aIsIndia && !bIsIndia) return -1;
+        if (!aIsIndia && bIsIndia) return 1;
+        return 0;
+      });
+      setPlaceSearchResults(sortedResults);
       setShowPlaceResults(true);
     } catch (error) {
       console.error('Place search error:', error);
@@ -218,6 +226,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 type="time"
                 {...register('time')}
                 className="bg-input"
+                placeholder="HH:MM"
                 required={!unknownTime}
               />
             )}
@@ -240,15 +249,18 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
           {/* Place of Birth with Autocomplete */}
           <div className="space-y-2">
-            <Label htmlFor="place" className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              Place of Birth *
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="place" className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Place of Birth *
+              </Label>
+              <span className="text-xs text-muted-foreground">Choose from suggested places</span>
+            </div>
             <div className="relative">
               <Input
                 id="place"
                 {...register('place')}
-                placeholder="Start typing city name..."
+                placeholder="Town, City, State"
                 className="bg-input"
                 onChange={(e) => handlePlaceSearch(e.target.value)}
                 onFocus={() => placeSearchResults.length > 0 && setShowPlaceResults(true)}
@@ -329,11 +341,6 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               'Calculate My Doshas'
             )}
           </Button>
-
-          {/* Secondary Hint */}
-          <p className="text-xs text-center text-muted-foreground">
-            Takes ~1 minute. We don't store your details unless you choose to save or share.
-          </p>
 
           {/* Disclaimer */}
           <p className="text-xs text-center text-muted-foreground">

@@ -42,19 +42,47 @@ const TEMPLE_TRANSLATIONS: Record<string, string> = {
  * Parse CSV and return puja objects
  */
 function parseCSV(csvText: string): SriMandirPuja[] {
-  const lines = csvText.trim().split('\n');
+  // Remove potential BOM and normalise newlines
+  const text = csvText.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const lines = text.trim().split('\n');
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  // Robust CSV line splitter (handles quotes and commas within quotes)
+  const splitCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        // Handle escaped quotes
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++; // skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    result.push(current);
+    return result.map(v => v.trim().replace(/^"|"$/g, ''));
+  };
+
+  const headers = splitCSVLine(lines[0]);
   const pujas: SriMandirPuja[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+    const values = splitCSVLine(lines[i]);
     if (values.length < headers.length) continue;
 
-    const puja: any = {};
+    const puja: Record<string, string> = {};
     headers.forEach((header, idx) => {
-      puja[header] = values[idx];
+      puja[header] = values[idx] ?? '';
     });
 
     if (puja.store_id && puja.pooja_title) {

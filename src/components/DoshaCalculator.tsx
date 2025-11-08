@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
+import { useTranslation } from 'react-i18next';
 
 // Form validation schema
 const birthInputSchema = z.object({
@@ -33,6 +34,7 @@ interface DoshaCalculatorProps {
 }
 
 const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
+  const { t } = useTranslation();
   const [placeSearchResults, setPlaceSearchResults] = useState<Place[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showPlaceResults, setShowPlaceResults] = useState(false);
@@ -125,7 +127,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     setPlaceSearchResults([]);
     setSelectedPlaceIndex(-1);
     
-    toast.success('Location selected. Time zone: Asia/Kolkata');
+    toast.success(t('dosha.locationSelected'));
   };
 
   // Keyboard navigation for place results
@@ -158,7 +160,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
   const onSubmit = async (data: BirthInput) => {
     if (!unknownTime && !data.time) {
-      toast.error('Please enter birth time or mark it as unknown');
+      toast.error(t('dosha.enterTimeError'));
       return;
     }
 
@@ -185,7 +187,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       const result = await response.json();
       
       console.log('Dosha calculation result:', result);
-      toast.success('Doshas calculated successfully!');
+      toast.success(t('dosha.calculationSuccess'));
       
       // Store and display results
       setDoshaResults(result);
@@ -195,7 +197,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       }
     } catch (error) {
       console.error('Calculation error:', error);
-      toast.error('Failed to calculate doshas. Please try again.');
+      toast.error(t('dosha.calculationError'));
     } finally {
       setIsCalculating(false);
     }
@@ -207,10 +209,10 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <CardTitle className="text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
-            Vedic Dosha Calculator
+            {t('dosha.calculatorTitle')}
           </CardTitle>
           <CardDescription className="text-center sm:text-left text-base">
-            Discover potential doshas in your birth chart based on classical Jyotish principles
+            {t('dosha.calculatorDesc')}
           </CardDescription>
         </div>
         <Button
@@ -223,11 +225,11 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             setPlaceSearchResults([]);
             setShowPlaceResults(false);
             setDoshaResults(null);
-            toast.success('Form refreshed');
+            toast.success(t('dosha.formRefreshed'));
           }}
         >
           <RotateCcw className="w-4 h-4 mr-2" />
-          Refresh
+          {t('dosha.refresh')}
         </Button>
       </CardHeader>
       
@@ -235,11 +237,11 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Name (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="name">Name (Optional)</Label>
+            <Label htmlFor="name">{t('dosha.nameOptional')}</Label>
             <Input
               id="name"
               {...register('name')}
-              placeholder="Enter your name"
+              placeholder={t('dosha.enterName')}
               className="bg-input"
             />
             {errors.name && (
@@ -254,7 +256,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           <div className="space-y-2">
             <Label htmlFor="date" className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Date of Birth *
+              {t('dosha.dateOfBirth')} *
             </Label>
             <Input
               id="date"
@@ -276,7 +278,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             <div className="flex items-center justify-between">
               <Label htmlFor="time" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Exact Time of Birth
+                {t('dosha.timeOfBirth')}
               </Label>
               <div className="flex items-center gap-2">
                 <Switch
@@ -285,7 +287,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                   onCheckedChange={(checked) => setValue('unknownTime', checked)}
                 />
                 <Label htmlFor="unknownTime" className="text-sm text-muted-foreground cursor-pointer">
-                  I don't know my birth time
+                  {t('dosha.dontKnowTime')}
                 </Label>
               </div>
             </div>
@@ -299,14 +301,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                   className="bg-input"
                   required={!unknownTime}
                 />
-                <p className="text-xs text-muted-foreground mt-1">Format: hh:mm AM/PM</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat')}</p>
               </>
             )}
             
             {unknownTime && (
               <div className="p-3 bg-accent/20 border border-accent rounded-md">
                 <p className="text-sm text-muted-foreground">
-                  ⚠️ Without exact birth time, accuracy will be reduced. We'll run Moon-based checks only.
+                  {t('dosha.unknownTimeWarning')}
                 </p>
               </div>
             )}
@@ -324,15 +326,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             <div className="flex items-center justify-between">
               <Label htmlFor="place" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Place of Birth *
+                {t('dosha.placeOfBirth')} *
               </Label>
-              <span className="text-xs text-muted-foreground">Type 2+ characters</span>
+              <span className="text-xs text-muted-foreground">{t('dosha.typeChars')}</span>
             </div>
             <div className="relative">
               <Input
                 id="place"
                 {...register('place')}
-                placeholder="e.g. Jaipur, Mumbai, Varanasi"
+                placeholder={t('dosha.placePlaceholder')}
                 className="bg-input"
                 onChange={(e) => handlePlaceSearch(e.target.value)}
                 onKeyDown={handlePlaceKeyDown}
@@ -392,7 +394,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             )}
             
             <p className="text-[10px] text-muted-foreground">
-              🔒 We only use your input to look up the place; nothing is stored.
+              {t('dosha.privacyPlace')}
             </p>
           </div>
 
@@ -400,15 +402,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           {watch('lat') && watch('lon') && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-md">
               <div>
-                <Label className="text-xs text-muted-foreground">Latitude</Label>
+                <Label className="text-xs text-muted-foreground">{t('dosha.latitude')}</Label>
                 <p className="font-mono text-sm">{watch('lat')?.toFixed(4)}°N</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Longitude</Label>
+                <Label className="text-xs text-muted-foreground">{t('dosha.longitude')}</Label>
                 <p className="font-mono text-sm">{watch('lon')?.toFixed(4)}°E</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Time Zone (India)</Label>
+                <Label className="text-xs text-muted-foreground">{t('dosha.timeZone')}</Label>
                 <p className="font-mono text-sm">{watch('tz') || 'Asia/Kolkata'}</p>
               </div>
             </div>
@@ -417,7 +419,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           {/* Privacy Note */}
           <div className="p-4 bg-accent/10 border border-accent/30 rounded-md">
             <p className="text-sm text-muted-foreground">
-              🔒 <strong>Privacy:</strong> We don't store your details server-side unless you generate a share link.
+              {t('dosha.privacyNote')}
             </p>
           </div>
 
@@ -431,16 +433,16 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             {isCalculating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Calculating...
+                {t('dosha.calculating')}
               </>
             ) : (
-              'Calculate My Doshas'
+              t('dosha.calculateButton')
             )}
           </Button>
 
           {/* Disclaimer */}
           <p className="text-xs text-center text-muted-foreground">
-            ⚠️ This is an educational tool based on classical Jyotish rules; not medical, legal, or financial advice.
+            {t('dosha.disclaimer')}
           </p>
         </form>
       </CardContent>

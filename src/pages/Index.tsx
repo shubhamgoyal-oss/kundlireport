@@ -52,18 +52,18 @@ const Index = () => {
                 <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
                   <CircleDot className="w-8 h-8 text-primary opacity-70" strokeWidth={1.5} />
                   <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
-                    Identify Your Dosha
+                    {t('dosha.heroTitle')}
                   </h1>
                 </div>
                 
                 <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                  Share your birth details to find out which doshas (if any) appear in your Vedic chart—and see gentle, traditional remedies.
+                  {t('dosha.heroSubtitle')}
                 </p>
 
                 {/* Learn the Basics - Collapsible FAQ */}
                 <Collapsible className="mb-6">
                   <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors group">
-                    <span>What is a dosha?</span>
+                    <span>{t('dosha.whatIsDosha')}</span>
                     <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent>
@@ -73,11 +73,11 @@ const Index = () => {
                           <AccordionTrigger className="text-sm font-medium">
                             <span className="flex items-center gap-2">
                               <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              What is a dosha?
+                              {t('dosha.whatIsDosha')}
                             </span>
                           </AccordionTrigger>
                           <AccordionContent className="text-sm text-muted-foreground">
-                            In Vedic astrology, a dosha is a specific planetary pattern believed to create challenges or imbalances in life.
+                            {t('dosha.whatIsDoshaAnswer')}
                           </AccordionContent>
                         </AccordionItem>
                         
@@ -85,11 +85,11 @@ const Index = () => {
                           <AccordionTrigger className="text-sm font-medium">
                             <span className="flex items-center gap-2">
                               <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              Why is it important?
+                              {t('dosha.whyImportant')}
                             </span>
                           </AccordionTrigger>
                           <AccordionContent className="text-sm text-muted-foreground">
-                            Identifying doshas helps you understand potential friction points and explore time-tested, gentle remedies.
+                            {t('dosha.whyImportantAnswer')}
                           </AccordionContent>
                         </AccordionItem>
                         
@@ -97,11 +97,11 @@ const Index = () => {
                           <AccordionTrigger className="text-sm font-medium">
                             <span className="flex items-center gap-2">
                               <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              How can it impact life?
+                              {t('dosha.howImpact')}
                             </span>
                           </AccordionTrigger>
                           <AccordionContent className="text-sm text-muted-foreground">
-                            Traditionally, doshas are linked to areas like relationships, career, health, and peace of mind—always interpreted with discretion.
+                            {t('dosha.howImpactAnswer')}
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>

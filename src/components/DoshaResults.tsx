@@ -222,16 +222,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
 
-                  {/* Sri Mandir Recommendations */}
-                  {isDoshaPresent(summary.mangal) && (() => {
-                    const mangalPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'mangal'));
-                    return mangalPujas.length > 0 ? (
-                      <div className="mt-6 space-y-3">
-                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <SriMandirPujaCarousel pujas={mangalPujas} doshaType="mangal" />
-                      </div>
-                    ) : null;
-                  })()}
                 </>
               )}
             </AccordionContent>
@@ -295,16 +285,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
 
-                  {/* Sri Mandir Recommendations */}
-                  {isDoshaPresent(summary.kaalSarp) && (() => {
-                    const kaalSarpPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'kaalSarp'));
-                    return kaalSarpPujas.length > 0 ? (
-                      <div className="mt-6 space-y-3">
-                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <SriMandirPujaCarousel pujas={kaalSarpPujas} doshaType="kaalSarp" />
-                      </div>
-                    ) : null;
-                  })()}
                 </>
               )}
             </AccordionContent>
@@ -367,16 +347,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
 
-                  {/* Sri Mandir Recommendations */}
-                  {isDoshaPresent(summary.pitra) && (() => {
-                    const pitraPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'pitra'));
-                    return pitraPujas.length > 0 ? (
-                      <div className="mt-6 space-y-3">
-                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <SriMandirPujaCarousel pujas={pitraPujas} doshaType="pitra" />
-                      </div>
-                    ) : null;
-                  })()}
                 </>
               )}
             </AccordionContent>
@@ -437,21 +407,21 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       </ul>
                     </div>
 
-                  {/* Sri Mandir Recommendations */}
-                  {isDoshaPresent(summary.shaniSadeSati) && (() => {
-                    const sadeSatiPujas = getUpcomingPujas(filterPujasByDosha(pujas, 'sadeSati'));
-                    return sadeSatiPujas.length > 0 ? (
-                      <div className="mt-6 space-y-3">
-                        <h4 className="font-medium text-base">Sri Mandir recommended solutions</h4>
-                        <SriMandirPujaCarousel pujas={sadeSatiPujas} doshaType="sadeSati" />
-                      </div>
-                    ) : null;
-                  })()}
                 </>
               )}
             </AccordionContent>
           </AccordionItem>
           </Accordion>
+
+          {/* Sri Mandir Offered Remedies Carousel */}
+          {pujas.length > 0 && (
+            <div className="mt-8 space-y-4">
+              <h2 className="text-3xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
+                Sri Mandir Offered Remedies
+              </h2>
+              <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
+            </div>
+          )}
 
           {/* Disclaimer */}
           <div className="mt-6 p-4 bg-accent/10 border border-accent/30 rounded-md">

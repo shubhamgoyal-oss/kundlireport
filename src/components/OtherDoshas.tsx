@@ -146,9 +146,8 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
     key: keyof typeof otherDoshasData,
     statusFlag?: { status: string }
   ) => {
-    if (!isDoshaPresent(statusFlag?.status)) return null;
-
     const dosha = otherDoshasData[key];
+    const isPresent = isDoshaPresent(statusFlag?.status);
     const matchedPujas = getUpcomingPujas(filterPujasByKeywords(dosha.keywords));
 
     return (
@@ -156,7 +155,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3 flex-1">
             <div className="flex items-center gap-2 flex-1">
-              <h4 className="font-semibold text-base text-left">{dosha.name}</h4>
+              <h3 className="font-semibold text-lg text-left">{dosha.name}</h3>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -168,10 +167,17 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
-              <AlertTriangle className="w-3 h-3 mr-1" />
-              Present
-            </Badge>
+            {isPresent ? (
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                Present
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Absent
+              </Badge>
+            )}
           </div>
         </AccordionTrigger>
         <AccordionContent className="pt-4 space-y-4">
@@ -181,21 +187,23 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             <p className="text-sm text-muted-foreground font-medium mt-2">{dosha.impact}</p>
           </div>
 
-          {/* Traditional Remedies */}
-          <div>
-            <h5 className="font-medium mb-2 flex items-center gap-2">
-              Traditional Remedies
-            </h5>
-            <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-              {dosha.remedies.map((remedy, i) => (
-                <li key={i}>{remedy}</li>
-              ))}
-              <li>Do a {dosha.name} Nivaran Puja.</li>
-            </ul>
-          </div>
+          {/* Traditional Remedies - Only show if present */}
+          {isPresent && (
+            <div>
+              <h5 className="font-medium mb-2 flex items-center gap-2">
+                Traditional Remedies
+              </h5>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                {dosha.remedies.map((remedy, i) => (
+                  <li key={i}>{remedy}</li>
+                ))}
+                <li>Do a {dosha.name} Nivaran Puja.</li>
+              </ul>
+            </div>
+          )}
 
-          {/* Sri Mandir Recommendations */}
-          {matchedPujas.length > 0 && (
+          {/* Sri Mandir Recommendations - Only show if present and has matches */}
+          {isPresent && matchedPujas.length > 0 && (
             <div className="mt-6 space-y-3">
               <h5 className="font-medium text-base">Sri Mandir recommended solutions</h5>
               <SriMandirPujaCarousel pujas={matchedPujas} doshaType={key} />
@@ -213,9 +221,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
-            Other Doshas
-          </CardTitle>
+          <CardTitle className="text-xl font-bold">Other Doshas</CardTitle>
           <ChevronDown 
             className={`h-6 w-6 transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''

@@ -228,10 +228,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               <div className="flex items-center gap-3">
                 <Waves className="w-5 h-5 text-primary" />
                 <div className="text-left">
-                  <h3 className="font-semibold text-lg">Kaal Sarp Dosha</h3>
+                  <h3 className="font-semibold text-lg">{t('doshaResults.kaalSarp.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.kaalSarp}
-                    {summary.kaalSarpType && ` • Type: ${summary.kaalSarpType}`}
+                    {t('doshaResults.status')}: {summary.kaalSarp}
+                    {summary.kaalSarpType && ` • ${t('doshaResults.type')}: ${summary.kaalSarpType}`}
                   </p>
                 </div>
               </div>
@@ -251,14 +251,14 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Info className="w-4 h-4" />
-                      Explanation
+                      {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground">{details.kaalSarp.explanation}</p>
                   </div>
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">Placements</h4>
+                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.kaalSarp.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -270,13 +270,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Waves className="w-4 h-4" />
-                        Traditional Remedies
+                        {t('doshaResults.traditionalRemedies')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {details.kaalSarp.remedies.map((remedy, i) => (
+                        {(t('doshaResults.kaalSarp.remedies', { returnObjects: true }) as string[]).map((remedy: string, i: number) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                          <li>Do a Kaal Sarp Dosha Nivaran Puja.</li>
                       </ul>
                     </div>
 
@@ -291,9 +290,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5 text-accent" />
                 <div className="text-left">
-                  <h3 className="font-semibold text-lg">Pitra Dosha</h3>
+                  <h3 className="font-semibold text-lg">{t('doshaResults.pitra.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.pitra}
+                    {t('doshaResults.status')}: {summary.pitra}
                   </p>
                 </div>
               </div>
@@ -313,14 +312,14 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Info className="w-4 h-4" />
-                      Explanation
+                      {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground">{details.pitra.explanation}</p>
                   </div>
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">Placements</h4>
+                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.pitra.placements.map((p, i) => (
                           <li key={i}>{p}</li>
@@ -332,13 +331,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                   <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Traditional Remedies
+                        {t('doshaResults.traditionalRemedies')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {details.pitra.remedies.map((remedy, i) => (
+                        {(t('doshaResults.pitra.remedies', { returnObjects: true }) as string[]).map((remedy: string, i: number) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                          <li>Do a Pitra Dosha Nivaran Puja.</li>
                       </ul>
                     </div>
 
@@ -353,10 +351,10 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               <div className="flex items-center gap-3">
                 <Moon className="w-5 h-5 text-warning" />
                 <div className="text-left">
-                  <h3 className="font-semibold text-lg">Shani Sade Sati</h3>
+                  <h3 className="font-semibold text-lg">{t('doshaResults.sadeSati.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.shaniSadeSati}
-                    {summary.shaniPhase && ` • Phase: ${summary.shaniPhase}`}
+                    {t('doshaResults.status')}: {summary.shaniSadeSati}
+                    {summary.shaniPhase && ` • ${t('doshaResults.phase')}: ${summary.shaniPhase}`}
                   </p>
                 </div>
               </div>
@@ -376,7 +374,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                   <div>
                     <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Info className="w-4 h-4" />
-                      Explanation
+                      {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground">{details.sadeSati.explanation}</p>
                   </div>
@@ -392,13 +390,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                     <div>
                       <h4 className="font-medium mb-2 flex items-center gap-2">
                         <Moon className="w-4 h-4" />
-                        Traditional Remedies
+                        {t('doshaResults.traditionalRemedies')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                        {details.sadeSati.remedies.map((remedy, i) => (
+                        {(t('doshaResults.sadeSati.remedies', { returnObjects: true }) as string[]).map((remedy: string, i: number) => (
                           <li key={i}>{remedy}</li>
                         ))}
-                          <li>Do a Sade Sati Nivaran Puja.</li>
                       </ul>
                     </div>
 

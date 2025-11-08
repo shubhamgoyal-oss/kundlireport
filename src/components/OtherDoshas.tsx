@@ -133,13 +133,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
     return s === 'present' || s.includes('active') || s === 'suggested';
   };
 
-  // Check if any dosha is present
-  const hasAnyDosha = Object.values(doshaFlags).some(flag => isDoshaPresent(flag?.status));
-
-  // Hide entire section if no doshas are present
-  if (!hasAnyDosha) {
-    return null;
-  }
+  // Section is always visible; individual panels render only if dosha is present
 
   const filterPujasByKeywords = (keywords: string[]): SriMandirPuja[] => {
     return pujas.filter(puja => {

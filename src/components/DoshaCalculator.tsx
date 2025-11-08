@@ -103,9 +103,35 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     setIsCalculating(true);
     
     try {
-      // For Phase 1, just show the data
-      console.log('Birth data submitted:', data);
-      toast.success('Form validated successfully! Calculation will be implemented in Phase 2.');
+      // Call the edge function to calculate chart
+      const response = await fetch(
+        'https://upqxbhzwqecaxfxgyxhe.supabase.co/functions/v1/calculate-dosha',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Calculation failed');
+      }
+
+      const result = await response.json();
+      
+      console.log('Chart calculation result:', result);
+      toast.success('Chart calculated successfully!');
+      
+      // Display planetary positions in console for now
+      if (result.chart) {
+        console.table(result.chart.grahas);
+        console.log('Ascendant:', result.chart.ascendant);
+        console.log('Houses:', result.chart.houses);
+        console.log('Ayanamsha:', result.metadata.ayanamsha);
+      }
       
       if (onCalculate) {
         onCalculate(data);

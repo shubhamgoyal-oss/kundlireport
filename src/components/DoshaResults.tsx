@@ -5,13 +5,17 @@ import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'luc
 
 interface DoshaResultsProps {
   summary: {
-    mangal: { status: string; severity?: string };
-    kaalSarp: { status: string; type?: string };
-    pitra: { status: string };
-    sadeSati: { status: string; phase?: number };
+    mangal: string;
+    mangalSeverity?: string;
+    kaalSarp: string;
+    kaalSarpType?: string;
+    pitra: string;
+    shaniSadeSati: string;
+    shaniPhase?: number;
   };
   details: Record<string, {
     explanation: string;
+    triggeredBy?: string[];
     placements?: string[];
     notes?: string[];
     remedies: string[];
@@ -62,11 +66,11 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             {/* Mangal Dosha Chip */}
             <Badge 
               variant="outline" 
-              className={`${getSeverityColor(summary.mangal.severity || '')} px-4 py-2 text-sm font-medium`}
+              className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
             >
-              {getStatusIcon(summary.mangal.status)}
-              Mangal: {summary.mangal.status}
-              {summary.mangal.severity && ` (${summary.mangal.severity})`}
+              {getStatusIcon(summary.mangal)}
+              Mangal: {summary.mangal}
+              {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
             </Badge>
 
             {/* Kaal Sarp Dosha Chip */}
@@ -74,9 +78,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               variant="outline" 
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
-              {getStatusIcon(summary.kaalSarp.status)}
-              Kaal Sarp: {summary.kaalSarp.status}
-              {summary.kaalSarp.type && ` (${summary.kaalSarp.type})`}
+              {getStatusIcon(summary.kaalSarp)}
+              Kaal Sarp: {summary.kaalSarp}
+              {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
             </Badge>
 
             {/* Pitra Dosha Chip */}
@@ -84,18 +88,18 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               variant="outline" 
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
-              {getStatusIcon(summary.pitra.status)}
-              Pitra: {summary.pitra.status}
+              {getStatusIcon(summary.pitra)}
+              Pitra: {summary.pitra}
             </Badge>
 
             {/* Sade Sati Chip */}
             <Badge 
               variant="outline" 
-              className={`${getSeverityColor(summary.sadeSati.phase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
+              className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
             >
-              {getStatusIcon(summary.sadeSati.status)}
-              Sade Sati: {summary.sadeSati.status}
-              {summary.sadeSati.phase && ` (Phase ${summary.sadeSati.phase})`}
+              {getStatusIcon(summary.shaniSadeSati)}
+              Sade Sati: {summary.shaniSadeSati}
+              {summary.shaniPhase && ` (Phase ${summary.shaniPhase})`}
             </Badge>
           </div>
         </CardContent>
@@ -122,8 +126,8 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">Mangal Dosha (Manglik)</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.mangal.status}
-                    {summary.mangal.severity && ` • Severity: ${summary.mangal.severity}`}
+                    Status: {summary.mangal}
+                    {summary.mangalSeverity && ` • Severity: ${summary.mangalSeverity}`}
                   </p>
                 </div>
               </div>
@@ -189,8 +193,8 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">Kaal Sarp Dosha</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.kaalSarp.status}
-                    {summary.kaalSarp.type && ` • Type: ${summary.kaalSarp.type}`}
+                    Status: {summary.kaalSarp}
+                    {summary.kaalSarpType && ` • Type: ${summary.kaalSarpType}`}
                   </p>
                 </div>
               </div>
@@ -248,7 +252,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">Pitra Dosha</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.pitra.status}
+                    Status: {summary.pitra}
                   </p>
                 </div>
               </div>
@@ -306,8 +310,8 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">Shani Sade Sati</h3>
                   <p className="text-sm text-muted-foreground">
-                    Status: {summary.sadeSati.status}
-                    {summary.sadeSati.phase && ` • Phase: ${summary.sadeSati.phase}`}
+                    Status: {summary.shaniSadeSati}
+                    {summary.shaniPhase && ` • Phase: ${summary.shaniPhase}`}
                   </p>
                 </div>
               </div>

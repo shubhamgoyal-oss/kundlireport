@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
+import DoshaCalculator from '@/components/DoshaCalculator';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight } from 'lucide-react';
@@ -46,34 +47,46 @@ const Index = () => {
                 </p>
               </div>
 
-              {/* Main CTA Button */}
+              {/* Dosha Calculator Card - Replaces the CTA Button */}
+              <div className="w-full">
+                <DoshaCalculator
+                  onCalculate={(data) => {
+                    trackEvent('dosha_calculate', { 
+                      page: 'home',
+                      metadata: {
+                        hasTime: !data.unknownTime,
+                        place: data.place 
+                      }
+                    });
+                  }}
+                />
+              </div>
+
+              {/* Optional: Keep Solution Finder as secondary option */}
               <Button
                 id="solution-finder-cta-btn"
                 onClick={() => { 
-                  // Track GTM event
                   if (typeof window !== 'undefined' && (window as any).dataLayer) {
                     (window as any).dataLayer.push({
                       event: 'solution_finder_cta_click',
                       buttonId: 'solution-finder-cta-btn',
-                      buttonType: 'main-cta',
+                      buttonType: 'secondary-cta',
                       page: 'home'
                     });
                   }
                   trackEvent('cta_my_solution_finder_click', { page: 'home' }); 
                   setIsSolutionFinderOpen(true); 
                 }}
+                variant="outline"
                 size="lg"
-                className="spiritual-glow bg-primary hover:bg-primary/90 text-white hover:scale-105 transition-transform duration-200 text-base sm:text-lg px-6 sm:px-10 md:px-12 py-4 sm:py-6 md:py-8 h-auto rounded-full w-full sm:w-auto group"
+                className="w-full sm:w-auto group border-primary/50 hover:border-primary"
                 data-gtm-button-id="solution-finder-cta-btn"
-                data-gtm-button-type="main-cta"
+                data-gtm-button-type="secondary-cta"
                 data-gtm-page="home"
               >
-                <span className="flex flex-col items-center gap-1">
+                <span className="flex items-center gap-2">
                   <span>{t('index.cta')}</span>
-                  <span className="flex items-center gap-2 text-xs opacity-90">
-                    <span>{t('index.clickHere')}</span>
-                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" />
-                  </span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </span>
               </Button>
             </div>

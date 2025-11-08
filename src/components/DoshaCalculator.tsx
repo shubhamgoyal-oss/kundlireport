@@ -66,15 +66,12 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     setIsSearching(true);
     try {
       const results = await searchPlaces(searchTerm);
-      // Prioritize India results
-      const sortedResults = results.sort((a, b) => {
-        const aIsIndia = a.display_name.toLowerCase().includes('india');
-        const bIsIndia = b.display_name.toLowerCase().includes('india');
-        if (aIsIndia && !bIsIndia) return -1;
-        if (!aIsIndia && bIsIndia) return 1;
-        return 0;
-      });
-      setPlaceSearchResults(sortedResults);
+      // Show only India results when available; otherwise fallback to all
+      const indiaOnly = results.filter(
+        (p) => p.address?.country?.toLowerCase() === 'india'
+      );
+      const finalResults = indiaOnly.length > 0 ? indiaOnly : results;
+      setPlaceSearchResults(finalResults);
       setShowPlaceResults(true);
     } catch (error) {
       console.error('Place search error:', error);
@@ -221,14 +218,20 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </div>
             
             {!unknownTime && (
-              <Input
-                id="time"
-                type="time"
-                {...register('time')}
-                className="bg-input"
-                placeholder="HH:MM"
-                required={!unknownTime}
-              />
+              <div className="relative">
+                <Input
+                  id="time"
+                  type="time"
+                  {...register('time')}
+                  className="bg-input"
+                  required={!unknownTime}
+                />
+                {!watch('time') && (
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-sm">
+                    hh-mm-AM/PM
+                  </span>
+                )}
+              </div>
             )}
             
             {unknownTime && (
@@ -265,6 +268,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 onChange={(e) => handlePlaceSearch(e.target.value)}
                 onFocus={() => placeSearchResults.length > 0 && setShowPlaceResults(true)}
                 required
+                inputMode="text"
+                autoComplete="off"
               />
               
               {isSearching && (

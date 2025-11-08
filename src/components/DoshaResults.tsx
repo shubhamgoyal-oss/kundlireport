@@ -36,8 +36,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    if (status.toLowerCase() === 'present' || status.toLowerCase().includes('active')) {
+  const getStatusIcon = (status?: string) => {
+    if (!status) {
+      return <CheckCircle className="w-4 h-4 mr-1 text-success" />;
+    }
+    const s = status.toLowerCase();
+    if (s === 'present' || s.includes('active')) {
       return <AlertTriangle className="w-4 h-4 mr-1" />;
     }
     return <CheckCircle className="w-4 h-4 mr-1 text-success" />;

@@ -185,27 +185,55 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
 }
 
 /**
- * Translate Hindi title to English
+ * Get the puja title in the specified language
+ * @param hindiTitle - The original Hindi title from the CSV
+ * @param language - The current language ('en' or 'hi')
+ */
+export function getPujaTitle(hindiTitle: string, language: string): string {
+  if (language === 'hi') {
+    return hindiTitle; // Return original Hindi title
+  }
+  return TITLE_TRANSLATIONS[hindiTitle] || hindiTitle; // Return English translation
+}
+
+/**
+ * Get the temple name in the specified language
+ * @param hindiName - The original Hindi temple name
+ * @param language - The current language ('en' or 'hi')
+ */
+export function getTempleName(hindiName: string, language: string): string {
+  if (language === 'hi') {
+    return hindiName; // Return original Hindi name
+  }
+  return TEMPLE_TRANSLATIONS[hindiName] || hindiName; // Return English translation
+}
+
+/**
+ * Translate Hindi title to English (kept for backwards compatibility)
  */
 export function translateTitle(hindiTitle: string): string {
   return TITLE_TRANSLATIONS[hindiTitle] || hindiTitle;
 }
 
 /**
- * Translate Hindi temple name to English
+ * Translate Hindi temple name to English (kept for backwards compatibility)
  */
 export function translateTempleName(hindiName: string): string {
   return TEMPLE_TRANSLATIONS[hindiName] || hindiName;
 }
 
 /**
- * Format DD/MM/YYYY to "13 Nov 2025"
+ * Format DD/MM/YYYY based on language
+ * @param dateStr - Date string in DD/MM/YYYY format
+ * @param language - The current language ('en' or 'hi')
  */
-export function formatScheduleDate(dateStr: string): string {
+export function formatScheduleDate(dateStr: string, language: string = 'en'): string {
   const date = parseIndianDate(dateStr);
   if (!date) return dateStr;
   
-  return new Intl.DateTimeFormat('en-GB', {
+  const locale = language === 'hi' ? 'hi-IN' : 'en-GB';
+  
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

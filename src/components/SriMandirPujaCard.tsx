@@ -1,8 +1,9 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-import { SriMandirPuja, translateTitle, formatScheduleDate } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
+import { useTranslation } from 'react-i18next';
 
 interface SriMandirPujaCardProps {
   puja: SriMandirPuja;
@@ -10,8 +11,12 @@ interface SriMandirPujaCardProps {
 }
 
 export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) => {
-  const translatedTitle = translateTitle(puja.pooja_title);
-  const formattedDate = formatScheduleDate(puja.schedule_date_ist);
+  const { i18n, t } = useTranslation();
+  const currentLang = i18n.language;
+  
+  const displayTitle = getPujaTitle(puja.pooja_title, currentLang);
+  const displayTempleName = getTempleName(puja.temple_name, currentLang);
+  const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
 
   const handleBookClick = () => {
     trackEvent('srimandir_puja_click', {
@@ -32,7 +37,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
           <div className="w-full sm:w-40 h-40 sm:h-auto flex-shrink-0">
             <img
               src={puja.cover_media_url}
-              alt={translatedTitle}
+              alt={displayTitle}
               className="w-full h-full object-cover"
             />
           </div>
@@ -40,15 +45,17 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
 
         {/* Details */}
         <div className="flex-1 p-4 space-y-2">
-          <h4 className="font-semibold text-base line-clamp-2">{translatedTitle}</h4>
+          <h4 className="font-semibold text-base line-clamp-2">{displayTitle}</h4>
           
           {puja.temple_name && (
-            <p className="text-sm text-muted-foreground">{puja.temple_name}</p>
+            <p className="text-sm text-muted-foreground">{displayTempleName}</p>
           )}
           
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {puja.schedule_date_ist && (
-              <span className="font-medium">Scheduled: {formattedDate}</span>
+              <span className="font-medium">
+                {currentLang === 'hi' ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
+              </span>
             )}
             {puja.individual_pack_price_inr > 0 && (
               <span className="font-semibold text-primary">₹{puja.individual_pack_price_inr}</span>
@@ -63,11 +70,13 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
               onClick={handleBookClick}
             >
               <a href={puja.puja_link} target="_blank" rel="noopener noreferrer">
-                Book Puja
+                {currentLang === 'hi' ? 'पूजा बुक करें' : 'Book Puja'}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
-            <p className="text-xs text-muted-foreground">Powered by Sri Mandir</p>
+            <p className="text-xs text-muted-foreground">
+              {currentLang === 'hi' ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
+            </p>
           </div>
         </div>
       </div>

@@ -38,6 +38,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [doshaResults, setDoshaResults] = useState<any>(null);
+  const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   const {
     register,
@@ -56,59 +58,102 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
   const unknownTime = watch('unknownTime');
   const placeValue = watch('place');
+  
+  // Debounced search timer
+  const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Debounced place search
-  const handlePlaceSearch = async (searchTerm: string) => {
-    if (searchTerm.length < 3) {
+  // Debounced place search (350ms)
+  const handlePlaceSearch = (searchTerm: string) => {
+    // Clear previous timer
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+
+    if (searchTerm.length < 2) {
       setPlaceSearchResults([]);
+      setSearchError(null);
+      setShowPlaceResults(false);
       return;
     }
 
     setIsSearching(true);
-    try {
-      const results = await searchPlaces(searchTerm);
-
-      const inIndiaBounds = (p: Place) =>
-        p.lat >= 8.0667 && p.lat <= 37.1 && p.lon >= 68.1167 && p.lon <= 97.4167;
-
-      let filtered = results;
-      if (searchTerm.length <= 5) {
-        // Strictly show only within India's bounding box for short inputs
-        filtered = results.filter(inIndiaBounds);
+    setSearchError(null);
+    
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchPlaces(searchTerm);
+        
+        if (results.length === 0) {
+          // Show offline fallback
+          const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+          const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+            city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setPlaceSearchResults(fallback);
+        } else {
+          setPlaceSearchResults(results);
+        }
+        
+        setShowPlaceResults(true);
+        setSelectedPlaceIndex(-1);
+      } catch (error) {
+        console.error('Place search error:', error);
+        setSearchError(error instanceof Error ? error.message : 'Search failed');
+        
+        // Show offline fallback on error
+        const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+        const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+          city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setPlaceSearchResults(fallback);
+        setShowPlaceResults(true);
+      } finally {
+        setIsSearching(false);
       }
+    }, 350);
 
-      // Prefer India country results
-      const indiaOnly = filtered.filter((p) => p.address?.country?.toLowerCase() === 'india');
-      const finalResults = searchTerm.length <= 5 ? filtered : (indiaOnly.length > 0 ? indiaOnly : filtered);
-
-      setPlaceSearchResults(finalResults);
-      setShowPlaceResults(true);
-    } catch (error) {
-      console.error('Place search error:', error);
-      toast.error('Failed to search places. Please try again.');
-    } finally {
-      setIsSearching(false);
-    }
+    setSearchTimer(timer);
   };
 
   const handlePlaceSelect = async (place: Place) => {
     setValue('place', place.display_name);
     setValue('lat', place.lat);
     setValue('lon', place.lon);
-    
-    // Auto-detect time zone
-    try {
-      const timezone = await getTimeZoneForCoordinates(place.lat, place.lon);
-      setValue('tz', timezone);
-      toast.success(`Time zone detected: ${timezone}`);
-    } catch (error) {
-      console.error('Time zone detection error:', error);
-      toast.error('Could not auto-detect time zone. Please verify manually.');
-      setValue('tz', 'Asia/Kolkata'); // Default fallback
-    }
+    setValue('tz', 'Asia/Kolkata'); // Default for India
     
     setShowPlaceResults(false);
     setPlaceSearchResults([]);
+    setSelectedPlaceIndex(-1);
+    
+    toast.success('Location selected. Time zone: Asia/Kolkata');
+  };
+
+  // Keyboard navigation for place results
+  const handlePlaceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showPlaceResults || placeSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedPlaceIndex(prev => 
+          prev < placeSearchResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedPlaceIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedPlaceIndex >= 0 && selectedPlaceIndex < placeSearchResults.length) {
+          handlePlaceSelect(placeSearchResults[selectedPlaceIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowPlaceResults(false);
+        setSelectedPlaceIndex(-1);
+        break;
+    }
   };
 
   const onSubmit = async (data: BirthInput) => {
@@ -281,16 +326,18 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 <MapPin className="w-4 h-4" />
                 Place of Birth *
               </Label>
-              <span className="text-xs text-muted-foreground">Choose from suggested places</span>
+              <span className="text-xs text-muted-foreground">Type 2+ characters</span>
             </div>
             <div className="relative">
               <Input
                 id="place"
                 {...register('place')}
-                placeholder="Town, City, State"
+                placeholder="e.g. Jaipur, Mumbai, Varanasi"
                 className="bg-input"
                 onChange={(e) => handlePlaceSearch(e.target.value)}
+                onKeyDown={handlePlaceKeyDown}
                 onFocus={() => placeSearchResults.length > 0 && setShowPlaceResults(true)}
+                onBlur={() => setTimeout(() => setShowPlaceResults(false), 200)}
                 required
                 inputMode="text"
                 autoComplete="off"
@@ -310,23 +357,43 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                       key={`${place.lat}-${place.lon}-${index}`}
                       type="button"
                       onClick={() => handlePlaceSelect(place)}
-                      className="w-full px-4 py-3 text-left hover:bg-accent/50 transition-colors border-b border-border last:border-b-0"
+                      className={`w-full px-4 py-3 text-left transition-colors border-b border-border last:border-b-0 ${
+                        index === selectedPlaceIndex ? 'bg-accent' : 'hover:bg-accent/50'
+                      }`}
                     >
-                      <p className="font-medium text-sm">{place.display_name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium text-sm flex-1">{place.display_name}</p>
+                        {place.confidence && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                            {place.confidence}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Lat: {place.lat.toFixed(4)}, Lon: {place.lon.toFixed(4)}
+                        {place.lat.toFixed(4)}°N, {place.lon.toFixed(4)}°E
                       </p>
                     </button>
                   ))}
                 </div>
               )}
             </div>
+            
+            {searchError && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                ⚠️ {searchError}
+              </p>
+            )}
+            
             {errors.place && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
                 {errors.place.message}
               </p>
             )}
+            
+            <p className="text-[10px] text-muted-foreground">
+              🔒 We only use your input to look up the place; nothing is stored.
+            </p>
           </div>
 
           {/* Coordinates and Time Zone Display */}
@@ -334,15 +401,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-md">
               <div>
                 <Label className="text-xs text-muted-foreground">Latitude</Label>
-                <p className="font-mono text-sm">{watch('lat')?.toFixed(4)}</p>
+                <p className="font-mono text-sm">{watch('lat')?.toFixed(4)}°N</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Longitude</Label>
-                <p className="font-mono text-sm">{watch('lon')?.toFixed(4)}</p>
+                <p className="font-mono text-sm">{watch('lon')?.toFixed(4)}°E</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Time Zone</Label>
-                <p className="font-mono text-sm">{watch('tz') || 'Not detected'}</p>
+                <Label className="text-xs text-muted-foreground">Time Zone (India)</Label>
+                <p className="font-mono text-sm">{watch('tz') || 'Asia/Kolkata'}</p>
               </div>
             </div>
           )}

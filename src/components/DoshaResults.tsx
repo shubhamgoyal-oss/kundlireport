@@ -184,7 +184,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('doshaResults.howImpactAnswer') : details.mangal.explanation}</p>
+                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.mangal.explanation}</p>
                   </div>
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
@@ -254,7 +254,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('doshaResults.howImpactAnswer') : details.kaalSarp.explanation}</p>
+                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.kaalSarp.explanation}</p>
                   </div>
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
@@ -315,7 +315,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('doshaResults.howImpactAnswer') : details.pitra.explanation}</p>
+                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.pitra.explanation}</p>
                   </div>
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
@@ -377,7 +377,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('doshaResults.howImpactAnswer') : details.sadeSati.explanation}</p>
+                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.sadeSati.explanation}</p>
                   </div>
 
                   {details.sadeSati.notes && details.sadeSati.notes.length > 0 && (

@@ -196,27 +196,27 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
 
 /**
  * Get the puja title in the specified language
- * Handles both Hindi and English source titles
+ * CSV has Hindi titles, so return as-is for Hindi, translate to English for English
  */
 export function getPujaTitle(originalTitle: string, language: string): string {
+  // For Hindi, return the original title from CSV (already in Hindi)
   if (language === 'hi') {
-    // If already in Hindi, return as is; otherwise translate from English to Hindi
-    return ENGLISH_TO_HINDI_TITLES[originalTitle] || originalTitle;
+    return originalTitle;
   }
-  // If already in English, return as is; otherwise translate from Hindi to English
+  // For English, translate from Hindi to English
   return HINDI_TO_ENGLISH_TITLES[originalTitle] || originalTitle;
 }
 
 /**
  * Get the temple name in the specified language
- * Handles both Hindi and English source names
+ * CSV has Hindi names, so return as-is for Hindi, translate to English for English
  */
 export function getTempleName(originalName: string, language: string): string {
+  // For Hindi, return the original name from CSV (already in Hindi)
   if (language === 'hi') {
-    // If already in Hindi, return as is; otherwise translate from English to Hindi
-    return ENGLISH_TO_HINDI_TEMPLES[originalName] || originalName;
+    return originalName;
   }
-  // If already in English, return as is; otherwise translate from Hindi to English
+  // For English, translate from Hindi to English
   return HINDI_TO_ENGLISH_TEMPLES[originalName] || originalName;
 }
 

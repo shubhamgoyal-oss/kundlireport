@@ -23,7 +23,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
   const pujaLink = getPujaLink(puja, currentLang);
   
-  console.log('Display title after translation:', displayTitle);
+  console.log('Display title after translation:', displayTitle, 'Link used:', pujaLink);
 
   const handleBookClick = () => {
     trackEvent('srimandir_puja_click', {

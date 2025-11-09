@@ -102,8 +102,18 @@ function parseCSV(csvText: string): SriMandirPuja[] {
         pooja_title: puja.pooja_title,
         temple_name: puja.temple_name || '',
         cover_media_url: puja.cover_media_url || '',
-        puja_link: puja.puja_link || '',
-        puja_link_hindi: puja.puja_link_hindi || puja.puja_link || '',
+        puja_link: puja.puja_link || puja.pooja_link || '',
+        puja_link_hindi:
+          puja.puja_link_hindi ||
+          puja.puja_link_hi ||
+          puja.pooja_link_hindi ||
+          puja.pooja_link_hi ||
+          puja.hindi_puja_link ||
+          puja.hindi_pooja_link ||
+          puja.hindi_link ||
+          puja.puja_link ||
+          puja.pooja_link ||
+          '',
         individual_pack_price_inr: parseFloat(puja.individual_pack_price_inr) || 0,
         schedule_date_ist: puja.schedule_date_ist || '',
       });
@@ -258,5 +268,8 @@ export function formatScheduleDate(dateStr: string, language: string = 'en'): st
  */
 export function getPujaLink(puja: SriMandirPuja, language: string): string {
   const isHindi = language?.toLowerCase().startsWith('hi');
-  return isHindi ? puja.puja_link_hindi : puja.puja_link;
+  if (isHindi) {
+    return puja.puja_link_hindi || puja.puja_link;
+  }
+  return puja.puja_link || puja.puja_link_hindi;
 }

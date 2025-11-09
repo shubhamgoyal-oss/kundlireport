@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
   const displayTitle = getPujaTitle(puja.pooja_title, currentLang);
   const displayTempleName = getTempleName(puja.temple_name, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
+  const pujaLink = getPujaLink(puja, currentLang);
   
   console.log('Display title after translation:', displayTitle);
 
@@ -75,7 +76,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
               className="w-full sm:w-auto"
               onClick={handleBookClick}
             >
-              <a href={puja.puja_link} target="_blank" rel="noopener noreferrer">
+              <a href={pujaLink} target="_blank" rel="noopener noreferrer">
                 {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>

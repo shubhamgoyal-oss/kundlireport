@@ -8,6 +8,7 @@ export interface SriMandirPuja {
   temple_name: string;
   cover_media_url: string;
   puja_link: string;
+  puja_link_hindi: string;
   individual_pack_price_inr: number;
   schedule_date_ist: string;
 }
@@ -102,6 +103,7 @@ function parseCSV(csvText: string): SriMandirPuja[] {
         temple_name: puja.temple_name || '',
         cover_media_url: puja.cover_media_url || '',
         puja_link: puja.puja_link || '',
+        puja_link_hindi: puja.puja_link_hindi || puja.puja_link || '',
         individual_pack_price_inr: parseFloat(puja.individual_pack_price_inr) || 0,
         schedule_date_ist: puja.schedule_date_ist || '',
       });
@@ -249,4 +251,12 @@ export function formatScheduleDate(dateStr: string, language: string = 'en'): st
     month: 'short',
     year: 'numeric',
   }).format(date);
+}
+
+/**
+ * Get the appropriate puja link based on language
+ */
+export function getPujaLink(puja: SriMandirPuja, language: string): string {
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  return isHindi ? puja.puja_link_hindi : puja.puja_link;
 }

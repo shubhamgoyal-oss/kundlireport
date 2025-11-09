@@ -1,10 +1,10 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-// Determine initial language from localStorage or browser
+// Determine initial language from localStorage or browser (default to Hindi)
 const savedLang = (typeof window !== 'undefined' && localStorage.getItem('lang')) || undefined;
-const browserLang = typeof navigator !== 'undefined' ? navigator.language : 'en';
-const initialLang = savedLang || (browserLang.startsWith('hi') ? 'hi' : 'en');
+const browserLang = typeof navigator !== 'undefined' ? navigator.language : 'hi';
+const initialLang = savedLang || (browserLang.startsWith('en') ? 'en' : 'hi');
 
 const resources = {
   en: {

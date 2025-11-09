@@ -85,6 +85,69 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
     return <CheckCircle className="w-4 h-4 mr-1 text-success" />;
   };
 
+  // Helpers: translate status and placements for Hindi
+  const translateStatus = (status?: string) => {
+    if (!status) return '';
+    const key = status.toLowerCase();
+    const map: Record<string, string> = {
+      present: t('doshaResults.statusValues.present'),
+      absent: t('doshaResults.statusValues.absent'),
+      inactive: t('doshaResults.statusValues.inactive'),
+      active: t('doshaResults.statusValues.active'),
+      suggested: t('doshaResults.statusValues.suggested'),
+    };
+    return map[key] || status;
+  };
+
+  const translatePlacement = (line: string) => {
+    if (!isHindi) return line;
+    let s = line;
+
+    const planetMap: Record<string, string> = {
+      Sun: 'सूर्य',
+      Moon: 'चंद्र',
+      Mars: 'मंगल',
+      Mercury: 'बुध',
+      Jupiter: 'गुरु',
+      Venus: 'शुक्र',
+      Saturn: 'शनि',
+      Rahu: 'राहु',
+      Ketu: 'केतु',
+    };
+    const signMap: Record<string, string> = {
+      Aries: 'मेष',
+      Taurus: 'वृषभ',
+      Gemini: 'मिथुन',
+      Cancer: 'कर्क',
+      Leo: 'सिंह',
+      Virgo: 'कन्या',
+      Libra: 'तुला',
+      Scorpio: 'वृश्चिक',
+      Sagittarius: 'धनु',
+      Capricorn: 'मकर',
+      Aquarius: 'कुंभ',
+      Pisces: 'मीन',
+    };
+
+    Object.entries(planetMap).forEach(([en, hi]) => {
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+    });
+    Object.entries(signMap).forEach(([en, hi]) => {
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+    });
+
+    s = s
+      .replace(/\bin\b/gi, 'में')
+      .replace(/\bhouse\b/gi, 'भाव')
+      .replace(/from\s+Lagna/gi, 'लग्न से')
+      .replace(/with empty neighboring signs/gi, 'पड़ोसी राशियों के बिना')
+      .replace(/isolated/gi, 'अकेला');
+
+    s = s.replace(/(\d+)(st|nd|rd|th)?\s*भाव/gi, (_m, num) => `${num}वें भाव`);
+
+    return s;
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
@@ -104,7 +167,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.mangal)}
-              {t('doshaResults.mangal.name')}: {summary.mangal}
+              {t('doshaResults.mangal.name')}: {translateStatus(summary.mangal)}
               {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
             </Badge>
 
@@ -114,7 +177,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.kaalSarp)}
-              {t('doshaResults.kaalSarp.name')}: {summary.kaalSarp}
+              {t('doshaResults.kaalSarp.name')}: {translateStatus(summary.kaalSarp)}
               {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
             </Badge>
 
@@ -124,7 +187,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.pitra)}
-              {t('doshaResults.pitra.name')}: {summary.pitra}
+              {t('doshaResults.pitra.name')}: {translateStatus(summary.pitra)}
             </Badge>
 
             {/* Sade Sati Chip */}
@@ -133,7 +196,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
             >
               {getStatusIcon(summary.shaniSadeSati)}
-              {t('doshaResults.sadeSati.name')}: {summary.shaniSadeSati}
+              {t('doshaResults.sadeSati.name')}: {translateStatus(summary.shaniSadeSati)}
               {summary.shaniPhase && ` (${t('doshaResults.phase')} ${summary.shaniPhase})`}
             </Badge>
           </div>
@@ -161,7 +224,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">{t('doshaResults.mangal.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('doshaResults.status')}: {summary.mangal}
+                    {t('doshaResults.status')}: {translateStatus(summary.mangal)}
                     {summary.mangalSeverity && ` • ${t('doshaResults.severity')}: ${summary.mangalSeverity}`}
                   </p>
                 </div>
@@ -192,7 +255,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.mangal.placements.map((p, i) => (
-                          <li key={i}>{p}</li>
+                          <li key={i}>{translatePlacement(p)}</li>
                         ))}
                       </ul>
                     </div>
@@ -231,7 +294,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">{t('doshaResults.kaalSarp.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('doshaResults.status')}: {summary.kaalSarp}
+                    {t('doshaResults.status')}: {translateStatus(summary.kaalSarp)}
                     {summary.kaalSarpType && ` • ${t('doshaResults.type')}: ${summary.kaalSarpType}`}
                   </p>
                 </div>
@@ -262,7 +325,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.kaalSarp.placements.map((p, i) => (
-                          <li key={i}>{p}</li>
+                          <li key={i}>{translatePlacement(p)}</li>
                         ))}
                       </ul>
                     </div>
@@ -293,7 +356,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">{t('doshaResults.pitra.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('doshaResults.status')}: {summary.pitra}
+                    {t('doshaResults.status')}: {translateStatus(summary.pitra)}
                   </p>
                 </div>
               </div>
@@ -323,7 +386,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                       <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                         {details.pitra.placements.map((p, i) => (
-                          <li key={i}>{p}</li>
+                          <li key={i}>{translatePlacement(p)}</li>
                         ))}
                       </ul>
                     </div>
@@ -354,7 +417,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                 <div className="text-left">
                   <h3 className="font-semibold text-lg">{t('doshaResults.sadeSati.name')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('doshaResults.status')}: {summary.shaniSadeSati}
+                    {t('doshaResults.status')}: {translateStatus(summary.shaniSadeSati)}
                     {summary.shaniPhase && ` • ${t('doshaResults.phase')}: ${summary.shaniPhase}`}
                   </p>
                 </div>

@@ -35,10 +35,10 @@ const Index = () => {
       {/* Hero Section - Medium.com inspired layout */}
       <main className="flex-1">
   
-        <div className="container mx-auto px-6 py-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
+        <div className="container mx-auto px-6 py-12 max-w-7xl">
+          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[70vh] mx-auto">
             {/* Left Content */}
-            <div className="space-y-8">
+            <div className="space-y-8 mx-auto lg:mx-0 max-w-2xl w-full">
               <div className="text-center lg:text-left">
                 <div className="mb-8">
                   <img 

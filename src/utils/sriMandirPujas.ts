@@ -18,7 +18,7 @@ const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1erweJnzoGMXOiA8Hf
 const ENGLISH_TO_HINDI_TITLES: Record<string, string> = {
   'Pitru Dosha Nivaran Mahayagya & Kashi Ganga Maha Aarti': 'पितृ दोष निवारण महायज्ञ एवं काशी गंगा महाआरती',
   'Pitra Dosha Shanti Mahapuja & Kashi Ganga Aarti': 'पितृ दोष शांति महापूजा एवं काशी गंगा आरती',
-  'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti': 'पितृ दोष निवारण पूजा और काशी गंगा आरती',
+  'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti': 'पितृ दोष निवारण पूजा एवं काशी गंगा आरती',
   'Trimbakeshwar Jyotirlinga Rudrabhishek & Kaal Sarp Dosha Nivaran Puja': 'त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक और काल सर्प दोष निवारण पूजा',
   'Kaal Sarp Dosha Nivaran Puja & Trimbakeshwar Jyotirlinga Rudrabhishek': 'काल सर्प दोष निवारण पूजा एवं त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक',
   'Rahu–Surya Dosha Nivaran Puja': 'राहु-सूर्य दोष निवारण पूजा',

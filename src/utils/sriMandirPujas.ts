@@ -199,11 +199,10 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
  * CSV has Hindi titles, so return as-is for Hindi, translate to English for English
  */
 export function getPujaTitle(originalTitle: string, language: string): string {
-  // For Hindi, return the original title from CSV (already in Hindi)
-  if (language === 'hi') {
-    return originalTitle;
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  if (isHindi) {
+    return originalTitle; // already Hindi in CSV
   }
-  // For English, translate from Hindi to English
   return HINDI_TO_ENGLISH_TITLES[originalTitle] || originalTitle;
 }
 
@@ -212,11 +211,10 @@ export function getPujaTitle(originalTitle: string, language: string): string {
  * CSV has Hindi names, so return as-is for Hindi, translate to English for English
  */
 export function getTempleName(originalName: string, language: string): string {
-  // For Hindi, return the original name from CSV (already in Hindi)
-  if (language === 'hi') {
-    return originalName;
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  if (isHindi) {
+    return originalName; // already Hindi in CSV
   }
-  // For English, translate from Hindi to English
   return HINDI_TO_ENGLISH_TEMPLES[originalName] || originalName;
 }
 
@@ -243,7 +241,8 @@ export function formatScheduleDate(dateStr: string, language: string = 'en'): st
   const date = parseIndianDate(dateStr);
   if (!date) return dateStr;
   
-  const locale = language === 'hi' ? 'hi-IN' : 'en-GB';
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  const locale = isHindi ? 'hi-IN' : 'en-GB';
   
   return new Intl.DateTimeFormat(locale, {
     day: 'numeric',

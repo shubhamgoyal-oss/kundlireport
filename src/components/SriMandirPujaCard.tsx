@@ -13,11 +13,11 @@ interface SriMandirPujaCardProps {
 export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) => {
   const { i18n, t } = useTranslation();
   const currentLang = i18n.language;
+  const isHindi = currentLang?.toLowerCase().startsWith('hi');
   
   // Debug log to see what we're getting
   console.log('Puja title from CSV:', puja.pooja_title);
   console.log('Current language:', currentLang);
-  
   const displayTitle = getPujaTitle(puja.pooja_title, currentLang);
   const displayTempleName = getTempleName(puja.temple_name, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
@@ -60,7 +60,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {puja.schedule_date_ist && (
               <span className="font-medium">
-                {currentLang === 'hi' ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
+                {isHindi ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
               </span>
             )}
             {puja.individual_pack_price_inr > 0 && (
@@ -76,12 +76,12 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
               onClick={handleBookClick}
             >
               <a href={puja.puja_link} target="_blank" rel="noopener noreferrer">
-                {currentLang === 'hi' ? 'पूजा बुक करें' : 'Book Puja'}
+                {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
             <p className="text-xs text-muted-foreground">
-              {currentLang === 'hi' ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
+              {isHindi ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
             </p>
           </div>
         </div>

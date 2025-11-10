@@ -14,27 +14,47 @@ import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 
-// Form validation schema with conditional time validation
-const birthInputSchema = z.object({
-  name: z.string().max(100, "Name must be less than 100 characters").optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-  time: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)").optional(),
-  unknownTime: z.boolean().default(false),
-  place: z.string().min(1, "Birth place is required"),
-  lat: z.number().min(-90).max(90),
-  lon: z.number().min(-180).max(180),
-  tz: z.string().min(1, "Time zone is required"),
-  chartStyle: z.enum(["north", "south"]).default("north").optional(),
-}).refine((data) => {
-  // If unknownTime is false, time must be provided
-  if (!data.unknownTime && !data.time) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Time is required when birth time is known",
-  path: ["time"],
-});
+// Form validation schema with conditional and cross-field validation
+const birthInputSchema = z
+  .object({
+    name: z.string().max(100, "Name must be less than 100 characters").optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    time: z
+      .string()
+      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)")
+      .optional(),
+    unknownTime: z.boolean().default(false),
+    place: z.string().min(1, "Birth place is required"),
+    // Make lat/lon/tz optional at schema level so RHF doesn't block silently;
+    // we'll surface a friendly error on the place field via superRefine
+    lat: z.number().optional(),
+    lon: z.number().optional(),
+    tz: z.string().optional(),
+    chartStyle: z.enum(["north", "south"]).default("north").optional(),
+  })
+  .superRefine((data, ctx) => {
+    // If birth time is known, time must be provided
+    if (!data.unknownTime && !data.time) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["time"],
+        message: "Time is required when birth time is known",
+      });
+    }
+
+    // Require selecting a place result so lat/lon/tz are present
+    if (
+      data.place && (data.lat == null || data.lon == null || !data.tz)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["place"],
+        message: "Please select a place from the list",
+      });
+    }
+  });
 
 type BirthInput = z.infer<typeof birthInputSchema>;
 
@@ -253,7 +273,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       </CardHeader>
       
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit, (errs) => {
+          const msg = (errs.place?.message as string)
+            || (errs.time?.message as string)
+            || (errs.date?.message as string)
+            || (Object.values(errs)[0]?.message as string)
+            || t('dosha.formError', 'Please correct the highlighted fields');
+          toast.error(msg);
+        })} className="space-y-6">
           {/* Name (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="name">{t('dosha.nameOptional')}</Label>

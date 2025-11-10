@@ -14,29 +14,31 @@ import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 
-// Form validation schema with conditional and cross-field validation
+// Form validation schema
 const birthInputSchema = z
   .object({
     name: z.string().max(100, "Name must be less than 100 characters").optional(),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
-    time: z
-      .string()
-      .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Invalid time format (HH:MM)")
-      .optional(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),
     place: z.string().min(1, "Birth place is required"),
-    // Make lat/lon/tz optional at schema level so RHF doesn't block silently;
-    // we'll surface a friendly error on the place field via superRefine
     lat: z.number().optional(),
     lon: z.number().optional(),
     tz: z.string().optional(),
     chartStyle: z.enum(["north", "south"]).default("north").optional(),
   })
   .superRefine((data, ctx) => {
-    // If birth time is known, time must be provided
-    if (!data.unknownTime && !data.time) {
+    // If birth time is known and provided, validate format
+    if (data.time && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(data.time)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["time"],
+        message: "Invalid time format (HH:MM)",
+      });
+    }
+
+    // If birth time is known (unknownTime is false), time is required
+    if (!data.unknownTime && (!data.time || data.time.trim() === '')) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["time"],
@@ -45,13 +47,11 @@ const birthInputSchema = z
     }
 
     // Require selecting a place result so lat/lon/tz are present
-    if (
-      data.place && (data.lat == null || data.lon == null || !data.tz)
-    ) {
+    if (data.place && (data.lat == null || data.lon == null || !data.tz)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["place"],
-        message: "Please select a place from the list",
+        message: "Please select a place from the dropdown list",
       });
     }
   });
@@ -188,21 +188,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   };
 
   const onSubmit = async (data: BirthInput) => {
-    // Ensure a place was selected from the dropdown so lat/lon/tz are populated
-    const placeChosen = typeof data.lat === 'number' && typeof data.lon === 'number' && !!data.tz;
-    if (!placeChosen) {
-      const msg = t('dosha.selectPlaceError', 'Please select a place from the list');
-      toast.error(msg);
-      setSearchError(msg);
-      return;
-    }
-
-    // If birth time is known, require time
-    if (!data.unknownTime && !data.time) {
-      toast.error(t('dosha.enterTimeError'));
-      return;
-    }
-
+    console.log('Form submitted with data:', data);
+    
     setIsCalculating(true);
     
     try {

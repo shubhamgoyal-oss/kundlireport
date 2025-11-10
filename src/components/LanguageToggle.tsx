@@ -1,9 +1,13 @@
 import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 
 export default function LanguageToggle() {
   const { i18n, t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { lang } = useParams<{ lang: string }>();
   const isHindi = i18n.language?.startsWith('hi');
 
   const toggle = () => {
@@ -19,7 +23,9 @@ export default function LanguageToggle() {
       });
     }
     
-    i18n.changeLanguage(next);
+    // Update URL with new language
+    const pathWithoutLang = location.pathname.replace(/^\/(en|hi)/, '');
+    navigate(`/${next}${pathWithoutLang}${location.search}`);
   };
 
   return (

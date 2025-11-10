@@ -84,6 +84,17 @@ serve(async (req) => {
           system: 'Sidereal',
           calculationUTC: new Date().toISOString(),
           jd: jd,
+          rules_version: 'india-popular-v1',
+          generated_at: new Date().toISOString(),
+          calculation_preset: {
+            zodiac: 'sidereal',
+            ayanamsha: 'Lahiri',
+            node_model: 'mean',
+            endpoints: 'inclusive',
+            ks_edge_tolerance_deg: 2.0,
+            conj_orb_deg: 8,
+            conj_orb_moon_deg: 6,
+          },
         },
       }),
       { 
@@ -294,6 +305,7 @@ function calculateSaturnPosition(T: number): number {
 }
 
 function calculateRahuPosition(T: number): number {
+  // MEAN node calculation for consistency with popular calculators
   const L = 125.04 - 1934.136 * T;
   return (L % 360 + 360) % 360;
 }
@@ -355,6 +367,8 @@ function calculateAllDoshas(chart: any) {
       // New doshas (add-only, optional fields)
       grahan: grahan.present,
       grahanSeverity: grahan.severity || undefined,
+      grahanSubtype: grahan.subtype || undefined,
+      rahuSurya: grahan.rahuSurya || undefined,
       shrapit: shrapit.present,
       guruChandal: guruChandal.present,
       punarphoo: punarphoo.present,
@@ -364,6 +378,7 @@ function calculateAllDoshas(chart: any) {
       vishDaridra: vishDaridra.present,
       ketuNaga: ketuNaga.present,
       navagrahaUmbrella: navagrahaUmbrella.present,
+      kaalSarpSubtype: kaalSarp.subtype || undefined,
     },
     details: {
       // Original doshas (backward-compatible)
@@ -499,6 +514,7 @@ function calculateMangalDosha(chart: any) {
     placements.push(`Mars in ${marsHouseFromLagna}th house from Lagna (${mars.sign} ${mars.deg.toFixed(1)}°)`);
   }
 
+  // Check from Moon only if Lagna unknown or as secondary check
   const moon = chart.grahas.Moon;
   const marsHouseFromMoon = calculateHouseFrom(mars.lon, moon.lon);
   if (MANGAL_DOSHA_HOUSES.includes(marsHouseFromMoon)) {
@@ -506,25 +522,43 @@ function calculateMangalDosha(chart: any) {
     placements.push(`Mars in ${marsHouseFromMoon}th house from Moon`);
   }
 
+  // Check cancellations
   if (mars.sign === 'Aries' || mars.sign === 'Scorpio' || mars.sign === 'Capricorn') {
     canceled = true;
     notes.push(`Mars is ${mars.sign === 'Capricorn' ? 'exalted' : 'in own sign'} (${mars.sign}) - Dosha canceled`);
   }
 
-  const jupiterMarsDistance = Math.abs(jupiter.lon - mars.lon);
-  if (jupiterMarsDistance < 8 || Math.abs(jupiterMarsDistance - 180) < 8) {
+  const jupiterMarsDistance = getMinDistance(jupiter.lon, mars.lon);
+  if (jupiterMarsDistance < 8) {
     canceled = true;
-    notes.push('Jupiter aspects/conjuncts Mars - beneficial mitigation');
+    notes.push('Jupiter conjuncts/aspects Mars - beneficial mitigation');
   }
 
+  // Determine severity
   let severity: any = null;
   if (triggeredBy.length > 0 && !canceled) {
-    severity = triggeredBy.length === 1 ? 'mild' : 'moderate';
+    const fromLagna = triggeredBy.includes('Mars from Lagna');
+    const fromMoon = triggeredBy.includes('Mars from Moon');
     
-    const aspectsLagna = Math.abs(mars.lon - chart.ascendant.lon);
-    if (aspectsLagna < 8 || Math.abs(aspectsLagna - 90) < 8 || Math.abs(aspectsLagna - 180) < 8) {
+    if (fromLagna && fromMoon) {
+      severity = 'moderate';
+    } else if (fromLagna || fromMoon) {
+      severity = 'mild';
+    }
+    
+    // Check for tight conjunction with Lagna/Moon (≤3° = strong)
+    if (chart.ascendant) {
+      const marsLagnaDist = getMinDistance(mars.lon, chart.ascendant.lon);
+      if (marsLagnaDist <= 3) {
+        severity = 'strong';
+        notes.push('Mars tightly conjunct Lagna (≤3°)');
+      }
+    }
+    
+    const marsMoonDist = getMinDistance(mars.lon, moon.lon);
+    if (marsMoonDist <= 3) {
       severity = 'strong';
-      notes.push('Mars strongly aspects Lagna');
+      notes.push('Mars tightly conjunct Moon (≤3°)');
     }
   }
 
@@ -543,11 +577,29 @@ function calculateKaalSarpDosha(chart: any) {
     chart.grahas.Mercury, chart.grahas.Jupiter, chart.grahas.Venus, chart.grahas.Saturn,
   ];
 
-  let allPlanetsInArc = true;
+  const EDGE_TOLERANCE = 2.0; // degrees
+  let planetsInArc = 0;
+  let planetsOutsideArc = 0;
+  let outsidePlanets: string[] = [];
+  
   for (const planet of planets) {
-    if (!isInRahuKetuArc(planet.lon, rahuLon, ketuLon)) {
-      allPlanetsInArc = false;
-      break;
+    const inArc = isInRahuKetuArc(planet.lon, rahuLon, ketuLon);
+    if (inArc) {
+      planetsInArc++;
+    } else {
+      // Check edge tolerance
+      const distFromRahu = getMinDistance(planet.lon, rahuLon);
+      const distFromKetu = getMinDistance(planet.lon, ketuLon);
+      const minDist = Math.min(distFromRahu, distFromKetu);
+      
+      if (minDist <= EDGE_TOLERANCE) {
+        // Within edge tolerance, count as partial
+        planetsInArc++;
+      } else {
+        planetsOutsideArc++;
+        const planetName = Object.keys(chart.grahas).find(k => chart.grahas[k] === planet) || 'Unknown';
+        outsidePlanets.push(planetName);
+      }
     }
   }
 
@@ -556,56 +608,99 @@ function calculateKaalSarpDosha(chart: any) {
 
   const triggeredBy: string[] = [];
   const placements: string[] = [];
+  const notes: string[] = [];
   let type: string | null = null;
+  let subtype: string | undefined = undefined;
+  
+  // Present if all in arc OR exactly 1 outside within edge tolerance
+  const isPresent = planetsOutsideArc === 0;
+  const isPartial = planetsOutsideArc === 0 && planetsInArc === 7;
 
-  if (allPlanetsInArc) {
-    triggeredBy.push('All planets between Rahu and Ketu');
+  if (isPresent) {
+    if (planetsInArc < 7) {
+      // Some planets on edge
+      triggeredBy.push('All planets between Rahu and Ketu (edge tolerance applied)');
+      subtype = 'partial';
+      notes.push(`Edge tolerance (≤${EDGE_TOLERANCE}°) applied for planet positioning`);
+    } else {
+      triggeredBy.push('All planets between Rahu and Ketu');
+    }
+    
     if (rahu.house) {
       type = KAAL_SARP_TYPES[rahu.house - 1];
       placements.push(`Rahu in ${rahu.house}th house (${rahu.sign}), Type: ${type}`);
+    } else if (chart.ascendant === null) {
+      notes.push('Birth time unknown - cannot determine Kaal Sarp type');
     }
+  } else {
+    notes.push(`${planetsOutsideArc} planet(s) outside Rahu-Ketu arc: ${outsidePlanets.join(', ')}`);
   }
 
-  return { present: allPlanetsInArc, type, triggeredBy, placements, notes: [] };
+  return { present: isPresent, type, subtype, triggeredBy, placements, notes };
+}
+
+function getMinDistance(lon1: number, lon2: number): number {
+  const diff = Math.abs(lon1 - lon2);
+  return Math.min(diff, 360 - diff);
 }
 
 function calculatePitraDosha(chart: any) {
   const triggeredBy: string[] = [];
   const placements: string[] = [];
+  const notes: string[] = [];
 
   const sun = chart.grahas.Sun;
   const rahu = chart.grahas.Rahu;
   const ketu = chart.grahas.Ketu;
   const saturn = chart.grahas.Saturn;
 
-  if (rahu.house === 9) {
-    triggeredBy.push('Rahu in 9th house');
-    placements.push(`Rahu in 9th house (${rahu.sign})`);
-  }
-  if (ketu.house === 9) {
-    triggeredBy.push('Ketu in 9th house');
-    placements.push(`Ketu in 9th house (${ketu.sign})`);
-  }
-
-  const sunRahuDist = Math.abs(sun.lon - rahu.lon);
-  if (sunRahuDist < 8 || sunRahuDist > 352) {
-    triggeredBy.push('Sun conjunct Rahu');
-    placements.push(`Sun conjunct Rahu`);
-  }
-
-  const sunKetuDist = Math.abs(sun.lon - ketu.lon);
-  if (sunKetuDist < 8 || sunKetuDist > 352) {
-    triggeredBy.push('Sun conjunct Ketu');
-    placements.push(`Sun conjunct Ketu`);
+  // Primary triggers (any one is sufficient)
+  
+  // 1. Rahu or Ketu in 9th house (requires birth time)
+  if (chart.ascendant) {
+    if (rahu.house === 9) {
+      triggeredBy.push('Rahu in 9th house');
+      placements.push(`Rahu in 9th house (${rahu.sign})`);
+    }
+    if (ketu.house === 9) {
+      triggeredBy.push('Ketu in 9th house');
+      placements.push(`Ketu in 9th house (${ketu.sign})`);
+    }
   }
 
-  const sunSaturnDist = Math.abs(sun.lon - saturn.lon);
-  if (Math.abs(sunSaturnDist - 180) < 6 || sunSaturnDist < 6) {
-    triggeredBy.push('Sun aspected by Saturn');
-    placements.push(`Sun-Saturn aspect`);
+  // 2. Sun-Rahu conjunction (≤8°, no houses needed)
+  const sunRahuDist = getMinDistance(sun.lon, rahu.lon);
+  if (sunRahuDist <= 8) {
+    triggeredBy.push('Sun-Rahu conjunction');
+    placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}° conjunct Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}° (Δ=${sunRahuDist.toFixed(1)}°)`);
   }
 
-  return { present: triggeredBy.length > 0, triggeredBy, placements, notes: [] };
+  // 3. Sun-Ketu conjunction (≤8°, no houses needed)
+  const sunKetuDist = getMinDistance(sun.lon, ketu.lon);
+  if (sunKetuDist <= 8) {
+    triggeredBy.push('Sun-Ketu conjunction');
+    placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}° conjunct Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}° (Δ=${sunKetuDist.toFixed(1)}°)`);
+  }
+
+  // 4. Sun-Saturn conjunction or opposition (≤6°, supporting trigger)
+  const sunSaturnDist = getMinDistance(sun.lon, saturn.lon);
+  if (sunSaturnDist <= 6) {
+    triggeredBy.push('Sun-Saturn conjunction');
+    placements.push(`Sun-Saturn conjunction (Δ=${sunSaturnDist.toFixed(1)}°)`);
+    notes.push('Sun-Saturn conjunction (supporting indicator)');
+  }
+
+  // If only house-based triggers would apply but time unknown
+  if (!chart.ascendant && triggeredBy.length === 0) {
+    notes.push('Birth time unknown - house-based checks skipped (partial result)');
+  }
+
+  return { 
+    present: triggeredBy.length > 0, 
+    triggeredBy, 
+    placements, 
+    notes: notes.length > 0 ? notes : ['Traditional indicators of ancestral karma patterns'] 
+  };
 }
 
 function calculateSadeSati(chart: any) {

@@ -35,8 +35,8 @@ function getNakshatra(lon: number): string {
 }
 
 /**
- * A) Rahu–Ketu / Grahan Dosha
- * Rule: Sun or Moon within ≤8° of Rahu or Ketu
+ * A) Rahu–Ketu / Grahan Dosha (updated with subtypes)
+ * Rule: Sun or Moon within ≤8° of Rahu or Ketu (Moon uses ≤6°)
  */
 export function calculateGrahanDosha(chart: any) {
   const sun = chart.grahas.Sun;
@@ -47,56 +47,78 @@ export function calculateGrahanDosha(chart: any) {
   const triggeredBy: string[] = [];
   const placements: string[] = [];
   const notes: string[] = [];
+  let rahuSurya = false;
+  let rahuChandra = false;
 
-  // Check Sun-Rahu
+  // Check Sun-Rahu (Rahu-Surya Dosha)
   const sunRahuDist = getConjunctionDistance(sun.lon, rahu.lon);
   if (sunRahuDist <= DOSHA_CONFIG.orb.standard) {
+    rahuSurya = true;
     triggeredBy.push('Sun-Rahu conjunction');
     placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${sunRahuDist.toFixed(1)}°`);
+    if (sunRahuDist <= 3) {
+      notes.push('Strong Sun-Rahu conjunction (≤3°)');
+    }
   }
 
   // Check Sun-Ketu
   const sunKetuDist = getConjunctionDistance(sun.lon, ketu.lon);
   if (sunKetuDist <= DOSHA_CONFIG.orb.standard) {
+    rahuSurya = true;
     triggeredBy.push('Sun-Ketu conjunction');
     placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}°; Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Δ=${sunKetuDist.toFixed(1)}°`);
+    if (sunKetuDist <= 3) {
+      notes.push('Strong Sun-Ketu conjunction (≤3°)');
+    }
   }
 
-  // Check Moon-Rahu
+  // Check Moon-Rahu (tighter orb for Moon)
   const moonRahuDist = getConjunctionDistance(moon.lon, rahu.lon);
-  if (moonRahuDist <= DOSHA_CONFIG.orb.standard) {
+  if (moonRahuDist <= DOSHA_CONFIG.orb.tight) {
+    rahuChandra = true;
     triggeredBy.push('Moon-Rahu conjunction');
     placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${moonRahuDist.toFixed(1)}°`);
+    if (moonRahuDist <= 3) {
+      notes.push('Strong Moon-Rahu conjunction (≤3°)');
+    }
   }
 
-  // Check Moon-Ketu
+  // Check Moon-Ketu (tighter orb for Moon)
   const moonKetuDist = getConjunctionDistance(moon.lon, ketu.lon);
-  if (moonKetuDist <= DOSHA_CONFIG.orb.standard) {
+  if (moonKetuDist <= DOSHA_CONFIG.orb.tight) {
+    rahuChandra = true;
     triggeredBy.push('Moon-Ketu conjunction');
     placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Δ=${moonKetuDist.toFixed(1)}°`);
+    if (moonKetuDist <= 3) {
+      notes.push('Strong Moon-Ketu conjunction (≤3°)');
+    }
   }
 
-  // Determine severity
+  // Determine severity and subtype
   let severity: string | null = null;
-  const hasSun = triggeredBy.some(t => t.includes('Sun'));
-  const hasMoon = triggeredBy.some(t => t.includes('Moon'));
+  let subtype: string | undefined = undefined;
   
-  if (hasSun && hasMoon) {
+  if (rahuSurya && rahuChandra) {
     severity = 'strong';
-  } else if (hasMoon) {
+    subtype = 'both';
+  } else if (rahuChandra) {
     severity = 'moderate';
-  } else if (hasSun) {
+    subtype = 'rahu-chandra';
+  } else if (rahuSurya) {
     severity = 'mild';
+    subtype = 'rahu-surya';
   }
 
   return {
     present: triggeredBy.length > 0 ? 'present' : 'absent',
     severity,
+    subtype,
+    rahuSurya: rahuSurya ? 'present' : 'absent',
     triggeredBy,
     placements,
     notes,
     explanation: triggeredBy.length > 0 
-      ? `Grahan Dosha (${severity}) detected: ${triggeredBy.join(', ')}`
+      ? `Grahan Dosha (${severity}, ${subtype}) detected: ${triggeredBy.join(', ')}`
       : 'No Grahan Dosha detected.',
     remedies: triggeredBy.length > 0 
       ? ['Mindfulness, stable routines, breath practices.', 'Charity on eclipse-related days; light devotional worship.']
@@ -207,7 +229,7 @@ export function calculatePunarphooDosha(chart: any) {
 }
 
 /**
- * E) Kemadruma Yoga (Moon isolated)
+ * E) Kemadruma Yoga (Moon isolated) - Updated with proper cancellations
  */
 export function calculateKemadrumaYoga(chart: any) {
   const moon = chart.grahas.Moon;
@@ -221,44 +243,71 @@ export function calculateKemadrumaYoga(chart: any) {
   const prevSign = (moonSign - 1 + 12) % 12;
   const nextSign = (moonSign + 1) % 12;
 
-  // Check for planets (exclude Rahu/Ketu) in adjacent signs
+  // Check for planets (exclude Rahu/Ketu) in adjacent signs OR with Moon
   const planets = ['Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
   let hasNeighbor = false;
+  let hasPlanetWithMoon = false;
 
+  // Check if any planet is with Moon in same sign
   for (const planetName of planets) {
     const planet = chart.grahas[planetName];
     const planetSign = Math.floor(planet.lon / 30);
     
+    if (planetSign === moonSign) {
+      hasPlanetWithMoon = true;
+      notes.push(`${planetName} with Moon in ${moon.sign} - Dosha canceled`);
+    }
+    
     if (planetSign === prevSign || planetSign === nextSign) {
       hasNeighbor = true;
-      notes.push(`${planetName} in adjacent sign (${planet.sign})`);
-      break;
+      notes.push(`${planetName} in adjacent sign (${planet.sign}) - Dosha canceled`);
     }
   }
 
-  if (!hasNeighbor) {
+  // Check for planets in kendras from Moon (1, 4, 7, 10)
+  let hasKendraPlanet = false;
+  if (chart.ascendant) {
+    for (const planetName of planets) {
+      const planet = chart.grahas[planetName];
+      const houseFromMoon = calculateHouseFrom(planet.lon, moon.lon);
+      
+      if ([1, 4, 7, 10].includes(houseFromMoon)) {
+        hasKendraPlanet = true;
+        notes.push(`${planetName} in kendra from Moon (${houseFromMoon}th) - Dosha canceled`);
+        break;
+      }
+    }
+  }
+
+  // Determine if Kemadruma is present (canceled if neighbors, planet with Moon, or kendra planets)
+  const isCanceled = hasNeighbor || hasPlanetWithMoon || hasKendraPlanet;
+
+  if (!hasNeighbor && !hasPlanetWithMoon && !isCanceled) {
     triggeredBy.push('Moon isolated (no planets in adjacent signs)');
     placements.push(`Moon in ${moon.sign} with empty neighboring signs`);
   }
 
-  // Check cancellations
-  const moonSignPlanets = planets.filter(p => Math.floor(chart.grahas[p].lon / 30) === moonSign);
-  if (moonSignPlanets.length > 0 && !hasNeighbor) {
-    notes.push(`Partial cancellation: ${moonSignPlanets.join(', ')} with Moon`);
-  }
-
   return {
-    present: !hasNeighbor ? 'present' : 'absent',
+    present: (!hasNeighbor && !hasPlanetWithMoon && !hasKendraPlanet) ? 'present' : 'absent',
     triggeredBy,
     placements,
     notes,
-    explanation: !hasNeighbor
-      ? 'Kemadruma Yoga present: Moon isolated without planetary neighbors.'
-      : 'No Kemadruma Yoga detected.',
-    remedies: !hasNeighbor
+    explanation: (!isCanceled && !hasNeighbor && !hasPlanetWithMoon)
+      ? 'Kemadruma Yoga present: Moon isolated without planetary neighbors or kendra support.'
+      : 'No Kemadruma Yoga detected (canceled by planetary support).',
+    remedies: (!isCanceled && !hasNeighbor && !hasPlanetWithMoon)
       ? ['Community seva; gratitude and consistency rituals.', 'Chandra pacification; Navagraha Shanti.']
       : []
   };
+}
+
+function calculateHouseFrom(planetLon: number, refLon: number): number {
+  const refSign = Math.floor(refLon / 30);
+  const planetSign = Math.floor(planetLon / 30);
+  let house = planetSign - refSign + 1;
+  while (house <= 0) house += 12;
+  while (house > 12) house -= 12;
+  return house;
 }
 
 /**

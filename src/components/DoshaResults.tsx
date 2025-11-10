@@ -14,12 +14,15 @@ interface DoshaResultsProps {
     mangalSeverity?: string;
     kaalSarp: string;
     kaalSarpType?: string;
+    kaalSarpSubtype?: string;
     pitra: string;
     shaniSadeSati: string;
     shaniPhase?: number;
     // New doshas (optional, backward-compatible)
     grahan?: string;
     grahanSeverity?: string;
+    grahanSubtype?: string;
+    rahuSurya?: string;
     shrapit?: string;
     guruChandal?: string;
     punarphoo?: string;
@@ -179,6 +182,9 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
               {getStatusIcon(summary.kaalSarp)}
               {t('doshaResults.kaalSarp.name')}: {translateStatus(summary.kaalSarp)}
               {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
+              {summary.kaalSarpSubtype === 'partial' && (
+                <span className="ml-1 text-xs bg-accent/30 px-1.5 py-0.5 rounded">Partial (edge)</span>
+              )}
             </Badge>
 
             {/* Pitra Dosha Chip */}

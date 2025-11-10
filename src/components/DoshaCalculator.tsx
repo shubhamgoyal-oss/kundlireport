@@ -14,7 +14,7 @@ import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 
-// Form validation schema
+// Form validation schema with conditional time validation
 const birthInputSchema = z.object({
   name: z.string().max(100, "Name must be less than 100 characters").optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
@@ -25,6 +25,15 @@ const birthInputSchema = z.object({
   lon: z.number().min(-180).max(180),
   tz: z.string().min(1, "Time zone is required"),
   chartStyle: z.enum(["north", "south"]).default("north").optional(),
+}).refine((data) => {
+  // If unknownTime is false, time must be provided
+  if (!data.unknownTime && !data.time) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Time is required when birth time is known",
+  path: ["time"],
 });
 
 type BirthInput = z.infer<typeof birthInputSchema>;

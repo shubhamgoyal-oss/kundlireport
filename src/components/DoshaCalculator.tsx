@@ -168,7 +168,17 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   };
 
   const onSubmit = async (data: BirthInput) => {
-    if (!unknownTime && !data.time) {
+    // Ensure a place was selected from the dropdown so lat/lon/tz are populated
+    const placeChosen = typeof data.lat === 'number' && typeof data.lon === 'number' && !!data.tz;
+    if (!placeChosen) {
+      const msg = t('dosha.selectPlaceError', 'Please select a place from the list');
+      toast.error(msg);
+      setSearchError(msg);
+      return;
+    }
+
+    // If birth time is known, require time
+    if (!data.unknownTime && !data.time) {
       toast.error(t('dosha.enterTimeError'));
       return;
     }

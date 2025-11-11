@@ -34,6 +34,44 @@ const HINDI_TO_ENGLISH_TITLES: Record<string, string> = {
   'शनि पूजा': 'Shani Puja',
   'राहु पूजा': 'Rahu Puja',
   'केतु पूजा': 'Ketu Puja',
+  'नवग्रह शांति पूजा, शनि तिल तेल अभिषेक और पाप ग्रह शांति यज्ञ': 'Navagraha Shanti Puja, Shani Til Tel Abhishek and Paap Graha Shanti Yagya',
+};
+
+// Word-level translations for fallback
+const HINDI_WORD_TRANSLATIONS: Record<string, string> = {
+  'पूजा': 'Puja',
+  'महापूजा': 'Mahapuja',
+  'दोष': 'Dosha',
+  'निवारण': 'Nivaran',
+  'शांति': 'Shanti',
+  'महायज्ञ': 'Mahayagya',
+  'यज्ञ': 'Yagya',
+  'अभिषेक': 'Abhishek',
+  'रुद्राभिषेक': 'Rudrabhishek',
+  'आरती': 'Aarti',
+  'महाआरती': 'Maha Aarti',
+  'मंदिर': 'Temple',
+  'ज्योतिर्लिंग': 'Jyotirlinga',
+  'एवं': '&',
+  'और': 'and',
+  'तिल': 'Til',
+  'तेल': 'Tel',
+  'पाप': 'Paap',
+  'ग्रह': 'Graha',
+  'नवग्रह': 'Navagraha',
+  'मंगल': 'Mangal',
+  'शनि': 'Shani',
+  'राहु': 'Rahu',
+  'केतु': 'Ketu',
+  'गुरु': 'Guru',
+  'सूर्य': 'Surya',
+  'चंद्र': 'Chandra',
+  'काल सर्प': 'Kaal Sarp',
+  'पितृ': 'Pitru',
+  'पितर': 'Pitra',
+  'श्रापित': 'Shrapit',
+  'चांडाल': 'Chandal',
+  'साढ़े साती': 'Sade Sati',
 };
 
 // English to Hindi translations (reverse mapping for backward compatibility)
@@ -53,6 +91,7 @@ const HINDI_TO_ENGLISH_TEMPLES: Record<string, string> = {
   'रामेश्वरम मंदिर': 'Rameshwaram Temple',
   'द्वारकाधीश मंदिर': 'Dwarkadhish Temple',
   'जगन्नाथ पुरी मंदिर': 'Jagannath Puri Temple',
+  'हथला शनि देव मंदिर': 'Hathla Shani Dev Temple',
 };
 
 // English to Hindi translations (reverse mapping for backward compatibility)
@@ -228,6 +267,22 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
 }
 
 /**
+ * Fallback translation using word-by-word replacement
+ */
+function fallbackTranslation(hindiText: string): string {
+  let result = hindiText;
+  
+  // Replace longer phrases first, then individual words
+  Object.entries(HINDI_WORD_TRANSLATIONS)
+    .sort((a, b) => b[0].length - a[0].length)
+    .forEach(([hindi, english]) => {
+      result = result.replace(new RegExp(hindi, 'g'), english);
+    });
+  
+  return result;
+}
+
+/**
  * Get the puja title in the specified language
  * CSV has Hindi titles, so return as-is for Hindi, translate to English for English
  */
@@ -236,7 +291,15 @@ export function getPujaTitle(originalTitle: string, language: string): string {
   if (isHindi) {
     return originalTitle; // already Hindi in CSV
   }
-  return HINDI_TO_ENGLISH_TITLES[originalTitle] || originalTitle;
+  
+  // Try exact match first
+  if (HINDI_TO_ENGLISH_TITLES[originalTitle]) {
+    return HINDI_TO_ENGLISH_TITLES[originalTitle];
+  }
+  
+  // Try fallback word-by-word translation
+  const fallback = fallbackTranslation(originalTitle);
+  return fallback !== originalTitle ? fallback : originalTitle;
 }
 
 /**
@@ -248,7 +311,15 @@ export function getTempleName(originalName: string, language: string): string {
   if (isHindi) {
     return originalName; // already Hindi in CSV
   }
-  return HINDI_TO_ENGLISH_TEMPLES[originalName] || originalName;
+  
+  // Try exact match first
+  if (HINDI_TO_ENGLISH_TEMPLES[originalName]) {
+    return HINDI_TO_ENGLISH_TEMPLES[originalName];
+  }
+  
+  // Try fallback word-by-word translation
+  const fallback = fallbackTranslation(originalName);
+  return fallback !== originalName ? fallback : originalName;
 }
 
 /**

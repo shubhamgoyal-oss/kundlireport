@@ -431,9 +431,9 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </p>
           </div>
 
-          {/* Coordinates and Time Zone Display */}
+          {/* Coordinates and Time Zone Display - Hidden but kept for backend */}
           {watch('lat') && watch('lon') && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-md">
+            <div className="hidden">
               <div>
                 <Label className="text-xs text-muted-foreground">{t('dosha.latitude')}</Label>
                 <p className="font-mono text-sm">{watch('lat')?.toFixed(4)}°N</p>

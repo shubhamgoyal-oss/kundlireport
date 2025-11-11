@@ -37,8 +37,9 @@ const HINDI_TO_ENGLISH_TITLES: Record<string, string> = {
   'नवग्रह शांति पूजा, शनि तिल तेल अभिषेक और पाप ग्रह शांति यज्ञ': 'Navagraha Shanti Puja, Shani Til Tel Abhishek and Paap Graha Shanti Yagya',
 };
 
-// Word-level translations for fallback
+// Word-level translations for fallback (comprehensive list)
 const HINDI_WORD_TRANSLATIONS: Record<string, string> = {
+  // Puja related
   'पूजा': 'Puja',
   'महापूजा': 'Mahapuja',
   'दोष': 'Dosha',
@@ -50,28 +51,53 @@ const HINDI_WORD_TRANSLATIONS: Record<string, string> = {
   'रुद्राभिषेक': 'Rudrabhishek',
   'आरती': 'Aarti',
   'महाआरती': 'Maha Aarti',
+  'महादशा': 'Mahadasha',
+  
+  // Temple related
   'मंदिर': 'Temple',
   'ज्योतिर्लिंग': 'Jyotirlinga',
+  'देव': 'Dev',
+  
+  // Conjunctions and connectors
   'एवं': '&',
   'और': 'and',
+  
+  // Materials and offerings
   'तिल': 'Til',
   'तेल': 'Tel',
+  'गंगा': 'Ganga',
+  
+  // Astrological terms
   'पाप': 'Paap',
   'ग्रह': 'Graha',
   'नवग्रह': 'Navagraha',
+  
+  // Planets
   'मंगल': 'Mangal',
   'शनि': 'Shani',
+  'साढ़े साती': 'Sade Sati',
+  'साढ़ेसाती': 'Sade Sati',
   'राहु': 'Rahu',
   'केतु': 'Ketu',
   'गुरु': 'Guru',
   'सूर्य': 'Surya',
   'चंद्र': 'Chandra',
+  'चन्द्र': 'Chandra',
+  'बुध': 'Budh',
+  'शुक्र': 'Shukra',
+  
+  // Doshas
   'काल सर्प': 'Kaal Sarp',
+  'कालसर्प': 'Kaal Sarp',
   'पितृ': 'Pitru',
   'पितर': 'Pitra',
   'श्रापित': 'Shrapit',
   'चांडाल': 'Chandal',
-  'साढ़े साती': 'Sade Sati',
+  
+  // Places
+  'काशी': 'Kashi',
+  'त्र्यंबकेश्वर': 'Trimbakeshwar',
+  'हथला': 'Hathla',
 };
 
 // English to Hindi translations (reverse mapping for backward compatibility)
@@ -272,12 +298,19 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 3): SriMandi
 function fallbackTranslation(hindiText: string): string {
   let result = hindiText;
   
-  // Replace longer phrases first, then individual words
-  Object.entries(HINDI_WORD_TRANSLATIONS)
-    .sort((a, b) => b[0].length - a[0].length)
-    .forEach(([hindi, english]) => {
-      result = result.replace(new RegExp(hindi, 'g'), english);
-    });
+  // Sort by length descending to replace longer phrases first
+  const sortedEntries = Object.entries(HINDI_WORD_TRANSLATIONS)
+    .sort((a, b) => b[0].length - a[0].length);
+  
+  // Replace each Hindi word/phrase with English
+  sortedEntries.forEach(([hindi, english]) => {
+    // Use global flag and case-insensitive matching
+    const regex = new RegExp(hindi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    result = result.replace(regex, english);
+  });
+  
+  // Clean up multiple spaces
+  result = result.replace(/\s+/g, ' ').trim();
   
   return result;
 }

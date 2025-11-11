@@ -161,15 +161,25 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
 /**
  * Filter pujas by dosha type
  */
-export function filterPujasByDosha(pujas: SriMandirPuja[], doshaType: 'mangal' | 'kaalSarp' | 'pitra' | 'sadeSati'): SriMandirPuja[] {
-  const keywords: Record<typeof doshaType, string[]> = {
+export function filterPujasByDosha(
+  pujas: SriMandirPuja[], 
+  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'
+): SriMandirPuja[] {
+  const keywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
     kaalSarp: ['kaal sarp', 'काल सर्प'],
+    'kaal-sarp': ['kaal sarp', 'काल सर्प'],
     mangal: ['mangal', 'kuja', 'मंगल'],
     sadeSati: ['shani', 'saturn', 'शनि'],
+    shani: ['shani', 'saturn', 'शनि'],
+    rahu: ['rahu', 'राहु'],
+    shrapit: ['shrapit', 'श्रापित'],
+    'guru-chandal': ['guru chandal', 'गुरु चांडाल'],
   };
 
   const searchTerms = keywords[doshaType];
+  if (!searchTerms) return [];
+  
   return pujas.filter(puja => {
     const title = puja.pooja_title.toLowerCase();
     return searchTerms.some(term => title.includes(term.toLowerCase()));

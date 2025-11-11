@@ -492,12 +492,75 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             }}
           />
 
-          {/* Sri Mandir Offered Remedies Carousel */}
+          {/* Remedies For You - Personalized based on detected doshas */}
+          {(() => {
+            const activeDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
+            
+            // Check each dosha and add to list if present/active
+            if (isDoshaPresent(summary.mangal)) {
+              activeDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
+            }
+            if (isDoshaPresent(summary.kaalSarp)) {
+              activeDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
+            }
+            if (isDoshaPresent(summary.pitra)) {
+              activeDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
+            }
+            if (isDoshaPresent(summary.shaniSadeSati)) {
+              activeDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
+            }
+            if (summary.grahan && isDoshaPresent(summary.grahan)) {
+              activeDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
+            }
+            if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
+              activeDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
+            }
+            if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
+              activeDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+            }
+
+            // Get personalized pujas for each active dosha
+            const personalizedPujas: SriMandirPuja[] = [];
+            activeDoshas.forEach(dosha => {
+              const filtered = filterPujasByDosha(pujas, dosha.type);
+              const upcoming = getUpcomingPujas(filtered, 3); // Get up to 3 pujas per dosha
+              personalizedPujas.push(...upcoming);
+            });
+
+            // Remove duplicates based on store_id
+            const uniquePersonalizedPujas = personalizedPujas.filter(
+              (puja, index, self) => index === self.findIndex(p => p.store_id === puja.store_id)
+            );
+
+            // Only show section if there are active doshas and pujas available
+            if (activeDoshas.length === 0 || uniquePersonalizedPujas.length === 0) {
+              return null;
+            }
+
+            return (
+              <div className="mt-8 space-y-4">
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
+                    {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {isHindi 
+                      ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
+                      : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
+                    }
+                  </p>
+                </div>
+                <SriMandirPujaCarousel pujas={uniquePersonalizedPujas} doshaType="personalized" />
+              </div>
+            );
+          })()}
+
+          {/* Sri Mandir Offered Other Remedies */}
           {pujas.length > 0 && (
             <div className="mt-8 space-y-4">
               <div className="text-center">
                 <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
-                  {t('doshaResults.sriMandirRemedies')}
+                  {isHindi ? 'श्री मंदिर द्वारा अन्य उपाय' : 'Sri Mandir Offered Other Remedies'}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-2">
                   {getUpcomingPujas(pujas, 10).length} {t('doshaResults.upcomingPujas')}

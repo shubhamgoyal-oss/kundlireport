@@ -15,38 +15,49 @@ export interface SriMandirPuja {
 
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1erweJnzoGMXOiA8HfZ7w9ZOA1nv2Mbt3ejiaUthfTNY/export?format=csv&gid=0';
 
-// English to Hindi translations for puja titles
-const ENGLISH_TO_HINDI_TITLES: Record<string, string> = {
-  'Pitru Dosha Nivaran Mahayagya & Kashi Ganga Maha Aarti': 'पितृ दोष निवारण महायज्ञ एवं काशी गंगा महाआरती',
-  'Pitra Dosha Shanti Mahapuja & Kashi Ganga Aarti': 'पितृ दोष शांति महापूजा एवं काशी गंगा आरती',
-  'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti': 'पितृ दोष निवारण पूजा एवं काशी गंगा आरती',
-  'Trimbakeshwar Jyotirlinga Rudrabhishek & Kaal Sarp Dosha Nivaran Puja': 'त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक और काल सर्प दोष निवारण पूजा',
-  'Kaal Sarp Dosha Nivaran Puja & Trimbakeshwar Jyotirlinga Rudrabhishek': 'काल सर्प दोष निवारण पूजा एवं त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक',
-  'Rahu–Surya Dosha Nivaran Puja': 'राहु-सूर्य दोष निवारण पूजा',
+// Hindi to English translations for puja titles (CSV has Hindi by default)
+const HINDI_TO_ENGLISH_TITLES: Record<string, string> = {
+  'पितृ दोष निवारण महायज्ञ एवं काशी गंगा महाआरती': 'Pitru Dosha Nivaran Mahayagya & Kashi Ganga Maha Aarti',
+  'पितृ दोष शांति महापूजा एवं काशी गंगा आरती': 'Pitra Dosha Shanti Mahapuja & Kashi Ganga Aarti',
+  'पितृ दोष निवारण पूजा एवं काशी गंगा आरती': 'Pitra Dosha Nivaran Puja & Kashi Ganga Aarti',
+  'त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक और काल सर्प दोष निवारण पूजा': 'Trimbakeshwar Jyotirlinga Rudrabhishek & Kaal Sarp Dosha Nivaran Puja',
+  'काल सर्प दोष निवारण पूजा एवं त्र्यंबकेश्वर ज्योतिर्लिंग रुद्राभिषेक': 'Kaal Sarp Dosha Nivaran Puja & Trimbakeshwar Jyotirlinga Rudrabhishek',
+  'राहु-सूर्य दोष निवारण पूजा': 'Rahu-Surya Dosha Nivaran Puja',
+  'मंगल दोष निवारण पूजा': 'Mangal Dosha Nivaran Puja',
+  'शनि शांति पूजा': 'Shani Shanti Puja',
+  'शनि साढ़े साती शांति पूजा': 'Shani Sade Sati Shanti Puja',
+  'नवग्रह शांति पूजा': 'Navagraha Shanti Puja',
+  'गुरु चांडाल दोष निवारण पूजा': 'Guru Chandal Dosha Nivaran Puja',
+  'श्रापित दोष निवारण पूजा': 'Shrapit Dosha Nivaran Puja',
+  'काल सर्प दोष पूजा': 'Kaal Sarp Dosha Puja',
+  'मंगल पूजा': 'Mangal Puja',
+  'शनि पूजा': 'Shani Puja',
+  'राहु पूजा': 'Rahu Puja',
+  'केतु पूजा': 'Ketu Puja',
 };
 
-// Hindi to English translations for puja titles (reverse mapping)
-const HINDI_TO_ENGLISH_TITLES: Record<string, string> = Object.fromEntries(
-  Object.entries(ENGLISH_TO_HINDI_TITLES).map(([en, hi]) => [hi, en])
+// English to Hindi translations (reverse mapping for backward compatibility)
+const ENGLISH_TO_HINDI_TITLES: Record<string, string> = Object.fromEntries(
+  Object.entries(HINDI_TO_ENGLISH_TITLES).map(([hi, en]) => [en, hi])
 );
 
-// English to Hindi translations for temple names
-const ENGLISH_TO_HINDI_TEMPLES: Record<string, string> = {
-  'Kashi Vishwanath Temple': 'काशी विश्वनाथ मंदिर',
-  'Trimbakeshwar Temple': 'त्र्यंबकेश्वर मंदिर',
-  'Trimbakeshwar Jyotirlinga': 'त्र्यंबकेश्वर ज्योतिर्लिंग',
-  'Mahakaleshwar Temple': 'महाकालेश्वर मंदिर',
-  'Somnath Temple': 'सोमनाथ मंदिर',
-  'Kedarnath Temple': 'केदारनाथ मंदिर',
-  'Badrinath Temple': 'बद्रीनाथ मंदिर',
-  'Rameshwaram Temple': 'रामेश्वरम मंदिर',
-  'Dwarkadhish Temple': 'द्वारकाधीश मंदिर',
-  'Jagannath Puri Temple': 'जगन्नाथ पुरी मंदिर',
+// Hindi to English translations for temple names (CSV has Hindi by default)
+const HINDI_TO_ENGLISH_TEMPLES: Record<string, string> = {
+  'काशी विश्वनाथ मंदिर': 'Kashi Vishwanath Temple',
+  'त्र्यंबकेश्वर मंदिर': 'Trimbakeshwar Temple',
+  'त्र्यंबकेश्वर ज्योतिर्लिंग': 'Trimbakeshwar Jyotirlinga',
+  'महाकालेश्वर मंदिर': 'Mahakaleshwar Temple',
+  'सोमनाथ मंदिर': 'Somnath Temple',
+  'केदारनाथ मंदिर': 'Kedarnath Temple',
+  'बद्रीनाथ मंदिर': 'Badrinath Temple',
+  'रामेश्वरम मंदिर': 'Rameshwaram Temple',
+  'द्वारकाधीश मंदिर': 'Dwarkadhish Temple',
+  'जगन्नाथ पुरी मंदिर': 'Jagannath Puri Temple',
 };
 
-// Hindi to English translations for temple names (reverse mapping)
-const HINDI_TO_ENGLISH_TEMPLES: Record<string, string> = Object.fromEntries(
-  Object.entries(ENGLISH_TO_HINDI_TEMPLES).map(([en, hi]) => [hi, en])
+// English to Hindi translations (reverse mapping for backward compatibility)
+const ENGLISH_TO_HINDI_TEMPLES: Record<string, string> = Object.fromEntries(
+  Object.entries(HINDI_TO_ENGLISH_TEMPLES).map(([hi, en]) => [en, hi])
 );
 
 /**

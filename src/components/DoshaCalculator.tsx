@@ -235,6 +235,13 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
         const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
         
+        // Helper function to convert status strings to boolean
+        const isActive = (status?: string | boolean) => {
+          if (typeof status === 'boolean') return status;
+          const s = String(status || '').toLowerCase();
+          return s === 'present' || s === 'active' || s === 'suggested';
+        };
+        
         const { data: savedCalc, error } = await supabase.from('dosha_calculations').insert({
           visitor_id: visitorId,
           session_id: sessionId,
@@ -244,20 +251,20 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           place_of_birth: data.place,
           latitude: data.lat || null,
           longitude: data.lon || null,
-          mangal_dosha: result.summary?.mangalDosha || false,
-          kaal_sarp_dosha: result.summary?.kaalSarpDosha || false,
-          pitra_dosha: result.summary?.pitraDosha || false,
-          sade_sati: result.summary?.sadeSati || false,
-          grahan_dosha: result.summary?.grahanDosha || false,
-          shrapit_dosha: result.summary?.shrapitDosha || false,
-          guru_chandal_dosha: result.summary?.guruChandalDosha || false,
-          punarphoo_dosha: result.summary?.punarphooDosha || false,
-          kemadruma_yoga: result.summary?.kemadrumaYoga || false,
-          gandmool_dosha: result.summary?.gandmoolDosha || false,
-          kalathra_dosha: result.summary?.kalathraDosh || false,
-          vish_daridra_yoga: result.summary?.vishDaridraYoga || false,
-          ketu_naga_dosha: result.summary?.ketuNagaDosha || false,
-          navagraha_umbrella: result.summary?.navagrahaUmbrella || false,
+          mangal_dosha: isActive(result.summary?.mangal),
+          kaal_sarp_dosha: isActive(result.summary?.kaalSarp),
+          pitra_dosha: isActive(result.summary?.pitra),
+          sade_sati: isActive(result.summary?.shaniSadeSati),
+          grahan_dosha: isActive(result.summary?.grahan),
+          shrapit_dosha: isActive(result.summary?.shrapit),
+          guru_chandal_dosha: isActive(result.summary?.guruChandal),
+          punarphoo_dosha: isActive(result.summary?.punarphoo),
+          kemadruma_yoga: isActive(result.summary?.kemadruma),
+          gandmool_dosha: isActive(result.summary?.gandmool),
+          kalathra_dosha: isActive(result.summary?.kalathra),
+          vish_daridra_yoga: isActive(result.summary?.vishDaridra),
+          ketu_naga_dosha: isActive(result.summary?.ketuNaga),
+          navagraha_umbrella: isActive(result.summary?.navagrahaUmbrella),
           calculation_results: result,
           book_puja_clicked: false,
         }).select().single();

@@ -163,58 +163,151 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
         </CardHeader>
         
         <CardContent className="space-y-4">
-          {/* Status Chips Row */}
-          <div className="flex flex-wrap gap-3">
-            {/* Mangal Dosha Chip - Only show if present */}
-            {isDoshaPresent(summary.mangal) && (
-              <Badge 
-                variant="outline" 
-                className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
-              >
-                {getStatusIcon(summary.mangal)}
-                {t('doshaResults.mangal.name')}: {translateStatus(summary.mangal)}
-                {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
-              </Badge>
-            )}
+          {/* Check if any doshas are present */}
+          {(() => {
+            const hasAnyDosha = 
+              isDoshaPresent(summary.mangal) ||
+              isDoshaPresent(summary.kaalSarp) ||
+              isDoshaPresent(summary.pitra) ||
+              isDoshaPresent(summary.shaniSadeSati);
+            
+            if (!hasAnyDosha) {
+              return (
+                <div className="text-center py-8">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-success" />
+                  <p className="text-lg font-medium text-foreground">
+                    {isHindi ? 'कोई प्रमुख दोष नहीं पाया गया' : 'No major doshas found'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {isHindi 
+                      ? 'आपकी कुंडली में कोई प्रमुख दोष नहीं है'
+                      : 'Your birth chart shows no major doshas'
+                    }
+                  </p>
+                </div>
+              );
+            }
+            
+            return (
+              <>
+                {/* Status Chips Row */}
+                <div className="flex flex-wrap gap-3">
+                  {/* Mangal Dosha Chip - Only show if present */}
+                  {isDoshaPresent(summary.mangal) && (
+                    <Badge 
+                      variant="outline" 
+                      className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
+                    >
+                      {getStatusIcon(summary.mangal)}
+                      {t('doshaResults.mangal.name')}: {translateStatus(summary.mangal)}
+                      {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
+                    </Badge>
+                  )}
 
-            {/* Kaal Sarp Dosha Chip - Only show if present */}
-            {isDoshaPresent(summary.kaalSarp) && (
-              <Badge 
-                variant="outline" 
-                className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
-              >
-                {getStatusIcon(summary.kaalSarp)}
-                {t('doshaResults.kaalSarp.name')}: {translateStatus(summary.kaalSarp)}
-                {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
-                {summary.kaalSarpSubtype === 'partial' && (
-                  <span className="ml-1 text-xs bg-accent/30 px-1.5 py-0.5 rounded">Partial (edge)</span>
-                )}
-              </Badge>
-            )}
+                  {/* Kaal Sarp Dosha Chip - Only show if present */}
+                  {isDoshaPresent(summary.kaalSarp) && (
+                    <Badge 
+                      variant="outline" 
+                      className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
+                    >
+                      {getStatusIcon(summary.kaalSarp)}
+                      {t('doshaResults.kaalSarp.name')}: {translateStatus(summary.kaalSarp)}
+                      {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
+                      {summary.kaalSarpSubtype === 'partial' && (
+                        <span className="ml-1 text-xs bg-accent/30 px-1.5 py-0.5 rounded">Partial (edge)</span>
+                      )}
+                    </Badge>
+                  )}
 
-            {/* Pitra Dosha Chip - Only show if present */}
-            {isDoshaPresent(summary.pitra) && (
-              <Badge 
-                variant="outline" 
-                className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
-              >
-                {getStatusIcon(summary.pitra)}
-                {t('doshaResults.pitra.name')}: {translateStatus(summary.pitra)}
-              </Badge>
-            )}
+                  {/* Pitra Dosha Chip - Only show if present */}
+                  {isDoshaPresent(summary.pitra) && (
+                    <Badge 
+                      variant="outline" 
+                      className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
+                    >
+                      {getStatusIcon(summary.pitra)}
+                      {t('doshaResults.pitra.name')}: {translateStatus(summary.pitra)}
+                    </Badge>
+                  )}
 
-            {/* Sade Sati Chip - Only show if present */}
-            {isDoshaPresent(summary.shaniSadeSati) && (
-              <Badge 
-                variant="outline" 
-                className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
-              >
-                {getStatusIcon(summary.shaniSadeSati)}
-                {t('doshaResults.sadeSati.name')}: {translateStatus(summary.shaniSadeSati)}
-                {summary.shaniPhase && ` (${t('doshaResults.phase')} ${summary.shaniPhase})`}
-              </Badge>
-            )}
-          </div>
+                  {/* Sade Sati Chip - Only show if present */}
+                  {isDoshaPresent(summary.shaniSadeSati) && (
+                    <Badge 
+                      variant="outline" 
+                      className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
+                    >
+                      {getStatusIcon(summary.shaniSadeSati)}
+                      {t('doshaResults.sadeSati.name')}: {translateStatus(summary.shaniSadeSati)}
+                      {summary.shaniPhase && ` (${t('doshaResults.phase')} ${summary.shaniPhase})`}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Remedies For You - Moved here from below */}
+                {(() => {
+                  const activeDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
+                  
+                  // Check each dosha and add to list if present/active
+                  if (isDoshaPresent(summary.mangal)) {
+                    activeDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
+                  }
+                  if (isDoshaPresent(summary.kaalSarp)) {
+                    activeDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
+                  }
+                  if (isDoshaPresent(summary.pitra)) {
+                    activeDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
+                  }
+                  if (isDoshaPresent(summary.shaniSadeSati)) {
+                    activeDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
+                  }
+                  if (summary.grahan && isDoshaPresent(summary.grahan)) {
+                    activeDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
+                  }
+                  if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
+                    activeDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
+                  }
+                  if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
+                    activeDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+                  }
+
+                  // Get personalized pujas for each active dosha
+                  const personalizedPujas: SriMandirPuja[] = [];
+                  activeDoshas.forEach(dosha => {
+                    const filtered = filterPujasByDosha(pujas, dosha.type);
+                    const upcoming = getUpcomingPujas(filtered, 3); // Get up to 3 pujas per dosha
+                    personalizedPujas.push(...upcoming);
+                  });
+
+                  // Remove duplicates based on store_id
+                  const uniquePersonalizedPujas = personalizedPujas.filter(
+                    (puja, index, self) => index === self.findIndex(p => p.store_id === puja.store_id)
+                  );
+
+                  // Only show section if there are active doshas and pujas available
+                  if (activeDoshas.length === 0 || uniquePersonalizedPujas.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <div className="mt-6 space-y-4">
+                      <div className="text-center">
+                        <h3 className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
+                          {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {isHindi 
+                            ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
+                            : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
+                          }
+                        </p>
+                      </div>
+                      <SriMandirPujaCarousel pujas={uniquePersonalizedPujas} doshaType="personalized" />
+                    </div>
+                  );
+                })()}
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 
@@ -521,68 +614,6 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
             }}
           />
 
-          {/* Remedies For You - Personalized based on detected doshas */}
-          {(() => {
-            const activeDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
-            
-            // Check each dosha and add to list if present/active
-            if (isDoshaPresent(summary.mangal)) {
-              activeDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
-            }
-            if (isDoshaPresent(summary.kaalSarp)) {
-              activeDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
-            }
-            if (isDoshaPresent(summary.pitra)) {
-              activeDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
-            }
-            if (isDoshaPresent(summary.shaniSadeSati)) {
-              activeDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
-            }
-            if (summary.grahan && isDoshaPresent(summary.grahan)) {
-              activeDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
-            }
-            if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
-              activeDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
-            }
-            if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
-              activeDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
-            }
-
-            // Get personalized pujas for each active dosha
-            const personalizedPujas: SriMandirPuja[] = [];
-            activeDoshas.forEach(dosha => {
-              const filtered = filterPujasByDosha(pujas, dosha.type);
-              const upcoming = getUpcomingPujas(filtered, 3); // Get up to 3 pujas per dosha
-              personalizedPujas.push(...upcoming);
-            });
-
-            // Remove duplicates based on store_id
-            const uniquePersonalizedPujas = personalizedPujas.filter(
-              (puja, index, self) => index === self.findIndex(p => p.store_id === puja.store_id)
-            );
-
-            // Only show section if there are active doshas and pujas available
-            if (activeDoshas.length === 0 || uniquePersonalizedPujas.length === 0) {
-              return null;
-            }
-
-            return (
-              <div className="mt-8 space-y-4">
-                <div className="text-center">
-                  <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
-                    {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
-                  </h2>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {isHindi 
-                      ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
-                      : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
-                    }
-                  </p>
-                </div>
-                <SriMandirPujaCarousel pujas={uniquePersonalizedPujas} doshaType="personalized" />
-              </div>
-            );
-          })()}
 
           {/* Sri Mandir Offered Other Remedies */}
           {pujas.length > 0 && (

@@ -6,6 +6,8 @@ export interface SriMandirPuja {
   store_id: string;
   pooja_title: string;
   temple_name: string;
+  pooja_title_english?: string;
+  temple_name_english?: string;
   cover_media_url: string;
   puja_link: string;
   puja_link_hindi: string;
@@ -177,6 +179,8 @@ function parseCSV(csvText: string): SriMandirPuja[] {
         store_id: puja.store_id,
         pooja_title: puja.pooja_title,
         temple_name: puja.temple_name || '',
+        pooja_title_english: puja.pooja_title_english || puja['Puja Title English'] || '',
+        temple_name_english: puja.temple_name_english || puja['Temple name English'] || '',
         cover_media_url: puja.cover_media_url || '',
         puja_link: puja.puja_link || puja.pooja_link || '',
         puja_link_hindi:
@@ -319,10 +323,20 @@ function fallbackTranslation(hindiText: string): string {
  * Get the puja title in the specified language
  * CSV has Hindi titles, so return as-is for Hindi, translate to English for English
  */
-export function getPujaTitle(originalTitle: string, language: string): string {
+export function getPujaTitle(puja: SriMandirPuja | string, language: string): string {
   const isHindi = language?.toLowerCase().startsWith('hi');
+  
+  // Handle both old string API and new object API
+  const originalTitle = typeof puja === 'string' ? puja : puja.pooja_title;
+  const englishTitle = typeof puja === 'string' ? undefined : puja.pooja_title_english;
+  
   if (isHindi) {
     return originalTitle; // already Hindi in CSV
+  }
+  
+  // If English column is available, use it
+  if (englishTitle && englishTitle.trim()) {
+    return englishTitle;
   }
   
   // Try exact match first
@@ -339,10 +353,20 @@ export function getPujaTitle(originalTitle: string, language: string): string {
  * Get the temple name in the specified language
  * CSV has Hindi names, so return as-is for Hindi, translate to English for English
  */
-export function getTempleName(originalName: string, language: string): string {
+export function getTempleName(puja: SriMandirPuja | string, language: string): string {
   const isHindi = language?.toLowerCase().startsWith('hi');
+  
+  // Handle both old string API and new object API
+  const originalName = typeof puja === 'string' ? puja : puja.temple_name;
+  const englishName = typeof puja === 'string' ? undefined : puja.temple_name_english;
+  
   if (isHindi) {
     return originalName; // already Hindi in CSV
+  }
+  
+  // If English column is available, use it
+  if (englishName && englishName.trim()) {
+    return englishName;
   }
   
   // Try exact match first

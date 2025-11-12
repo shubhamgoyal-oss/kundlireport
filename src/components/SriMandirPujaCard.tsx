@@ -18,8 +18,8 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
   // Debug log to see what we're getting
   console.log('Puja title from CSV:', puja.pooja_title);
   console.log('Current language:', currentLang);
-  const displayTitle = getPujaTitle(puja.pooja_title, currentLang);
-  const displayTempleName = getTempleName(puja.temple_name, currentLang);
+  const displayTitle = getPujaTitle(puja, currentLang);
+  const displayTempleName = getTempleName(puja, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
   const pujaLink = getPujaLink(puja, currentLang);
   

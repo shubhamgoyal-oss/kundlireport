@@ -130,6 +130,21 @@ const ENGLISH_TO_HINDI_TEMPLES: Record<string, string> = Object.fromEntries(
 /**
  * Parse CSV and return puja objects
  */
+// Helper to fetch a field with case-insensitive and variant key support
+function getFieldInsensitive(row: Record<string, string>, candidates: string[]): string {
+  const normalize = (k: string) => k.trim().toLowerCase().replace(/[_\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const map = new Map<string, string>();
+  Object.entries(row).forEach(([k, v]) => {
+    map.set(normalize(k), v);
+  });
+  for (const c of candidates) {
+    const key = normalize(c);
+    if (map.has(key)) {
+      return (map.get(key) || '').trim();
+    }
+  }
+  return '';
+}
 function parseCSV(csvText: string): SriMandirPuja[] {
   // Remove potential BOM and normalise newlines
   const text = csvText.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
@@ -175,12 +190,19 @@ function parseCSV(csvText: string): SriMandirPuja[] {
     });
 
     if (puja.store_id && puja.pooja_title) {
+      const poojaTitleEn = puja.pooja_title_english || getFieldInsensitive(puja, [
+        'puja title english', 'pooja title english', 'puja_title_english', 'pooja_title_english', 'title english', 'english title'
+      ]);
+      const templeNameEn = puja.temple_name_english || getFieldInsensitive(puja, [
+        'temple name english', 'temple_name_english', 'temple english', 'english temple name'
+      ]);
+
       pujas.push({
         store_id: puja.store_id,
         pooja_title: puja.pooja_title,
         temple_name: puja.temple_name || '',
-        pooja_title_english: puja.pooja_title_english || puja['Puja Title English'] || '',
-        temple_name_english: puja.temple_name_english || puja['Temple name English'] || '',
+        pooja_title_english: poojaTitleEn,
+        temple_name_english: templeNameEn,
         cover_media_url: puja.cover_media_url || '',
         puja_link: puja.puja_link || puja.pooja_link || '',
         puja_link_hindi:

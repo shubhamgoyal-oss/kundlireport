@@ -85,7 +85,7 @@ export const SriMandirPujaCarousel = ({
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
                     <img
                       src={puja.cover_media_url}
-                      alt={getPujaTitle(puja.pooja_title, currentLang)}
+                      alt={getPujaTitle(puja, currentLang)}
                       className="w-full h-full object-cover"
                     />
                     
@@ -134,13 +134,13 @@ export const SriMandirPujaCarousel = ({
                   <div className="p-4 space-y-3">
                     {/* Puja Title */}
                     <h4 className="font-semibold text-base line-clamp-2">
-                      {getPujaTitle(puja.pooja_title, currentLang)}
+                      {getPujaTitle(puja, currentLang)}
                     </h4>
                     
                     {/* Temple Name */}
                     {puja.temple_name && (
                       <p className="text-sm text-muted-foreground">
-                        {getTempleName(puja.temple_name, currentLang)}
+                        {getTempleName(puja, currentLang)}
                       </p>
                     )}
 

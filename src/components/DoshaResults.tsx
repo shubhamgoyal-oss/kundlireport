@@ -7,6 +7,7 @@ import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
+import { trackEvent } from '@/lib/analytics';
 
 interface DoshaResultsProps {
   summary: {
@@ -224,7 +225,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
           <Accordion type="single" collapsible className="w-full space-y-4">
           {/* Mangal Dosha Details */}
           <AccordionItem value="mangal" className="border rounded-lg px-4">
-            <AccordionTrigger className="hover:no-underline">
+            <AccordionTrigger 
+              className="hover:no-underline"
+              onClick={() => trackEvent('accordion_expanded', {
+                metadata: { section: 'mangal_dosha', status: summary.mangal }
+              })}
+            >
               <div className="flex items-center gap-3">
                 <Flame className="w-5 h-5 text-destructive" />
                 <div className="text-left">
@@ -294,7 +300,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
 
           {/* Kaal Sarp Dosha Details */}
           <AccordionItem value="kaalSarp" className="border rounded-lg px-4">
-            <AccordionTrigger className="hover:no-underline">
+            <AccordionTrigger 
+              className="hover:no-underline"
+              onClick={() => trackEvent('accordion_expanded', {
+                metadata: { section: 'kaal_sarp_dosha', status: summary.kaalSarp }
+              })}
+            >
               <div className="flex items-center gap-3">
                 <Waves className="w-5 h-5 text-primary" />
                 <div className="text-left">
@@ -356,7 +367,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
 
           {/* Pitra Dosha Details */}
           <AccordionItem value="pitra" className="border rounded-lg px-4">
-            <AccordionTrigger className="hover:no-underline">
+            <AccordionTrigger 
+              className="hover:no-underline"
+              onClick={() => trackEvent('accordion_expanded', {
+                metadata: { section: 'pitra_dosha', status: summary.pitra }
+              })}
+            >
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5 text-accent" />
                 <div className="text-left">
@@ -417,7 +433,12 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
 
           {/* Sade Sati Details */}
           <AccordionItem value="sadeSati" className="border rounded-lg px-4">
-            <AccordionTrigger className="hover:no-underline">
+            <AccordionTrigger 
+              className="hover:no-underline"
+              onClick={() => trackEvent('accordion_expanded', {
+                metadata: { section: 'sade_sati', status: summary.shaniSadeSati }
+              })}
+            >
               <div className="flex items-center gap-3">
                 <Moon className="w-5 h-5 text-warning" />
                 <div className="text-left">

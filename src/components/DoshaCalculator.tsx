@@ -13,6 +13,7 @@ import { searchPlaces, type Place } from '@/utils/geocoding';
 import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
+import { trackEvent } from '@/lib/analytics';
 
 // Form validation schema
 const birthInputSchema = z
@@ -190,6 +191,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const onSubmit = async (data: BirthInput) => {
     console.log('Form submitted with data:', data);
     
+    // Track calculate button click
+    trackEvent('calculate_dosha_clicked', {
+      metadata: {
+        hasTime: !data.unknownTime,
+        place: data.place,
+        date: data.date
+      }
+    });
+    
     setIsCalculating(true);
     
     try {
@@ -276,6 +286,13 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               {...register('name')}
               placeholder={t('dosha.enterName')}
               className="bg-input"
+              onBlur={(e) => {
+                if (e.target.value) {
+                  trackEvent('form_field_filled', {
+                    metadata: { field: 'name', value_length: e.target.value.length }
+                  });
+                }
+              }}
             />
             {errors.name && (
               <p className="text-sm text-destructive flex items-center gap-1">
@@ -297,6 +314,13 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               {...register('date')}
               className="bg-input"
               required
+              onBlur={(e) => {
+                if (e.target.value) {
+                  trackEvent('form_field_filled', {
+                    metadata: { field: 'date', value: e.target.value }
+                  });
+                }
+              }}
             />
             {errors.date && (
               <p className="text-sm text-destructive flex items-center gap-1">
@@ -317,7 +341,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 <Switch
                   id="unknownTime"
                   checked={unknownTime}
-                  onCheckedChange={(checked) => setValue('unknownTime', checked)}
+                  onCheckedChange={(checked) => {
+                    setValue('unknownTime', checked);
+                    if (checked) {
+                      trackEvent('unknown_time_toggled', {
+                        metadata: { checked: true }
+                      });
+                    }
+                  }}
                 />
                 <Label htmlFor="unknownTime" className="text-sm text-muted-foreground cursor-pointer">
                   {t('dosha.dontKnowTime')}
@@ -333,6 +364,13 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                   {...register('time')}
                   className="bg-input"
                   required={!unknownTime}
+                  onBlur={(e) => {
+                    if (e.target.value && !unknownTime) {
+                      trackEvent('form_field_filled', {
+                        metadata: { field: 'time', value: e.target.value }
+                      });
+                    }
+                  }}
                 />
                 <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat')}</p>
               </>
@@ -372,7 +410,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 onChange={(e) => handlePlaceSearch(e.target.value)}
                 onKeyDown={handlePlaceKeyDown}
                 onFocus={() => placeSearchResults.length > 0 && setShowPlaceResults(true)}
-                onBlur={() => setTimeout(() => setShowPlaceResults(false), 200)}
+                onBlur={(e) => {
+                  setTimeout(() => setShowPlaceResults(false), 200);
+                  if (e.target.value) {
+                    trackEvent('form_field_filled', {
+                      metadata: { field: 'place', value: e.target.value }
+                    });
+                  }
+                }}
                 required
                 inputMode="text"
                 autoComplete="off"

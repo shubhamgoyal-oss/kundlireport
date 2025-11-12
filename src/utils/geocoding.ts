@@ -212,6 +212,68 @@ function determineConfidence(type?: string, address?: any): Place['confidence'] 
 }
 
 /**
+ * Search local Indian cities database (Google Sheets fallback)
+ */
+async function searchLocalIndianCities(query: string): Promise<Place[]> {
+  try {
+    const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1txrJUoN2M8cG3j1CJKsifsNHrKZrHMnAZwpCVAkVaW8/export?format=csv';
+    const response = await fetch(spreadsheetUrl);
+    
+    if (!response.ok) {
+      console.warn('Failed to fetch local cities database');
+      return [];
+    }
+    
+    const csvText = await response.text();
+    const rows = csvText.split('\n').slice(1); // Skip header row
+    
+    const queryLower = query.toLowerCase().trim();
+    const matches: Place[] = [];
+    
+    for (const row of rows) {
+      if (!row.trim()) continue;
+      
+      // Parse CSV row (handling potential commas in quotes)
+      const columns = row.split(',');
+      if (columns.length < 5) continue;
+      
+      const state = columns[0]?.replace(/^"|"$/g, '').trim();
+      const location = columns[1]?.replace(/^"|"$/g, '').trim();
+      const lat = parseFloat(columns[2]?.trim());
+      const lon = parseFloat(columns[3]?.trim());
+      const combined = columns[4]?.replace(/^"|"$/g, '').trim();
+      
+      if (!location || isNaN(lat) || isNaN(lon)) continue;
+      
+      // Match query against location name or combined field
+      if (location.toLowerCase().includes(queryLower) || 
+          combined?.toLowerCase().includes(queryLower)) {
+        matches.push({
+          display_name: combined || `${location}, ${state}`,
+          lat,
+          lon,
+          type: 'city',
+          address: {
+            city: location,
+            state: state,
+            country: 'India',
+          },
+          confidence: 'city',
+        });
+        
+        // Limit to 8 results
+        if (matches.length >= 8) break;
+      }
+    }
+    
+    return matches;
+  } catch (error) {
+    console.warn('Error searching local Indian cities:', error);
+    return [];
+  }
+}
+
+/**
  * Main search with provider fallback and caching
  */
 export async function searchPlaces(query: string): Promise<Place[]> {
@@ -260,9 +322,33 @@ export async function searchPlaces(query: string): Promise<Place[]> {
         results = await searchGeoNames(sanitizedQuery);
         error = null;
       } catch (geoNamesError) {
-        console.error('All providers failed');
+        console.warn('GeoNames failed, trying local database:', geoNamesError);
         error = geoNamesError as Error;
+        
+        // Final fallback: Try local Indian cities database
+        try {
+          results = await searchLocalIndianCities(sanitizedQuery);
+          error = results.length === 0 ? error : null;
+        } catch (localError) {
+          console.error('All providers failed including local database');
+          error = localError as Error;
+        }
       }
+    }
+  }
+  
+  // If API providers returned results but very few, supplement with local database
+  if (results.length > 0 && results.length < 3) {
+    try {
+      const localResults = await searchLocalIndianCities(sanitizedQuery);
+      // Add local results that aren't already in the results
+      const existingNames = new Set(results.map(r => r.display_name.toLowerCase()));
+      const uniqueLocalResults = localResults.filter(
+        r => !existingNames.has(r.display_name.toLowerCase())
+      );
+      results = [...results, ...uniqueLocalResults].slice(0, 8);
+    } catch (localError) {
+      console.warn('Could not supplement with local database:', localError);
     }
   }
 

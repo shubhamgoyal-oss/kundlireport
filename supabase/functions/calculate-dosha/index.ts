@@ -18,6 +18,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Simple in-memory rate limiting (5 requests per minute per IP)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 5;
+const RATE_WINDOW = 60000; // 1 minute in milliseconds
+
+function checkRateLimit(identifier: string): { allowed: boolean; remaining: number; resetTime: number } {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_WINDOW });
+    return { allowed: true, remaining: RATE_LIMIT - 1, resetTime: now + RATE_WINDOW };
+  }
+  
+  if (record.count >= RATE_LIMIT) {
+    return { allowed: false, remaining: 0, resetTime: record.resetTime };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: RATE_LIMIT - record.count, resetTime: record.resetTime };
+}
+
+// Cleanup old entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of rateLimitMap.entries()) {
+    if (now > value.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 300000);
+
 // Input validation schema
 const birthInputSchema = z.object({
   name: z.string().max(100).optional(),
@@ -34,6 +66,33 @@ type BirthInput = z.infer<typeof birthInputSchema>;
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting check
+  const identifier = req.headers.get('x-forwarded-for') || 
+                     req.headers.get('cf-connecting-ip') || 
+                     'anonymous';
+  
+  const rateCheck = checkRateLimit(identifier);
+  
+  if (!rateCheck.allowed) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'Too many requests. Please try again later.',
+        resetTime: new Date(rateCheck.resetTime).toISOString()
+      }),
+      { 
+        status: 429,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'X-RateLimit-Limit': RATE_LIMIT.toString(),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': rateCheck.resetTime.toString(),
+          'Retry-After': Math.ceil((rateCheck.resetTime - Date.now()) / 1000).toString()
+        } 
+      }
+    );
   }
 
   try {

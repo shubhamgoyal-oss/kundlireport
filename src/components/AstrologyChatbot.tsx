@@ -155,7 +155,14 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
                       : 'bg-muted text-foreground'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <p 
+                    className="text-sm whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{
+                      __html: msg.content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br/>')
+                    }}
+                  />
                 </div>
               </div>
             ))}

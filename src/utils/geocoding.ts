@@ -233,15 +233,36 @@ async function searchLocalIndianCities(query: string): Promise<Place[]> {
     for (const row of rows) {
       if (!row.trim()) continue;
       
-      // Parse CSV row (handling potential commas in quotes)
-      const columns = row.split(',');
+      // Proper CSV parsing that handles quoted fields
+      const parseCSVRow = (row: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      };
+      
+      const columns = parseCSVRow(row);
       if (columns.length < 5) continue;
       
-      const state = columns[0]?.replace(/^"|"$/g, '').trim();
-      const location = columns[1]?.replace(/^"|"$/g, '').trim();
-      const lat = parseFloat(columns[2]?.trim());
-      const lon = parseFloat(columns[3]?.trim());
-      const combined = columns[4]?.replace(/^"|"$/g, '').trim();
+      const state = columns[0];
+      const location = columns[1];
+      const lat = parseFloat(columns[2]);
+      const lon = parseFloat(columns[3]);
+      const combined = columns[4];
       
       if (!location || isNaN(lat) || isNaN(lon)) continue;
       

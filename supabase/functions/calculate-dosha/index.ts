@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
   calculateGrahanDosha,
   calculateShrapitDosha,
@@ -17,15 +18,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface BirthInput {
-  name?: string;
-  date: string;
-  time?: string;
-  tz: string;
-  lat: number;
-  lon: number;
-  unknownTime?: boolean;
-}
+// Input validation schema
+const birthInputSchema = z.object({
+  name: z.string().max(100).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").optional(),
+  tz: z.string().min(1).max(50, "Timezone string too long"),
+  lat: z.number().min(-90, "Latitude must be >= -90").max(90, "Latitude must be <= 90"),
+  lon: z.number().min(-180, "Longitude must be >= -180").max(180, "Longitude must be <= 180"),
+  unknownTime: z.boolean().optional(),
+});
+
+type BirthInput = z.infer<typeof birthInputSchema>;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -33,7 +37,33 @@ serve(async (req) => {
   }
 
   try {
-    const input: BirthInput = await req.json();
+    const rawInput = await req.json();
+    
+    // Validate input using Zod schema
+    const validationResult = birthInputSchema.safeParse(rawInput);
+    
+    if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.errors);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid input',
+          details: validationResult.error.errors.map(e => ({
+            field: e.path.join('.'),
+            message: e.message
+          }))
+        }),
+        { 
+          status: 400,
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
+    }
+    
+    const input = validationResult.data;
     
     console.log('Calculating dosha for:', { 
       date: input.date, 
@@ -42,11 +72,6 @@ serve(async (req) => {
       lon: input.lon,
       tz: input.tz 
     });
-
-    // Validate input
-    if (!input.date || !input.lat || !input.lon || !input.tz) {
-      throw new Error('Missing required fields: date, lat, lon, tz');
-    }
 
     // Convert date/time to UTC
     const birthDateTime = input.time 

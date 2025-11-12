@@ -16,7 +16,7 @@ export default function Footer() {
               className="h-16 w-auto mb-4"
             />
             <p className="text-sm leading-relaxed">
-              Sri Mandir has brought religious services to the masses in India by connecting devotees, pundits, and temples. Partnering with over 50 renowned temples, we provide exclusive pujas and offering services performed by expert pandits and share videos of the completed puja rituals.
+              {t('footer.description')}
             </p>
           </div>
 
@@ -57,17 +57,15 @@ export default function Footer() {
           <div className="md:ml-4">
             <h3 className="font-semibold text-lg mb-4">{t('footer.ourServices')}</h3>
             <ul className="space-y-2">
-              <li><span className="text-sm">Puja</span></li>
-              <li><span className="text-sm">Chadhava</span></li>
-              <li><span className="text-sm">Panchang</span></li>
-              <li><span className="text-sm">Temples</span></li>
+              <li><span className="text-sm">{t('footer.services.puja')}</span></li>
+              <li><span className="text-sm">{t('footer.services.chadhava')}</span></li>
+              <li><span className="text-sm">{t('footer.services.panchang')}</span></li>
+              <li><span className="text-sm">{t('footer.services.temples')}</span></li>
             </ul>
             
             <h3 className="font-semibold text-lg mb-4 mt-8">{t('footer.ourAddress')}</h3>
             <p className="text-sm leading-relaxed">
-              Firstprinciple AppsForBharat Pvt. Ltd. 435, 1st Floor 17th Cross, 
-              19th Main Rd, above Axis Bank, Sector 4, HSR Layout, Bengaluru, 
-              Karnataka 560102
+              {t('footer.address')}
             </p>
           </div>
         </div>

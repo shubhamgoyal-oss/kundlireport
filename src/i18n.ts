@@ -71,7 +71,7 @@ const resources = {
       },
       dosha: {
         heroTitle: 'Identify Your Dosha',
-        heroSubtitle: 'Share your birth details to find out which doshas (if any) appear in your Vedic chart—and see gentle, traditional remedies.',
+        heroSubtitle: 'Share your birth details to find out which doshas (if any) appear in your Vedic chart—and see devotional remedies.',
         whatIsDosha: 'What is a dosha?',
         whatIsDoshaAnswer: 'In Vedic astrology, a dosha is a specific planetary pattern believed to create challenges or imbalances in life.',
         whyImportant: 'Why is it important?',

@@ -8,6 +8,7 @@ import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuj
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
+import AstrologyChatbot from '@/components/AstrologyChatbot';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DoshaResultsProps {
@@ -650,6 +651,22 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
               <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
             </div>
           )}
+
+          {/* AI Chatbot Section */}
+          <div className="mt-8">
+            <AstrologyChatbot 
+              doshaContext={{
+                summary,
+                details,
+                activeDoshas: [
+                  summary.mangal === 'present' && 'Mangal Dosha',
+                  summary.kaalSarp === 'present' && 'Kaal Sarp Dosha',
+                  summary.pitra === 'present' && 'Pitra Dosha',
+                  summary.shaniSadeSati === 'active' && 'Sade Sati'
+                ].filter(Boolean)
+              }}
+            />
+          </div>
 
           {/* Disclaimer */}
           <div className="mt-6 p-4 bg-accent/10 border border-accent/30 rounded-md">

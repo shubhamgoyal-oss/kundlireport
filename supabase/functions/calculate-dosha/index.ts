@@ -136,13 +136,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message || 'Unknown error occurred' 
+        error: 'Unable to calculate dosha. Please verify your birth details and try again.' 
       }),
       { 
         status: 400,
         headers: { 
           ...corsHeaders, 
-          'Content-Type': 'application/json' 
+          'Content-Type': 'application/json'
         } 
       }
     );

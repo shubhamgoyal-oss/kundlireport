@@ -143,29 +143,43 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
               </div>
             )}
             
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
+            {messages.map((msg, idx) => {
+              // Safe message formatting - split on bold markers and render with React
+              const formatMessage = (content: string) => {
+                const parts = content.split(/\*\*(.*?)\*\*/g);
+                return parts.map((part, i) => {
+                  if (i % 2 === 1) {
+                    return <strong key={i}>{part}</strong>;
+                  }
+                  // Handle line breaks safely without dangerouslySetInnerHTML
+                  return part.split('\n').map((line, j, arr) => (
+                    <span key={`${i}-${j}`}>
+                      {line}
+                      {j < arr.length - 1 && <br />}
+                    </span>
+                  ));
+                });
+              };
+
+              return (
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
-                  }`}
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p 
-                    className="text-sm whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{
-                      __html: msg.content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\n/g, '<br/>')
-                    }}
-                  />
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">
+                      {formatMessage(msg.content)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             
             {isLoading && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex justify-start">

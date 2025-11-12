@@ -8,6 +8,7 @@ import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuj
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DoshaResultsProps {
   summary: {
@@ -41,11 +42,13 @@ interface DoshaResultsProps {
     notes?: string[];
     remedies: string[];
   }>;
+  calculationId?: string | null;
 }
 
-const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
+const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
+  const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
 
   useEffect(() => {
@@ -301,7 +304,25 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
                           }
                         </p>
                       </div>
-                      <SriMandirPujaCarousel pujas={uniquePersonalizedPujas} doshaType="personalized" />
+                      <SriMandirPujaCarousel 
+                        pujas={uniquePersonalizedPujas} 
+                        doshaType="personalized"
+                        calculationId={calculationId}
+                        onBookPujaClick={async () => {
+                          if (!hasTrackedBookPuja && calculationId) {
+                            try {
+                              await supabase
+                                .from('dosha_calculations')
+                                .update({ book_puja_clicked: true })
+                                .eq('id', calculationId);
+                              setHasTrackedBookPuja(true);
+                              console.log('Book puja tracked for calculation:', calculationId);
+                            } catch (err) {
+                              console.error('Failed to track book puja:', err);
+                            }
+                          }
+                        }}
+                      />
                     </div>
                   );
                 })()}

@@ -14,6 +14,7 @@ import { getTimeZoneForCoordinates } from '@/utils/timezone';
 import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form validation schema
 const birthInputSchema = z
@@ -70,6 +71,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [doshaResults, setDoshaResults] = useState<any>(null);
+  const [calculationId, setCalculationId] = useState<string | null>(null);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchError, setSearchError] = useState<string | null>(null);
 
@@ -227,6 +229,48 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       
       // Store and display results
       setDoshaResults(result);
+      
+      // Save calculation to database
+      try {
+        const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
+        const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
+        
+        const { data: savedCalc, error } = await supabase.from('dosha_calculations').insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          name: data.name || '',
+          date_of_birth: data.date,
+          time_of_birth: data.time || '00:00',
+          place_of_birth: data.place,
+          latitude: data.lat || null,
+          longitude: data.lon || null,
+          mangal_dosha: result.summary?.mangalDosha || false,
+          kaal_sarp_dosha: result.summary?.kaalSarpDosha || false,
+          pitra_dosha: result.summary?.pitraDosha || false,
+          sade_sati: result.summary?.sadeSati || false,
+          grahan_dosha: result.summary?.grahanDosha || false,
+          shrapit_dosha: result.summary?.shrapitDosha || false,
+          guru_chandal_dosha: result.summary?.guruChandalDosha || false,
+          punarphoo_dosha: result.summary?.punarphooDosha || false,
+          kemadruma_yoga: result.summary?.kemadrumaYoga || false,
+          gandmool_dosha: result.summary?.gandmoolDosha || false,
+          kalathra_dosha: result.summary?.kalathraDosh || false,
+          vish_daridra_yoga: result.summary?.vishDaridraYoga || false,
+          ketu_naga_dosha: result.summary?.ketuNagaDosha || false,
+          navagraha_umbrella: result.summary?.navagrahaUmbrella || false,
+          calculation_results: result,
+          book_puja_clicked: false,
+        }).select().single();
+        
+        if (error) throw error;
+        if (savedCalc) {
+          setCalculationId(savedCalc.id);
+          console.log('Calculation saved to database with ID:', savedCalc.id);
+        }
+      } catch (dbError) {
+        console.error('Failed to save calculation to database:', dbError);
+        // Don't show error to user, just log it
+      }
       
       if (onCalculate) {
         onCalculate(data);
@@ -530,7 +574,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     {doshaResults && (
       <DoshaResults 
         summary={doshaResults.summary} 
-        details={doshaResults.details} 
+        details={doshaResults.details}
+        calculationId={calculationId}
       />
     )}
   </>

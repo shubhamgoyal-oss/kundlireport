@@ -10,12 +10,16 @@ interface SriMandirPujaCarouselProps {
   pujas: SriMandirPuja[];
   doshaType: string;
   autoPlayInterval?: number;
+  calculationId?: string | null;
+  onBookPujaClick?: () => void | Promise<void>;
 }
 
 export const SriMandirPujaCarousel = ({ 
   pujas, 
   doshaType,
-  autoPlayInterval = 5000 
+  autoPlayInterval = 5000,
+  calculationId,
+  onBookPujaClick
 }: SriMandirPujaCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -37,7 +41,7 @@ export const SriMandirPujaCarousel = ({
     setCurrentIndex((prev) => (prev + 1) % pujas.length);
   };
 
-  const handleBookClick = (puja: SriMandirPuja) => {
+  const handleBookClick = async (puja: SriMandirPuja) => {
     trackEvent('srimandir_puja_click', {
       metadata: {
         store_id: puja.store_id,
@@ -46,6 +50,11 @@ export const SriMandirPujaCarousel = ({
         schedule_date_ist: puja.schedule_date_ist,
       },
     });
+    
+    // Call the onBookPujaClick callback if provided
+    if (onBookPujaClick) {
+      await onBookPujaClick();
+    }
   };
 
   if (pujas.length === 0) return null;

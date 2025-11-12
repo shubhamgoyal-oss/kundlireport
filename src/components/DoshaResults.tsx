@@ -62,7 +62,7 @@ const DoshaResults = ({ summary, details }: DoshaResultsProps) => {
 
   const isDoshaPresent = (status: string) => {
     const s = status.toLowerCase();
-    return s === 'present' || s.includes('active');
+    return s === 'present' || s === 'active';
   };
 
   const getSeverityColor = (severity: string) => {

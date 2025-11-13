@@ -513,7 +513,7 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
   const mangal = calculateMangalDosha(chart, debugMode);
   const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
   const pitra = calculatePitraDosha(chart, debugMode);
-  const sadeSati = calculateSadeSati(chart);
+  const sadeSati = calculateSadeSati(chart, debugMode);
 
   // Calculate new doshas
   const grahan = calculateGrahanDosha(chart);
@@ -679,7 +679,7 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
       },
       mangal: mangal.debug,
       pitra: pitra.debug,
-      shaniDosha: sadeSati.debug,
+      sadeSati: sadeSati.debug,
       kaalSarp: kaalSarp.debug
     };
   }
@@ -1071,7 +1071,12 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
   };
 }
 
-function calculateSadeSati(chart: any) {
+function calculateSadeSati(chart: any, debugMode: boolean = false) {
+  // CRITICAL: Sade Sati uses TRANSIT Saturn vs NATAL Moon
+  // We need current Saturn position (transit), not natal Saturn
+  
+  // For now, use natal chart positions (TODO: add transit calculation)
+  // In a proper implementation, saturnSign should be from TODAY's ephemeris
   const moonSign = Math.floor(chart.grahas.Moon.lon / 30);
   const saturnSign = Math.floor(chart.grahas.Saturn.lon / 30);
   
@@ -1082,6 +1087,10 @@ function calculateSadeSati(chart: any) {
   const notes: string[] = [];
 
   const diff = (saturnSign - moonSign + 12) % 12;
+  
+  // Get sign names for logging
+  const signNames = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
+                     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
   
   if (diff === 11) {
     active = true;
@@ -1100,7 +1109,36 @@ function calculateSadeSati(chart: any) {
     notes.push('Phase 3: Setting phase');
   }
 
-  return { active, phase, triggeredBy, placements, notes };
+  if (debugMode) {
+    console.log('Sade Sati Debug:', {
+      moonSignName: signNames[moonSign],
+      moonSignIndex: moonSign,
+      saturnNatalName: signNames[saturnSign],
+      saturnNatalIndex: saturnSign,
+      saturnTransitName: signNames[saturnSign] + ' (using natal - TODO: implement transit)',
+      saturnTransitIndex: saturnSign,
+      diff: diff,
+      phase: phase,
+      active: active
+    });
+  }
+
+  return { 
+    active, 
+    phase, 
+    triggeredBy, 
+    placements, 
+    notes,
+    debug: debugMode ? {
+      moon_sign: signNames[moonSign],
+      moon_sign_index: moonSign,
+      saturn_sign: signNames[saturnSign] + ' (natal)',
+      saturn_sign_index: saturnSign,
+      diff: diff,
+      calculated_phase: phase,
+      note: 'Currently using natal Saturn. Should use transit Saturn for accurate Sade Sati.'
+    } : undefined
+  };
 }
 
 function calculateHouseFrom(planetLon: number, refLon: number): number {

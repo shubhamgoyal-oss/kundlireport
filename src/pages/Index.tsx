@@ -48,10 +48,9 @@ const Index = () => {
                   />
                 </div>
                 
-                {/* Hero Heading with Icon */}
-                <div className="flex items-center gap-3 mb-6 justify-center lg:justify-start">
-                  <CircleDot className="w-8 h-8 text-primary opacity-70" strokeWidth={1.5} />
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
+                {/* Hero Heading */}
+                <div className="mb-6">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground text-center lg:text-left">
                     {t('dosha.heroTitle')}
                   </h1>
                 </div>

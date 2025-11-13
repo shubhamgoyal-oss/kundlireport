@@ -173,15 +173,50 @@ serve(async (req) => {
       tz: input.tz 
     });
 
-    // Convert date/time to UTC
-    const birthDateTime = input.time 
-      ? new Date(`${input.date}T${input.time}:00`)
-      : new Date(`${input.date}T12:00:00`); // Default to noon if unknown
+    // CRITICAL: Proper timezone conversion from local to UTC
+    // Input time is in local timezone (e.g., Asia/Kolkata)
+    // We need to convert it to UTC for accurate ephemeris calculations
+    
+    let birthDateTimeUTC: Date;
+    let localTimeString: string;
+    
+    if (input.time) {
+      // Parse local time and convert to UTC
+      // For IST (Asia/Kolkata), this is UTC+5:30
+      localTimeString = `${input.date}T${input.time}:00`;
+      
+      // Timezone offset map (hours from UTC)
+      const tzOffsetMap: Record<string, number> = {
+        'Asia/Kolkata': 5.5,
+        'Asia/Calcutta': 5.5,
+        'UTC': 0,
+        'GMT': 0,
+      };
+      
+      const tzOffset = tzOffsetMap[input.tz] || 5.5; // Default to IST if not found
+      
+      // Parse the local date/time
+      const [datePart, timePart] = localTimeString.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
+      
+      // Create UTC date by subtracting timezone offset
+      const utcHour = hour - Math.floor(tzOffset);
+      const utcMinute = minute - ((tzOffset % 1) * 60);
+      
+      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, utcHour, utcMinute, 0));
+    } else {
+      // Unknown time - default to noon local time
+      localTimeString = `${input.date}T12:00:00`;
+      const [year, month, day] = input.date.split('-').map(Number);
+      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0)); // Noon IST = 06:30 UTC
+    }
 
-    console.log('Birth date/time (local):', birthDateTime.toISOString());
+    console.log('Local time:', localTimeString);
+    console.log('UTC time:', birthDateTimeUTC.toISOString());
 
-    // Calculate Julian Day
-    const jd = calculateJulianDay(birthDateTime);
+    // Calculate Julian Day from UTC
+    const jd = calculateJulianDay(birthDateTimeUTC);
     console.log('Julian Day:', jd);
 
     // Calculate Lahiri Ayanamsha
@@ -201,7 +236,9 @@ serve(async (req) => {
       lat: input.lat,
       lon: input.lon,
       tz: input.tz,
-      utc: birthDateTime.toISOString()
+      utc: birthDateTimeUTC.toISOString(),
+      local: localTimeString,
+      ayanamsha: getLahiriAyanamsha(jd)
     });
     console.log('Dosha calculation complete:', doshaResults.summary);
 
@@ -632,12 +669,13 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
     result.debug = {
       input_echo: {
         dob: inputData.date,
-        tob_local: inputData.time || 'unknown',
+        tob_local: inputData.local || inputData.time || 'unknown',
         place: inputData.place,
         lat: inputData.lat,
         lon: inputData.lon,
         tz: inputData.tz,
-        utc: inputData.utc
+        utc: inputData.utc,
+        ayanamsha_deg: inputData.ayanamsha?.toFixed(4)
       },
       mangal: mangal.debug,
       pitra: pitra.debug,
@@ -805,11 +843,14 @@ function calculateMangalDosha(chart: any, debugMode: boolean = false) {
     placements,
     notes,
     debug: debugMode ? {
-      lagna_sign: lagnaSign,
-      mars_sign_house: `H${marsHouseFromLagna}`,
+      asc_sid_deg: chart.ascendant.lon.toFixed(4),
+      asc_sign: lagnaSign,
+      mars_sid_deg: mars.lon.toFixed(4),
+      mars_sign: mars.sign,
+      house_from_lagna: marsHouseFromLagna,
       helpers: {
-        moon_house: `H${marsHouseFromMoon}`,
-        venus_house: `H${marsHouseFromVenus}`
+        moon_house: marsHouseFromMoon,
+        venus_house: marsHouseFromVenus
       },
       cancellations,
       mitigations,

@@ -137,8 +137,8 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
                 <Sparkles className="w-12 h-12 mx-auto mb-3 text-primary/50" />
                 <p className="text-sm">
                   {isHindi 
-                    ? 'अपने दोषों, उपायों या ज्योतिष के बारे में कुछ भी पूछें'
-                    : 'Ask anything about your doshas, remedies, or astrology'}
+                    ? 'हमारे AI सहायक के माध्यम से अपने दोष का विस्तार से विश्लेषण करें'
+                    : 'Analyse your dosha in detail through our AI powered assistant'}
                 </p>
               </div>
             )}

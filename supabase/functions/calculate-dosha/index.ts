@@ -1082,7 +1082,7 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
   };
 }
 
-function calculateSadeSati(chart: any) {
+function calculateSadeSati(chart: any, currentDate: Date = new Date(), debugMode: boolean = false) {
   const moon = chart.grahas.Moon;
   const saturn = chart.grahas.Saturn;
   

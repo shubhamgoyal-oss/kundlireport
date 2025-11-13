@@ -513,7 +513,9 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
   const mangal = calculateMangalDosha(chart, debugMode);
   const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
   const pitra = calculatePitraDosha(chart, debugMode);
-  const sadeSati = calculateSadeSati(chart, debugMode);
+  // Use current date for Sade Sati transit calculation
+  const evalDate = new Date();
+  const sadeSati = calculateSadeSati(chart, evalDate, debugMode);
 
   // Calculate new doshas
   const grahan = calculateGrahanDosha(chart);
@@ -1071,52 +1073,70 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
   };
 }
 
-function calculateSadeSati(chart: any, debugMode: boolean = false) {
+// Helper to calculate transit planet position for a given date
+function getTransitPlanetPosition(planetId: number, evalDate: Date): number {
+  const jd = calculateJulianDay(evalDate);
+  const ayanamsha = getLahiriAyanamsha(jd);
+  
+  const flags = SEFLG_SIDEREAL | SEFLG_SPEED;
+  const result = swe_calc_ut(jd, planetId, flags);
+  
+  if (result.error) {
+    throw new Error(`Transit calculation failed: ${result.error}`);
+  }
+  
+  // Convert to sidereal
+  const sidLon = normalize((result.longitude - ayanamsha + 360) % 360);
+  return sidLon;
+}
+
+function calculateSadeSati(chart: any, evalDate: Date = new Date(), debugMode: boolean = false) {
   // CRITICAL: Sade Sati uses TRANSIT Saturn vs NATAL Moon
-  // We need current Saturn position (transit), not natal Saturn
+  const signNames = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
+                     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
   
-  // For now, use natal chart positions (TODO: add transit calculation)
-  // In a proper implementation, saturnSign should be from TODAY's ephemeris
+  // Natal Moon's sidereal sign
   const moonSign = Math.floor(chart.grahas.Moon.lon / 30);
-  const saturnSign = Math.floor(chart.grahas.Saturn.lon / 30);
   
-  let phase: any = null;
+  // Transit Saturn's sidereal sign for evaluation date
+  const transitSaturnLon = getTransitPlanetPosition(SE_SATURN, evalDate);
+  const saturnSign = Math.floor(transitSaturnLon / 30);
+  
   let active = false;
+  let phase: number | null = null;
   const triggeredBy: string[] = [];
   const placements: string[] = [];
   const notes: string[] = [];
 
   const diff = (saturnSign - moonSign + 12) % 12;
   
-  // Get sign names for logging
-  const signNames = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 
-                     'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-  
   if (diff === 11) {
     active = true;
     phase = 1;
-    triggeredBy.push('Saturn transiting 12th from Moon');
+    triggeredBy.push('Saturn transiting sign before Moon (Phase 1)');
+    placements.push(`Transit Saturn in ${signNames[saturnSign]}, Moon in ${signNames[moonSign]}`);
     notes.push('Phase 1: Rising phase');
   } else if (diff === 0) {
     active = true;
     phase = 2;
-    triggeredBy.push('Saturn over Moon sign');
+    triggeredBy.push('Saturn transiting same sign as Moon (Phase 2)');
+    placements.push(`Transit Saturn in ${signNames[saturnSign]}, Moon in ${signNames[moonSign]}`);
     notes.push('Phase 2: Peak phase');
   } else if (diff === 1) {
     active = true;
     phase = 3;
-    triggeredBy.push('Saturn transiting 2nd from Moon');
+    triggeredBy.push('Saturn transiting sign after Moon (Phase 3)');
+    placements.push(`Transit Saturn in ${signNames[saturnSign]}, Moon in ${signNames[moonSign]}`);
     notes.push('Phase 3: Setting phase');
   }
 
   if (debugMode) {
     console.log('Sade Sati Debug:', {
+      evalDate: evalDate.toISOString(),
       moonSignName: signNames[moonSign],
       moonSignIndex: moonSign,
-      saturnNatalName: signNames[saturnSign],
-      saturnNatalIndex: saturnSign,
-      saturnTransitName: signNames[saturnSign] + ' (using natal - TODO: implement transit)',
-      saturnTransitIndex: saturnSign,
+      saturnTransitSignName: signNames[saturnSign],
+      saturnTransitSignIndex: saturnSign,
       diff: diff,
       phase: phase,
       active: active
@@ -1130,13 +1150,14 @@ function calculateSadeSati(chart: any, debugMode: boolean = false) {
     placements, 
     notes,
     debug: debugMode ? {
-      moon_sign: signNames[moonSign],
+      eval_date: evalDate.toISOString(),
+      moon_sign_name: signNames[moonSign],
       moon_sign_index: moonSign,
-      saturn_sign: signNames[saturnSign] + ' (natal)',
-      saturn_sign_index: saturnSign,
+      saturn_transit_sign_name: signNames[saturnSign],
+      saturn_transit_sign_index: saturnSign,
       diff: diff,
       calculated_phase: phase,
-      note: 'Currently using natal Saturn. Should use transit Saturn for accurate Sade Sati.'
+      active: active
     } : undefined
   };
 }

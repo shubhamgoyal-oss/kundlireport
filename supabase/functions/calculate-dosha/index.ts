@@ -173,25 +173,16 @@ serve(async (req) => {
       tz: input.tz 
     });
 
-    // HARD ASSERTIONS - fail request if violated
-    // These values are enforced throughout the calculation
-    if ("sidereal" !== "sidereal" || "Lahiri" !== "Lahiri") {
-      throw new Error("ASSERT FAILED: zodiac must be 'sidereal' and ayanamsha must be 'Lahiri'");
-    }
-    if ("mean" !== "mean") {
-      throw new Error("ASSERT FAILED: node_model must be 'mean'");
-    }
-    if ("whole-sign" !== "whole-sign") {
-      throw new Error("ASSERT FAILED: houses must be 'whole-sign'");
-    }
-
-
     // CRITICAL: Proper timezone conversion from local to UTC
+    // Input time is in local timezone (e.g., Asia/Kolkata)
+    // We need to convert it to UTC for accurate ephemeris calculations
+    
     let birthDateTimeUTC: Date;
     let localTimeString: string;
     
     if (input.time) {
       // Parse local time and convert to UTC
+      // For IST (Asia/Kolkata), this is UTC+5:30
       localTimeString = `${input.date}T${input.time}:00`;
       
       // Timezone offset map (hours from UTC)
@@ -202,10 +193,7 @@ serve(async (req) => {
         'GMT': 0,
       };
       
-      const tzOffset = tzOffsetMap[input.tz] || 5.5;
-      if (!tzOffsetMap[input.tz]) {
-        warnings.push(`tz_defaulted: ${input.tz} not recognized, using Asia/Kolkata (UTC+5:30)`);
-      }
+      const tzOffset = tzOffsetMap[input.tz] || 5.5; // Default to IST if not found
       
       // Parse the local date/time
       const [datePart, timePart] = localTimeString.split('T');
@@ -221,12 +209,12 @@ serve(async (req) => {
       // Unknown time - default to noon local time
       localTimeString = `${input.date}T12:00:00`;
       const [year, month, day] = input.date.split('-').map(Number);
-      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0));
-      warnings.push('time_unknown: defaulted to 12:00 local (06:30 UTC for IST)');
+      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0)); // Noon IST = 06:30 UTC
     }
 
     console.log('Local time:', localTimeString);
     console.log('UTC time:', birthDateTimeUTC.toISOString());
+
     // Calculate Julian Day from UTC
     const jd = calculateJulianDay(birthDateTimeUTC);
     console.log('Julian Day:', jd);
@@ -240,7 +228,7 @@ serve(async (req) => {
     
     console.log('Chart calculated successfully');
 
-    // Calculate doshas with debug mode and warnings
+    // Calculate doshas with debug mode
     const doshaResults = calculateAllDoshas(chartData, input.unknownTime || false, debugMode, {
       date: input.date,
       time: input.time,
@@ -251,7 +239,7 @@ serve(async (req) => {
       utc: birthDateTimeUTC.toISOString(),
       local: localTimeString,
       ayanamsha: getLahiriAyanamsha(jd)
-    }, warnings);
+    });
     console.log('Dosha calculation complete:', doshaResults.summary);
 
     // Build response with optional debug data
@@ -267,8 +255,16 @@ serve(async (req) => {
         jd: jd,
         rules_version: 'india-popular-v1',
         generated_at: new Date().toISOString(),
-        calculation_preset: preset,
-        warnings: warnings.length > 0 ? warnings : undefined
+        calculation_preset: {
+          zodiac: 'sidereal',
+          ayanamsha: 'Lahiri',
+          node_model: 'mean',
+          houses: 'whole-sign',
+          endpoints: 'inclusive',
+          ks_edge_tolerance_deg: 2.0,
+          conj_orb_deg: 8,
+          conj_orb_moon_deg: 6,
+        },
       },
     };
     
@@ -513,11 +509,11 @@ function calculateAscendant(jd: number, lat: number, lon: number): number {
 }
 
 // Dosha calculation functions
-function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode: boolean = false, inputData?: any, warnings: string[] = []) {
+function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode: boolean = false, inputData?: any) {
   const mangal = calculateMangalDosha(chart, debugMode);
   const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
   const pitra = calculatePitraDosha(chart, debugMode);
-  const sadeSati = calculateSadeSati(chart, new Date(), debugMode);
+  const sadeSati = calculateSadeSati(chart);
 
   // Calculate new doshas
   const grahan = calculateGrahanDosha(chart);
@@ -681,19 +677,10 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
         utc: inputData.utc,
         ayanamsha_deg: inputData.ayanamsha?.toFixed(4)
       },
-      preset: {
-        zodiac: 'sidereal',
-        ayanamsha: 'Lahiri',
-        node_model: 'mean',
-        houses: 'whole-sign',
-        endpoints: 'inclusive'
-      },
       mangal: mangal.debug,
       pitra: pitra.debug,
       shaniDosha: sadeSati.debug,
-      kaalSarp: kaalSarp.debug,
-      sadeSati: sadeSati.debug,
-      warnings
+      kaalSarp: kaalSarp.debug
     };
   }
   
@@ -856,16 +843,18 @@ function calculateMangalDosha(chart: any, debugMode: boolean = false) {
     placements,
     notes,
     debug: debugMode ? {
-      lagnaHouseOfMars: `H${marsHouseFromLagna}`,
-      signOfMars: mars.sign,
+      asc_sid_deg: chart.ascendant.lon.toFixed(4),
+      asc_sign: lagnaSign,
+      mars_sid_deg: mars.lon.toFixed(4),
+      mars_sign: mars.sign,
+      house_from_lagna: marsHouseFromLagna,
       helpers: {
-        moon: `H${marsHouseFromMoon}`,
-        venus: `H${marsHouseFromVenus}`
+        moon_house: marsHouseFromMoon,
+        venus_house: marsHouseFromVenus
       },
       cancellations,
       mitigations,
-      final,
-      severity
+      final
     } : undefined
   };
 }
@@ -1082,70 +1071,36 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
   };
 }
 
-function calculateSadeSati(chart: any, currentDate: Date = new Date(), debugMode: boolean = false) {
-  const moon = chart.grahas.Moon;
-  const saturn = chart.grahas.Saturn;
+function calculateSadeSati(chart: any) {
+  const moonSign = Math.floor(chart.grahas.Moon.lon / 30);
+  const saturnSign = Math.floor(chart.grahas.Saturn.lon / 30);
   
-  // Get current Saturn position (sidereal, Lahiri)
-  const currentJD = calculateJulianDay(currentDate);
-  const ayanamsha = getLahiriAyanamsha(currentJD);
-  const saturnPos = calculatePlanetPosition(currentJD, swisseph.SE_SATURN);
-  const currentSaturnLon = normalizeAngle(saturnPos.lon - ayanamsha);
-  const currentSaturnSign = getZodiacSign(currentSaturnLon);
-
-  const moonSign = moon.sign; // natal Moon sign (sidereal, Lahiri)
-  
-  // Define zodiac order
-  const signs = [
-    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
-    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
-  ];
-  
-  const moonIndex = signs.indexOf(moonSign);
-  const saturnIndex = signs.indexOf(currentSaturnSign);
-  
-  // Calculate relative position: d = (saturnIndex - moonIndex + 12) % 12
-  const d = (saturnIndex - moonIndex + 12) % 12;
-  
-  // Sade Sati is active when Saturn is in 12th, 1st, or 2nd house from Moon
-  // d=11 → 12th house (Phase 1: Rising)
-  // d=0  → 1st house (Phase 2: Peak)
-  // d=1  → 2nd house (Phase 3: Setting)
-  const active = (d === 11 || d === 0 || d === 1);
-  
-  let phase: number | null = null;
+  let phase: any = null;
+  let active = false;
   const triggeredBy: string[] = [];
+  const placements: string[] = [];
   const notes: string[] = [];
+
+  const diff = (saturnSign - moonSign + 12) % 12;
   
-  if (active) {
-    if (d === 11) {
-      phase = 1;
-      triggeredBy.push('Saturn transiting 12th from Moon');
-      notes.push('Phase 1: Rising phase');
-    } else if (d === 0) {
-      phase = 2;
-      triggeredBy.push('Saturn over Moon sign');
-      notes.push('Phase 2: Peak phase');
-    } else if (d === 1) {
-      phase = 3;
-      triggeredBy.push('Saturn transiting 2nd from Moon');
-      notes.push('Phase 3: Setting phase');
-    }
+  if (diff === 11) {
+    active = true;
+    phase = 1;
+    triggeredBy.push('Saturn transiting 12th from Moon');
+    notes.push('Phase 1: Rising phase');
+  } else if (diff === 0) {
+    active = true;
+    phase = 2;
+    triggeredBy.push('Saturn over Moon sign');
+    notes.push('Phase 2: Peak phase');
+  } else if (diff === 1) {
+    active = true;
+    phase = 3;
+    triggeredBy.push('Saturn transiting 2nd from Moon');
+    notes.push('Phase 3: Setting phase');
   }
 
-  return {
-    active,
-    phase,
-    triggeredBy,
-    placements: [],
-    notes,
-    debug: debugMode ? {
-      moonSign_sidereal: moonSign,
-      saturnSign_today_sidereal: currentSaturnSign,
-      d,
-      phase
-    } : undefined
-  };
+  return { active, phase, triggeredBy, placements, notes };
 }
 
 function calculateHouseFrom(planetLon: number, refLon: number): number {

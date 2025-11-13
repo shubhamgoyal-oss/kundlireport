@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
@@ -49,12 +49,16 @@ interface DoshaResultsProps {
 const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
+  const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
 
   useEffect(() => {
-    // Initial fetch
-    fetchSriMandirPujas().then(setPujas);
+    // Fetch latest pujas
+    setIsLoadingPujas(true);
+    fetchSriMandirPujas()
+      .then(setPujas)
+      .finally(() => setIsLoadingPujas(false));
 
     // Set up hourly refresh
     const intervalId = setInterval(() => {
@@ -287,11 +291,6 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                     (puja, index, self) => index === self.findIndex(p => p.store_id === puja.store_id)
                   );
 
-                  // Only show section if there are active doshas and pujas available
-                  if (activeDoshas.length === 0 || uniquePersonalizedPujas.length === 0) {
-                    return null;
-                  }
-
                   return (
                     <div className="mt-6 space-y-4">
                       <div className="text-center">
@@ -299,31 +298,42 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-2">
-                          {isHindi 
-                            ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
-                            : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
-                          }
+                          {activeDoshas.length > 0 ? (
+                            isHindi 
+                              ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
+                              : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
+                          ) : null}
                         </p>
                       </div>
-                      <SriMandirPujaCarousel 
-                        pujas={uniquePersonalizedPujas} 
-                        doshaType="personalized"
-                        calculationId={calculationId}
-                        onBookPujaClick={async () => {
-                          if (!hasTrackedBookPuja && calculationId) {
-                            try {
-                              await supabase
-                                .from('dosha_calculations')
-                                .update({ book_puja_clicked: true })
-                                .eq('id', calculationId);
-                              setHasTrackedBookPuja(true);
-                              console.log('Book puja tracked for calculation:', calculationId);
-                            } catch (err) {
-                              console.error('Failed to track book puja:', err);
+                      
+                      {isLoadingPujas ? (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                          <p className="text-sm text-muted-foreground">
+                            {isHindi ? 'उपाय लोड हो रहे हैं...' : 'Loading...'}
+                          </p>
+                        </div>
+                      ) : uniquePersonalizedPujas.length === 0 ? null : (
+                        <SriMandirPujaCarousel 
+                          pujas={uniquePersonalizedPujas} 
+                          doshaType="personalized"
+                          calculationId={calculationId}
+                          onBookPujaClick={async () => {
+                            if (!hasTrackedBookPuja && calculationId) {
+                              try {
+                                await supabase
+                                  .from('dosha_calculations')
+                                  .update({ book_puja_clicked: true })
+                                  .eq('id', calculationId);
+                                setHasTrackedBookPuja(true);
+                                console.log('Book puja tracked for calculation:', calculationId);
+                              } catch (err) {
+                                console.error('Failed to track book puja:', err);
+                              }
                             }
-                          }
-                        }}
-                      />
+                          }}
+                        />
+                      )}
                     </div>
                   );
                 })()}

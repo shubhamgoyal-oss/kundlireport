@@ -173,6 +173,22 @@ serve(async (req) => {
       tz: input.tz 
     });
 
+    // HARD ASSERTIONS - fail request if violated
+    const zodiac = "sidereal";
+    const ayanamsha = "Lahiri";
+    const node_model = "mean";
+    const houses = "whole-sign";
+    
+    if (zodiac !== "sidereal" || ayanamsha !== "Lahiri") {
+      throw new Error("ASSERT FAILED: zodiac must be 'sidereal' and ayanamsha must be 'Lahiri'");
+    }
+    if (node_model !== "mean") {
+      throw new Error("ASSERT FAILED: node_model must be 'mean'");
+    }
+    if (houses !== "whole-sign") {
+      throw new Error("ASSERT FAILED: houses must be 'whole-sign'");
+    }
+
     // CRITICAL: Proper timezone conversion from local to UTC
     // Input time is in local timezone (e.g., Asia/Kolkata)
     // We need to convert it to UTC for accurate ephemeris calculations
@@ -513,7 +529,7 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
   const mangal = calculateMangalDosha(chart, debugMode);
   const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
   const pitra = calculatePitraDosha(chart, debugMode);
-  const sadeSati = calculateSadeSati(chart);
+  const sadeSati = calculateSadeSati(chart, new Date(), debugMode);
 
   // Calculate new doshas
   const grahan = calculateGrahanDosha(chart);
@@ -680,7 +696,8 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
       mangal: mangal.debug,
       pitra: pitra.debug,
       shaniDosha: sadeSati.debug,
-      kaalSarp: kaalSarp.debug
+      kaalSarp: kaalSarp.debug,
+      sadeSati: sadeSati.debug
     };
   }
   
@@ -843,18 +860,16 @@ function calculateMangalDosha(chart: any, debugMode: boolean = false) {
     placements,
     notes,
     debug: debugMode ? {
-      asc_sid_deg: chart.ascendant.lon.toFixed(4),
-      asc_sign: lagnaSign,
-      mars_sid_deg: mars.lon.toFixed(4),
-      mars_sign: mars.sign,
-      house_from_lagna: marsHouseFromLagna,
+      lagnaHouseOfMars: `H${marsHouseFromLagna}`,
+      signOfMars: mars.sign,
       helpers: {
-        moon_house: marsHouseFromMoon,
-        venus_house: marsHouseFromVenus
+        moon: `H${marsHouseFromMoon}`,
+        venus: `H${marsHouseFromVenus}`
       },
       cancellations,
       mitigations,
-      final
+      final,
+      severity
     } : undefined
   };
 }
@@ -1072,35 +1087,69 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
 }
 
 function calculateSadeSati(chart: any) {
-  const moonSign = Math.floor(chart.grahas.Moon.lon / 30);
-  const saturnSign = Math.floor(chart.grahas.Saturn.lon / 30);
+  const moon = chart.grahas.Moon;
+  const saturn = chart.grahas.Saturn;
   
-  let phase: any = null;
-  let active = false;
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
+  // Get current Saturn position (sidereal, Lahiri)
+  const currentJD = calculateJulianDay(currentDate);
+  const ayanamsha = getLahiriAyanamsha(currentJD);
+  const saturnPos = calculatePlanetPosition(currentJD, swisseph.SE_SATURN);
+  const currentSaturnLon = normalizeAngle(saturnPos.lon - ayanamsha);
+  const currentSaturnSign = getZodiacSign(currentSaturnLon);
 
-  const diff = (saturnSign - moonSign + 12) % 12;
+  const moonSign = moon.sign; // natal Moon sign (sidereal, Lahiri)
   
-  if (diff === 11) {
-    active = true;
-    phase = 1;
-    triggeredBy.push('Saturn transiting 12th from Moon');
-    notes.push('Phase 1: Rising phase');
-  } else if (diff === 0) {
-    active = true;
-    phase = 2;
-    triggeredBy.push('Saturn over Moon sign');
-    notes.push('Phase 2: Peak phase');
-  } else if (diff === 1) {
-    active = true;
-    phase = 3;
-    triggeredBy.push('Saturn transiting 2nd from Moon');
-    notes.push('Phase 3: Setting phase');
+  // Define zodiac order
+  const signs = [
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+  ];
+  
+  const moonIndex = signs.indexOf(moonSign);
+  const saturnIndex = signs.indexOf(currentSaturnSign);
+  
+  // Calculate relative position: d = (saturnIndex - moonIndex + 12) % 12
+  const d = (saturnIndex - moonIndex + 12) % 12;
+  
+  // Sade Sati is active when Saturn is in 12th, 1st, or 2nd house from Moon
+  // d=11 → 12th house (Phase 1: Rising)
+  // d=0  → 1st house (Phase 2: Peak)
+  // d=1  → 2nd house (Phase 3: Setting)
+  const active = (d === 11 || d === 0 || d === 1);
+  
+  let phase: number | null = null;
+  const triggeredBy: string[] = [];
+  const notes: string[] = [];
+  
+  if (active) {
+    if (d === 11) {
+      phase = 1;
+      triggeredBy.push('Saturn transiting 12th from Moon');
+      notes.push('Phase 1: Rising phase');
+    } else if (d === 0) {
+      phase = 2;
+      triggeredBy.push('Saturn over Moon sign');
+      notes.push('Phase 2: Peak phase');
+    } else if (d === 1) {
+      phase = 3;
+      triggeredBy.push('Saturn transiting 2nd from Moon');
+      notes.push('Phase 3: Setting phase');
+    }
   }
 
-  return { active, phase, triggeredBy, placements, notes };
+  return {
+    active,
+    phase,
+    triggeredBy,
+    placements: [],
+    notes,
+    debug: debugMode ? {
+      moonSign_sidereal: moonSign,
+      saturnSign_today_sidereal: currentSaturnSign,
+      d,
+      phase
+    } : undefined
+  };
 }
 
 function calculateHouseFrom(planetLon: number, refLon: number): number {

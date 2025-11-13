@@ -54,7 +54,7 @@ setInterval(() => {
 const birthInputSchema = z.object({
   name: z.string().max(100).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
-  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").optional(),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").or(z.literal("")).optional(),
   tz: z.string().min(1).max(50, "Timezone string too long"),
   lat: z.number().min(-90, "Latitude must be >= -90").max(90, "Latitude must be <= 90"),
   lon: z.number().min(-180, "Longitude must be >= -180").max(180, "Longitude must be <= 180"),

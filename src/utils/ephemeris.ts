@@ -13,7 +13,6 @@ export const PLANETS = {
   JUPITER: 5,
   SATURN: 6,
   MEAN_NODE: 10, // Rahu (mean node)
-  TRUE_NODE: 11, // Rahu (true node)
 } as const;
 
 export const PLANET_NAMES = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu'] as const;
@@ -25,7 +24,6 @@ export interface PlanetPosition {
   sign: string;     // Zodiac sign name
   deg: number;      // Degree within sign (0-30)
   house?: number;   // House number (1-12)
-  retro?: boolean;  // Retrograde flag
 }
 
 export interface ChartData {
@@ -33,12 +31,6 @@ export interface ChartData {
   ascendant: PlanetPosition & { house: number };
   houses: Array<{ house: number; sign: string; cusp: number }>;
   ayanamsha: number;
-  rahuTrue?: PlanetPosition;
-  ketuTrue?: PlanetPosition;
-  rahuMean?: PlanetPosition;
-  ketuMean?: PlanetPosition;
-  sripatiCusps?: number[]; // Sripati house cusps
-  moonNakshatra?: { name: string; pada: number };
 }
 
 const ZODIAC_SIGNS = [

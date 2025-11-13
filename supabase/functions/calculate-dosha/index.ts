@@ -185,16 +185,13 @@ serve(async (req) => {
       throw new Error("ASSERT FAILED: houses must be 'whole-sign'");
     }
 
+
     // CRITICAL: Proper timezone conversion from local to UTC
-    // Input time is in local timezone (e.g., Asia/Kolkata)
-    // We need to convert it to UTC for accurate ephemeris calculations
-    
     let birthDateTimeUTC: Date;
     let localTimeString: string;
     
     if (input.time) {
       // Parse local time and convert to UTC
-      // For IST (Asia/Kolkata), this is UTC+5:30
       localTimeString = `${input.date}T${input.time}:00`;
       
       // Timezone offset map (hours from UTC)
@@ -205,7 +202,10 @@ serve(async (req) => {
         'GMT': 0,
       };
       
-      const tzOffset = tzOffsetMap[input.tz] || 5.5; // Default to IST if not found
+      const tzOffset = tzOffsetMap[input.tz] || 5.5;
+      if (!tzOffsetMap[input.tz]) {
+        warnings.push(`tz_defaulted: ${input.tz} not recognized, using Asia/Kolkata (UTC+5:30)`);
+      }
       
       // Parse the local date/time
       const [datePart, timePart] = localTimeString.split('T');
@@ -221,12 +221,12 @@ serve(async (req) => {
       // Unknown time - default to noon local time
       localTimeString = `${input.date}T12:00:00`;
       const [year, month, day] = input.date.split('-').map(Number);
-      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0)); // Noon IST = 06:30 UTC
+      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0));
+      warnings.push('time_unknown: defaulted to 12:00 local (06:30 UTC for IST)');
     }
 
     console.log('Local time:', localTimeString);
     console.log('UTC time:', birthDateTimeUTC.toISOString());
-
     // Calculate Julian Day from UTC
     const jd = calculateJulianDay(birthDateTimeUTC);
     console.log('Julian Day:', jd);
@@ -240,7 +240,7 @@ serve(async (req) => {
     
     console.log('Chart calculated successfully');
 
-    // Calculate doshas with debug mode
+    // Calculate doshas with debug mode and warnings
     const doshaResults = calculateAllDoshas(chartData, input.unknownTime || false, debugMode, {
       date: input.date,
       time: input.time,
@@ -251,7 +251,7 @@ serve(async (req) => {
       utc: birthDateTimeUTC.toISOString(),
       local: localTimeString,
       ayanamsha: getLahiriAyanamsha(jd)
-    });
+    }, warnings);
     console.log('Dosha calculation complete:', doshaResults.summary);
 
     // Build response with optional debug data
@@ -267,16 +267,8 @@ serve(async (req) => {
         jd: jd,
         rules_version: 'india-popular-v1',
         generated_at: new Date().toISOString(),
-        calculation_preset: {
-          zodiac: 'sidereal',
-          ayanamsha: 'Lahiri',
-          node_model: 'mean',
-          houses: 'whole-sign',
-          endpoints: 'inclusive',
-          ks_edge_tolerance_deg: 2.0,
-          conj_orb_deg: 8,
-          conj_orb_moon_deg: 6,
-        },
+        calculation_preset: preset,
+        warnings: warnings.length > 0 ? warnings : undefined
       },
     };
     
@@ -521,7 +513,7 @@ function calculateAscendant(jd: number, lat: number, lon: number): number {
 }
 
 // Dosha calculation functions
-function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode: boolean = false, inputData?: any) {
+function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode: boolean = false, inputData?: any, warnings: string[] = []) {
   const mangal = calculateMangalDosha(chart, debugMode);
   const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
   const pitra = calculatePitraDosha(chart, debugMode);
@@ -689,11 +681,19 @@ function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode:
         utc: inputData.utc,
         ayanamsha_deg: inputData.ayanamsha?.toFixed(4)
       },
+      preset: {
+        zodiac: 'sidereal',
+        ayanamsha: 'Lahiri',
+        node_model: 'mean',
+        houses: 'whole-sign',
+        endpoints: 'inclusive'
+      },
       mangal: mangal.debug,
       pitra: pitra.debug,
       shaniDosha: sadeSati.debug,
       kaalSarp: kaalSarp.debug,
-      sadeSati: sadeSati.debug
+      sadeSati: sadeSati.debug,
+      warnings
     };
   }
   

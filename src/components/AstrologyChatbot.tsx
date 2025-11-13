@@ -21,8 +21,40 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLimitReached, setIsLimitReached] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
+
+  // Get or create device ID
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+      deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('deviceId', deviceId);
+    }
+    return deviceId;
+  };
+
+  // Check message limit
+  const checkMessageLimit = () => {
+    const deviceId = getDeviceId();
+    const key = `chatCount_${deviceId}`;
+    const count = parseInt(localStorage.getItem(key) || '0', 10);
+    return count >= 15;
+  };
+
+  // Increment message count
+  const incrementMessageCount = () => {
+    const deviceId = getDeviceId();
+    const key = `chatCount_${deviceId}`;
+    const count = parseInt(localStorage.getItem(key) || '0', 10);
+    localStorage.setItem(key, (count + 1).toString());
+  };
+
+  // Check limit on mount
+  useEffect(() => {
+    setIsLimitReached(checkMessageLimit());
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -31,6 +63,16 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
   }, [messages]);
 
   const streamChat = async (userMessage: string) => {
+    // Check if limit reached
+    if (checkMessageLimit()) {
+      setIsLimitReached(true);
+      toast.error(isHindi ? 'मुफ्त चैट सीमा समाप्त हो गई है।' : 'Free chat limit exhausted.');
+      return;
+    }
+
+    // Increment count
+    incrementMessageCount();
+    
     const newMessages = [...messages, { role: 'user' as const, content: userMessage }];
     setMessages(newMessages);
     setInput('');
@@ -109,8 +151,9 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
   };
 
   const handleSend = () => {
-    if (!input.trim() || isLoading) return;
-    streamChat(input.trim());
+    if (input.trim() && !isLoading && !isLimitReached) {
+      streamChat(input.trim());
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -197,13 +240,13 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={isHindi ? 'अपना प्रश्न पूछें...' : 'Ask your question...'}
-            disabled={isLoading}
+            placeholder={isLimitReached ? (isHindi ? "चैट सीमा समाप्त" : "Chat limit reached") : (isHindi ? "अपना प्रश्न पूछें..." : "Ask your question...")}
+            disabled={isLoading || isLimitReached}
             className="flex-1"
           />
           <Button 
             onClick={handleSend} 
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || isLimitReached}
             size="icon"
           >
             {isLoading ? (

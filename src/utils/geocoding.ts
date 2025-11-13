@@ -296,7 +296,7 @@ export async function searchPlaces(query: string): Promise<Place[]> {
     return cached.results;
   }
 
-  // Rate limiting
+  // Rate limiting for external APIs only
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
@@ -306,72 +306,81 @@ export async function searchPlaces(query: string): Promise<Place[]> {
   }
   lastRequestTime = Date.now();
 
-  let results: Place[] = [];
-  let error: Error | null = null;
-
-  // Try Photon first (primary)
-  try {
-    results = await searchPhoton(sanitizedQuery);
-  } catch (e) {
-    error = e as Error;
-    console.warn('Photon failed, trying Nominatim:', e);
-
-    // Try Nominatim as secondary fallback
-    try {
-      results = await searchNominatim(sanitizedQuery);
-      error = null;
-    } catch (nominatimError) {
-      console.warn('Nominatim failed, trying GeoNames:', nominatimError);
-      error = nominatimError as Error;
-
-      // Try GeoNames as tertiary fallback
+  // Search local database and external APIs in parallel
+  const [localResults, externalResults] = await Promise.all([
+    // Priority 1: Local database (4.2k Indian cities)
+    searchLocalIndianCities(sanitizedQuery).catch(err => {
+      console.warn('Local database search failed:', err);
+      return [];
+    }),
+    
+    // Priority 2: External APIs (run in parallel, fastest wins)
+    Promise.race([
+      searchPhoton(sanitizedQuery),
+      searchNominatim(sanitizedQuery),
+      searchGeoNames(sanitizedQuery),
+    ]).catch(async (err) => {
+      console.warn('All fast APIs failed, trying fallback:', err);
+      // If race fails, try them sequentially
       try {
-        results = await searchGeoNames(sanitizedQuery);
-        error = null;
-      } catch (geoNamesError) {
-        console.warn('GeoNames failed, trying local database:', geoNamesError);
-        error = geoNamesError as Error;
-        
-        // Final fallback: Try local Indian cities database
+        return await searchNominatim(sanitizedQuery);
+      } catch {
         try {
-          results = await searchLocalIndianCities(sanitizedQuery);
-          error = results.length === 0 ? error : null;
-        } catch (localError) {
-          console.error('All providers failed including local database');
-          error = localError as Error;
+          return await searchGeoNames(sanitizedQuery);
+        } catch {
+          return [];
         }
       }
-    }
-  }
-  
-  // If API providers returned results but very few, supplement with local database
-  if (results.length > 0 && results.length < 3) {
-    try {
-      const localResults = await searchLocalIndianCities(sanitizedQuery);
-      // Add local results that aren't already in the results
-      const existingNames = new Set(results.map(r => r.display_name.toLowerCase()));
-      const uniqueLocalResults = localResults.filter(
-        r => !existingNames.has(r.display_name.toLowerCase())
-      );
-      results = [...results, ...uniqueLocalResults].slice(0, 8);
-    } catch (localError) {
-      console.warn('Could not supplement with local database:', localError);
+    })
+  ]);
+
+  console.log(`📊 Search results - Local: ${localResults.length}, External: ${externalResults.length}`);
+
+  // Merge results with local cities ranked higher
+  const mergedResults: Place[] = [];
+  const seen = new Set<string>();
+
+  // Add local results first (higher priority)
+  for (const result of localResults) {
+    const key = `${result.display_name.toLowerCase()}-${result.lat}-${result.lon}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      mergedResults.push(result);
     }
   }
 
-  if (error && results.length === 0) {
-    throw new Error('Too many lookups. Try again in a moment.');
+  // Add external results (deduplicated)
+  for (const result of externalResults) {
+    const key = `${result.display_name.toLowerCase()}-${result.lat.toFixed(4)}-${result.lon.toFixed(4)}`;
+    const cityName = result.address?.city?.toLowerCase() || result.display_name.toLowerCase();
+    
+    // Skip if we already have a local result for this city
+    const isDuplicate = localResults.some(local => 
+      local.address?.city?.toLowerCase() === cityName ||
+      local.display_name.toLowerCase().includes(cityName)
+    );
+    
+    if (!seen.has(key) && !isDuplicate) {
+      seen.add(key);
+      mergedResults.push(result);
+    }
+  }
+
+  // Limit total results
+  const results = mergedResults.slice(0, 10);
+
+  if (results.length === 0) {
+    throw new Error('No locations found. Please try a different search.');
   }
 
   // Update cache
-  if (results.length > 0) {
-    if (queryCache.size >= MAX_CACHE_SIZE) {
-      const firstKey = queryCache.keys().next().value;
-      queryCache.delete(firstKey);
-    }
-    queryCache.set(sanitizedQuery, { results, timestamp: Date.now() });
+  if (queryCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = queryCache.keys().next().value;
+    queryCache.delete(firstKey);
   }
+  queryCache.set(sanitizedQuery, { results, timestamp: Date.now() });
 
+  console.log(`✓ Returning ${results.length} merged results (local prioritized)`);
   return results;
 }
 

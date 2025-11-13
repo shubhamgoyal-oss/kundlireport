@@ -40,7 +40,7 @@ export default function LanguageToggle() {
         data-gtm-button-type="language-toggle"
       >
         <Globe className="h-4 w-4" />
-        {isHindi ? t('common.switchToEnglish') : t('common.switchToHindi')}
+        {isHindi ? 'Switch to English' : 'हिंदी में बदलें'}
       </Button>
     </div>
   );

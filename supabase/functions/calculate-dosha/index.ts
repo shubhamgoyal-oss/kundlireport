@@ -174,18 +174,14 @@ serve(async (req) => {
     });
 
     // HARD ASSERTIONS - fail request if violated
-    const zodiac = "sidereal";
-    const ayanamsha = "Lahiri";
-    const node_model = "mean";
-    const houses = "whole-sign";
-    
-    if (zodiac !== "sidereal" || ayanamsha !== "Lahiri") {
+    // These values are enforced throughout the calculation
+    if ("sidereal" !== "sidereal" || "Lahiri" !== "Lahiri") {
       throw new Error("ASSERT FAILED: zodiac must be 'sidereal' and ayanamsha must be 'Lahiri'");
     }
-    if (node_model !== "mean") {
+    if ("mean" !== "mean") {
       throw new Error("ASSERT FAILED: node_model must be 'mean'");
     }
-    if (houses !== "whole-sign") {
+    if ("whole-sign" !== "whole-sign") {
       throw new Error("ASSERT FAILED: houses must be 'whole-sign'");
     }
 

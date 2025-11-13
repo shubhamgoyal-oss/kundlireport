@@ -545,13 +545,6 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </div>
           )}
 
-          {/* Privacy Note */}
-          <div className="p-4 bg-accent/10 border border-accent/30 rounded-md">
-            <p className="text-sm text-muted-foreground">
-              {t('dosha.privacyNote')}
-            </p>
-          </div>
-
           {/* Submit Button */}
           <Button
             type="submit"

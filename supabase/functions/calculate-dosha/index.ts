@@ -1073,20 +1073,17 @@ function calculatePitraDosha(chart: any, debugMode: boolean = false) {
   };
 }
 
-// Helper to calculate transit planet position for a given date
-function getTransitPlanetPosition(planetId: number, evalDate: Date): number {
+// Helper to calculate transit Saturn position for a given date
+function getTransitSaturnPosition(evalDate: Date): number {
   const jd = calculateJulianDay(evalDate);
   const ayanamsha = getLahiriAyanamsha(jd);
+  const T = (jd - 2451545.0) / 36525;
   
-  const flags = SEFLG_SIDEREAL | SEFLG_SPEED;
-  const result = swe_calc_ut(jd, planetId, flags);
-  
-  if (result.error) {
-    throw new Error(`Transit calculation failed: ${result.error}`);
-  }
+  // Calculate tropical Saturn position
+  const tropicalLon = calculateSaturnPosition(T);
   
   // Convert to sidereal
-  const sidLon = normalize((result.longitude - ayanamsha + 360) % 360);
+  const sidLon = (tropicalLon - ayanamsha + 360) % 360;
   return sidLon;
 }
 
@@ -1099,7 +1096,7 @@ function calculateSadeSati(chart: any, evalDate: Date = new Date(), debugMode: b
   const moonSign = Math.floor(chart.grahas.Moon.lon / 30);
   
   // Transit Saturn's sidereal sign for evaluation date
-  const transitSaturnLon = getTransitPlanetPosition(SE_SATURN, evalDate);
+  const transitSaturnLon = getTransitSaturnPosition(evalDate);
   const saturnSign = Math.floor(transitSaturnLon / 30);
   
   let active = false;

@@ -78,7 +78,7 @@ const resources = {
         noPujas: 'No specific pujas found for your selected areas. Please try selecting different areas.'
       },
       dosha: {
-        heroTitle: 'Identify Your Dosha',
+        heroTitle: 'Analyse your Kundali',
         heroSubtitle: 'Share your birth details to find out which doshas (if any) appear in your Vedic chart—and see devotional remedies.',
         whatIsDosha: 'What is a dosha?',
         whatIsDoshaAnswer: 'In Vedic astrology, a dosha is a specific planetary pattern believed to create challenges or imbalances in life.',
@@ -356,7 +356,7 @@ const resources = {
         noPujas: 'आपके चयनित क्षेत्रों के लिए कोई विशिष्ट पूजा नहीं मिली। कृपया अन्य क्षेत्र चुनें।'
       },
       dosha: {
-        heroTitle: 'अपने दोष की पहचान करें',
+        heroTitle: 'अपनी कुंडली का विश्लेषण करें',
         heroSubtitle: 'अपने जन्म विवरण साझा करें और पता लगाएं कि आपके वैदिक चार्ट में कौन से दोष (यदि कोई हो) दिखाई देते हैं—और पारंपरिक उपचार देखें।',
         whatIsDosha: 'दोष क्या है?',
         whatIsDoshaAnswer: 'वैदिक ज्योतिष में, दोष एक विशिष्ट ग्रह पैटर्न है जो जीवन में चुनौतियां या असंतुलन पैदा करने के लिए माना जाता है।',

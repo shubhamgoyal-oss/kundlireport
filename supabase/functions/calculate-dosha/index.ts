@@ -12,6 +12,11 @@ import {
   calculateKetuNagaDosha,
   calculateNavagrahaUmbrella,
 } from "./other-doshas.ts";
+import {
+  calculateShaniDosha,
+  getShaniDoshaExplanation,
+  getShaniDoshaRemedies,
+} from "./shani-dosha.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

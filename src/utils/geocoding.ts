@@ -216,80 +216,66 @@ function determineConfidence(type?: string, address?: any): Place['confidence'] 
  */
 async function searchLocalIndianCities(query: string): Promise<Place[]> {
   try {
-    const spreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1txrJUoN2M8cG3j1CJKsifsNHrKZrHMnAZwpCVAkVaW8/export?format=csv';
-    const response = await fetch(spreadsheetUrl);
+    console.log('🏙️ Searching local Indian cities database (4.2k cities)...');
+    
+    // Dynamically import xlsx library
+    const XLSX = await import('xlsx');
+    
+    // Fetch the Excel file
+    const response = await fetch('/indian-cities.xlsx');
     
     if (!response.ok) {
-      console.warn('Failed to fetch local cities database');
+      console.warn('Failed to fetch local database');
       return [];
     }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     
-    const csvText = await response.text();
-    const rows = csvText.split('\n').slice(1); // Skip header row
+    // Get first sheet
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json<{
+      State: string;
+      Location: string;
+      Latitude: number;
+      Longitude: number;
+      Combined: string;
+    }>(firstSheet);
     
+    const results: Place[] = [];
     const queryLower = query.toLowerCase().trim();
-    const matches: Place[] = [];
     
-    for (const row of rows) {
-      if (!row.trim()) continue;
+    // Search through all cities
+    for (const row of data) {
+      if (!row.Location || !row.Latitude || !row.Longitude) continue;
       
-      // Proper CSV parsing that handles quoted fields
-      const parseCSVRow = (row: string): string[] => {
-        const result: string[] = [];
-        let current = '';
-        let inQuotes = false;
-        
-        for (let i = 0; i < row.length; i++) {
-          const char = row[i];
-          
-          if (char === '"') {
-            inQuotes = !inQuotes;
-          } else if (char === ',' && !inQuotes) {
-            result.push(current.trim());
-            current = '';
-          } else {
-            current += char;
-          }
-        }
-        result.push(current.trim());
-        return result;
-      };
+      // Check if location matches query (search in both Location and Combined)
+      const locationMatch = row.Location.toLowerCase().includes(queryLower);
+      const combinedMatch = row.Combined?.toLowerCase().includes(queryLower);
       
-      const columns = parseCSVRow(row);
-      if (columns.length < 5) continue;
-      
-      const state = columns[0];
-      const location = columns[1];
-      const lat = parseFloat(columns[2]);
-      const lon = parseFloat(columns[3]);
-      const combined = columns[4];
-      
-      if (!location || isNaN(lat) || isNaN(lon)) continue;
-      
-      // Match query against location name or combined field
-      if (location.toLowerCase().includes(queryLower) || 
-          combined?.toLowerCase().includes(queryLower)) {
-        matches.push({
-          display_name: combined || `${location}, ${state}`,
-          lat,
-          lon,
+      if (locationMatch || combinedMatch) {
+        results.push({
+          display_name: row.Combined || `${row.Location}, ${row.State}`,
+          lat: row.Latitude,
+          lon: row.Longitude,
           type: 'city',
           address: {
-            city: location,
-            state: state,
-            country: 'India',
+            city: row.Location,
+            state: row.State,
+            country: 'India'
           },
-          confidence: 'city',
+          confidence: 'city'
         });
-        
-        // Limit to 8 results
-        if (matches.length >= 8) break;
       }
+      
+      // Limit results to 15 for better coverage
+      if (results.length >= 15) break;
     }
     
-    return matches;
+    console.log(`✓ Found ${results.length} results from local database`);
+    return results;
   } catch (error) {
-    console.warn('Error searching local Indian cities:', error);
+    console.error('Error searching local database:', error);
     return [];
   }
 }

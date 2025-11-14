@@ -27,6 +27,54 @@ const MAX_CACHE_SIZE = 10;
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 400; // ms
 
+// Preloaded city data for instant first search
+interface CityData {
+  State: string;
+  Location: string;
+  Latitude: number;
+  Longitude: number;
+  Combined: string;
+}
+
+let cityDataCache: CityData[] | null = null;
+let cityDataLoading: Promise<CityData[]> | null = null;
+
+// Preload city data immediately
+async function preloadCityData(): Promise<CityData[]> {
+  if (cityDataCache) return cityDataCache;
+  if (cityDataLoading) return cityDataLoading;
+
+  cityDataLoading = (async () => {
+    try {
+      console.log('🚀 Preloading Indian cities database...');
+      const XLSX = await import('xlsx');
+      const response = await fetch('/indian-cities.xlsx');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch city database');
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json<CityData>(firstSheet);
+      
+      cityDataCache = data;
+      console.log(`✓ Preloaded ${data.length} cities`);
+      return data;
+    } catch (error) {
+      console.error('Failed to preload city data:', error);
+      cityDataLoading = null;
+      return [];
+    }
+  })();
+
+  return cityDataLoading;
+}
+
+// Start preloading immediately when module loads
+preloadCityData();
+
 /**
  * Nominatim (Primary) - Free OSM geocoder with India filters
  */
@@ -216,31 +264,15 @@ function determineConfidence(type?: string, address?: any): Place['confidence'] 
  */
 async function searchLocalIndianCities(query: string): Promise<Place[]> {
   try {
-    console.log('🏙️ Searching local Indian cities database (4.2k cities)...');
+    console.log('🏙️ Searching local Indian cities database...');
     
-    // Dynamically import xlsx library
-    const XLSX = await import('xlsx');
+    // Get preloaded data (instant if already loaded)
+    const data = await preloadCityData();
     
-    // Fetch the Excel file
-    const response = await fetch('/indian-cities.xlsx');
-    
-    if (!response.ok) {
-      console.warn('Failed to fetch local database');
+    if (data.length === 0) {
+      console.warn('City data not available');
       return [];
     }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-    
-    // Get first sheet
-    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json<{
-      State: string;
-      Location: string;
-      Latitude: number;
-      Longitude: number;
-      Combined: string;
-    }>(firstSheet);
     
     const results: Place[] = [];
     const queryLower = query.toLowerCase().trim();

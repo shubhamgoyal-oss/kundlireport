@@ -53,13 +53,34 @@ async function fetchSeerKundli(
   day: number, month: number, year: number, hour: number, min: number,
   lat: number, lon: number, tzone: number = 5.5
 ): Promise<SeerKundliResponse> {
+  const requestBody = {
+    name: "",
+    gender: "",
+    day,
+    month,
+    year,
+    hour,
+    min,
+    lat,
+    lon,
+    tzone,
+    user_id: 0
+  };
+
+  console.log('Seer API Request:', JSON.stringify(requestBody, null, 2));
+
   const response = await fetch('https://api-sbox.a4b.io/gw2/seer/internal/v1/user/kundli-details', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-fe-server': 'true' },
-    body: JSON.stringify({ day, month, year, hour, min, lat, lon, tzone, user_id: 0 })
+    body: JSON.stringify(requestBody)
   });
 
-  if (!response.ok) throw new Error(`Seer API error: ${response.status}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Seer API Error Response:', errorText);
+    throw new Error(`Seer API error: ${response.status} - ${errorText}`);
+  }
+
   return await response.json();
 }
 

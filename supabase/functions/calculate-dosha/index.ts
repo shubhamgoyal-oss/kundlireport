@@ -50,12 +50,15 @@ const PLANET_MAP: Record<string, string> = {
 };
 
 async function fetchSeerKundli(
+  name: string,
+  gender: string,
+  userId: number,
   day: number, month: number, year: number, hour: number, min: number,
   lat: number, lon: number, tzone: number = 5.5
 ): Promise<SeerKundliResponse> {
   const requestBody = {
-    name: "",
-    gender: "",
+    name,
+    gender,
     day,
     month,
     year,
@@ -64,7 +67,7 @@ async function fetchSeerKundli(
     lat,
     lon,
     tzone,
-    user_id: 0
+    user_id: userId
   };
 
   console.log('Seer API Request:', JSON.stringify(requestBody, null, 2));
@@ -270,7 +273,16 @@ serve(async (req) => {
     const [h, min] = (input.time || '12:00').split(':').map(Number);
 
     console.log('🔮 Calling Seer API...');
-    const seerResponse = await fetchSeerKundli(d, m, y, h, min, input.lat, input.lon, 5.5);
+    const nameForSeer = (input.name || 'User').toString().trim() || 'User';
+    // Default gender to 'male' if not provided (API requires non-empty)
+    const genderForSeer = 'male';
+    const userIdForSeer = 1; // non-zero positive
+    const seerResponse = await fetchSeerKundli(
+      nameForSeer,
+      genderForSeer,
+      userIdForSeer,
+      d, m, y, h, min, input.lat, input.lon, 5.5
+    );
     const { planets, ascendant } = normalizeSeerData(seerResponse);
 
     const mangal = recomputeMangalDosha(planets, ascendant);

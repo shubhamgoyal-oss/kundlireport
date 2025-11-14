@@ -57,8 +57,9 @@ const SIGN_MAP: Record<string, { name: string; idx: number }> = {
 };
 
 export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
-  console.log("📡 Calling Seer API:", req);
+  console.log("📡 [SEER] Calling Seer API with request:", JSON.stringify(req, null, 2));
   
+  const startTime = Date.now();
   const response = await fetch("https://api-sbox.a4b.io/gw2/seer/internal/v1/user/kundli-details", {
     method: "POST",
     headers: {
@@ -67,44 +68,66 @@ export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
     },
     body: JSON.stringify(req)
   });
+  
+  const elapsed = Date.now() - startTime;
+  console.log(`⏱️ [SEER] API call took ${elapsed}ms`);
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("❌ Seer API error:", response.status, errorText);
+    console.error("❌ [SEER] API error:", {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText
+    });
     throw new Error(`Seer API failed: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
-  console.log("✅ Seer API response received");
+  console.log("✅ [SEER] API response received successfully");
+  console.log("📊 [SEER] Response structure:", {
+    hasVedicHoroscope: !!data?.vedic_horoscope,
+    hasPlanetsPosition: !!data?.vedic_horoscope?.planets_position,
+    planetsCount: data?.vedic_horoscope?.planets_position?.length || 0
+  });
+  
   return data;
 }
 
 export function adaptSeerResponse(seerData: any): SeerKundli {
+  console.log("🔄 [SEER] Starting adaptation of Hindi JSON to English");
   const warnings: string[] = [];
   const planets: SeerPlanet[] = [];
   let asc: SeerPlanet | null = null;
 
   if (!seerData?.vedic_horoscope?.planets_position) {
+    console.error("❌ [SEER] Invalid response structure");
     throw new Error("Invalid Seer response: missing planets_position");
   }
 
   const positions = seerData.vedic_horoscope.planets_position;
+  console.log(`📝 [SEER] Processing ${positions.length} planetary positions`);
   
   for (const p of positions) {
     // Trim whitespace from name and sign
     const nameHindi = (p.name || "").trim();
     const signHindi = (p.sign || "").trim();
     
+    console.log(`  → [SEER] Processing: "${nameHindi}" in "${signHindi}"`);
+    
     const nameEn = PLANET_MAP[nameHindi];
     const signData = SIGN_MAP[signHindi];
     
     if (!nameEn) {
-      warnings.push(`Unknown planet name: "${nameHindi}"`);
+      const warning = `Unknown planet name: "${nameHindi}"`;
+      console.warn(`  ⚠️ [SEER] ${warning}`);
+      warnings.push(warning);
       continue;
     }
     
     if (!signData) {
-      warnings.push(`Unknown sign: "${signHindi}"`);
+      const warning = `Unknown sign: "${signHindi}"`;
+      console.warn(`  ⚠️ [SEER] ${warning}`);
+      warnings.push(warning);
       continue;
     }
 
@@ -129,6 +152,8 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
       isRetro
     };
 
+    console.log(`  ✓ [SEER] Mapped to: ${nameEn} ${signData.name} ${deg.toFixed(1)}° (H${house})${isRetro ? ' R' : ''}`);
+
     if (nameEn === "Asc") {
       asc = planet;
     } else {
@@ -137,8 +162,11 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
   }
 
   if (!asc) {
+    console.error("❌ [SEER] Ascendant missing from response");
     throw new Error("Ascendant (लग्न) missing from Seer response");
   }
+
+  console.log(`✓ [SEER] Ascendant: ${asc.sign} ${asc.deg.toFixed(1)}°`);
 
   // Verify we have all 9 planets
   const expectedPlanets = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
@@ -146,7 +174,14 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
   const missing = expectedPlanets.filter(n => !foundPlanets.includes(n));
   
   if (missing.length > 0) {
-    warnings.push(`Missing planets: ${missing.join(", ")}`);
+    const warning = `Missing planets: ${missing.join(", ")}`;
+    console.warn(`⚠️ [SEER] ${warning}`);
+    warnings.push(warning);
+  }
+
+  console.log(`✅ [SEER] Adaptation complete: ${planets.length} planets + Asc`);
+  if (warnings.length > 0) {
+    console.log(`⚠️ [SEER] ${warnings.length} warning(s):`, warnings);
   }
 
   return {

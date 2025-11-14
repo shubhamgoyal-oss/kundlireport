@@ -12,11 +12,23 @@ import {
   calculateKetuNagaDosha,
   calculateNavagrahaUmbrella,
 } from "./other-doshas.ts";
+import { fetchSeerKundli, adaptSeerResponse, type SeerKundliRequest } from "./seer-adapter.ts";
 import {
-  calculateShaniDosha,
-  getShaniDoshaExplanation,
-  getShaniDoshaRemedies,
-} from "./shani-dosha.ts";
+  calculateMangalDosha as calculateMangalDoshaSeer,
+  calculatePitraDosha as calculatePitraDoshaSeer,
+  calculateShaniDosha as calculateShaniDoshaSeer,
+  calculateKaalSarpaDosha as calculateKaalSarpaDoshaSeer,
+} from "./seer-doshas.ts";
+import {
+  getMangalExplanationSeer,
+  getMangalRemediesSeer,
+  getPitraExplanationSeer,
+  getPitraRemediesSeer,
+  getShaniExplanationSeer,
+  getShaniRemediesSeer,
+  getKaalSarpExplanationSeer,
+  getKaalSarpRemediesSeer,
+} from "./seer-explanations.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -173,75 +185,244 @@ serve(async (req) => {
       tz: input.tz 
     });
 
-    // CRITICAL: Proper timezone conversion from local to UTC
-    // Input time is in local timezone (e.g., Asia/Kolkata)
-    // We need to convert it to UTC for accurate ephemeris calculations
+    // Parse date and time for Seer API
+    const [year, month, day] = input.date.split('-').map(Number);
+    let hour = 12;
+    let min = 0;
     
-    let birthDateTimeUTC: Date;
-    let localTimeString: string;
-    
-    if (input.time) {
-      // Parse local time and convert to UTC
-      // For IST (Asia/Kolkata), this is UTC+5:30
-      localTimeString = `${input.date}T${input.time}:00`;
-      
-      // Timezone offset map (hours from UTC)
-      const tzOffsetMap: Record<string, number> = {
-        'Asia/Kolkata': 5.5,
-        'Asia/Calcutta': 5.5,
-        'UTC': 0,
-        'GMT': 0,
-      };
-      
-      const tzOffset = tzOffsetMap[input.tz] || 5.5; // Default to IST if not found
-      
-      // Parse the local date/time
-      const [datePart, timePart] = localTimeString.split('T');
-      const [year, month, day] = datePart.split('-').map(Number);
-      const [hour, minute] = timePart.split(':').map(Number);
-      
-      // Create UTC date by subtracting timezone offset
-      const utcHour = hour - Math.floor(tzOffset);
-      const utcMinute = minute - ((tzOffset % 1) * 60);
-      
-      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, utcHour, utcMinute, 0));
-    } else {
-      // Unknown time - default to noon local time
-      localTimeString = `${input.date}T12:00:00`;
-      const [year, month, day] = input.date.split('-').map(Number);
-      birthDateTimeUTC = new Date(Date.UTC(year, month - 1, day, 6, 30, 0)); // Noon IST = 06:30 UTC
+    if (input.time && !input.unknownTime) {
+      [hour, min] = input.time.split(':').map(Number);
     }
-
-    console.log('Local time:', localTimeString);
-    console.log('UTC time:', birthDateTimeUTC.toISOString());
-
-    // Calculate Julian Day from UTC
-    const jd = calculateJulianDay(birthDateTimeUTC);
-    console.log('Julian Day:', jd);
-
-    // Calculate Lahiri Ayanamsha
-    const ayanamsha = getLahiriAyanamsha(jd);
-    console.log('Lahiri Ayanamsha:', ayanamsha);
-
-    // Calculate planetary positions
-    const chartData = calculatePlanetaryPositions(jd, input.lat, input.lon, input.unknownTime || false);
     
-    console.log('Chart calculated successfully');
+    // Timezone conversion (Seer expects tzone as hours from UTC)
+    const tzOffsetMap: Record<string, number> = {
+      'Asia/Kolkata': 5.5,
+      'Asia/Calcutta': 5.5,
+      'UTC': 0,
+      'GMT': 0,
+    };
+    const tzone = tzOffsetMap[input.tz] || 5.5;
 
-    // Calculate doshas with debug mode
-    const doshaResults = calculateAllDoshas(chartData, input.unknownTime || false, debugMode, {
-      date: input.date,
-      time: input.time,
-      place: input.place || `${input.lat},${input.lon}`,
+    // Fetch Kundli from Seer API
+    console.log('📡 Calling Seer API...');
+    const seerRequest: SeerKundliRequest = {
+      day,
+      month,
+      year,
+      hour,
+      min,
       lat: input.lat,
       lon: input.lon,
-      tz: input.tz,
-      utc: birthDateTimeUTC.toISOString(),
-      local: localTimeString,
-      ayanamsha: getLahiriAyanamsha(jd)
+      tzone,
+      user_id: 0
+    };
+    
+    const seerData = await fetchSeerKundli(seerRequest);
+    console.log('✅ Seer API response received');
+    
+    // Adapt Hindi JSON to English
+    const kundli = adaptSeerResponse(seerData);
+    console.log('✅ Kundli adapted:', kundli.planets.map(p => `${p.name} ${p.sign}`).join(', '));
+
+    // Calculate core doshas using Seer data (recomputed locally, ignoring Seer's dosha flags)
+    const mangal = calculateMangalDoshaSeer(kundli);
+    const pitra = calculatePitraDoshaSeer(kundli);
+    const shani = calculateShaniDoshaSeer(kundli);
+    const kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
+    
+    // Build chart structure for compatibility with "other doshas"
+    const chartForOldDoshas = {
+      planets: kundli.planets.map(p => ({
+        name: p.name,
+        sign: p.sign,
+        longitude: p.deg,
+        house: p.house
+      })),
+      ascendant: {
+        sign: kundli.asc.sign,
+        longitude: kundli.asc.deg
+      }
+    };
+    
+    // Calculate other doshas (using existing logic)
+    const grahan = calculateGrahanDosha(chartForOldDoshas);
+    const shrapit = calculateShrapitDosha(chartForOldDoshas);
+    const guruChandal = calculateGuruChandalDosha(chartForOldDoshas);
+    const punarphoo = calculatePunarphooDosha(chartForOldDoshas);
+    const kemadruma = calculateKemadrumaYoga(chartForOldDoshas);
+    const gandmool = calculateGandmoolDosha(chartForOldDoshas);
+    const kalathra = calculateKalathraDosh(chartForOldDoshas);
+    const vishDaridra = calculateVishDaridraYoga(chartForOldDoshas);
+    const ketuNaga = calculateKetuNagaDosha(chartForOldDoshas);
+    
+    // Build summary
+    const summary: any = {
+      mangal: mangal.status,
+      mangalSeverity: mangal.severity,
+      pitra: pitra.status,
+      shaniDosha: shani.status,
+      shaniSeverity: shani.severity,
+      kaalSarp: kaalSarp.status,
+      kaalSarpSubtype: kaalSarp.status === "present" && kaalSarp.notes.some(n => n.includes("partial")) ? "partial" : undefined,
+      grahan: grahan.present,
+      rahuSurya: grahan.rahuSurya ? "present" : "absent",
+      shrapit: shrapit.present,
+      guruChandal: guruChandal.present,
+      punarphoo: punarphoo.present,
+      kemadruma: kemadruma.present,
+      gandmool: gandmool.present,
+      kalathra: kalathra.present,
+      vishDaridra: vishDaridra.present,
+      ketuNaga: ketuNaga.present
+    };
+    
+    // Calculate Navagraha umbrella
+    const navagrahaResult = calculateNavagrahaUmbrella({
+      grahan,
+      shrapit,
+      guruChandal,
+      punarphoo,
+      kemadruma,
+      gandmool,
+      kalathra,
+      vishDaridra,
+      ketuNaga
     });
+    summary.navagrahaUmbrella = navagrahaResult.present;
+    
+    const doshaResults = {
+      summary,
+      details: {
+        mangal: {
+          triggeredBy: mangal.triggeredBy,
+          placements: mangal.placements,
+          notes: [...mangal.notes, ...mangal.cancellations, ...mangal.mitigations],
+          explanation: getMangalExplanationSeer(mangal),
+          remedies: getMangalRemediesSeer(mangal)
+        },
+        pitra: {
+          triggeredBy: pitra.triggeredBy,
+          placements: pitra.placements,
+          notes: pitra.notes,
+          explanation: getPitraExplanationSeer(pitra),
+          remedies: getPitraRemediesSeer(pitra)
+        },
+        shaniDosha: {
+          triggeredBy: shani.triggeredBy,
+          placements: shani.placements,
+          notes: [...shani.notes, ...shani.mitigations],
+          explanation: getShaniExplanationSeer(shani),
+          remedies: getShaniRemediesSeer(shani)
+        },
+        kaalSarp: {
+          triggeredBy: kaalSarp.triggeredBy,
+          placements: kaalSarp.placements,
+          notes: kaalSarp.notes,
+          explanation: getKaalSarpExplanationSeer(kaalSarp),
+          remedies: getKaalSarpRemediesSeer()
+        },
+        grahan: {
+          triggeredBy: grahan.triggeredBy || [],
+          placements: grahan.placements || [],
+          notes: grahan.notes || [],
+          explanation: grahan.explanation || "No Grahan Dosha detected.",
+          remedies: grahan.remedies || []
+        },
+        shrapit: {
+          triggeredBy: shrapit.triggeredBy || [],
+          placements: shrapit.placements || [],
+          notes: shrapit.notes || [],
+          explanation: shrapit.explanation || "No Shrapit Dosha detected.",
+          remedies: shrapit.remedies || []
+        },
+        guruChandal: {
+          triggeredBy: guruChandal.triggeredBy || [],
+          placements: guruChandal.placements || [],
+          notes: guruChandal.notes || [],
+          explanation: guruChandal.explanation || "No Guru Chandal Dosha detected.",
+          remedies: guruChandal.remedies || []
+        },
+        punarphoo: {
+          triggeredBy: punarphoo.triggeredBy || [],
+          placements: punarphoo.placements || [],
+          notes: punarphoo.notes || [],
+          explanation: punarphoo.explanation || "No Punarphoo Dosha detected.",
+          remedies: punarphoo.remedies || []
+        },
+        kemadruma: {
+          triggeredBy: kemadruma.triggeredBy || [],
+          placements: kemadruma.placements || [],
+          notes: kemadruma.notes || [],
+          explanation: kemadruma.explanation || "No Kemadruma Yoga detected.",
+          remedies: kemadruma.remedies || []
+        },
+        gandmool: {
+          triggeredBy: gandmool.triggeredBy || [],
+          placements: gandmool.placements || [],
+          notes: gandmool.notes || [],
+          explanation: gandmool.explanation || "No Gandmool Dosha detected.",
+          remedies: gandmool.remedies || []
+        },
+        kalathra: {
+          triggeredBy: kalathra.triggeredBy || [],
+          placements: kalathra.placements || [],
+          notes: kalathra.notes || [],
+          explanation: kalathra.explanation || "No Kalathra Dosha detected.",
+          remedies: kalathra.remedies || []
+        },
+        vishDaridra: {
+          triggeredBy: vishDaridra.triggeredBy || [],
+          placements: vishDaridra.placements || [],
+          notes: vishDaridra.notes || [],
+          explanation: vishDaridra.explanation || "No Vish/Daridra Yoga detected.",
+          remedies: vishDaridra.remedies || []
+        },
+        ketuNaga: {
+          triggeredBy: ketuNaga.triggeredBy || [],
+          placements: ketuNaga.placements || [],
+          notes: ketuNaga.notes || [],
+          explanation: ketuNaga.explanation || "No Ketu/Naga Dosha detected.",
+          remedies: ketuNaga.remedies || []
+        },
+        navagrahaUmbrella: {
+          triggeredBy: navagrahaResult.triggeredBy || [],
+          placements: navagrahaResult.placements || [],
+          notes: navagrahaResult.notes || [],
+          explanation: navagrahaResult.explanation || "",
+          remedies: navagrahaResult.remedies || []
+        }
+      }
+    };
+    
     console.log('Dosha calculation complete:', doshaResults.summary);
 
+    // Build chart structure for response (using Seer data)
+    const chartData = {
+      grahas: {} as any,
+      ascendant: {
+        lon: kundli.asc.deg,
+        sign: kundli.asc.sign,
+        deg: kundli.asc.deg,
+        house: 1
+      },
+      houses: Array.from({ length: 12 }, (_, i) => ({
+        house: i + 1,
+        sign: ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"][(kundli.asc.signIdx + i) % 12],
+        cusp: ((kundli.asc.signIdx + i) * 30) % 360
+      })),
+      ayanamsha: 23.8 // Approximate Lahiri for current epoch
+    };
+    
+    // Populate grahas
+    for (const p of kundli.planets) {
+      chartData.grahas[p.name] = {
+        lon: p.deg,
+        sign: p.sign,
+        deg: p.deg % 30,
+        house: p.house
+      };
+    }
+    
     // Build response with optional debug data
     const response: any = {
       success: true,
@@ -252,7 +433,7 @@ serve(async (req) => {
         ayanamsha: 'Lahiri',
         system: 'Sidereal',
         calculationUTC: new Date().toISOString(),
-        jd: jd,
+        jd: 0, // Not calculated with Seer
         rules_version: 'india-popular-v1',
         generated_at: new Date().toISOString(),
         calculation_preset: {
@@ -269,8 +450,22 @@ serve(async (req) => {
     };
     
     // Add debug data if requested
-    if (debugMode && doshaResults.debug) {
-      response.debug = doshaResults.debug;
+    if (debugMode) {
+      response.debug = {
+        adapter: {
+          bodies_found: kundli.planets.length + 1,
+          trimmed_names: true,
+          coerced_booleans: true
+        },
+        asc: { sign: kundli.asc.sign, deg: kundli.asc.deg },
+        positions: [kundli.asc, ...kundli.planets].map(p => ({
+          name: p.name,
+          sign: p.sign,
+          deg: p.deg,
+          house: p.house
+        })),
+        warnings: kundli.notes
+      };
     }
     
     // Return complete results

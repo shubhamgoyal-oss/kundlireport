@@ -296,7 +296,33 @@ export async function searchPlaces(query: string): Promise<Place[]> {
     return cached.results;
   }
 
-  // Rate limiting for external APIs only
+  // Priority 1: Search local database first (fastest, 4.2k Indian cities)
+  const localResults = await searchLocalIndianCities(sanitizedQuery).catch(err => {
+    console.warn('Local database search failed:', err);
+    return [];
+  });
+
+  console.log(`📊 Local search results: ${localResults.length}`);
+
+  // If local database has results, return them immediately (no API calls needed)
+  if (localResults.length > 0) {
+    const results = localResults.slice(0, 10);
+    
+    // Update cache
+    if (queryCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = queryCache.keys().next().value;
+      queryCache.delete(firstKey);
+    }
+    queryCache.set(sanitizedQuery, { results, timestamp: Date.now() });
+    
+    console.log(`✓ Returning ${results.length} local results (no API calls needed)`);
+    return results;
+  }
+
+  // Priority 2: Only query external APIs if local database has no results
+  console.log('⚠️ No local results, querying external APIs...');
+  
+  // Rate limiting for external APIs
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
@@ -306,68 +332,28 @@ export async function searchPlaces(query: string): Promise<Place[]> {
   }
   lastRequestTime = Date.now();
 
-  // Search local database and external APIs in parallel
-  const [localResults, externalResults] = await Promise.all([
-    // Priority 1: Local database (4.2k Indian cities)
-    searchLocalIndianCities(sanitizedQuery).catch(err => {
-      console.warn('Local database search failed:', err);
-      return [];
-    }),
-    
-    // Priority 2: External APIs (run in parallel, fastest wins)
-    Promise.race([
-      searchPhoton(sanitizedQuery),
-      searchNominatim(sanitizedQuery),
-      searchGeoNames(sanitizedQuery),
-    ]).catch(async (err) => {
-      console.warn('All fast APIs failed, trying fallback:', err);
-      // If race fails, try them sequentially
+  const externalResults = await Promise.race([
+    searchPhoton(sanitizedQuery),
+    searchNominatim(sanitizedQuery),
+    searchGeoNames(sanitizedQuery),
+  ]).catch(async (err) => {
+    console.warn('All fast APIs failed, trying fallback:', err);
+    // If race fails, try them sequentially
+    try {
+      return await searchNominatim(sanitizedQuery);
+    } catch {
       try {
-        return await searchNominatim(sanitizedQuery);
+        return await searchGeoNames(sanitizedQuery);
       } catch {
-        try {
-          return await searchGeoNames(sanitizedQuery);
-        } catch {
-          return [];
-        }
+        return [];
       }
-    })
-  ]);
-
-  console.log(`📊 Search results - Local: ${localResults.length}, External: ${externalResults.length}`);
-
-  // Merge results with local cities ranked higher
-  const mergedResults: Place[] = [];
-  const seen = new Set<string>();
-
-  // Add local results first (higher priority)
-  for (const result of localResults) {
-    const key = `${result.display_name.toLowerCase()}-${result.lat}-${result.lon}`;
-    if (!seen.has(key)) {
-      seen.add(key);
-      mergedResults.push(result);
     }
-  }
+  });
 
-  // Add external results (deduplicated)
-  for (const result of externalResults) {
-    const key = `${result.display_name.toLowerCase()}-${result.lat.toFixed(4)}-${result.lon.toFixed(4)}`;
-    const cityName = result.address?.city?.toLowerCase() || result.display_name.toLowerCase();
-    
-    // Skip if we already have a local result for this city
-    const isDuplicate = localResults.some(local => 
-      local.address?.city?.toLowerCase() === cityName ||
-      local.display_name.toLowerCase().includes(cityName)
-    );
-    
-    if (!seen.has(key) && !isDuplicate) {
-      seen.add(key);
-      mergedResults.push(result);
-    }
-  }
+  console.log(`📊 External search results: ${externalResults.length}`);
 
   // Limit total results
-  const results = mergedResults.slice(0, 10);
+  const results = externalResults.slice(0, 10);
 
   if (results.length === 0) {
     throw new Error('No locations found. Please try a different search.');

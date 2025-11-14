@@ -204,7 +204,16 @@ serve(async (req) => {
     const tzone = tzOffsetMap[input.tz] || 5.5;
 
     // Fetch Kundli from Seer API
-    console.log('📡 Calling Seer API...');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('🚀 [MAIN] Starting Seer-based dosha calculation');
+    console.log('═══════════════════════════════════════════════════════');
+    console.log('📋 [MAIN] Input data:', {
+      date: `${day}/${month}/${year}`,
+      time: `${hour}:${String(min).padStart(2, '0')}`,
+      location: `${input.lat}, ${input.lon}`,
+      timezone: `UTC+${tzone}`
+    });
+    
     const seerRequest: SeerKundliRequest = {
       day,
       month,
@@ -218,17 +227,53 @@ serve(async (req) => {
     };
     
     const seerData = await fetchSeerKundli(seerRequest);
-    console.log('✅ Seer API response received');
     
     // Adapt Hindi JSON to English
     const kundli = adaptSeerResponse(seerData);
-    console.log('✅ Kundli adapted:', kundli.planets.map(p => `${p.name} ${p.sign}`).join(', '));
+    console.log('✅ [MAIN] Kundli adapted successfully');
+    console.log('📊 [MAIN] Planetary positions:');
+    kundli.planets.forEach(p => {
+      console.log(`  ${p.name.padEnd(10)}: ${p.sign.padEnd(12)} ${p.deg.toFixed(1).padStart(6)}° (H${p.house})`);
+    });
 
     // Calculate core doshas using Seer data (recomputed locally, ignoring Seer's dosha flags)
+    console.log('');
+    console.log('🔮 [MAIN] Calculating doshas (local rules, ignoring Seer flags)...');
+    console.log('───────────────────────────────────────────────────────');
+    
+    console.log('🔴 [DOSHA] Calculating Mangal Dosha...');
     const mangal = calculateMangalDoshaSeer(kundli);
+    console.log(`  Result: ${mangal.status}${mangal.severity ? ` (${mangal.severity})` : ''}`);
+    if (mangal.triggeredBy.length > 0) {
+      console.log(`  Triggers: ${mangal.triggeredBy.join(', ')}`);
+    }
+    if (mangal.cancellations.length > 0) {
+      console.log(`  Cancellations: ${mangal.cancellations.join(', ')}`);
+    }
+    if (mangal.mitigations.length > 0) {
+      console.log(`  Mitigations: ${mangal.mitigations.join(', ')}`);
+    }
+    
+    console.log('👴 [DOSHA] Calculating Pitra Dosha...');
     const pitra = calculatePitraDoshaSeer(kundli);
+    console.log(`  Result: ${pitra.status}`);
+    if (pitra.triggeredBy.length > 0) {
+      console.log(`  Triggers: ${pitra.triggeredBy.join(', ')}`);
+    }
+    
+    console.log('🪐 [DOSHA] Calculating Shani Dosha (natal)...');
     const shani = calculateShaniDoshaSeer(kundli);
+    console.log(`  Result: ${shani.status}${shani.severity ? ` (${shani.severity})` : ''}`);
+    if (shani.triggeredBy.length > 0) {
+      console.log(`  Triggers: ${shani.triggeredBy.join(', ')}`);
+    }
+    
+    console.log('🐉 [DOSHA] Calculating Kaal Sarpa Dosha...');
     const kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
+    console.log(`  Result: ${kaalSarp.status}`);
+    if (kaalSarp.triggeredBy.length > 0) {
+      console.log(`  Triggers: ${kaalSarp.triggeredBy.join(', ')}`);
+    }
     
     // Build chart structure for compatibility with "other doshas"
     const chartForOldDoshas = {
@@ -245,15 +290,26 @@ serve(async (req) => {
     };
     
     // Calculate other doshas (using existing logic)
+    console.log('');
+    console.log('📿 [DOSHA] Calculating other doshas...');
     const grahan = calculateGrahanDosha(chartForOldDoshas);
+    console.log(`  Grahan: ${grahan.present}`);
     const shrapit = calculateShrapitDosha(chartForOldDoshas);
+    console.log(`  Shrapit: ${shrapit.present}`);
     const guruChandal = calculateGuruChandalDosha(chartForOldDoshas);
+    console.log(`  Guru Chandal: ${guruChandal.present}`);
     const punarphoo = calculatePunarphooDosha(chartForOldDoshas);
+    console.log(`  Punarphoo: ${punarphoo.present}`);
     const kemadruma = calculateKemadrumaYoga(chartForOldDoshas);
+    console.log(`  Kemadruma: ${kemadruma.present}`);
     const gandmool = calculateGandmoolDosha(chartForOldDoshas);
+    console.log(`  Gandmool: ${gandmool.present}`);
     const kalathra = calculateKalathraDosh(chartForOldDoshas);
+    console.log(`  Kalathra: ${kalathra.present}`);
     const vishDaridra = calculateVishDaridraYoga(chartForOldDoshas);
+    console.log(`  Vish/Daridra: ${vishDaridra.present}`);
     const ketuNaga = calculateKetuNagaDosha(chartForOldDoshas);
+    console.log(`  Ketu/Naga: ${ketuNaga.present}`);
     
     // Build summary
     const summary: any = {
@@ -394,7 +450,10 @@ serve(async (req) => {
       }
     };
     
-    console.log('Dosha calculation complete:', doshaResults.summary);
+    console.log('');
+    console.log('✅ [MAIN] Dosha calculation complete');
+    console.log('📋 [MAIN] Summary:', JSON.stringify(doshaResults.summary, null, 2));
+    console.log('═══════════════════════════════════════════════════════');
 
     // Build chart structure for response (using Seer data)
     const chartData = {

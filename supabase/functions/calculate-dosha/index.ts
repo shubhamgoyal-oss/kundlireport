@@ -377,6 +377,41 @@ serve(async (req) => {
       console.log(`  Triggers: ${shani.triggeredBy.join(', ')}`);
     }
     
+    // Extract Sade Sati data from Seer
+    console.log('⏳ [DOSHA] Extracting Sade Sati from Seer...');
+    let sadeSati = {
+      isActive: false,
+      currentPhase: null as string | null,
+      periods: [] as any[]
+    };
+    
+    if (seerVedic?.shadhe_sati_dosha && Array.isArray(seerVedic.shadhe_sati_dosha)) {
+      sadeSati.periods = seerVedic.shadhe_sati_dosha;
+      
+      // Check if Sade Sati is currently active
+      const now = Date.now();
+      for (const period of seerVedic.shadhe_sati_dosha) {
+        const periodTime = parseInt(period.millisecond);
+        if (periodTime <= now) {
+          // Find the most recent period that has started
+          if (period.type?.includes('START')) {
+            sadeSati.isActive = true;
+            sadeSati.currentPhase = period.type;
+          } else if (period.type?.includes('END')) {
+            sadeSati.isActive = false;
+            sadeSati.currentPhase = null;
+          }
+        }
+      }
+      
+      console.log(`  Sade Sati Active: ${sadeSati.isActive}`);
+      if (sadeSati.currentPhase) {
+        console.log(`  Current Phase: ${sadeSati.currentPhase}`);
+      }
+    } else {
+      console.log(`  No Sade Sati data found in Seer response`);
+    }
+    
     // Use Seer's Kaal Sarpa Dosha result
     console.log('🐉 [DOSHA] Extracting Kaal Sarp Dosha from Seer...');
     let kaalSarp;
@@ -471,6 +506,8 @@ serve(async (req) => {
       pitra: pitra.status,
       shaniDosha: shani.status,
       shaniSeverity: shani.severity,
+      sadeSati: sadeSati.isActive ? "active" : "not_active",
+      sadeSatiPhase: sadeSati.currentPhase,
       kaalSarp: kaalSarp.status,
       kaalSarpSubtype: kaalSarp.status === "present" && kaalSarp.notes.some(n => n.includes("partial")) ? "partial" : undefined,
       grahan: grahan.present,
@@ -522,6 +559,23 @@ serve(async (req) => {
           notes: [...shani.notes, ...shani.mitigations],
           explanation: getShaniExplanationSeer(shani),
           remedies: getShaniRemediesSeer(shani)
+        },
+        sadeSati: {
+          isActive: sadeSati.isActive,
+          currentPhase: sadeSati.currentPhase,
+          periods: sadeSati.periods,
+          explanation: sadeSati.isActive 
+            ? `Sade Sati is currently active (Phase: ${sadeSati.currentPhase}). This is a 7.5-year period when Saturn transits through the 12th, 1st, and 2nd houses from your Moon sign.`
+            : "Sade Sati is not currently active in your chart.",
+          remedies: sadeSati.isActive ? [
+            "Worship Lord Hanuman and recite Hanuman Chalisa daily",
+            "Donate mustard oil, black sesame seeds, and black clothes on Saturdays",
+            "Feed crows and help the poor and needy",
+            "Chant Saturn mantras: 'Om Sham Shanaishcharaya Namah'",
+            "Light a lamp with mustard oil under a Peepal tree on Saturdays",
+            "Practice patience, discipline, and hard work",
+            "Consider wearing a blue sapphire (Neelam) after consulting an expert astrologer"
+          ] : []
         },
         kaalSarp: {
           triggeredBy: kaalSarp.triggeredBy,

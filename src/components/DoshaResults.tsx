@@ -51,7 +51,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
-  const isHindi = i18n.language?.toLowerCase().startsWith('hi');
+  const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
 
   useEffect(() => {
     // Fetch latest pujas
@@ -68,13 +68,14 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
     return () => clearInterval(intervalId);
   }, []);
 
-  const isDoshaPresent = (status: string) => {
-    const s = status.toLowerCase();
+  const isDoshaPresent = (status?: string) => {
+    const s = (status || '').toLowerCase();
     return s === 'present' || s === 'active';
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
+  const getSeverityColor = (severity?: string) => {
+    const s = (severity || '').toLowerCase();
+    switch (s) {
       case 'high':
         return 'bg-destructive/10 text-destructive border-destructive/20';
       case 'medium':

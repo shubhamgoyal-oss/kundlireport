@@ -56,7 +56,7 @@ const SIGN_MAP: Record<string, { name: string; idx: number }> = {
   "मीन": { name: "Pisces", idx: 11 }
 };
 
-export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
+export async function fetchSeerKundli(req: SeerKundliRequest): Promise<{ data: any; responseTimeMs: number; status: number }> {
   console.log("╔════════════════════════════════════════════════════════════════╗");
   console.log("║               SEER API CALL - REQUEST TRACKING                 ║");
   console.log("╚════════════════════════════════════════════════════════════════╝");
@@ -110,7 +110,7 @@ export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
     rawPlanets: data?.vedic_horoscope?.planets_position || []
   });
   
-  return data;
+  return { data, responseTimeMs: elapsed, status: response.status };
 }
 
 export function adaptSeerResponse(seerData: any): SeerKundli {

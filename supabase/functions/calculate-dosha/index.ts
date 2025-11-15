@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
   calculateGrahanDosha,
@@ -29,6 +30,12 @@ import {
   getKaalSarpExplanationSeer,
   getKaalSarpRemediesSeer,
 } from "./seer-explanations.ts";
+
+// Initialize Supabase client for logging
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -226,7 +233,8 @@ serve(async (req) => {
       user_id: 0
     };
     
-    const seerData = await fetchSeerKundli(seerRequest);
+    const seerApiStart = Date.now();
+    const { data: seerData, responseTimeMs, status: seerStatus } = await fetchSeerKundli(seerRequest);
     
     // Adapt Hindi JSON to English
     const kundli = adaptSeerResponse(seerData);
@@ -235,6 +243,40 @@ serve(async (req) => {
     kundli.planets.forEach(p => {
       console.log(`  ${p.name.padEnd(10)}: ${p.sign.padEnd(12)} ${p.deg.toFixed(1).padStart(6)}° (H${p.house})`);
     });
+
+    // Log Seer API call to database for tracking
+    const sessionId = req.headers.get('x-session-id') || 'unknown';
+    const visitorId = req.headers.get('x-visitor-id') || 'unknown';
+    
+    try {
+      const { error: logError } = await supabaseAdmin.from('seer_api_logs').insert({
+        request_payload: seerRequest,
+        birth_date: input.date,
+        birth_time: input.time || '00:00',
+        birth_place: input.place || `${input.lat},${input.lon}`,
+        latitude: input.lat,
+        longitude: input.lon,
+        timezone: tzone,
+        response_status: seerStatus,
+        response_time_ms: responseTimeMs,
+        response_data: seerData,
+        session_id: sessionId,
+        visitor_id: visitorId,
+        adapted_planets: {
+          ascendant: kundli.asc,
+          planets: kundli.planets
+        },
+        adaptation_warnings: kundli.notes.filter(n => n.includes('Unknown') || n.includes('Missing'))
+      });
+      
+      if (logError) {
+        console.error("⚠️ [LOG] Failed to save Seer API log:", logError);
+      } else {
+        console.log("✅ [LOG] Seer API call logged to database");
+      }
+    } catch (logErr) {
+      console.error("⚠️ [LOG] Error saving Seer API log:", logErr);
+    }
 
     // Calculate core doshas using Seer data (recomputed locally, ignoring Seer's dosha flags)
     console.log('');
@@ -274,6 +316,22 @@ serve(async (req) => {
     if (kaalSarp.triggeredBy.length > 0) {
       console.log(`  Triggers: ${kaalSarp.triggeredBy.join(', ')}`);
     }
+    
+    // Update log with dosha results (fire and forget)
+    supabaseAdmin.from('seer_api_logs')
+      .update({
+        mangal_dosha: mangal.status === 'present',
+        kaal_sarp_dosha: kaalSarp.status === 'present',
+        pitra_dosha: pitra.status === 'present',
+        shani_dosha: shani.status === 'present'
+      })
+      .eq('session_id', sessionId)
+      .eq('visitor_id', visitorId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .then(({ error }) => {
+        if (error) console.error("⚠️ [LOG] Failed to update dosha results:", error);
+      });
     
     // Build chart structure for compatibility with "other doshas"
     const chartForOldDoshas = {

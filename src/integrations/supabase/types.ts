@@ -152,6 +152,89 @@ export type Database = {
         }
         Relationships: []
       }
+      seer_api_logs: {
+        Row: {
+          adaptation_warnings: Json | null
+          adapted_planets: Json | null
+          birth_date: string
+          birth_place: string
+          birth_time: string
+          calculation_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          kaal_sarp_dosha: boolean | null
+          latitude: number
+          longitude: number
+          mangal_dosha: boolean | null
+          pitra_dosha: boolean | null
+          request_payload: Json
+          response_data: Json | null
+          response_status: number
+          response_time_ms: number
+          session_id: string
+          shani_dosha: boolean | null
+          timezone: number
+          visitor_id: string
+        }
+        Insert: {
+          adaptation_warnings?: Json | null
+          adapted_planets?: Json | null
+          birth_date: string
+          birth_place: string
+          birth_time: string
+          calculation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          kaal_sarp_dosha?: boolean | null
+          latitude: number
+          longitude: number
+          mangal_dosha?: boolean | null
+          pitra_dosha?: boolean | null
+          request_payload: Json
+          response_data?: Json | null
+          response_status: number
+          response_time_ms: number
+          session_id: string
+          shani_dosha?: boolean | null
+          timezone: number
+          visitor_id: string
+        }
+        Update: {
+          adaptation_warnings?: Json | null
+          adapted_planets?: Json | null
+          birth_date?: string
+          birth_place?: string
+          birth_time?: string
+          calculation_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          kaal_sarp_dosha?: boolean | null
+          latitude?: number
+          longitude?: number
+          mangal_dosha?: boolean | null
+          pitra_dosha?: boolean | null
+          request_payload?: Json
+          response_data?: Json | null
+          response_status?: number
+          response_time_ms?: number
+          session_id?: string
+          shani_dosha?: boolean | null
+          timezone?: number
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seer_api_logs_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "dosha_calculations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -105,11 +105,12 @@ export async function fetchSeerKundli(req: SeerKundliRequest): Promise<{ data: a
   console.log("✅ [SEER-RESPONSE] Status: SUCCESS");
   console.log("📦 [SEER-RESPONSE] Full response structure:");
   console.log(JSON.stringify(data, null, 2));
+  const body = data?.vedic_horoscope ? data : (data?.data?.vedic_horoscope ? data.data : data);
   console.log("📊 [SEER-RESPONSE] Parsed structure summary:", {
-    hasVedicHoroscope: !!data?.vedic_horoscope,
-    hasPlanetsPosition: !!data?.vedic_horoscope?.planets_position,
-    planetsCount: data?.vedic_horoscope?.planets_position?.length || 0,
-    rawPlanets: data?.vedic_horoscope?.planets_position || []
+    hasVedicHoroscope: !!body?.vedic_horoscope,
+    hasPlanetsPosition: !!body?.vedic_horoscope?.planets_position,
+    planetsCount: body?.vedic_horoscope?.planets_position?.length || 0,
+    rawPlanets: body?.vedic_horoscope?.planets_position || []
   });
   
   return { data, responseTimeMs: elapsed, status: response.status };
@@ -121,12 +122,18 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
   const planets: SeerPlanet[] = [];
   let asc: SeerPlanet | null = null;
 
-  if (!seerData?.vedic_horoscope?.planets_position) {
+  // Normalize shape: Seer sometimes wraps payload under a `data` key
+  const root = seerData?.vedic_horoscope
+    ? seerData
+    : (seerData?.data?.vedic_horoscope ? seerData.data : (seerData?.data || seerData));
+  const vedic = root?.vedic_horoscope;
+
+  if (!vedic?.planets_position) {
     console.error("❌ [SEER] Invalid response structure");
     throw new Error("Invalid Seer response: missing planets_position");
   }
 
-  const positions = seerData.vedic_horoscope.planets_position;
+  const positions = vedic.planets_position;
   console.log(`📝 [SEER] Processing ${positions.length} planetary positions`);
   
   for (const p of positions) {

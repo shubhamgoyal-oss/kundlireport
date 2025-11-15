@@ -10,6 +10,8 @@ export interface SeerKundliRequest {
   lon: number;
   tzone: number;
   user_id: number;
+  name: string;
+  gender: string;
 }
 
 export interface SeerPlanet {

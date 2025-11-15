@@ -77,7 +77,8 @@ setInterval(() => {
 
 // Input validation schema
 const birthInputSchema = z.object({
-  name: z.string().max(100).optional(),
+  name: z.string().min(1, "Name is required").max(100),
+  gender: z.enum(['male', 'female'], { required_error: "Gender is required" }),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").or(z.literal("")).optional(),
   tz: z.string().min(1).max(50, "Timezone string too long"),
@@ -231,7 +232,9 @@ serve(async (req) => {
       lat: input.lat,
       lon: input.lon,
       tzone,
-      user_id: 0
+      user_id: Date.now(), // Use timestamp as unique user_id
+      name: input.name,
+      gender: input.gender
     };
     
     const seerApiStart = Date.now();

@@ -284,31 +284,92 @@ serve(async (req) => {
       console.error("⚠️ [LOG] Error saving Seer API log:", logErr);
     }
 
-    // Calculate core doshas using Seer data (recomputed locally, ignoring Seer's dosha flags)
+    // Extract Seer's dosha calculations from response
+    const seerVedic = seerData?.data?.vedic_horoscope || seerData?.vedic_horoscope;
+    
     console.log('');
-    console.log('🔮 [MAIN] Calculating doshas (local rules, ignoring Seer flags)...');
+    console.log('🔮 [MAIN] Using Seer API dosha calculations...');
     console.log('───────────────────────────────────────────────────────');
     
-    console.log('🔴 [DOSHA] Calculating Mangal Dosha...');
-    const mangal = calculateMangalDoshaSeer(kundli);
-    console.log(`  Result: ${mangal.status}${mangal.severity ? ` (${mangal.severity})` : ''}`);
-    if (mangal.triggeredBy.length > 0) {
-      console.log(`  Triggers: ${mangal.triggeredBy.join(', ')}`);
-    }
-    if (mangal.cancellations.length > 0) {
-      console.log(`  Cancellations: ${mangal.cancellations.join(', ')}`);
-    }
-    if (mangal.mitigations.length > 0) {
-      console.log(`  Mitigations: ${mangal.mitigations.join(', ')}`);
+    // Use Seer's Mangal Dosha result
+    console.log('🔴 [DOSHA] Extracting Mangal Dosha from Seer...');
+    let mangal;
+    if (seerVedic?.manglik_dosha) {
+      const seerMangal = seerVedic.manglik_dosha;
+      const isManglik = seerMangal.from_ascendant?.is_manglik || 
+                        seerMangal.from_moon?.is_manglik || 
+                        seerMangal.from_venus?.is_manglik;
+      
+      if (isManglik) {
+        mangal = {
+          status: 'present' as const,
+          severity: 'moderate' as const,
+          triggeredBy: [
+            seerMangal.from_ascendant?.is_manglik ? `Mars from Lagna (H${seerMangal.from_ascendant.mars_house})` : null,
+            seerMangal.from_moon?.is_manglik ? `Mars from Moon (H${seerMangal.from_moon.mars_house})` : null,
+            seerMangal.from_venus?.is_manglik ? `Mars from Venus (H${seerMangal.from_venus.mars_house})` : null,
+          ].filter(Boolean) as string[],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      } else {
+        mangal = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+      console.log(`  Seer Result: ${mangal.status}${mangal.severity ? ` (${mangal.severity})` : ''}`);
+      if (mangal.triggeredBy.length > 0) {
+        console.log(`  Triggers: ${mangal.triggeredBy.join(', ')}`);
+      }
+    } else {
+      // Fallback to local calculation
+      mangal = calculateMangalDoshaSeer(kundli);
+      console.log(`  Local Calculation: ${mangal.status}${mangal.severity ? ` (${mangal.severity})` : ''}`);
     }
     
-    console.log('👴 [DOSHA] Calculating Pitra Dosha...');
-    const pitra = calculatePitraDoshaSeer(kundli);
-    console.log(`  Result: ${pitra.status}`);
-    if (pitra.triggeredBy.length > 0) {
-      console.log(`  Triggers: ${pitra.triggeredBy.join(', ')}`);
+    // Use Seer's Pitra Dosha result
+    console.log('👴 [DOSHA] Extracting Pitra Dosha from Seer...');
+    let pitra;
+    if (seerVedic?.pitri_dosha) {
+      const seerPitra = seerVedic.pitri_dosha;
+      if (seerPitra.is_pitri_dosha_present) {
+        pitra = {
+          status: 'present' as const,
+          severity: 'moderate' as const,
+          triggeredBy: seerPitra.rules_matched || ['Pitra Dosha detected by Seer'],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      } else {
+        pitra = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+      console.log(`  Seer Result: ${pitra.status}${pitra.severity ? ` (${pitra.severity})` : ''}`);
+      if (pitra.triggeredBy.length > 0) {
+        console.log(`  Triggers: ${pitra.triggeredBy.join(', ')}`);
+      }
+    } else {
+      // Fallback to local calculation
+      pitra = calculatePitraDoshaSeer(kundli);
+      console.log(`  Local Calculation: ${pitra.status}${pitra.severity ? ` (${pitra.severity})` : ''}`);
     }
     
+    // Always use local Shani Dosha calculation (not in Seer response)
     console.log('🪐 [DOSHA] Calculating Shani Dosha (natal)...');
     const shani = calculateShaniDoshaSeer(kundli);
     console.log(`  Result: ${shani.status}${shani.severity ? ` (${shani.severity})` : ''}`);
@@ -316,11 +377,39 @@ serve(async (req) => {
       console.log(`  Triggers: ${shani.triggeredBy.join(', ')}`);
     }
     
-    console.log('🐉 [DOSHA] Calculating Kaal Sarpa Dosha...');
-    const kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
-    console.log(`  Result: ${kaalSarp.status}`);
-    if (kaalSarp.triggeredBy.length > 0) {
-      console.log(`  Triggers: ${kaalSarp.triggeredBy.join(', ')}`);
+    // Use Seer's Kaal Sarpa Dosha result
+    console.log('🐉 [DOSHA] Extracting Kaal Sarp Dosha from Seer...');
+    let kaalSarp;
+    if (seerVedic?.kalsarpa_dosha) {
+      const seerKS = seerVedic.kalsarpa_dosha;
+      if (seerKS.present) {
+        kaalSarp = {
+          status: 'present' as const,
+          severity: seerKS.type?.includes('Partial') ? 'moderate' as const : 'strong' as const,
+          triggeredBy: [seerKS.name ? `${seerKS.name} (${seerKS.type})` : 'Kaal Sarpa Dosha detected by Seer'],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: seerKS.type ? [`Type: ${seerKS.type}`] : []
+        };
+      } else {
+        kaalSarp = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+      console.log(`  Seer Result: ${kaalSarp.status}${kaalSarp.severity ? ` (${kaalSarp.severity})` : ''}`);
+      if (kaalSarp.triggeredBy.length > 0) {
+        console.log(`  Triggers: ${kaalSarp.triggeredBy.join(', ')}`);
+      }
+    } else {
+      // Fallback to local calculation
+      kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
+      console.log(`  Local Calculation: ${kaalSarp.status}${kaalSarp.severity ? ` (${kaalSarp.severity})` : ''}`);
     }
     
     // Update log with dosha results (fire and forget)

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -15,6 +16,7 @@ import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 // Form validation schema
 const birthInputSchema = z
@@ -67,6 +69,8 @@ interface DoshaCalculatorProps {
 
 const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
   const [placeSearchResults, setPlaceSearchResults] = useState<Place[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showPlaceResults, setShowPlaceResults] = useState(false);
@@ -75,6 +79,18 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const [calculationId, setCalculationId] = useState<string | null>(null);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const {
     register,
@@ -193,6 +209,12 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
   const onSubmit = async (data: BirthInput) => {
     console.log('Form submitted with data:', data);
+
+    if (!user) {
+      toast.error(t('dosha.loginRequired', 'Please login to calculate your dosha'));
+      navigate('/auth');
+      return;
+    }
     
     // Track calculate button click
     trackEvent('calculate_dosha_clicked', {
@@ -255,6 +277,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       supabase.from('dosha_calculations').insert({
         visitor_id: visitorId,
         session_id: sessionId,
+        user_id: user.id,
         name: data.name || '',
         date_of_birth: data.date,
         time_of_birth: data.time || '00:00',

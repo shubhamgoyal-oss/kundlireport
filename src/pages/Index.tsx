@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import SolutionFinder from '@/components/SolutionFinder';
 import DoshaCalculator from '@/components/DoshaCalculator';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, CircleDot, ChevronDown } from 'lucide-react';
+import { ArrowRight, CircleDot, ChevronDown, LogOut, LogIn } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,17 +21,52 @@ import {
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     trackEvent('page_view', { page: 'home' });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Auth Header */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        {user ? (
+          <>
+            <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </>
+        ) : (
+          <Button variant="default" size="sm" onClick={() => navigate('/auth')}>
+            <LogIn className="w-4 h-4 mr-2" />
+            Login
+          </Button>
+        )}
+      </div>
 
       {/* Hero Section - Medium.com inspired layout */}
       <main className="flex-1">

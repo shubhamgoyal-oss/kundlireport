@@ -506,20 +506,29 @@ serve(async (req) => {
       pitra: pitra.status,
       shaniDosha: shani.status,
       shaniSeverity: shani.severity,
+      // New: keep new fields while also providing backward-compatible ones
       sadeSati: sadeSati.isActive ? "active" : "not_active",
       sadeSatiPhase: sadeSati.currentPhase,
+      // Back-compat fields expected by UI
+      shaniSadeSati: sadeSati.isActive ? "active" : "inactive",
+      shaniPhase: sadeSati.currentPhase
+        ? (sadeSati.currentPhase.includes('RISING') ? 1
+          : (sadeSati.currentPhase.includes('PEAK') ? 2
+            : (sadeSati.currentPhase.includes('SETTING') ? 3 : null)))
+        : null,
       kaalSarp: kaalSarp.status,
       kaalSarpSubtype: kaalSarp.status === "present" && kaalSarp.notes.some(n => n.includes("partial")) ? "partial" : undefined,
-      grahan: grahan.present,
-      rahuSurya: grahan.rahuSurya ? "present" : "absent",
-      shrapit: shrapit.present,
-      guruChandal: guruChandal.present,
-      punarphoo: punarphoo.present,
-      kemadruma: kemadruma.present,
-      gandmool: gandmool.present,
-      kalathra: kalathra.present,
-      vishDaridra: vishDaridra.present,
-      ketuNaga: ketuNaga.present
+      // Ensure string statuses for new doshas (avoid booleans in UI)
+      grahan: grahan.present ? 'present' : 'absent',
+      rahuSurya: grahan.rahuSurya ? 'present' : 'absent',
+      shrapit: shrapit.present ? 'present' : 'absent',
+      guruChandal: guruChandal.present ? 'present' : 'absent',
+      punarphoo: punarphoo.present ? 'present' : 'absent',
+      kemadruma: kemadruma.present ? 'present' : 'absent',
+      gandmool: gandmool.present ? 'present' : 'absent',
+      kalathra: kalathra.present ? 'present' : 'absent',
+      vishDaridra: vishDaridra.present ? 'present' : 'absent',
+      ketuNaga: ketuNaga.present ? 'present' : 'absent'
     };
     
     // Calculate Navagraha umbrella

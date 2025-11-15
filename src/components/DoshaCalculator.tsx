@@ -226,8 +226,20 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       
       console.log('Dosha calculation result:', result);
       
+      // Normalize summary keys for backward compatibility (ensure shaniSadeSati exists)
+      const normalized = { ...result, summary: { ...(result?.summary || {}) } } as any;
+      if (!normalized.summary.shaniSadeSati) {
+        if (normalized.summary.sadeSati) {
+          normalized.summary.shaniSadeSati = normalized.summary.sadeSati === 'active' ? 'active' : 'inactive';
+        }
+        if (normalized.summary.sadeSatiPhase && normalized.summary.shaniPhase == null) {
+          const phaseStr = String(normalized.summary.sadeSatiPhase);
+          normalized.summary.shaniPhase = phaseStr.includes('RISING') ? 1 : (phaseStr.includes('PEAK') ? 2 : (phaseStr.includes('SETTING') ? 3 : null));
+        }
+      }
+      
       // Store and display results IMMEDIATELY (don't wait for DB save)
-      setDoshaResults(result);
+      setDoshaResults(normalized);
       toast.success(t('dosha.calculationSuccess'));
       
       // Save calculation to database asynchronously (non-blocking)

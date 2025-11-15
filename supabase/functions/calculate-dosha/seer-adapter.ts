@@ -57,7 +57,18 @@ const SIGN_MAP: Record<string, { name: string; idx: number }> = {
 };
 
 export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
-  console.log("📡 [SEER] Calling Seer API with request:", JSON.stringify(req, null, 2));
+  console.log("╔════════════════════════════════════════════════════════════════╗");
+  console.log("║               SEER API CALL - REQUEST TRACKING                 ║");
+  console.log("╚════════════════════════════════════════════════════════════════╝");
+  console.log("📡 [SEER-REQUEST] Full request payload:");
+  console.log(JSON.stringify(req, null, 2));
+  console.log("🌐 [SEER-REQUEST] Endpoint: https://api-sbox.a4b.io/gw2/seer/internal/v1/user/kundli-details");
+  console.log("📅 [SEER-REQUEST] Birth Details:", {
+    date: `${req.day}/${req.month}/${req.year}`,
+    time: `${req.hour}:${String(req.min).padStart(2, '0')}`,
+    location: `Lat: ${req.lat}, Lon: ${req.lon}`,
+    timezone: `UTC+${req.tzone}`
+  });
   
   const startTime = Date.now();
   const response = await fetch("https://api-sbox.a4b.io/gw2/seer/internal/v1/user/kundli-details", {
@@ -70,24 +81,33 @@ export async function fetchSeerKundli(req: SeerKundliRequest): Promise<any> {
   });
   
   const elapsed = Date.now() - startTime;
-  console.log(`⏱️ [SEER] API call took ${elapsed}ms`);
+  console.log(`⏱️ [SEER-RESPONSE] API call completed in ${elapsed}ms`);
+  console.log(`📊 [SEER-RESPONSE] HTTP Status: ${response.status} ${response.statusText}`);
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("❌ [SEER] API error:", {
-      status: response.status,
-      statusText: response.statusText,
-      error: errorText
-    });
+    console.error("╔════════════════════════════════════════════════════════════════╗");
+    console.error("║                    SEER API ERROR                              ║");
+    console.error("╚════════════════════════════════════════════════════════════════╝");
+    console.error("❌ [SEER-ERROR] HTTP Status:", response.status, response.statusText);
+    console.error("❌ [SEER-ERROR] Error Response:", errorText);
+    console.error("❌ [SEER-ERROR] Request that failed:", JSON.stringify(req, null, 2));
     throw new Error(`Seer API failed: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
-  console.log("✅ [SEER] API response received successfully");
-  console.log("📊 [SEER] Response structure:", {
+  
+  console.log("╔════════════════════════════════════════════════════════════════╗");
+  console.log("║               SEER API CALL - RESPONSE TRACKING                ║");
+  console.log("╚════════════════════════════════════════════════════════════════╝");
+  console.log("✅ [SEER-RESPONSE] Status: SUCCESS");
+  console.log("📦 [SEER-RESPONSE] Full response structure:");
+  console.log(JSON.stringify(data, null, 2));
+  console.log("📊 [SEER-RESPONSE] Parsed structure summary:", {
     hasVedicHoroscope: !!data?.vedic_horoscope,
     hasPlanetsPosition: !!data?.vedic_horoscope?.planets_position,
-    planetsCount: data?.vedic_horoscope?.planets_position?.length || 0
+    planetsCount: data?.vedic_horoscope?.planets_position?.length || 0,
+    rawPlanets: data?.vedic_horoscope?.planets_position || []
   });
   
   return data;

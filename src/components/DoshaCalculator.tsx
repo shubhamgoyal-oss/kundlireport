@@ -19,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 // Form validation schema
 const birthInputSchema = z
   .object({
-    name: z.string().max(100, "Name must be less than 100 characters").optional(),
+    name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+    gender: z.enum(["male", "female"], { required_error: "Gender is required" }),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),
@@ -323,14 +324,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             || t('dosha.formError', 'Please correct the highlighted fields');
           toast.error(msg);
         })} className="space-y-6">
-          {/* Name (Optional) */}
+          {/* Name (Required) */}
           <div className="space-y-2">
-            <Label htmlFor="name">{t('dosha.nameOptional')}</Label>
+            <Label htmlFor="name">{t('dosha.name')} *</Label>
             <Input
               id="name"
               {...register('name')}
               placeholder={t('dosha.enterName')}
               className="bg-input"
+              required
               onBlur={(e) => {
                 if (e.target.value) {
                   trackEvent('form_field_filled', {
@@ -343,6 +345,37 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
                 {errors.name.message}
+              </p>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div className="space-y-2">
+            <Label>{t('dosha.gender')} *</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="male"
+                  {...register('gender')}
+                  className="w-4 h-4 text-primary"
+                />
+                <span>{t('dosha.male')}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="female"
+                  {...register('gender')}
+                  className="w-4 h-4 text-primary"
+                />
+                <span>{t('dosha.female')}</span>
+              </label>
+            </div>
+            {errors.gender && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.gender.message}
               </p>
             )}
           </div>

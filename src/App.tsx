@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
+import Auth from "./pages/Auth";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
 
@@ -18,6 +19,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Auth route (no language prefix needed) */}
+          <Route path="/auth" element={<Auth />} />
+          
           {/* Redirect root to /hi by default */}
           <Route path="/" element={<Navigate to="/hi" replace />} />
           

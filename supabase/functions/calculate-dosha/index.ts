@@ -223,6 +223,8 @@ serve(async (req) => {
       timezone: `UTC+${tzone}`
     });
     
+    const genderCode = (input as any).gender === 'male' ? 'M' : (input as any).gender === 'female' ? 'F' : 'O';
+
     const seerRequest: SeerKundliRequest = {
       day,
       month,
@@ -233,8 +235,8 @@ serve(async (req) => {
       lon: input.lon,
       tzone,
       user_id: Date.now(), // Use timestamp as unique user_id
-      name: input.name,
-      gender: input.gender
+      name: (input as any).name,
+      gender: genderCode
     };
     
     const seerApiStart = Date.now();

@@ -206,23 +206,22 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     
     try {
       // Call the edge function to calculate chart
-      const response = await fetch(
-        'https://upqxbhzwqecaxfxgyxhe.supabase.co/functions/v1/calculate-dosha',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        }
-      );
+      const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
+      const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
+      
+      const response = await supabase.functions.invoke('calculate-dosha', {
+        body: data,
+        headers: {
+          'x-visitor-id': visitorId,
+          'x-session-id': sessionId,
+        },
+      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Calculation failed');
+      if (response.error) {
+        throw new Error(response.error.message || 'Calculation failed');
       }
 
-      const result = await response.json();
+      const result = response.data;
       
       console.log('Dosha calculation result:', result);
       
@@ -231,8 +230,6 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       toast.success(t('dosha.calculationSuccess'));
       
       // Save calculation to database asynchronously (non-blocking)
-      const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
-      const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
       
       // Helper function to convert status strings to boolean
       const isActive = (status?: string | boolean) => {

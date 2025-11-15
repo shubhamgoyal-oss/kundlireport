@@ -34,16 +34,38 @@ function getNakshatra(lon: number): string {
   return NAKSHATRAS[nakshatraIndex];
 }
 
+// Compatibility helper: build grahas map from planets[] if old chart shape is used
+// Supports planets objects with longitude/deg/lon fields
+type Graha = { lon: number; deg: number; sign: string; house: number };
+function buildGrahasFromPlanets(planets: Array<any> = []): Record<string, Graha> {
+  const map: Record<string, Graha> = {};
+  for (const p of planets) {
+    if (!p || !p.name) continue;
+    const lon = typeof p.lon === 'number' ? p.lon
+      : typeof p.longitude === 'number' ? p.longitude
+      : typeof p.deg === 'number' ? p.deg
+      : 0;
+    const deg = typeof p.deg === 'number' ? p.deg : lon;
+    map[p.name] = {
+      lon,
+      deg,
+      sign: p.sign,
+      house: typeof p.house === 'number' ? p.house : 1,
+    };
+  }
+  return map;
+}
 /**
  * A) Rahu–Ketu / Grahan Dosha (updated with subtypes)
  * Rule: Sun or Moon within ≤8° of Rahu or Ketu (Moon uses ≤6°)
  */
 export function calculateGrahanDosha(chart: any) {
+  // Normalize chart to ensure grahas map exists for legacy/new shapes
+  chart.grahas = chart.grahas ?? buildGrahasFromPlanets(chart.planets || []);
   const sun = chart.grahas.Sun;
   const moon = chart.grahas.Moon;
   const rahu = chart.grahas.Rahu;
   const ketu = chart.grahas.Ketu;
-
   const triggeredBy: string[] = [];
   const placements: string[] = [];
   const notes: string[] = [];

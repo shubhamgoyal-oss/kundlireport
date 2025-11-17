@@ -163,7 +163,7 @@ export const SriMandirPujaCarousel = ({
                     {/* Price */}
                     {puja.individual_pack_price_inr > 0 && (
                       <p className="text-base font-semibold text-primary">
-                        Starting from ₹{puja.individual_pack_price_inr}
+                        {isHindi ? '₹' : 'Starting from ₹'}{puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
                       </p>
                     )}
 

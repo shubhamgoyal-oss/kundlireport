@@ -278,12 +278,11 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         navagraha_umbrella: isActive(result.summary?.navagrahaUmbrella),
         calculation_results: result,
         book_puja_clicked: false,
-      }).select().single().then(({ data: savedCalc, error }) => {
+      } as any).then(({ error }) => {
         if (error) {
           console.error('Failed to save calculation to database:', error);
-        } else if (savedCalc) {
-          setCalculationId(savedCalc.id);
-          console.log('Calculation saved to database with ID:', savedCalc.id);
+        } else {
+          console.log('Calculation saved to database');
         }
       });
       

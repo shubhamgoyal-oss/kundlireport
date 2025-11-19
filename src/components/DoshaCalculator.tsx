@@ -252,7 +252,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       };
       
       // Non-blocking database save
-      supabase.from('dosha_calculations').insert({
+      supabase.from('dosha_calculator2').insert({
         visitor_id: visitorId,
         session_id: sessionId,
         user_id: null,

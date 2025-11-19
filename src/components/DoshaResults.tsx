@@ -323,7 +323,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                             if (!hasTrackedBookPuja && calculationId) {
                               try {
                                 await supabase
-                                  .from('dosha_calculations')
+                                  .from('dosha_calculator2')
                                   .update({ book_puja_clicked: true })
                                   .eq('id', calculationId);
                                 setHasTrackedBookPuja(true);

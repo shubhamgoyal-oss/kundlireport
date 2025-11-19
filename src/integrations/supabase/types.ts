@@ -152,6 +152,102 @@ export type Database = {
         }
         Relationships: []
       }
+      dosha_calculator2: {
+        Row: {
+          book_puja_clicked: boolean
+          calculation_number: number
+          calculation_results: Json | null
+          created_at: string
+          date_of_birth: string
+          gandmool_dosha: boolean
+          grahan_dosha: boolean
+          guru_chandal_dosha: boolean
+          id: string
+          kaal_sarp_dosha: boolean
+          kalathra_dosha: boolean
+          kemadruma_yoga: boolean
+          ketu_naga_dosha: boolean
+          latitude: number | null
+          longitude: number | null
+          mangal_dosha: boolean
+          name: string
+          navagraha_umbrella: boolean
+          pitra_dosha: boolean
+          place_of_birth: string
+          punarphoo_dosha: boolean
+          sade_sati: boolean
+          session_id: string
+          shrapit_dosha: boolean
+          time_of_birth: string
+          updated_at: string
+          user_id: string | null
+          vish_daridra_yoga: boolean
+          visitor_id: string
+        }
+        Insert: {
+          book_puja_clicked?: boolean
+          calculation_number?: number
+          calculation_results?: Json | null
+          created_at?: string
+          date_of_birth: string
+          gandmool_dosha?: boolean
+          grahan_dosha?: boolean
+          guru_chandal_dosha?: boolean
+          id?: string
+          kaal_sarp_dosha?: boolean
+          kalathra_dosha?: boolean
+          kemadruma_yoga?: boolean
+          ketu_naga_dosha?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          mangal_dosha?: boolean
+          name: string
+          navagraha_umbrella?: boolean
+          pitra_dosha?: boolean
+          place_of_birth: string
+          punarphoo_dosha?: boolean
+          sade_sati?: boolean
+          session_id: string
+          shrapit_dosha?: boolean
+          time_of_birth: string
+          updated_at?: string
+          user_id?: string | null
+          vish_daridra_yoga?: boolean
+          visitor_id: string
+        }
+        Update: {
+          book_puja_clicked?: boolean
+          calculation_number?: number
+          calculation_results?: Json | null
+          created_at?: string
+          date_of_birth?: string
+          gandmool_dosha?: boolean
+          grahan_dosha?: boolean
+          guru_chandal_dosha?: boolean
+          id?: string
+          kaal_sarp_dosha?: boolean
+          kalathra_dosha?: boolean
+          kemadruma_yoga?: boolean
+          ketu_naga_dosha?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          mangal_dosha?: boolean
+          name?: string
+          navagraha_umbrella?: boolean
+          pitra_dosha?: boolean
+          place_of_birth?: string
+          punarphoo_dosha?: boolean
+          sade_sati?: boolean
+          session_id?: string
+          shrapit_dosha?: boolean
+          time_of_birth?: string
+          updated_at?: string
+          user_id?: string | null
+          vish_daridra_yoga?: boolean
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       seer_api_logs: {
         Row: {
           adaptation_warnings: Json | null

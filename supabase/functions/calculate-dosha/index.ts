@@ -518,17 +518,17 @@ serve(async (req) => {
         : null,
       kaalSarp: kaalSarp.status,
       kaalSarpSubtype: kaalSarp.status === "present" && kaalSarp.notes.some(n => n.includes("partial")) ? "partial" : undefined,
-      // Ensure string statuses for new doshas (avoid booleans in UI)
-      grahan: grahan.present ? 'present' : 'absent',
-      rahuSurya: grahan.rahuSurya ? 'present' : 'absent',
-      shrapit: shrapit.present ? 'present' : 'absent',
-      guruChandal: guruChandal.present ? 'present' : 'absent',
-      punarphoo: punarphoo.present ? 'present' : 'absent',
-      kemadruma: kemadruma.present ? 'present' : 'absent',
-      gandmool: gandmool.present ? 'present' : 'absent',
-      kalathra: kalathra.present ? 'present' : 'absent',
-      vishDaridra: vishDaridra.present ? 'present' : 'absent',
-      ketuNaga: ketuNaga.present ? 'present' : 'absent'
+      // Ensure string statuses for new doshas - FIXED: properly check string values
+      grahan: grahan.present === 'present' ? 'present' : 'absent',
+      rahuSurya: grahan.rahuSurya === 'present' ? 'present' : 'absent',
+      shrapit: shrapit.present === 'present' ? 'present' : 'absent',
+      guruChandal: guruChandal.present === 'present' ? 'present' : 'absent',
+      punarphoo: punarphoo.present === 'present' ? 'present' : 'absent',
+      kemadruma: kemadruma.present === 'present' ? 'present' : 'absent',
+      gandmool: gandmool.present === 'present' ? 'present' : 'absent',
+      kalathra: kalathra.present === 'present' ? 'present' : 'absent',
+      vishDaridra: vishDaridra.present === 'present' ? 'present' : 'absent',
+      ketuNaga: ketuNaga.present === 'present' ? 'present' : 'absent'
     };
     
     // Calculate Navagraha umbrella

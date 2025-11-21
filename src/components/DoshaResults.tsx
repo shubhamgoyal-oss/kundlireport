@@ -256,6 +256,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       if (isDoshaPresent(summary.kaalSarp)) activeDoshasList.push({ key: 'kaalSarp', hi: 'कालसर्प दोष', en: 'Kaal Sarp Dosha', effect: { hi: 'करियर और मानसिक शांति में', en: 'career and mental peace' } });
                       if (isDoshaPresent(summary.pitra)) activeDoshasList.push({ key: 'pitra', hi: 'पितृ दोष', en: 'Pitra Dosha', effect: { hi: 'परिवार और संतान में', en: 'family and progeny' } });
                       if (isDoshaPresent(summary.shaniSadeSati)) activeDoshasList.push({ key: 'shani', hi: 'साढ़े साती', en: 'Sade Sati', effect: { hi: 'जीवन के सभी क्षेत्रों में', en: 'all areas of life' } });
+                      if (isDoshaPresent(summary.vishDaridra)) activeDoshasList.push({ key: 'vishDaridra', hi: 'विष/दारिद्र्य योग', en: 'Vish/Daridra Yoga', effect: { hi: 'धन और समृद्धि में', en: 'wealth and prosperity' } });
+                      if (isDoshaPresent(summary.grahan)) activeDoshasList.push({ key: 'grahan', hi: 'ग्रहण दोष', en: 'Grahan Dosha', effect: { hi: 'मानसिक स्वास्थ्य और स्पष्टता में', en: 'mental health and clarity' } });
+                      if (isDoshaPresent(summary.shrapit)) activeDoshasList.push({ key: 'shrapit', hi: 'श्रापित दोष', en: 'Shrapit Dosha', effect: { hi: 'जीवन की प्रगति में', en: 'life progress' } });
+                      if (isDoshaPresent(summary.guruChandal)) activeDoshasList.push({ key: 'guruChandal', hi: 'गुरु चांडाल दोष', en: 'Guru Chandal Dosha', effect: { hi: 'ज्ञान और आध्यात्मिकता में', en: 'wisdom and spirituality' } });
+                      if (isDoshaPresent(summary.punarphoo)) activeDoshasList.push({ key: 'punarphoo', hi: 'पुनर्फू दोष', en: 'Punarphoo Dosha', effect: { hi: 'भावनात्मक स्थिरता में', en: 'emotional stability' } });
+                      if (isDoshaPresent(summary.kemadruma)) activeDoshasList.push({ key: 'kemadruma', hi: 'केमद्रुम योग', en: 'Kemadruma Yoga', effect: { hi: 'मानसिक शांति में', en: 'mental peace' } });
+                      if (isDoshaPresent(summary.gandmool)) activeDoshasList.push({ key: 'gandmool', hi: 'गंडमूल दोष', en: 'Gandmool Dosha', effect: { hi: 'स्वास्थ्य में', en: 'health' } });
+                      if (isDoshaPresent(summary.kalathra)) activeDoshasList.push({ key: 'kalathra', hi: 'कलत्र दोष', en: 'Kalathra Dosha', effect: { hi: 'वैवाहिक जीवन में', en: 'married life' } });
+                      if (isDoshaPresent(summary.ketuNaga)) activeDoshasList.push({ key: 'ketuNaga', hi: 'केतु नाग दोष', en: 'Ketu Naga Dosha', effect: { hi: 'आध्यात्मिक विकास में', en: 'spiritual growth' } });
 
                       if (activeDoshasList.length === 0) return null;
 

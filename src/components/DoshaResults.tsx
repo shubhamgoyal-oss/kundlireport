@@ -256,59 +256,6 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   </p>
                 </div>
 
-                {/* Status Chips Row */}
-                <div className="flex flex-wrap gap-3">
-                  {/* Mangal Dosha Chip - Only show if present */}
-                  {isDoshaPresent(summary.mangal) && (
-                    <Badge 
-                      variant="outline" 
-                      className={`${getSeverityColor(summary.mangalSeverity || '')} px-4 py-2 text-sm font-medium`}
-                    >
-                      {getStatusIcon(summary.mangal)}
-                      {t('doshaResults.mangal.name')}: {translateStatus(summary.mangal)}
-                      {summary.mangalSeverity && ` (${summary.mangalSeverity})`}
-                    </Badge>
-                  )}
-
-                  {/* Kaal Sarp Dosha Chip - Only show if present */}
-                  {isDoshaPresent(summary.kaalSarp) && (
-                    <Badge 
-                      variant="outline" 
-                      className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
-                    >
-                      {getStatusIcon(summary.kaalSarp)}
-                      {t('doshaResults.kaalSarp.name')}: {translateStatus(summary.kaalSarp)}
-                      {summary.kaalSarpType && ` (${summary.kaalSarpType})`}
-                      {summary.kaalSarpSubtype === 'partial' && (
-                        <span className="ml-1 text-xs bg-accent/30 px-1.5 py-0.5 rounded">Partial (edge)</span>
-                      )}
-                    </Badge>
-                  )}
-
-                  {/* Pitra Dosha Chip - Only show if present */}
-                  {isDoshaPresent(summary.pitra) && (
-                    <Badge 
-                      variant="outline" 
-                      className={`${getSeverityColor('')} px-4 py-2 text-sm font-medium`}
-                    >
-                      {getStatusIcon(summary.pitra)}
-                      {t('doshaResults.pitra.name')}: {translateStatus(summary.pitra)}
-                    </Badge>
-                  )}
-
-                  {/* Sade Sati Chip - Only show if present */}
-                  {isDoshaPresent(summary.shaniSadeSati) && (
-                    <Badge 
-                      variant="outline" 
-                      className={`${getSeverityColor(summary.shaniPhase ? 'medium' : '')} px-4 py-2 text-sm font-medium`}
-                    >
-                      {getStatusIcon(summary.shaniSadeSati)}
-                      {t('doshaResults.sadeSati.name')}: {translateStatus(summary.shaniSadeSati)}
-                      {summary.shaniPhase && ` (${t('doshaResults.phase')} ${summary.shaniPhase})`}
-                    </Badge>
-                  )}
-                </div>
-
                 {/* Remedies For You - Moved here from below */}
                 {(() => {
                   const activeDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];

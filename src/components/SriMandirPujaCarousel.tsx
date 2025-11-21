@@ -95,7 +95,7 @@ export const SriMandirPujaCarousel = ({
                     <img
                       src={puja.cover_media_url}
                       alt={getPujaTitle(puja, currentLang)}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                     
                     {/* Navigation Arrows - Only show on active card if more than 1 puja */}

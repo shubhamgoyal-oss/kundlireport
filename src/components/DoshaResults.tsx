@@ -337,25 +337,35 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   return (
                     <div className="mt-6 space-y-4">
-                      {/* Remedies For You (English Header) */}
                       <div className="text-center space-y-3">
                         <h3 className="text-2xl font-bold">
-                          🪔 Remedies For You
+                          {isHindi ? '🪔 आपके लिए उपाय' : '🪔 Remedies For You'}
                         </h3>
                         
-                        {/* Recommended Puja (English Block) */}
                         <div className="max-w-2xl mx-auto">
-                          <p className="text-sm text-foreground leading-relaxed mb-2">
-                            Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
-                          </p>
-                          <p className="text-sm text-muted-foreground leading-relaxed">
-                            Our pandits perform the complete ritual with your name, gotra and birth details, following every Vedic step with authenticity and devotion.
-                          </p>
+                          {isHindi ? (
+                            <>
+                              <p className="text-sm text-foreground leading-relaxed mb-2">
+                                वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।
+                              </p>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                हमारे पंडित आपके नाम, गोत्र और जन्म विवरण के साथ पूरी विधि करते हैं, हर वैदिक चरण को प्रामाणिकता और भक्ति के साथ पूरा करते हैं।
+                              </p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="text-sm text-foreground leading-relaxed mb-2">
+                                Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
+                              </p>
+                              <p className="text-sm text-muted-foreground leading-relaxed">
+                                Our pandits perform the complete ritual with your name, gotra and birth details, following every Vedic step with authenticity and devotion.
+                              </p>
+                            </>
+                          )}
                         </div>
 
-                        {/* Puja Card Cue */}
                         <p className="text-base font-medium text-foreground pt-2">
-                          📿 Here is the puja best suited for your dosha relief.
+                          {isHindi ? '📿 यह पूजा आपके दोष निवारण के लिए सबसे उपयुक्त है।' : '📿 Here is the puja best suited for your dosha relief.'}
                         </p>
                       </div>
                       

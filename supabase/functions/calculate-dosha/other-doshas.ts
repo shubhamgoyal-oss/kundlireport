@@ -1,536 +1,617 @@
 /**
- * Additional Dosha calculations ("Other Doshas")
- * Backward-compatible extension to main dosha calculator
+ * Other Doshas - Calculated from Seer API Planet Positions
+ * Following exact specifications for deterministic, reproducible results
  */
 
+// ==================== CONSTANTS ====================
+
 // Orb configuration
-const DOSHA_CONFIG = {
-  orb: {
-    tight: 6,  // For Moon pairs
-    standard: 8, // For most conjunctions
-  }
+const ORB_CONJ = 8;  // Conjunction orb in degrees
+const ORB_OPP = 8;   // Opposition orb in degrees
+
+// Hindi to English planet name mapping
+const PLANET_MAP: Record<string, string> = {
+  "सूर्य": "Sun",
+  "चन्द्र": "Moon",
+  "मंगल": "Mars",
+  "बुध": "Mercury",
+  "गुरु": "Jupiter",
+  "शुक्र": "Venus",
+  "शनि": "Saturn",
+  "राहु": "Rahu",
+  "केतु": "Ketu",
+  "लग्न": "Asc"
 };
 
-// Helper: calculate conjunction distance
-function getConjunctionDistance(lon1: number, lon2: number): number {
-  const diff = Math.abs(lon1 - lon2);
+// Hindi to English sign mapping with indices
+const SIGN_MAP: Record<string, { name: string; idx: number }> = {
+  "मेष": { name: "Aries", idx: 0 },
+  "वृष": { name: "Taurus", idx: 1 },
+  "मिथुन": { name: "Gemini", idx: 2 },
+  "कर्क": { name: "Cancer", idx: 3 },
+  "सिंह": { name: "Leo", idx: 4 },
+  "कन्या": { name: "Virgo", idx: 5 },
+  "तुला": { name: "Libra", idx: 6 },
+  "वृश्चिक": { name: "Scorpio", idx: 7 },
+  "धनु": { name: "Sagittarius", idx: 8 },
+  "मकर": { name: "Capricorn", idx: 9 },
+  "कुम्भ": { name: "Aquarius", idx: 10 },
+  "मीन": { name: "Pisces", idx: 11 }
+};
+
+// Gandmool nakshatras (Hindi names)
+const GANDMOOL_NAKSHATRAS = ["अश्विनी", "अश्लेषा", "मघा", "ज्येष्ठा", "मूला", "रेवती"];
+
+// Sign lord mapping (for Kalathra dosha)
+const SIGN_LORDS: Record<number, string> = {
+  0: "Mars",      // Aries
+  1: "Venus",     // Taurus
+  2: "Mercury",   // Gemini
+  3: "Moon",      // Cancer
+  4: "Sun",       // Leo
+  5: "Mercury",   // Virgo
+  6: "Venus",     // Libra
+  7: "Mars",      // Scorpio
+  8: "Jupiter",   // Sagittarius
+  9: "Saturn",    // Capricorn
+  10: "Saturn",   // Aquarius
+  11: "Jupiter"   // Pisces
+};
+
+// ==================== TYPES ====================
+
+interface Planet {
+  name: string;
+  deg: number;      // 0-360 degrees
+  sign: string;     // English sign name
+  signIdx: number;  // 0-11
+  house: number;    // 1-12
+}
+
+interface Snapshot {
+  planets: Record<string, Planet>;
+  asc: Planet;
+  moonNakshatra?: string;
+  moonNakshatraPada?: string;
+}
+
+// ==================== HELPERS ====================
+
+/**
+ * Normalize angle to 0-360 range
+ */
+function norm(x: number): number {
+  return ((x % 360) + 360) % 360;
+}
+
+/**
+ * Calculate minimal angular separation (0-180 degrees)
+ */
+function delta(a: number, b: number): number {
+  const diff = Math.abs(norm(a) - norm(b));
   return Math.min(diff, 360 - diff);
 }
 
-// Helper: get nakshatra from longitude
-const NAKSHATRAS = [
-  'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira', 'Ardra',
-  'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni',
-  'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha',
-  'Moola', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha',
-  'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'
-];
-
-const GANDMOOL_NAKSHATRAS = ['Ashwini', 'Ashlesha', 'Magha', 'Jyeshtha', 'Moola', 'Revati'];
-
-function getNakshatra(lon: number): string {
-  const normalizedLon = ((lon % 360) + 360) % 360;
-  const nakshatraIndex = Math.floor(normalizedLon / (360 / 27));
-  return NAKSHATRAS[nakshatraIndex];
-}
-
-// Compatibility helper: build grahas map from planets[] if old chart shape is used
-// Supports planets objects with longitude/deg/lon fields
-type Graha = { lon: number; deg: number; sign: string; house: number };
-function buildGrahasFromPlanets(planets: Array<any> = []): Record<string, Graha> {
-  const map: Record<string, Graha> = {};
-  for (const p of planets) {
-    if (!p || !p.name) continue;
-    const lon = typeof p.lon === 'number' ? p.lon
-      : typeof p.longitude === 'number' ? p.longitude
-      : typeof p.deg === 'number' ? p.deg
-      : 0;
-    const deg = typeof p.deg === 'number' ? p.deg : lon;
-    map[p.name] = {
-      lon,
-      deg,
-      sign: p.sign,
-      house: typeof p.house === 'number' ? p.house : 1,
-    };
-  }
-  return map;
-}
 /**
- * A) Rahu–Ketu / Grahan Dosha (updated with subtypes)
- * Rule: Sun or Moon within ≤8° of Rahu or Ketu (Moon uses ≤6°)
+ * Calculate house number from reference sign to target sign
  */
-export function calculateGrahanDosha(chart: any) {
-  // Normalize chart to ensure grahas map exists for legacy/new shapes
-  chart.grahas = chart.grahas ?? buildGrahasFromPlanets(chart.planets || []);
-  const sun = chart.grahas.Sun;
-  const moon = chart.grahas.Moon;
-  const rahu = chart.grahas.Rahu;
-  const ketu = chart.grahas.Ketu;
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-  let rahuSurya = false;
-  let rahuChandra = false;
+function houseFrom(refSignIdx: number, targetSignIdx: number): number {
+  return ((targetSignIdx - refSignIdx + 12) % 12) + 1;
+}
 
-  // Check Sun-Rahu (Rahu-Surya Dosha)
-  const sunRahuDist = getConjunctionDistance(sun.lon, rahu.lon);
-  if (sunRahuDist <= DOSHA_CONFIG.orb.standard) {
-    rahuSurya = true;
-    triggeredBy.push('Sun-Rahu conjunction');
-    placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${sunRahuDist.toFixed(1)}°`);
-    if (sunRahuDist <= 3) {
-      notes.push('Strong Sun-Rahu conjunction (≤3°)');
+/**
+ * Check if angle is within opposition orb (180° ± orb)
+ */
+function isOpposition(a: number, b: number, orb: number): boolean {
+  const separation = delta(a, b);
+  return Math.abs(separation - 180) <= orb;
+}
+
+/**
+ * Parse Seer API planetary positions into canonical snapshot
+ */
+export function parseSeerPlanets(seerData: any): Snapshot {
+  const planets: Record<string, Planet> = {};
+  let asc: Planet | null = null;
+  let moonNakshatra: string | undefined;
+  let moonNakshatraPada: string | undefined;
+
+  // Normalize Seer response structure
+  const root = seerData?.vedic_horoscope ? seerData : (seerData?.data?.vedic_horoscope ? seerData.data : seerData?.data || seerData);
+  const vedic = root?.vedic_horoscope;
+
+  if (!vedic?.planets_position) {
+    throw new Error("Invalid Seer response: missing planets_position");
+  }
+
+  // Get Moon nakshatra from astro_details or Moon's nakshatra field
+  if (vedic.astro_details?.naksahtra) {
+    const nakshatraText = vedic.astro_details.naksahtra.trim();
+    const parts = nakshatraText.split(/[-\s]/);
+    moonNakshatra = parts[0]?.trim();
+    moonNakshatraPada = parts[1]?.trim();
+  }
+
+  // Process each planet
+  for (const p of vedic.planets_position) {
+    // Trim all strings
+    const nameHindi = (p.name || "").trim();
+    const signHindi = (p.sign || "").trim();
+
+    // Map to English
+    const nameEn = PLANET_MAP[nameHindi];
+    const signData = SIGN_MAP[signHindi];
+
+    if (!nameEn || !signData) {
+      console.warn(`[PARSE] Skipping unknown: "${nameHindi}" in "${signHindi}"`);
+      continue;
     }
+
+    // Coerce to numbers
+    const deg = Number(p.full_degree || 0);
+    const house = Number(p.house || 1);
+
+    const planet: Planet = {
+      name: nameEn,
+      deg: norm(deg),
+      sign: signData.name,
+      signIdx: signData.idx,
+      house
+    };
+
+    // Extract Moon nakshatra if present
+    if (nameEn === "Moon" && p.nakshatra) {
+      const nakshatraText = p.nakshatra.trim();
+      const parts = nakshatraText.split(/[-\s]/);
+      moonNakshatra = parts[0]?.trim();
+      moonNakshatraPada = parts[1]?.trim();
+    }
+
+    if (nameEn === "Asc") {
+      asc = planet;
+    } else {
+      planets[nameEn] = planet;
+    }
+  }
+
+  if (!asc) {
+    throw new Error("Ascendant missing from Seer response");
+  }
+
+  return {
+    planets,
+    asc,
+    moonNakshatra,
+    moonNakshatraPada
+  };
+}
+
+// ==================== DOSHA CALCULATIONS ====================
+
+/**
+ * 1. Grahan Dosha (Rahu-Ketu / Eclipse)
+ * Present if Sun or Moon within ≤8° of Rahu or Ketu
+ */
+export function calculateGrahanDosha(snapshot: Snapshot) {
+  const { planets } = snapshot;
+  const { Sun, Moon, Rahu, Ketu } = planets;
+
+  const reason: string[] = [];
+  let rahuSurya = "absent";
+
+  // Check Sun-Rahu
+  const sunRahuDelta = delta(Sun.deg, Rahu.deg);
+  if (sunRahuDelta <= ORB_CONJ) {
+    rahuSurya = "present";
+    reason.push(`Sun-Rahu conjunction: Δ=${sunRahuDelta.toFixed(2)}°`);
   }
 
   // Check Sun-Ketu
-  const sunKetuDist = getConjunctionDistance(sun.lon, ketu.lon);
-  if (sunKetuDist <= DOSHA_CONFIG.orb.standard) {
-    rahuSurya = true;
-    triggeredBy.push('Sun-Ketu conjunction');
-    placements.push(`Sun ${sun.sign} ${sun.deg.toFixed(1)}°; Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Δ=${sunKetuDist.toFixed(1)}°`);
-    if (sunKetuDist <= 3) {
-      notes.push('Strong Sun-Ketu conjunction (≤3°)');
-    }
+  const sunKetuDelta = delta(Sun.deg, Ketu.deg);
+  if (sunKetuDelta <= ORB_CONJ) {
+    rahuSurya = "present";
+    reason.push(`Sun-Ketu conjunction: Δ=${sunKetuDelta.toFixed(2)}°`);
   }
 
-  // Check Moon-Rahu (tighter orb for Moon)
-  const moonRahuDist = getConjunctionDistance(moon.lon, rahu.lon);
-  if (moonRahuDist <= DOSHA_CONFIG.orb.tight) {
-    rahuChandra = true;
-    triggeredBy.push('Moon-Rahu conjunction');
-    placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${moonRahuDist.toFixed(1)}°`);
-    if (moonRahuDist <= 3) {
-      notes.push('Strong Moon-Rahu conjunction (≤3°)');
-    }
+  // Check Moon-Rahu
+  const moonRahuDelta = delta(Moon.deg, Rahu.deg);
+  if (moonRahuDelta <= ORB_CONJ) {
+    reason.push(`Moon-Rahu conjunction: Δ=${moonRahuDelta.toFixed(2)}°`);
   }
 
-  // Check Moon-Ketu (tighter orb for Moon)
-  const moonKetuDist = getConjunctionDistance(moon.lon, ketu.lon);
-  if (moonKetuDist <= DOSHA_CONFIG.orb.tight) {
-    rahuChandra = true;
-    triggeredBy.push('Moon-Ketu conjunction');
-    placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Δ=${moonKetuDist.toFixed(1)}°`);
-    if (moonKetuDist <= 3) {
-      notes.push('Strong Moon-Ketu conjunction (≤3°)');
-    }
+  // Check Moon-Ketu
+  const moonKetuDelta = delta(Moon.deg, Ketu.deg);
+  if (moonKetuDelta <= ORB_CONJ) {
+    reason.push(`Moon-Ketu conjunction: Δ=${moonKetuDelta.toFixed(2)}°`);
   }
 
-  // Determine severity and subtype
-  let severity: string | null = null;
-  let subtype: string | undefined = undefined;
-  
-  if (rahuSurya && rahuChandra) {
-    severity = 'strong';
-    subtype = 'both';
-  } else if (rahuChandra) {
-    severity = 'moderate';
-    subtype = 'rahu-chandra';
-  } else if (rahuSurya) {
-    severity = 'mild';
-    subtype = 'rahu-surya';
-  }
+  const status = reason.length > 0 ? "present" : "absent";
 
   return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    severity,
-    subtype,
-    rahuSurya: rahuSurya ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0 
-      ? `Grahan Dosha (${severity}, ${subtype}) detected: ${triggeredBy.join(', ')}`
-      : 'No Grahan Dosha detected.',
-    remedies: triggeredBy.length > 0 
-      ? ['Mindfulness, stable routines, breath practices.', 'Charity on eclipse-related days; light devotional worship.']
-      : []
+    status,
+    rahuSurya,
+    reason
   };
 }
 
 /**
- * B) Shrapit Dosha (Saturn–Rahu)
+ * 2. Shrapit Dosha (Saturn-Rahu)
+ * Present if conjunction or opposition
  */
-export function calculateShrapitDosha(chart: any) {
-  const saturn = chart.grahas.Saturn;
-  const rahu = chart.grahas.Rahu;
+export function calculateShrapitDosha(snapshot: Snapshot) {
+  const { Saturn, Rahu } = snapshot.planets;
+  const reason: string[] = [];
 
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  const saturnRahuDist = getConjunctionDistance(saturn.lon, rahu.lon);
-  
-  if (saturnRahuDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Saturn-Rahu conjunction');
-    placements.push(`Saturn ${saturn.sign} ${saturn.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${saturnRahuDist.toFixed(1)}°`);
+  // Check conjunction
+  const conjDelta = delta(Saturn.deg, Rahu.deg);
+  if (conjDelta <= ORB_CONJ) {
+    reason.push(`Saturn-Rahu conjunction: Δ=${conjDelta.toFixed(2)}°`);
+    return { status: "present", reason };
   }
 
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? 'Shrapit Dosha detected: Saturn and Rahu conjunction.'
-      : 'No Shrapit Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Saturday discipline; service and humility.', 'Rudrabhishek / Shani-focused prayers.']
-      : []
-  };
+  // Check opposition
+  if (isOpposition(Saturn.deg, Rahu.deg, ORB_OPP)) {
+    reason.push(`Saturn-Rahu opposition: Δ=${conjDelta.toFixed(2)}° (~180°)`);
+    return { status: "partial", reason };
+  }
+
+  return { status: "absent", reason };
 }
 
 /**
- * C) Guru Chandal Dosha (Jupiter–Rahu/Ketu)
+ * 3. Guru Chandal Dosha (Jupiter-Rahu/Ketu)
+ * Present if Jupiter conjunct Rahu or Ketu
  */
-export function calculateGuruChandalDosha(chart: any) {
-  const jupiter = chart.grahas.Jupiter;
-  const rahu = chart.grahas.Rahu;
-  const ketu = chart.grahas.Ketu;
+export function calculateGuruChandalDosha(snapshot: Snapshot) {
+  const { Jupiter, Rahu, Ketu } = snapshot.planets;
+  const reason: string[] = [];
 
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  const jupiterRahuDist = getConjunctionDistance(jupiter.lon, rahu.lon);
-  if (jupiterRahuDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Jupiter-Rahu conjunction');
-    placements.push(`Jupiter ${jupiter.sign} ${jupiter.deg.toFixed(1)}°; Rahu ${rahu.sign} ${rahu.deg.toFixed(1)}°; Δ=${jupiterRahuDist.toFixed(1)}°`);
+  // Check Jupiter-Rahu
+  const jupRahuDelta = delta(Jupiter.deg, Rahu.deg);
+  if (jupRahuDelta <= ORB_CONJ) {
+    reason.push(`Jupiter-Rahu conjunction: Δ=${jupRahuDelta.toFixed(2)}°`);
   }
 
-  const jupiterKetuDist = getConjunctionDistance(jupiter.lon, ketu.lon);
-  if (jupiterKetuDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Jupiter-Ketu conjunction');
-    placements.push(`Jupiter ${jupiter.sign} ${jupiter.deg.toFixed(1)}°; Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Δ=${jupiterKetuDist.toFixed(1)}°`);
+  // Check Jupiter-Ketu
+  const jupKetuDelta = delta(Jupiter.deg, Ketu.deg);
+  if (jupKetuDelta <= ORB_CONJ) {
+    reason.push(`Jupiter-Ketu conjunction: Δ=${jupKetuDelta.toFixed(2)}°`);
   }
 
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? `Guru Chandal Dosha detected: ${triggeredBy.join(', ')}`
-      : 'No Guru Chandal Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Study with grounded mentors; donation of knowledge/education items.', 'Guru-focused prayers.']
-      : []
-  };
+  const status = reason.length > 0 ? "present" : "absent";
+  return { status, reason };
 }
 
 /**
- * D) Punarphoo Dosha (Saturn–Moon)
+ * 4. Punarphoo Dosha (Saturn-Moon)
+ * Present if conjunction, partial if opposition
  */
-export function calculatePunarphooDosha(chart: any) {
-  const moon = chart.grahas.Moon;
-  const saturn = chart.grahas.Saturn;
+export function calculatePunarphooDosha(snapshot: Snapshot) {
+  const { Saturn, Moon } = snapshot.planets;
+  const reason: string[] = [];
 
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  const moonSaturnDist = getConjunctionDistance(moon.lon, saturn.lon);
-  
-  if (moonSaturnDist <= DOSHA_CONFIG.orb.tight) {
-    triggeredBy.push('Moon-Saturn conjunction');
-    placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Saturn ${saturn.sign} ${saturn.deg.toFixed(1)}°; Δ=${moonSaturnDist.toFixed(1)}°`);
+  // Check conjunction
+  const conjDelta = delta(Saturn.deg, Moon.deg);
+  if (conjDelta <= ORB_CONJ) {
+    reason.push(`Saturn-Moon conjunction: Δ=${conjDelta.toFixed(2)}°`);
+    return { status: "present", reason };
   }
 
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? 'Punarphoo Dosha detected: Moon-Saturn conjunction.'
-      : 'No Punarphoo Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Monday calm practices; moon-soothing disciplines.', 'Chandra–Shani pacification prayers.']
-      : []
-  };
+  // Check opposition
+  if (isOpposition(Saturn.deg, Moon.deg, ORB_OPP)) {
+    reason.push(`Saturn-Moon opposition: Δ=${conjDelta.toFixed(2)}° (~180°)`);
+    return { status: "partial", reason };
+  }
+
+  return { status: "absent", reason };
 }
 
 /**
- * E) Kemadruma Yoga (Moon isolated) - Updated with proper cancellations
+ * 5. Kemadruma Yoga (Moon isolated)
+ * Present if no classical planets in H12/H2 from Moon AND no planets in kendras from Moon
  */
-export function calculateKemadrumaYoga(chart: any) {
-  const moon = chart.grahas.Moon;
-  const moonSign = Math.floor(moon.lon / 30);
-  
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
+export function calculateKemadrumaYoga(snapshot: Snapshot) {
+  const { planets } = snapshot;
+  const { Moon } = planets;
+  const moonIdx = Moon.signIdx;
 
-  // Get adjacent signs (2nd and 12th from Moon)
-  const prevSign = (moonSign - 1 + 12) % 12;
-  const nextSign = (moonSign + 1) % 12;
+  const reason: string[] = [];
+  const classicalPlanets = ["Sun", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
 
-  // Check for planets (exclude Rahu/Ketu) in adjacent signs OR with Moon
-  const planets = ['Sun', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn'];
-  let hasNeighbor = false;
-  let hasPlanetWithMoon = false;
+  // Check H12 and H2 from Moon (adjacent signs)
+  const h12Idx = (moonIdx + 11) % 12; // Sign behind
+  const h2Idx = (moonIdx + 1) % 12;   // Sign ahead
 
-  // Check if any planet is with Moon in same sign
-  for (const planetName of planets) {
-    const planet = chart.grahas[planetName];
-    const planetSign = Math.floor(planet.lon / 30);
-    
-    if (planetSign === moonSign) {
-      hasPlanetWithMoon = true;
-      notes.push(`${planetName} with Moon in ${moon.sign} - Dosha canceled`);
+  let hasH12 = false;
+  let hasH2 = false;
+
+  for (const name of classicalPlanets) {
+    const planet = planets[name];
+    if (planet.signIdx === h12Idx) {
+      hasH12 = true;
+      reason.push(`${name} in H12 from Moon (${planet.sign})`);
     }
-    
-    if (planetSign === prevSign || planetSign === nextSign) {
-      hasNeighbor = true;
-      notes.push(`${planetName} in adjacent sign (${planet.sign}) - Dosha canceled`);
+    if (planet.signIdx === h2Idx) {
+      hasH2 = true;
+      reason.push(`${name} in H2 from Moon (${planet.sign})`);
     }
   }
 
-  // Check for planets in kendras from Moon (1, 4, 7, 10)
-  let hasKendraPlanet = false;
-  if (chart.ascendant) {
-    for (const planetName of planets) {
-      const planet = chart.grahas[planetName];
-      const houseFromMoon = calculateHouseFrom(planet.lon, moon.lon);
-      
-      if ([1, 4, 7, 10].includes(houseFromMoon)) {
-        hasKendraPlanet = true;
-        notes.push(`${planetName} in kendra from Moon (${houseFromMoon}th) - Dosha canceled`);
-        break;
+  // Check kendras from Moon (H1, H4, H7, H10)
+  const kendraIdxs = [
+    moonIdx,                  // H1
+    (moonIdx + 3) % 12,      // H4
+    (moonIdx + 6) % 12,      // H7
+    (moonIdx + 9) % 12       // H10
+  ];
+
+  let hasKendra = false;
+  for (const name of classicalPlanets) {
+    const planet = planets[name];
+    if (kendraIdxs.includes(planet.signIdx)) {
+      hasKendra = true;
+      const houseNum = houseFrom(moonIdx, planet.signIdx);
+      reason.push(`${name} in kendra from Moon (H${houseNum}, ${planet.sign})`);
+    }
+  }
+
+  // Determine status
+  if (!hasH12 && !hasH2 && !hasKendra) {
+    return {
+      status: "present",
+      reason: ["Moon isolated: no planets in H12/H2 and no kendra planets from Moon"]
+    };
+  } else if (!hasH12 && !hasH2 && hasKendra) {
+    return {
+      status: "partial",
+      reason: ["Adjacent signs empty but kendra has planets", ...reason]
+    };
+  } else {
+    return {
+      status: "absent",
+      reason
+    };
+  }
+}
+
+/**
+ * 6. Gandmool Dosha (Moon in specific nakshatras)
+ * Present if Moon nakshatra is in Gandmool list
+ */
+export function calculateGandmoolDosha(snapshot: Snapshot) {
+  const { moonNakshatra, moonNakshatraPada } = snapshot;
+  
+  if (!moonNakshatra) {
+    return {
+      status: "absent",
+      nakshatra: "Unknown",
+      reason: ["Moon nakshatra not available"]
+    };
+  }
+
+  const isGandmool = GANDMOOL_NAKSHATRAS.includes(moonNakshatra);
+  const nakshatraText = moonNakshatraPada 
+    ? `${moonNakshatra}-${moonNakshatraPada}` 
+    : moonNakshatra;
+
+  if (isGandmool) {
+    return {
+      status: "present",
+      nakshatra: nakshatraText,
+      reason: [`Moon in Gandmool nakshatra: ${nakshatraText}`]
+    };
+  }
+
+  return {
+    status: "absent",
+    nakshatra: nakshatraText,
+    reason: [`Moon in ${nakshatraText} (not Gandmool)`]
+  };
+}
+
+/**
+ * 7. Kalathra Dosha (7th house/partner affliction)
+ * Present if malefic in H7, 7th lord afflicted, or Venus afflicted
+ */
+export function calculateKalathraDosh(snapshot: Snapshot) {
+  const { planets, asc } = snapshot;
+  const reason: string[] = [];
+
+  // 7th house index from Lagna
+  const h7Idx = (asc.signIdx + 6) % 12;
+  
+  // 7th lord
+  const seventhLord = SIGN_LORDS[h7Idx];
+  const seventhLordPlanet = planets[seventhLord];
+
+  // Malefics
+  const malefics = ["Mars", "Saturn", "Rahu", "Ketu", "Sun"];
+
+  // Check 1: Any malefic in H7 by house number
+  for (const maleficName of malefics) {
+    const malefic = planets[maleficName];
+    if (malefic.house === 7) {
+      reason.push(`${maleficName} in 7th house (${malefic.sign})`);
+    }
+  }
+
+  // Check 2: 7th lord conjunct malefic or in dusthana (H6/H8/H12)
+  if (seventhLordPlanet) {
+    for (const maleficName of malefics) {
+      const malefic = planets[maleficName];
+      const dist = delta(seventhLordPlanet.deg, malefic.deg);
+      if (dist <= ORB_CONJ) {
+        reason.push(`7th lord (${seventhLord}) conjunct ${maleficName}: Δ=${dist.toFixed(2)}°`);
       }
     }
-  }
 
-  // Determine if Kemadruma is present (canceled if neighbors, planet with Moon, or kendra planets)
-  const isCanceled = hasNeighbor || hasPlanetWithMoon || hasKendraPlanet;
-
-  if (!hasNeighbor && !hasPlanetWithMoon && !isCanceled) {
-    triggeredBy.push('Moon isolated (no planets in adjacent signs)');
-    placements.push(`Moon in ${moon.sign} with empty neighboring signs`);
-  }
-
-  return {
-    present: (!hasNeighbor && !hasPlanetWithMoon && !hasKendraPlanet) ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: (!isCanceled && !hasNeighbor && !hasPlanetWithMoon)
-      ? 'Kemadruma Yoga present: Moon isolated without planetary neighbors or kendra support.'
-      : 'No Kemadruma Yoga detected (canceled by planetary support).',
-    remedies: (!isCanceled && !hasNeighbor && !hasPlanetWithMoon)
-      ? ['Community seva; gratitude and consistency rituals.', 'Chandra pacification; Navagraha Shanti.']
-      : []
-  };
-}
-
-function calculateHouseFrom(planetLon: number, refLon: number): number {
-  const refSign = Math.floor(refLon / 30);
-  const planetSign = Math.floor(planetLon / 30);
-  let house = planetSign - refSign + 1;
-  while (house <= 0) house += 12;
-  while (house > 12) house -= 12;
-  return house;
-}
-
-/**
- * F) Gandmool Dosha (Moon in specific nakshatras)
- */
-export function calculateGandmoolDosha(chart: any) {
-  const moon = chart.grahas.Moon;
-  const nakshatra = getNakshatra(moon.lon);
-
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  if (GANDMOOL_NAKSHATRAS.includes(nakshatra)) {
-    triggeredBy.push(`Moon in ${nakshatra} nakshatra`);
-    placements.push(`Moon ${moon.sign} ${moon.deg.toFixed(1)}° (${nakshatra})`);
-    notes.push(`Gandmool nakshatra: ${nakshatra}`);
-  }
-
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    nakshatra,
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? `Gandmool Dosha detected: Moon in ${nakshatra} nakshatra.`
-      : 'No Gandmool Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Gandmool Shanti with family blessings.']
-      : []
-  };
-}
-
-/**
- * G) Kalathra Dosha (7th house/partner)
- * Needs Lagna (birth time)
- */
-export function calculateKalathraDosh(chart: any) {
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  // Check if birth time is known
-  if (!chart.ascendant || !chart.houses || chart.houses.length === 0) {
-    return {
-      present: 'partial',
-      triggeredBy: [],
-      placements: [],
-      notes: ['Birth time required for house-based checks'],
-      explanation: 'Birth time unknown - cannot fully calculate Kalathra Dosha.',
-      remedies: []
-    };
-  }
-
-  const malefics = ['Mars', 'Saturn', 'Rahu', 'Ketu'];
-  const venus = chart.grahas.Venus;
-
-  // Check 7th house for malefics
-  for (const maleficName of malefics) {
-    const malefic = chart.grahas[maleficName];
-    if (malefic.house === 7) {
-      triggeredBy.push(`${maleficName} in 7th house`);
-      placements.push(`${maleficName} in 7th house (${malefic.sign})`);
+    // Check if 7th lord in dusthana
+    if ([6, 8, 12].includes(seventhLordPlanet.house)) {
+      reason.push(`7th lord (${seventhLord}) in H${seventhLordPlanet.house} (dusthana)`);
     }
   }
 
-  // Check Venus conjunctions with malefics
+  // Check 3: Venus conjunct malefic
+  const venus = planets.Venus;
   for (const maleficName of malefics) {
-    const malefic = chart.grahas[maleficName];
-    const dist = getConjunctionDistance(venus.lon, malefic.lon);
-    if (dist <= DOSHA_CONFIG.orb.standard) {
-      triggeredBy.push(`Venus-${maleficName} conjunction`);
-      placements.push(`Venus ${venus.sign} ${venus.deg.toFixed(1)}°; ${maleficName} ${malefic.sign} ${malefic.deg.toFixed(1)}°; Δ=${dist.toFixed(1)}°`);
+    const malefic = planets[maleficName];
+    const dist = delta(venus.deg, malefic.deg);
+    if (dist <= ORB_CONJ) {
+      reason.push(`Venus conjunct ${maleficName}: Δ=${dist.toFixed(2)}°`);
     }
   }
 
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? `Kalathra Dosha detected: ${triggeredBy.join(', ')}`
-      : 'No Kalathra Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Friday harmony practices; counseling/mediation mindset.', 'Venus pacification where appropriate.']
-      : []
-  };
-}
-
-/**
- * H) Vish/Daridra Yoga (Mars–Saturn)
- */
-export function calculateVishDaridraYoga(chart: any) {
-  const mars = chart.grahas.Mars;
-  const saturn = chart.grahas.Saturn;
-
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  const marsSaturnDist = getConjunctionDistance(mars.lon, saturn.lon);
+  // Special case: Only Sun in H7 alone → partial
+  const sunInH7 = planets.Sun.house === 7;
+  const otherMaleficsInH7 = malefics.filter(m => m !== "Sun" && planets[m].house === 7).length > 0;
   
-  if (marsSaturnDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Mars-Saturn conjunction');
-    placements.push(`Mars ${mars.sign} ${mars.deg.toFixed(1)}°; Saturn ${saturn.sign} ${saturn.deg.toFixed(1)}°; Δ=${marsSaturnDist.toFixed(1)}°`);
+  if (sunInH7 && !otherMaleficsInH7 && reason.length === 1) {
+    return { status: "partial", reason: ["Sun alone in 7th house"] };
   }
 
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? 'Vish/Daridra Yoga detected: Mars-Saturn conjunction.'
-      : 'No Vish/Daridra Yoga detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Structured effort; conflict-avoidance sadhana.', 'Hanuman devotion; Navagraha Shanti.']
-      : []
-  };
+  const status = reason.length > 0 ? "present" : "absent";
+  return { status, reason };
 }
 
 /**
- * I) Ketu/Naga (Sarpa) Dosha
+ * 8. Vish/Daridra Yoga (Mars-Saturn harsh)
+ * Present if conjunction or opposition
  */
-export function calculateKetuNagaDosha(chart: any) {
-  const ketu = chart.grahas.Ketu;
-  const moon = chart.grahas.Moon;
-  const venus = chart.grahas.Venus;
+export function calculateVishDaridraYoga(snapshot: Snapshot) {
+  const { Mars, Saturn } = snapshot.planets;
+  const reason: string[] = [];
 
-  const triggeredBy: string[] = [];
-  const placements: string[] = [];
-  const notes: string[] = [];
-
-  // Rule A: Ketu-Moon or Ketu-Venus conjunction
-  const ketuMoonDist = getConjunctionDistance(ketu.lon, moon.lon);
-  if (ketuMoonDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Ketu-Moon conjunction');
-    placements.push(`Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Moon ${moon.sign} ${moon.deg.toFixed(1)}°; Δ=${ketuMoonDist.toFixed(1)}°`);
+  // Check conjunction
+  const conjDelta = delta(Mars.deg, Saturn.deg);
+  if (conjDelta <= ORB_CONJ) {
+    reason.push(`Mars-Saturn conjunction: Δ=${conjDelta.toFixed(2)}°`);
+    return { status: "present", reason };
   }
 
-  const ketuVenusDist = getConjunctionDistance(ketu.lon, venus.lon);
-  if (ketuVenusDist <= DOSHA_CONFIG.orb.standard) {
-    triggeredBy.push('Ketu-Venus conjunction');
-    placements.push(`Ketu ${ketu.sign} ${ketu.deg.toFixed(1)}°; Venus ${venus.sign} ${venus.deg.toFixed(1)}°; Δ=${ketuVenusDist.toFixed(1)}°`);
+  // Check opposition
+  if (isOpposition(Mars.deg, Saturn.deg, ORB_OPP)) {
+    reason.push(`Mars-Saturn opposition: Δ=${conjDelta.toFixed(2)}° (~180°)`);
+    return { status: "present", reason };
   }
 
-  // Rule B: Ketu in house 1 or 8 (needs birth time)
-  if (chart.ascendant && chart.houses && chart.houses.length > 0) {
-    if (ketu.house === 1 || ketu.house === 8) {
-      triggeredBy.push(`Ketu in ${ketu.house}${ketu.house === 1 ? 'st' : 'th'} house`);
-      placements.push(`Ketu in ${ketu.house}${ketu.house === 1 ? 'st' : 'th'} house (${ketu.sign})`);
-    }
-  } else if (triggeredBy.length === 0) {
-    // If no conjunction and no birth time, mark as partial
-    return {
-      present: 'partial',
-      triggeredBy: [],
-      placements: [],
-      notes: ['Birth time required for complete house-based checks'],
-      explanation: 'Birth time unknown - partial Ketu/Naga Dosha check only.',
-      remedies: []
-    };
-  }
-
-  return {
-    present: triggeredBy.length > 0 ? 'present' : 'absent',
-    triggeredBy,
-    placements,
-    notes,
-    explanation: triggeredBy.length > 0
-      ? `Ketu/Naga Dosha detected: ${triggeredBy.join(', ')}`
-      : 'No Ketu/Naga Dosha detected.',
-    remedies: triggeredBy.length > 0
-      ? ['Naga devotion where traditional; steady devotional routines.']
-      : []
-  };
+  return { status: "absent", reason };
 }
 
 /**
- * J) Navagraha Shanti (umbrella)
- * Suggested if ≥2 of the above minor doshas are present
+ * 9. Ketu/Naga Dosha
+ * Present if Ketu conjunct Moon/Venus or in H1/H8
  */
-export function calculateNavagrahaUmbrella(otherDoshas: any) {
+export function calculateKetuNagaDosha(snapshot: Snapshot) {
+  const { planets } = snapshot;
+  const { Ketu, Moon, Venus } = planets;
+  const reason: string[] = [];
+
+  // Check Ketu-Moon conjunction
+  const ketuMoonDelta = delta(Ketu.deg, Moon.deg);
+  if (ketuMoonDelta <= ORB_CONJ) {
+    reason.push(`Ketu-Moon conjunction: Δ=${ketuMoonDelta.toFixed(2)}°`);
+  }
+
+  // Check Ketu-Venus conjunction
+  const ketuVenusDelta = delta(Ketu.deg, Venus.deg);
+  if (ketuVenusDelta <= ORB_CONJ) {
+    reason.push(`Ketu-Venus conjunction: Δ=${ketuVenusDelta.toFixed(2)}°`);
+  }
+
+  // Check Ketu in H1 or H8
+  if (Ketu.house === 1 || Ketu.house === 8) {
+    reason.push(`Ketu in ${Ketu.house}${Ketu.house === 1 ? 'st' : 'th'} house (${Ketu.sign})`);
+  }
+
+  // If no conjunction found but house check was done
+  if (reason.length === 0) {
+    return { status: "absent", reason: ["No Ketu conjunctions or problematic placements"] };
+  }
+
+  // If only house placement (no conjunction), mark as partial
+  const hasConjunction = ketuMoonDelta <= ORB_CONJ || ketuVenusDelta <= ORB_CONJ;
+  const status = hasConjunction ? "present" : "partial";
+
+  return { status, reason };
+}
+
+/**
+ * 10. Navagraha Umbrella
+ * Suggested if 2 or more doshas are present
+ */
+export function calculateNavagrahaUmbrella(otherDoshas: any): any {
   const presentCount = Object.values(otherDoshas)
-    .filter((d: any) => d.present === 'present')
+    .filter((d: any) => d.status === "present")
     .length;
 
   const suggested = presentCount >= 2;
 
   return {
-    present: suggested ? 'suggested' : 'not_suggested',
-    triggeredBy: suggested ? [`${presentCount} minor doshas present`] : [],
-    placements: [],
-    notes: suggested ? ['Multiple doshas indicate diffuse stress across life areas'] : [],
-    explanation: suggested
-      ? `Navagraha Shanti suggested: ${presentCount} minor doshas detected.`
-      : 'Navagraha Shanti not needed.',
-    remedies: suggested
-      ? ['Balanced discipline; regular simple worship.']
-      : []
+    status: suggested ? "suggested" : "not_suggested",
+    reason: suggested ? [`${presentCount} doshas present`] : []
+  };
+}
+
+// ==================== MAIN ORCHESTRATOR ====================
+
+/**
+ * Calculate all Other Doshas from Seer API data
+ */
+export function calculateAllOtherDoshas(seerData: any) {
+  // Parse Seer planets into canonical snapshot
+  const snapshot = parseSeerPlanets(seerData);
+
+  // Calculate each dosha
+  const grahan = calculateGrahanDosha(snapshot);
+  const shrapit = calculateShrapitDosha(snapshot);
+  const guruChandal = calculateGuruChandalDosha(snapshot);
+  const punarphoo = calculatePunarphooDosha(snapshot);
+  const kemadruma = calculateKemadrumaYoga(snapshot);
+  const gandmool = calculateGandmoolDosha(snapshot);
+  const kalathra = calculateKalathraDosh(snapshot);
+  const vishDaridra = calculateVishDaridraYoga(snapshot);
+  const ketuNaga = calculateKetuNagaDosha(snapshot);
+
+  const otherDoshas = {
+    grahan,
+    shrapit,
+    guruChandal,
+    punarphoo,
+    kemadruma,
+    gandmool,
+    kalathra,
+    vishDaridra,
+    ketuNaga
+  };
+
+  const navagrahaUmbrella = calculateNavagrahaUmbrella(otherDoshas);
+
+  return {
+    otherDoshas: {
+      grahan,
+      shrapit,
+      guruChandal,
+      punarphoo,
+      kemadruma,
+      gandmool,
+      kalathra,
+      vishDaridra,
+      ketuNaga
+    },
+    navagrahaUmbrella,
+    debug: {
+      placements: Object.entries(snapshot.planets).map(([name, p]) => ({
+        name,
+        deg: p.deg.toFixed(2),
+        sign: p.sign,
+        house: p.house
+      })),
+      asc: {
+        sign: snapshot.asc.sign,
+        deg: snapshot.asc.deg.toFixed(2)
+      },
+      moonNakshatra: snapshot.moonNakshatra,
+      orbs: { conj: ORB_CONJ, opp: ORB_OPP }
+    }
   };
 }

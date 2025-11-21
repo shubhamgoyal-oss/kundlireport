@@ -211,6 +211,14 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                         {isDoshaPresent(summary.kaalSarp) && 'कालसर्प दोष'}
                         {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp)) && isDoshaPresent(summary.pitra) && ' | '}
                         {isDoshaPresent(summary.pitra) && 'पितृ दोष'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra)) && isDoshaPresent(summary.vishDaridra) && ' | '}
+                        {isDoshaPresent(summary.vishDaridra) && 'विष/दारिद्र्य योग'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra)) && isDoshaPresent(summary.grahan) && ' | '}
+                        {isDoshaPresent(summary.grahan) && 'ग्रहण दोष'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra) || isDoshaPresent(summary.grahan)) && isDoshaPresent(summary.shrapit) && ' | '}
+                        {isDoshaPresent(summary.shrapit) && 'श्रापित दोष'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra) || isDoshaPresent(summary.grahan) || isDoshaPresent(summary.shrapit)) && isDoshaPresent(summary.guruChandal) && ' | '}
+                        {isDoshaPresent(summary.guruChandal) && 'गुरु चांडाल दोष'}
                       </>
                     ) : (
                       <>
@@ -221,10 +229,18 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                         {isDoshaPresent(summary.kaalSarp) && 'Kaal Sarp Dosha'}
                         {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp)) && isDoshaPresent(summary.pitra) && ' | '}
                         {isDoshaPresent(summary.pitra) && 'Pitra Dosha'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra)) && isDoshaPresent(summary.vishDaridra) && ' | '}
+                        {isDoshaPresent(summary.vishDaridra) && 'Vish/Daridra Yoga'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra)) && isDoshaPresent(summary.grahan) && ' | '}
+                        {isDoshaPresent(summary.grahan) && 'Grahan Dosha'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra) || isDoshaPresent(summary.grahan)) && isDoshaPresent(summary.shrapit) && ' | '}
+                        {isDoshaPresent(summary.shrapit) && 'Shrapit Dosha'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp) || isDoshaPresent(summary.pitra) || isDoshaPresent(summary.vishDaridra) || isDoshaPresent(summary.grahan) || isDoshaPresent(summary.shrapit)) && isDoshaPresent(summary.guruChandal) && ' | '}
+                        {isDoshaPresent(summary.guruChandal) && 'Guru Chandal Dosha'}
                       </>
                     )}
                   </p>
-                  {(isDoshaPresent(summary.grahan) || isDoshaPresent(summary.shrapit) || isDoshaPresent(summary.guruChandal)) && (
+                  {(isDoshaPresent(summary.punarphoo) || isDoshaPresent(summary.kemadruma) || isDoshaPresent(summary.gandmool) || isDoshaPresent(summary.kalathra) || isDoshaPresent(summary.ketuNaga)) && (
                     <p className="text-sm text-muted-foreground mt-1">
                       {isHindi ? '(अधिक दोष)' : '(More Doshas)'}
                     </p>

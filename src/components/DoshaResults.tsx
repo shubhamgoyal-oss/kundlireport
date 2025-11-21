@@ -231,14 +231,28 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   )}
                 </div>
 
-                {/* Combined Summary (Hindi - Emotional, Short) */}
+                {/* Combined Summary (Hindi - Emotional, Short) - Personalized */}
                 <div className="p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
                   <p className="text-sm text-foreground leading-relaxed">
-                    {isHindi ? (
-                      'इन ग्रह-दोषों के कारण जीवन में रुकावटें, तनाव, देरी या मन की अशांति आ सकती है। लेकिन सही उपाय से इनका प्रभाव कम किया जा सकता है।'
-                    ) : (
-                      'These planetary afflictions may cause obstacles, stress, delays or mental unrest in life. However, their effects can be reduced with proper remedies.'
-                    )}
+                    {(() => {
+                      const activeDoshasList = [];
+                      if (isDoshaPresent(summary.mangal)) activeDoshasList.push({ key: 'mangal', hi: 'मंगल दोष', en: 'Mangal Dosha', effect: { hi: 'विवाह और रिश्तों में', en: 'marriage and relationships' } });
+                      if (isDoshaPresent(summary.kaalSarp)) activeDoshasList.push({ key: 'kaalSarp', hi: 'कालसर्प दोष', en: 'Kaal Sarp Dosha', effect: { hi: 'करियर और मानसिक शांति में', en: 'career and mental peace' } });
+                      if (isDoshaPresent(summary.pitra)) activeDoshasList.push({ key: 'pitra', hi: 'पितृ दोष', en: 'Pitra Dosha', effect: { hi: 'परिवार और संतान में', en: 'family and progeny' } });
+                      if (isDoshaPresent(summary.shaniSadeSati)) activeDoshasList.push({ key: 'shani', hi: 'साढ़े साती', en: 'Sade Sati', effect: { hi: 'जीवन के सभी क्षेत्रों में', en: 'all areas of life' } });
+
+                      if (activeDoshasList.length === 0) return null;
+
+                      if (isHindi) {
+                        const doshaNames = activeDoshasList.map(d => d.hi).join(', ');
+                        const effects = activeDoshasList.map(d => d.effect.hi).join(', ');
+                        return `आपकी कुंडली में ${doshaNames} पाए गए हैं, जो ${effects} रुकावटें, तनाव या देरी का कारण बन सकते हैं। लेकिन सही वैदिक उपाय से इनका प्रभाव कम किया जा सकता है।`;
+                      } else {
+                        const doshaNames = activeDoshasList.map(d => d.en).join(', ');
+                        const effects = activeDoshasList.map(d => d.effect.en).join(', ');
+                        return `Your birth chart shows ${doshaNames}, which may cause obstacles, stress or delays in ${effects}. However, their effects can be reduced with proper Vedic remedies.`;
+                      }
+                    })()}
                   </p>
                 </div>
 

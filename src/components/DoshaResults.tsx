@@ -167,7 +167,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
       <Card className="spiritual-glow">
         <CardHeader>
           <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
-            {t('doshaResults.summary')}
+            {isHindi ? 'आपके कुछ दोष पाए गए हैं' : 'Some Doshas Have Been Detected'}
           </CardTitle>
         </CardHeader>
         
@@ -199,6 +199,49 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
             
             return (
               <>
+                {/* Top Doshas Display (Hindi Bold) */}
+                <div className="text-center mb-4">
+                  <p className="text-lg font-bold text-foreground">
+                    {isHindi ? (
+                      <>
+                        {isDoshaPresent(summary.shaniSadeSati) && 'शनि दोष'}
+                        {isDoshaPresent(summary.shaniSadeSati) && isDoshaPresent(summary.mangal) && ' | '}
+                        {isDoshaPresent(summary.mangal) && 'मंगल दोष'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal)) && isDoshaPresent(summary.kaalSarp) && ' | '}
+                        {isDoshaPresent(summary.kaalSarp) && 'कालसर्प दोष'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp)) && isDoshaPresent(summary.pitra) && ' | '}
+                        {isDoshaPresent(summary.pitra) && 'पितृ दोष'}
+                      </>
+                    ) : (
+                      <>
+                        {isDoshaPresent(summary.shaniSadeSati) && 'Shani Dosha'}
+                        {isDoshaPresent(summary.shaniSadeSati) && isDoshaPresent(summary.mangal) && ' | '}
+                        {isDoshaPresent(summary.mangal) && 'Mangal Dosha'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal)) && isDoshaPresent(summary.kaalSarp) && ' | '}
+                        {isDoshaPresent(summary.kaalSarp) && 'Kaal Sarp Dosha'}
+                        {(isDoshaPresent(summary.shaniSadeSati) || isDoshaPresent(summary.mangal) || isDoshaPresent(summary.kaalSarp)) && isDoshaPresent(summary.pitra) && ' | '}
+                        {isDoshaPresent(summary.pitra) && 'Pitra Dosha'}
+                      </>
+                    )}
+                  </p>
+                  {(isDoshaPresent(summary.grahan) || isDoshaPresent(summary.shrapit) || isDoshaPresent(summary.guruChandal)) && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {isHindi ? '(अधिक दोष)' : '(More Doshas)'}
+                    </p>
+                  )}
+                </div>
+
+                {/* Combined Summary (Hindi - Emotional, Short) */}
+                <div className="p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
+                  <p className="text-sm text-foreground leading-relaxed">
+                    {isHindi ? (
+                      'इन ग्रह-दोषों के कारण जीवन में रुकावटें, तनाव, देरी या मन की अशांति आ सकती है। लेकिन सही उपाय से इनका प्रभाव कम किया जा सकता है।'
+                    ) : (
+                      'These planetary afflictions may cause obstacles, stress, delays or mental unrest in life. However, their effects can be reduced with proper remedies.'
+                    )}
+                  </p>
+                </div>
+
                 {/* Status Chips Row */}
                 <div className="flex flex-wrap gap-3">
                   {/* Mangal Dosha Chip - Only show if present */}
@@ -294,16 +337,25 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   return (
                     <div className="mt-6 space-y-4">
-                      <div className="text-center">
-                        <h3 className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
-                          {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
+                      {/* Remedies For You (English Header) */}
+                      <div className="text-center space-y-3">
+                        <h3 className="text-2xl font-bold">
+                          🪔 Remedies For You
                         </h3>
-                        <p className="text-sm text-muted-foreground mt-2">
-                          {activeDoshas.length > 0 ? (
-                            isHindi 
-                              ? `आपके ${activeDoshas.length} दोष${activeDoshas.length > 1 ? 'ों' : ''} के लिए व्यक्तिगत उपाय`
-                              : `Personalized remedies for your ${activeDoshas.length} detected dosha${activeDoshas.length > 1 ? 's' : ''}`
-                          ) : null}
+                        
+                        {/* Recommended Puja (English Block) */}
+                        <div className="max-w-2xl mx-auto">
+                          <p className="text-sm text-foreground leading-relaxed mb-2">
+                            Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
+                          </p>
+                          <p className="text-sm text-muted-foreground leading-relaxed">
+                            Our pandits perform the complete ritual with your name, gotra and birth details, following every Vedic step with authenticity and devotion.
+                          </p>
+                        </div>
+
+                        {/* Puja Card Cue */}
+                        <p className="text-base font-medium text-foreground pt-2">
+                          📿 Here is the puja best suited for your dosha relief.
                         </p>
                       </div>
                       

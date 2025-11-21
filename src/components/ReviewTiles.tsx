@@ -48,9 +48,6 @@ const StarRating = ({ stars }: { stars: number }) => {
           src="/lovable-uploads/a398c33a-4475-4e18-ba7d-367b95f5c4c8.png"
           alt="Star"
           className={`w-4 h-4 ${index < stars ? 'opacity-100' : 'opacity-30'}`}
-          width="16"
-          height="16"
-          loading="lazy"
         />
       ))}
     </div>

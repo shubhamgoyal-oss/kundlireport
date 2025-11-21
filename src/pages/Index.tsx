@@ -45,10 +45,6 @@ const Index = () => {
                     src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
                     alt="Sri Mandir" 
                     className="h-20 w-auto mx-auto lg:mx-0"
-                    width="461"
-                    height="140"
-                    loading="eager"
-                    fetchPriority="high"
                   />
                 </div>
                 

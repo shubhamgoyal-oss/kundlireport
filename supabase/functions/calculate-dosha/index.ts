@@ -2,16 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import {
-  calculateGrahanDosha,
-  calculateShrapitDosha,
-  calculateGuruChandalDosha,
-  calculatePunarphooDosha,
-  calculateKemadrumaYoga,
-  calculateGandmoolDosha,
-  calculateKalathraDosh,
-  calculateVishDaridraYoga,
-  calculateKetuNagaDosha,
-  calculateNavagrahaUmbrella,
+  calculateAllOtherDoshas
 } from "./other-doshas.ts";
 import { fetchSeerKundli, adaptSeerResponse, type SeerKundliRequest } from "./seer-adapter.ts";
 import {
@@ -477,27 +468,21 @@ serve(async (req) => {
       }
     };
     
-    // Calculate other doshas (using existing logic)
+    // Calculate other doshas using new deterministic logic
     console.log('');
     console.log('📿 [DOSHA] Calculating other doshas...');
-    const grahan = calculateGrahanDosha(chartForOldDoshas);
-    console.log(`  Grahan: ${grahan.present}`);
-    const shrapit = calculateShrapitDosha(chartForOldDoshas);
-    console.log(`  Shrapit: ${shrapit.present}`);
-    const guruChandal = calculateGuruChandalDosha(chartForOldDoshas);
-    console.log(`  Guru Chandal: ${guruChandal.present}`);
-    const punarphoo = calculatePunarphooDosha(chartForOldDoshas);
-    console.log(`  Punarphoo: ${punarphoo.present}`);
-    const kemadruma = calculateKemadrumaYoga(chartForOldDoshas);
-    console.log(`  Kemadruma: ${kemadruma.present}`);
-    const gandmool = calculateGandmoolDosha(chartForOldDoshas);
-    console.log(`  Gandmool: ${gandmool.present}`);
-    const kalathra = calculateKalathraDosh(chartForOldDoshas);
-    console.log(`  Kalathra: ${kalathra.present}`);
-    const vishDaridra = calculateVishDaridraYoga(chartForOldDoshas);
-    console.log(`  Vish/Daridra: ${vishDaridra.present}`);
-    const ketuNaga = calculateKetuNagaDosha(chartForOldDoshas);
-    console.log(`  Ketu/Naga: ${ketuNaga.present}`);
+    const otherDoshasResult = calculateAllOtherDoshas(seerData);
+    const { otherDoshas, navagrahaUmbrella } = otherDoshasResult;
+    
+    console.log(`  Grahan: ${otherDoshas.grahan.status}`);
+    console.log(`  Shrapit: ${otherDoshas.shrapit.status}`);
+    console.log(`  Guru Chandal: ${otherDoshas.guruChandal.status}`);
+    console.log(`  Punarphoo: ${otherDoshas.punarphoo.status}`);
+    console.log(`  Kemadruma: ${otherDoshas.kemadruma.status}`);
+    console.log(`  Gandmool: ${otherDoshas.gandmool.status}`);
+    console.log(`  Kalathra: ${otherDoshas.kalathra.status}`);
+    console.log(`  Vish/Daridra: ${otherDoshas.vishDaridra.status}`);
+    console.log(`  Ketu/Naga: ${otherDoshas.ketuNaga.status}`);
     
     // Build summary
     const summary: any = {
@@ -518,32 +503,19 @@ serve(async (req) => {
         : null,
       kaalSarp: kaalSarp.status,
       kaalSarpSubtype: kaalSarp.status === "present" && kaalSarp.notes.some(n => n.includes("partial")) ? "partial" : undefined,
-      // Pass through the actual status from calculations (present/absent/partial)
-      grahan: grahan.present || 'absent',
-      rahuSurya: grahan.rahuSurya || 'absent',
-      shrapit: shrapit.present || 'absent',
-      guruChandal: guruChandal.present || 'absent',
-      punarphoo: punarphoo.present || 'absent',
-      kemadruma: kemadruma.present || 'absent',
-      gandmool: gandmool.present || 'absent',
-      kalathra: kalathra.present || 'absent',
-      vishDaridra: vishDaridra.present || 'absent',
-      ketuNaga: ketuNaga.present || 'absent'
+      // Use status from new calculation (present/absent/partial)
+      grahan: otherDoshas.grahan.status,
+      rahuSurya: otherDoshas.grahan.rahuSurya,
+      shrapit: otherDoshas.shrapit.status,
+      guruChandal: otherDoshas.guruChandal.status,
+      punarphoo: otherDoshas.punarphoo.status,
+      kemadruma: otherDoshas.kemadruma.status,
+      gandmool: otherDoshas.gandmool.status,
+      kalathra: otherDoshas.kalathra.status,
+      vishDaridra: otherDoshas.vishDaridra.status,
+      ketuNaga: otherDoshas.ketuNaga.status,
+      navagrahaUmbrella: navagrahaUmbrella.status
     };
-    
-    // Calculate Navagraha umbrella
-    const navagrahaResult = calculateNavagrahaUmbrella({
-      grahan,
-      shrapit,
-      guruChandal,
-      punarphoo,
-      kemadruma,
-      gandmool,
-      kalathra,
-      vishDaridra,
-      ketuNaga
-    });
-    summary.navagrahaUmbrella = navagrahaResult.present;
     
     const doshaResults = {
       summary,
@@ -594,74 +566,114 @@ serve(async (req) => {
           remedies: getKaalSarpRemediesSeer()
         },
         grahan: {
-          triggeredBy: grahan.triggeredBy || [],
-          placements: grahan.placements || [],
-          notes: grahan.notes || [],
-          explanation: grahan.explanation || "No Grahan Dosha detected.",
-          remedies: grahan.remedies || []
+          triggeredBy: otherDoshas.grahan.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.grahan.status === "present" 
+            ? `Grahan Dosha detected: ${otherDoshas.grahan.reason.join(', ')}`
+            : "No Grahan Dosha detected.",
+          remedies: otherDoshas.grahan.status === "present" 
+            ? ["Mindfulness, stable routines, breath practices", "Charity on eclipse-related days; light devotional worship"]
+            : []
         },
         shrapit: {
-          triggeredBy: shrapit.triggeredBy || [],
-          placements: shrapit.placements || [],
-          notes: shrapit.notes || [],
-          explanation: shrapit.explanation || "No Shrapit Dosha detected.",
-          remedies: shrapit.remedies || []
+          triggeredBy: otherDoshas.shrapit.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.shrapit.status === "present"
+            ? `Shrapit Dosha detected: ${otherDoshas.shrapit.reason.join(', ')}`
+            : "No Shrapit Dosha detected.",
+          remedies: otherDoshas.shrapit.status === "present"
+            ? ["Saturday discipline; service and humility", "Rudrabhishek / Shani-focused prayers"]
+            : []
         },
         guruChandal: {
-          triggeredBy: guruChandal.triggeredBy || [],
-          placements: guruChandal.placements || [],
-          notes: guruChandal.notes || [],
-          explanation: guruChandal.explanation || "No Guru Chandal Dosha detected.",
-          remedies: guruChandal.remedies || []
+          triggeredBy: otherDoshas.guruChandal.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.guruChandal.status === "present"
+            ? `Guru Chandal Dosha detected: ${otherDoshas.guruChandal.reason.join(', ')}`
+            : "No Guru Chandal Dosha detected.",
+          remedies: otherDoshas.guruChandal.status === "present"
+            ? ["Study with grounded mentors; donation of knowledge/education items", "Guru-focused prayers"]
+            : []
         },
         punarphoo: {
-          triggeredBy: punarphoo.triggeredBy || [],
-          placements: punarphoo.placements || [],
-          notes: punarphoo.notes || [],
-          explanation: punarphoo.explanation || "No Punarphoo Dosha detected.",
-          remedies: punarphoo.remedies || []
+          triggeredBy: otherDoshas.punarphoo.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.punarphoo.status === "present"
+            ? `Punarphoo Dosha detected: ${otherDoshas.punarphoo.reason.join(', ')}`
+            : "No Punarphoo Dosha detected.",
+          remedies: otherDoshas.punarphoo.status === "present"
+            ? ["Monday calm practices; moon-soothing disciplines", "Chandra–Shani pacification prayers"]
+            : []
         },
         kemadruma: {
-          triggeredBy: kemadruma.triggeredBy || [],
-          placements: kemadruma.placements || [],
-          notes: kemadruma.notes || [],
-          explanation: kemadruma.explanation || "No Kemadruma Yoga detected.",
-          remedies: kemadruma.remedies || []
+          triggeredBy: otherDoshas.kemadruma.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.kemadruma.status === "present"
+            ? `Kemadruma Yoga detected: ${otherDoshas.kemadruma.reason.join(', ')}`
+            : "No Kemadruma Yoga detected.",
+          remedies: otherDoshas.kemadruma.status === "present"
+            ? ["Community seva; gratitude and consistency rituals", "Chandra pacification; Navagraha Shanti"]
+            : []
         },
         gandmool: {
-          triggeredBy: gandmool.triggeredBy || [],
-          placements: gandmool.placements || [],
-          notes: gandmool.notes || [],
-          explanation: gandmool.explanation || "No Gandmool Dosha detected.",
-          remedies: gandmool.remedies || []
+          triggeredBy: otherDoshas.gandmool.reason,
+          placements: [],
+          notes: otherDoshas.gandmool.nakshatra ? [`Moon nakshatra: ${otherDoshas.gandmool.nakshatra}`] : [],
+          explanation: otherDoshas.gandmool.status === "present"
+            ? `Gandmool Dosha detected: Moon in ${otherDoshas.gandmool.nakshatra} nakshatra`
+            : "No Gandmool Dosha detected.",
+          remedies: otherDoshas.gandmool.status === "present"
+            ? ["Gandmool Shanti with family blessings"]
+            : []
         },
         kalathra: {
-          triggeredBy: kalathra.triggeredBy || [],
-          placements: kalathra.placements || [],
-          notes: kalathra.notes || [],
-          explanation: kalathra.explanation || "No Kalathra Dosha detected.",
-          remedies: kalathra.remedies || []
+          triggeredBy: otherDoshas.kalathra.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.kalathra.status === "present"
+            ? `Kalathra Dosha detected: ${otherDoshas.kalathra.reason.join(', ')}`
+            : "No Kalathra Dosha detected.",
+          remedies: otherDoshas.kalathra.status === "present"
+            ? ["Friday harmony practices; counseling/mediation mindset", "Venus pacification where appropriate"]
+            : []
         },
         vishDaridra: {
-          triggeredBy: vishDaridra.triggeredBy || [],
-          placements: vishDaridra.placements || [],
-          notes: vishDaridra.notes || [],
-          explanation: vishDaridra.explanation || "No Vish/Daridra Yoga detected.",
-          remedies: vishDaridra.remedies || []
+          triggeredBy: otherDoshas.vishDaridra.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.vishDaridra.status === "present"
+            ? `Vish/Daridra Yoga detected: ${otherDoshas.vishDaridra.reason.join(', ')}`
+            : "No Vish/Daridra Yoga detected.",
+          remedies: otherDoshas.vishDaridra.status === "present"
+            ? ["Structured effort; conflict-avoidance sadhana", "Hanuman devotion; Navagraha Shanti"]
+            : []
         },
         ketuNaga: {
-          triggeredBy: ketuNaga.triggeredBy || [],
-          placements: ketuNaga.placements || [],
-          notes: ketuNaga.notes || [],
-          explanation: ketuNaga.explanation || "No Ketu/Naga Dosha detected.",
-          remedies: ketuNaga.remedies || []
+          triggeredBy: otherDoshas.ketuNaga.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.ketuNaga.status === "present"
+            ? `Ketu/Naga Dosha detected: ${otherDoshas.ketuNaga.reason.join(', ')}`
+            : "No Ketu/Naga Dosha detected.",
+          remedies: otherDoshas.ketuNaga.status === "present"
+            ? ["Naga devotion where traditional; steady devotional routines"]
+            : []
         },
         navagrahaUmbrella: {
-          triggeredBy: navagrahaResult.triggeredBy || [],
-          placements: navagrahaResult.placements || [],
-          notes: navagrahaResult.notes || [],
-          explanation: navagrahaResult.explanation || "",
-          remedies: navagrahaResult.remedies || []
+          triggeredBy: navagrahaUmbrella.reason,
+          placements: [],
+          notes: [],
+          explanation: navagrahaUmbrella.status === "suggested"
+            ? `Navagraha Shanti suggested: ${navagrahaUmbrella.reason.join(', ')}`
+            : "Navagraha Shanti not needed.",
+          remedies: navagrahaUmbrella.status === "suggested"
+            ? ["Balanced discipline; regular simple worship"]
+            : []
         }
       }
     };
@@ -979,185 +991,7 @@ function calculateAscendant(jd: number, lat: number, lon: number): number {
 }
 
 // Dosha calculation functions
-function calculateAllDoshas(chart: any, unknownTime: boolean = false, debugMode: boolean = false, inputData?: any) {
-  const mangal = calculateMangalDosha(chart, debugMode);
-  const kaalSarp = calculateKaalSarpDosha(chart, debugMode);
-  const pitra = calculatePitraDosha(chart, debugMode);
-  // Use current date for Sade Sati transit calculation
-  const evalDate = new Date();
-  const sadeSati = calculateSadeSati(chart, evalDate, debugMode);
-
-  // Calculate new doshas
-  const grahan = calculateGrahanDosha(chart);
-  const shrapit = calculateShrapitDosha(chart);
-  const guruChandal = calculateGuruChandalDosha(chart);
-  const punarphoo = calculatePunarphooDosha(chart);
-  const kemadruma = calculateKemadrumaYoga(chart);
-  const gandmool = calculateGandmoolDosha(chart);
-  const kalathra = calculateKalathraDosh(chart);
-  const vishDaridra = calculateVishDaridraYoga(chart);
-  const ketuNaga = calculateKetuNagaDosha(chart);
-  
-  // Umbrella check
-  const navagrahaUmbrella = calculateNavagrahaUmbrella({
-    grahan, shrapit, guruChandal, punarphoo, kemadruma,
-    gandmool, kalathra, vishDaridra, ketuNaga
-  });
-
-  const result: any = {
-    summary: {
-      // Original doshas (backward-compatible)
-      mangal: mangal.canceled ? 'canceled' : (mangal.present ? 'present' : 'absent'),
-      mangalSeverity: mangal.severity || undefined,
-      kaalSarp: kaalSarp.present ? 'present' : 'absent',
-      kaalSarpType: kaalSarp.type || undefined,
-      pitra: pitra.present ? 'present' : 'absent',
-      shaniSadeSati: sadeSati.active ? 'active' : 'inactive',
-      shaniPhase: sadeSati.phase || undefined,
-      
-      // New doshas (add-only, optional fields)
-      grahan: grahan.present,
-      grahanSeverity: grahan.severity || undefined,
-      grahanSubtype: grahan.subtype || undefined,
-      rahuSurya: grahan.rahuSurya || undefined,
-      shrapit: shrapit.present,
-      guruChandal: guruChandal.present,
-      punarphoo: punarphoo.present,
-      kemadruma: kemadruma.present,
-      gandmool: gandmool.present,
-      kalathra: kalathra.present,
-      vishDaridra: vishDaridra.present,
-      ketuNaga: ketuNaga.present,
-      navagrahaUmbrella: navagrahaUmbrella.present,
-      kaalSarpSubtype: kaalSarp.subtype || undefined,
-    },
-    details: {
-      // Original doshas (backward-compatible)
-      mangal: {
-        triggeredBy: mangal.triggeredBy,
-        placements: mangal.placements,
-        notes: mangal.notes,
-        explanation: getMangalExplanation(mangal),
-        remedies: getMangalRemedies(mangal),
-      },
-      kaalSarp: {
-        triggeredBy: kaalSarp.triggeredBy,
-        placements: kaalSarp.placements,
-        notes: kaalSarp.notes,
-        explanation: getKaalSarpExplanation(kaalSarp),
-        remedies: getKaalSarpRemedies(),
-      },
-      pitra: {
-        triggeredBy: pitra.triggeredBy,
-        placements: pitra.placements,
-        notes: pitra.notes,
-        explanation: getPitraExplanation(pitra),
-        remedies: getPitraRemedies(),
-      },
-      sadeSati: {
-        triggeredBy: sadeSati.triggeredBy,
-        placements: sadeSati.placements,
-        notes: sadeSati.notes,
-        explanation: getSadeSatiExplanation(sadeSati),
-        remedies: getSadeSatiRemedies(),
-      },
-      
-      // New doshas (add-only)
-      grahan: {
-        triggeredBy: grahan.triggeredBy,
-        placements: grahan.placements,
-        notes: grahan.notes,
-        explanation: grahan.explanation,
-        remedies: grahan.remedies,
-      },
-      shrapit: {
-        triggeredBy: shrapit.triggeredBy,
-        placements: shrapit.placements,
-        notes: shrapit.notes,
-        explanation: shrapit.explanation,
-        remedies: shrapit.remedies,
-      },
-      guruChandal: {
-        triggeredBy: guruChandal.triggeredBy,
-        placements: guruChandal.placements,
-        notes: guruChandal.notes,
-        explanation: guruChandal.explanation,
-        remedies: guruChandal.remedies,
-      },
-      punarphoo: {
-        triggeredBy: punarphoo.triggeredBy,
-        placements: punarphoo.placements,
-        notes: punarphoo.notes,
-        explanation: punarphoo.explanation,
-        remedies: punarphoo.remedies,
-      },
-      kemadruma: {
-        triggeredBy: kemadruma.triggeredBy,
-        placements: kemadruma.placements,
-        notes: kemadruma.notes,
-        explanation: kemadruma.explanation,
-        remedies: kemadruma.remedies,
-      },
-      gandmool: {
-        triggeredBy: gandmool.triggeredBy,
-        placements: gandmool.placements,
-        notes: gandmool.notes,
-        explanation: gandmool.explanation,
-        remedies: gandmool.remedies,
-      },
-      kalathra: {
-        triggeredBy: kalathra.triggeredBy,
-        placements: kalathra.placements,
-        notes: kalathra.notes,
-        explanation: kalathra.explanation,
-        remedies: kalathra.remedies,
-      },
-      vishDaridra: {
-        triggeredBy: vishDaridra.triggeredBy,
-        placements: vishDaridra.placements,
-        notes: vishDaridra.notes,
-        explanation: vishDaridra.explanation,
-        remedies: vishDaridra.remedies,
-      },
-      ketuNaga: {
-        triggeredBy: ketuNaga.triggeredBy,
-        placements: ketuNaga.placements,
-        notes: ketuNaga.notes,
-        explanation: ketuNaga.explanation,
-        remedies: ketuNaga.remedies,
-      },
-      navagrahaUmbrella: {
-        triggeredBy: navagrahaUmbrella.triggeredBy,
-        placements: navagrahaUmbrella.placements,
-        notes: navagrahaUmbrella.notes,
-        explanation: navagrahaUmbrella.explanation,
-        remedies: navagrahaUmbrella.remedies,
-      },
-    },
-  };
-  
-  // Add debug information if debug mode is enabled
-  if (debugMode && inputData) {
-    result.debug = {
-      input_echo: {
-        dob: inputData.date,
-        tob_local: inputData.local || inputData.time || 'unknown',
-        place: inputData.place,
-        lat: inputData.lat,
-        lon: inputData.lon,
-        tz: inputData.tz,
-        utc: inputData.utc,
-        ayanamsha_deg: inputData.ayanamsha?.toFixed(4)
-      },
-      mangal: mangal.debug,
-      pitra: pitra.debug,
-      sadeSati: sadeSati.debug,
-      kaalSarp: kaalSarp.debug
-    };
-  }
-  
-  return result;
-}
+// (Other Doshas now calculated via calculateAllOtherDoshas from other-doshas.ts)
 
 const MANGAL_DOSHA_HOUSES = [1, 2, 4, 7, 8, 12];
 

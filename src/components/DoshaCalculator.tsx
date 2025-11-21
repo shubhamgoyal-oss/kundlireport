@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { getTimeZoneForCoordinates } from '@/utils/timezone';
@@ -73,6 +74,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [doshaResults, setDoshaResults] = useState<any>(null);
   const [calculationId, setCalculationId] = useState<string | null>(null);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchError, setSearchError] = useState<string | null>(null);
 
@@ -240,6 +242,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       
       // Store and display results IMMEDIATELY (don't wait for DB save)
       setDoshaResults(normalized);
+      setIsFormCollapsed(true);
       toast.success(t('dosha.calculationSuccess'));
       
       // Save calculation to database asynchronously (non-blocking)
@@ -278,11 +281,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         navagraha_umbrella: isActive(result.summary?.navagrahaUmbrella),
         calculation_results: result,
         book_puja_clicked: false,
-      } as any).then(({ error }) => {
+      } as any).select('id').then(({ data, error }) => {
         if (error) {
           console.error('Failed to save calculation to database:', error);
         } else {
           console.log('Calculation saved to database');
+          if (data && data[0]?.id) {
+            setCalculationId(data[0].id);
+          }
         }
       });
       
@@ -300,34 +306,52 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   return (
     <>
       <Card className="w-full max-w-4xl mx-auto spiritual-glow">
-      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <CardTitle className="text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
-            {t('dosha.calculatorTitle')}
-          </CardTitle>
-          <CardDescription className="text-center sm:text-left text-base">
-            {t('dosha.calculatorDesc')}
-          </CardDescription>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="self-end sm:self-auto text-muted-foreground"
-          onClick={() => {
-            reset();
-            setPlaceSearchResults([]);
-            setShowPlaceResults(false);
-            setDoshaResults(null);
-            toast.success(t('dosha.formRefreshed'));
-          }}
-        >
-          <RotateCcw className="w-4 h-4 mr-2" />
-          {t('dosha.refresh')}
-        </Button>
-      </CardHeader>
-      
-      <CardContent>
+      <Collapsible open={!isFormCollapsed} onOpenChange={(open) => setIsFormCollapsed(!open)}>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
+              {t('dosha.calculatorTitle')}
+            </CardTitle>
+            <CardDescription className="text-center sm:text-left text-base">
+              {t('dosha.calculatorDesc')}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {isFormCollapsed && (
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-end sm:self-auto"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {t('dosha.edit', 'Edit')}
+                </Button>
+              </CollapsibleTrigger>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="self-end sm:self-auto text-muted-foreground"
+              onClick={() => {
+                reset();
+                setPlaceSearchResults([]);
+                setShowPlaceResults(false);
+                setDoshaResults(null);
+                setIsFormCollapsed(false);
+                toast.success(t('dosha.formRefreshed'));
+              }}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              {t('dosha.refresh')}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CollapsibleContent>
+          <CardContent>
         <form onSubmit={handleSubmit(onSubmit, (errs) => {
           const msg = (errs.place?.message as string)
             || (errs.time?.message as string)
@@ -606,7 +630,9 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             {t('dosha.disclaimer')}
           </p>
         </form>
-      </CardContent>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
     </Card>
 
     {/* Display Results */}

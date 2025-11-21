@@ -225,7 +225,7 @@ serve(async (req) => {
       lat: input.lat,
       lon: input.lon,
       tzone,
-      user_id: Date.now(), // Use timestamp as unique user_id
+      user_id: 505, // Fixed user_id for all Seer API calls
       name: (input as any).name,
       gender: genderCode
     };

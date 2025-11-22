@@ -50,6 +50,10 @@ const resources = {
         terms: 'Terms and Conditions',
         copyright: '© 2025 Sri Mandir. All rights reserved.'
       },
+      trustBadge: {
+        tagline: "India's most trusted devotion app",
+        downloads: '3 Cr.+ downloads'
+      },
       solutionFinder: {
         title: 'My Solution Finder',
         description:
@@ -330,6 +334,10 @@ const resources = {
         privacyPolicy: 'गोपनीयता नीति',
         terms: 'नियम और शर्तें',
         copyright: '© 2025 श्री मंदिर। सर्वाधिकार सुरक्षित।'
+      },
+      trustBadge: {
+        tagline: 'भारत का सबसे भरोसेमंद भक्ति ऐप',
+        downloads: '3 करोड़+ डाउनलोड'
       },
       solutionFinder: {
         title: 'मेरा समाधान खोजक',

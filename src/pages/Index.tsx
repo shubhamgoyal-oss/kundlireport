@@ -49,9 +49,9 @@ const Index = () => {
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium text-center lg:text-left space-y-0.5">
                     <div className="flex items-center justify-center lg:justify-start gap-1.5">
                       <span className="text-primary text-[10px]">✦</span>
-                      <span>India's most trusted devotion app</span>
+                      <span>{t('trustBadge.tagline')}</span>
                     </div>
-                    <div className="font-semibold text-foreground">3 Cr.+ downloads</div>
+                    <div className="font-semibold text-foreground">{t('trustBadge.downloads')}</div>
                   </div>
                 </div>
                 

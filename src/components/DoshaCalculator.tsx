@@ -307,23 +307,23 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
     <>
       <Card className="w-full max-w-4xl mx-auto spiritual-glow">
       <Collapsible open={!isFormCollapsed} onOpenChange={(open) => setIsFormCollapsed(!open)}>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <CardTitle className="text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-6">
+          <div className="flex-1">
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
               {t('dosha.calculatorTitle')}
             </CardTitle>
-            <CardDescription className="text-center sm:text-left text-base">
+            <CardDescription className="text-center sm:text-left text-sm sm:text-base mt-1">
               {t('dosha.calculatorDesc')}
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 justify-center sm:justify-end">
             {isFormCollapsed && (
               <CollapsibleTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="self-end sm:self-auto"
+                  className="min-h-[44px] px-4"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   {t('dosha.edit', 'Edit')}
@@ -334,7 +334,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               type="button"
               variant="ghost"
               size="sm"
-              className="self-end sm:self-auto text-muted-foreground"
+              className="text-muted-foreground min-h-[44px] px-4"
               onClick={() => {
                 reset();
                 setPlaceSearchResults([]);
@@ -351,7 +351,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
         </CardHeader>
         
         <CollapsibleContent>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
         <form onSubmit={handleSubmit(onSubmit, (errs) => {
           const msg = (errs.place?.message as string)
             || (errs.time?.message as string)
@@ -359,15 +359,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             || (Object.values(errs)[0]?.message as string)
             || t('dosha.formError', 'Please correct the highlighted fields');
           toast.error(msg);
-        })} className="space-y-6">
+        })} className="space-y-4 sm:space-y-6">
           {/* Name (Required) */}
           <div className="space-y-2">
-            <Label htmlFor="name">{t('dosha.name')} *</Label>
+            <Label htmlFor="name" className="text-sm sm:text-base">{t('dosha.name')} *</Label>
             <Input
               id="name"
               {...register('name')}
               placeholder={t('dosha.enterName')}
-              className="bg-input"
+              className="bg-input min-h-[44px] text-base"
               required
               onBlur={(e) => {
                 if (e.target.value) {
@@ -387,25 +387,25 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
           {/* Gender */}
           <div className="space-y-2">
-            <Label>{t('dosha.gender')} *</Label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+            <Label className="text-sm sm:text-base">{t('dosha.gender')} *</Label>
+            <div className="flex gap-4 sm:gap-6">
+              <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
                 <input
                   type="radio"
                   value="male"
                   {...register('gender')}
-                  className="w-4 h-4 text-primary"
+                  className="w-5 h-5 text-primary"
                 />
-                <span>{t('dosha.male')}</span>
+                <span className="text-sm sm:text-base">{t('dosha.male')}</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
                 <input
                   type="radio"
                   value="female"
                   {...register('gender')}
-                  className="w-4 h-4 text-primary"
+                  className="w-5 h-5 text-primary"
                 />
-                <span>{t('dosha.female')}</span>
+                <span className="text-sm sm:text-base">{t('dosha.female')}</span>
               </label>
             </div>
             {errors.gender && (
@@ -418,15 +418,15 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
           {/* Date of Birth */}
           <div className="space-y-2">
-            <Label htmlFor="date" className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
+            <Label htmlFor="date" className="flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
               {t('dosha.dateOfBirth')} *
             </Label>
             <Input
               id="date"
               type="date"
               {...register('date')}
-              className="bg-input"
+              className="bg-input min-h-[44px] text-base"
               required
               onBlur={(e) => {
                 if (e.target.value) {
@@ -446,9 +446,9 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
 
           {/* Time of Birth with Unknown Toggle */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="time" className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+            <div className="flex items-center justify-between min-h-[44px]">
+              <Label htmlFor="time" className="flex items-center gap-2 text-sm sm:text-base">
+                <Clock className="w-4 h-4 flex-shrink-0" />
                 {t('dosha.timeOfBirth')}
               </Label>
               <div className="flex items-center gap-2">
@@ -464,7 +464,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                     }
                   }}
                 />
-                <Label htmlFor="unknownTime" className="text-sm text-muted-foreground cursor-pointer">
+                <Label htmlFor="unknownTime" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
                   {t('dosha.dontKnowTime')}
                 </Label>
               </div>
@@ -476,7 +476,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                   id="time"
                   type="time"
                   {...register('time')}
-                  className="bg-input"
+                  className="bg-input min-h-[44px] text-base"
                   required={!unknownTime}
                   onBlur={(e) => {
                     if (e.target.value && !unknownTime) {
@@ -509,8 +509,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           {/* Place of Birth with Autocomplete */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="place" className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
+              <Label htmlFor="place" className="flex items-center gap-2 text-sm sm:text-base">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
                 {t('dosha.placeOfBirth')} *
               </Label>
               <span className="text-xs text-muted-foreground">{t('dosha.typeChars')}</span>
@@ -520,7 +520,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 id="place"
                 {...register('place')}
                 placeholder={t('dosha.placePlaceholder')}
-                className="bg-input"
+                className="bg-input min-h-[44px] text-base"
                 onChange={(e) => handlePlaceSearch(e.target.value)}
                 onKeyDown={handlePlaceKeyDown}
                 onFocus={() => placeSearchResults.length > 0 && setShowPlaceResults(true)}
@@ -551,12 +551,12 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                       key={`${place.lat}-${place.lon}-${index}`}
                       type="button"
                       onClick={() => handlePlaceSelect(place)}
-                      className={`w-full px-4 py-3 text-left transition-colors border-b border-border last:border-b-0 ${
+                      className={`w-full px-4 py-3 text-left transition-colors border-b border-border last:border-b-0 min-h-[52px] ${
                         index === selectedPlaceIndex ? 'bg-accent' : 'hover:bg-accent/50'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-medium text-sm flex-1">{place.display_name}</p>
+                        <p className="font-medium text-sm sm:text-base flex-1">{place.display_name}</p>
                         {place.confidence && (
                           <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">
                             {place.confidence}
@@ -612,12 +612,12 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
           <Button
             type="submit"
             size="lg"
-            className="w-full spiritual-glow bg-primary hover:bg-primary/90 text-white"
+            className="w-full spiritual-glow bg-primary hover:bg-primary/90 text-white font-semibold min-h-[52px] text-base sm:text-lg"
             disabled={isCalculating}
           >
             {isCalculating ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" />
                 {t('dosha.calculating')}
               </>
             ) : (

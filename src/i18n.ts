@@ -48,7 +48,7 @@ const resources = {
         contactUs: 'Contact Us',
         privacyPolicy: 'Privacy Policy',
         terms: 'Terms and Conditions',
-        copyright: '© 2024 Sri Mandir. All rights reserved.'
+        copyright: '© 2025 Sri Mandir. All rights reserved.'
       },
       solutionFinder: {
         title: 'My Solution Finder',
@@ -329,7 +329,7 @@ const resources = {
         contactUs: 'संपर्क करें',
         privacyPolicy: 'गोपनीयता नीति',
         terms: 'नियम और शर्तें',
-        copyright: '© 2024 श्री मंदिर। सर्वाधिकार सुरक्षित।'
+        copyright: '© 2025 श्री मंदिर। सर्वाधिकार सुरक्षित।'
       },
       solutionFinder: {
         title: 'मेरा समाधान खोजक',

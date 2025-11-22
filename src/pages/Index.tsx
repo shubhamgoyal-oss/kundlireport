@@ -32,22 +32,22 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
 
-      {/* Hero Section - Medium.com inspired layout */}
+      {/* Hero Section - Mobile-first optimized */}
       <main className="flex-1">
   
-        <div className="container mx-auto px-6 py-12 max-w-7xl">
-          <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[70vh] mx-auto">
-            {/* Left Content */}
-            <div className="space-y-8 mx-auto lg:mx-0 max-w-2xl w-full">
-              <div className="text-center lg:text-left">
-                <div className="mb-8 space-y-1.5">
+        <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 max-w-7xl">
+          <div className="flex flex-col items-center mx-auto max-w-2xl w-full">
+            {/* Content */}
+            <div className="space-y-6 sm:space-y-8 w-full">
+              <div className="text-center">
+                <div className="mb-6 sm:mb-8 space-y-1.5">
                   <img 
                     src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
                     alt="Sri Mandir" 
-                    className="h-20 w-auto mx-auto lg:mx-0"
+                    className="h-16 sm:h-20 w-auto mx-auto"
                   />
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium text-center lg:text-left space-y-0.5">
-                    <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium space-y-0.5">
+                    <div className="flex items-center justify-center gap-1.5">
                       <span className="text-primary text-[10px]">✦</span>
                       <span>{t('trustBadge.tagline')}</span>
                     </div>
@@ -56,57 +56,57 @@ const Index = () => {
                 </div>
                 
                 {/* Hero Heading */}
-                <div className="mb-6">
-                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground text-center lg:text-left">
+                <div className="mb-4 sm:mb-6">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-foreground">
                     {t('dosha.heroTitle')}
                   </h1>
                 </div>
                 
-                <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed mb-4 sm:mb-6 px-2">
                   {t('dosha.heroSubtitle')}
                 </p>
 
                 {/* Learn the Basics - Collapsible FAQ */}
-                <Collapsible className="mb-6">
-                  <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors group">
+                <Collapsible className="mb-4 sm:mb-6">
+                  <CollapsibleTrigger className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium text-primary hover:text-primary/80 transition-colors group min-h-[44px]">
                     <span>{t('dosha.whatIsDosha')}</span>
-                    <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-data-[state=open]:rotate-180" />
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                    <div className="mt-4 bg-card border border-border rounded-lg p-4">
+                    <div className="mt-3 sm:mt-4 bg-card border border-border rounded-lg p-3 sm:p-4">
                       <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="item-1">
-                          <AccordionTrigger className="text-sm font-medium">
+                          <AccordionTrigger className="text-sm sm:text-base font-medium text-left min-h-[44px]">
                             <span className="flex items-center gap-2">
-                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              {t('dosha.whatIsDosha')}
+                              <CircleDot className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} />
+                              <span className="text-left">{t('dosha.whatIsDosha')}</span>
                             </span>
                           </AccordionTrigger>
-                          <AccordionContent className="text-sm text-muted-foreground">
+                          <AccordionContent className="text-sm sm:text-base text-muted-foreground">
                             {t('dosha.whatIsDoshaAnswer')}
                           </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="item-2">
-                          <AccordionTrigger className="text-sm font-medium">
+                          <AccordionTrigger className="text-sm sm:text-base font-medium text-left min-h-[44px]">
                             <span className="flex items-center gap-2">
-                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              {t('dosha.whyImportant')}
+                              <CircleDot className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} />
+                              <span className="text-left">{t('dosha.whyImportant')}</span>
                             </span>
                           </AccordionTrigger>
-                          <AccordionContent className="text-sm text-muted-foreground">
+                          <AccordionContent className="text-sm sm:text-base text-muted-foreground">
                             {t('dosha.whyImportantAnswer')}
                           </AccordionContent>
                         </AccordionItem>
                         
                         <AccordionItem value="item-3">
-                          <AccordionTrigger className="text-sm font-medium">
+                          <AccordionTrigger className="text-sm sm:text-base font-medium text-left min-h-[44px]">
                             <span className="flex items-center gap-2">
-                              <CircleDot className="w-4 h-4 text-primary" strokeWidth={1.5} />
-                              {t('dosha.howImpact')}
+                              <CircleDot className="w-4 h-4 text-primary flex-shrink-0" strokeWidth={1.5} />
+                              <span className="text-left">{t('dosha.howImpact')}</span>
                             </span>
                           </AccordionTrigger>
-                          <AccordionContent className="text-sm text-muted-foreground">
+                          <AccordionContent className="text-sm sm:text-base text-muted-foreground">
                             {t('dosha.howImpactAnswer')}
                           </AccordionContent>
                         </AccordionItem>

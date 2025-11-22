@@ -57,30 +57,30 @@ const StarRating = ({ stars }: { stars: number }) => {
 export default function ReviewTiles() {
   const { t } = useTranslation();
   return (
-    <div className="w-full bg-muted/50 py-12 overflow-hidden">
-      <div className="container mx-auto px-6 mb-8">
-        <h2 className="text-2xl font-bold text-center text-foreground mb-2">
+    <div className="w-full bg-muted/50 py-8 sm:py-12 overflow-hidden">
+      <div className="container mx-auto px-4 sm:px-6 mb-6 sm:mb-8">
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-foreground mb-2">
           {t('reviews.heading')}
         </h2>
-        <p className="text-muted-foreground text-center">
+        <p className="text-sm sm:text-base text-muted-foreground text-center">
           {t('reviews.subheading')}
         </p>
       </div>
       
       <div className="relative">
-        <div className="flex animate-scroll gap-6 w-max">
+        <div className="flex animate-scroll gap-4 sm:gap-6 w-max">
           {/* First set of reviews */}
           {reviews.map((review) => (
-            <Card key={`first-${review.id}`} className="w-80 flex-shrink-0 border-border shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+            <Card key={`first-${review.id}`} className="w-72 sm:w-80 flex-shrink-0 border-border shadow-sm">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div>
-                    <h4 className="font-semibold text-foreground">{review.name}</h4>
-                    <p className="text-sm text-muted-foreground">{review.location}</p>
+                    <h4 className="font-semibold text-sm sm:text-base text-foreground">{review.name}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{review.location}</p>
                   </div>
                   <StarRating stars={review.stars} />
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   {review.review}
                 </p>
               </CardContent>
@@ -89,16 +89,16 @@ export default function ReviewTiles() {
           
           {/* Duplicate set for seamless scrolling */}
           {reviews.map((review) => (
-            <Card key={`second-${review.id}`} className="w-80 flex-shrink-0 border-border shadow-sm">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+            <Card key={`second-${review.id}`} className="w-72 sm:w-80 flex-shrink-0 border-border shadow-sm">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <div>
-                    <h4 className="font-semibold text-foreground">{review.name}</h4>
-                    <p className="text-sm text-muted-foreground">{review.location}</p>
+                    <h4 className="font-semibold text-sm sm:text-base text-foreground">{review.name}</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">{review.location}</p>
                   </div>
                   <StarRating stars={review.stars} />
                 </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   {review.review}
                 </p>
               </CardContent>

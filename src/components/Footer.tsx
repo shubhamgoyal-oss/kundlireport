@@ -5,31 +5,31 @@ import { trackEvent } from '@/lib/analytics';
 export default function Footer() {
   const { t } = useTranslation();
   return (
-    <footer className="bg-orange-500 text-white pt-12 pb-8">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+    <footer className="bg-orange-500 text-white pt-8 sm:pt-12 pb-6 sm:pb-8">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
           {/* Logo and Description */}
           <div className="md:col-span-2">
             <img 
               src="/lovable-uploads/cbeff861-08ec-47c1-8450-0878f7dbe47c.png" 
               alt="Sri Mandir" 
-              className="h-16 w-auto mb-4"
+              className="h-12 sm:h-16 w-auto mb-3 sm:mb-4"
             />
-            <p className="text-sm leading-relaxed">
+            <p className="text-sm sm:text-base leading-relaxed">
               {t('footer.description')}
             </p>
           </div>
 
           {/* Company Links */}
           <div className="md:ml-8">
-            <h3 className="font-semibold text-lg mb-4">{t('footer.company')}</h3>
-            <ul className="space-y-2">
+            <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">{t('footer.company')}</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <a 
                   href="https://www.srimandir.com/aboutus" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-sm hover:underline"
+                  className="text-sm sm:text-base hover:underline min-h-[44px] flex items-center"
                   onClick={() => trackEvent('footer_link_clicked', {
                     metadata: { link: 'about_us', url: 'https://www.srimandir.com/aboutus' }
                   })}
@@ -42,7 +42,7 @@ export default function Footer() {
                   href="https://www.srimandir.com/contact-us" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-sm hover:underline"
+                  className="text-sm sm:text-base hover:underline min-h-[44px] flex items-center"
                   onClick={() => trackEvent('footer_link_clicked', {
                     metadata: { link: 'contact_us', url: 'https://www.srimandir.com/contact-us' }
                   })}
@@ -55,30 +55,30 @@ export default function Footer() {
 
           {/* Services */}
           <div className="md:ml-4">
-            <h3 className="font-semibold text-lg mb-4">{t('footer.ourServices')}</h3>
-            <ul className="space-y-2">
-              <li><span className="text-sm">{t('footer.services.puja')}</span></li>
-              <li><span className="text-sm">{t('footer.services.chadhava')}</span></li>
-              <li><span className="text-sm">{t('footer.services.panchang')}</span></li>
-              <li><span className="text-sm">{t('footer.services.temples')}</span></li>
+            <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">{t('footer.ourServices')}</h3>
+            <ul className="space-y-1.5 sm:space-y-2">
+              <li><span className="text-sm sm:text-base">{t('footer.services.puja')}</span></li>
+              <li><span className="text-sm sm:text-base">{t('footer.services.chadhava')}</span></li>
+              <li><span className="text-sm sm:text-base">{t('footer.services.panchang')}</span></li>
+              <li><span className="text-sm sm:text-base">{t('footer.services.temples')}</span></li>
             </ul>
             
-            <h3 className="font-semibold text-lg mb-4 mt-8">{t('footer.ourAddress')}</h3>
-            <p className="text-sm leading-relaxed">
+            <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4 mt-6 sm:mt-8">{t('footer.ourAddress')}</h3>
+            <p className="text-sm sm:text-base leading-relaxed">
               {t('footer.address')}
             </p>
           </div>
         </div>
 
         {/* App Download and Social Links */}
-        <div className="flex flex-col md:flex-row justify-between items-center border-t border-orange-400 pt-8">
+        <div className="flex flex-col md:flex-row justify-between items-center border-t border-orange-400 pt-6 sm:pt-8 gap-6">
           {/* App Download Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6 md:mb-0">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
             <a 
               href="https://play.google.com/store/apps/details?id=com.mandir&pli=1"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors w-full sm:w-auto justify-center"
+              className="bg-black text-white px-4 py-3 sm:py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors w-full sm:w-auto justify-center min-h-[48px]"
               onClick={() => trackEvent('app_download_clicked', {
                 metadata: { platform: 'google_play' }
               })}
@@ -95,7 +95,7 @@ export default function Footer() {
               href="https://apps.apple.com/in/app/sri-mandir-puja-chadhava/id1637621461"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-black text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors w-full sm:w-auto justify-center"
+              className="bg-black text-white px-4 py-3 sm:py-2 rounded-lg flex items-center gap-2 hover:bg-gray-800 transition-colors w-full sm:w-auto justify-center min-h-[48px]"
               onClick={() => trackEvent('app_download_clicked', {
                 metadata: { platform: 'app_store' }
               })}
@@ -111,12 +111,12 @@ export default function Footer() {
           </div>
 
           {/* Social Media Icons */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4">
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 w-full sm:w-auto">
             <a 
               href="https://www.youtube.com/@srimandirofficial"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'youtube' }
               })}
@@ -127,7 +127,7 @@ export default function Footer() {
               href="https://www.instagram.com/sri.mandir"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'instagram' }
               })}
@@ -138,7 +138,7 @@ export default function Footer() {
               href="https://www.linkedin.com/company/appsforbharat/posts/?feedView=all"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'linkedin' }
               })}
@@ -149,7 +149,7 @@ export default function Footer() {
               href="https://api.whatsapp.com/send?phone=7829661119"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'whatsapp' }
               })}
@@ -160,7 +160,7 @@ export default function Footer() {
               href="https://x.com/SriMandir_App"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'twitter' }
               })}
@@ -171,7 +171,7 @@ export default function Footer() {
               href="https://www.facebook.com/srimandirapp"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-orange-500 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="bg-white text-orange-500 p-3 rounded-full hover:bg-gray-100 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
               onClick={() => trackEvent('social_media_clicked', {
                 metadata: { platform: 'facebook' }
               })}
@@ -182,13 +182,13 @@ export default function Footer() {
         </div>
 
         {/* Bottom Links */}
-        <div className="border-t border-orange-400 pt-6 mt-6 text-center">
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm">
+        <div className="border-t border-orange-400 pt-4 sm:pt-6 mt-6 text-center">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 text-sm sm:text-base">
             <a 
               href="https://www.srimandir.com/privacy-policy"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="hover:underline min-h-[44px] flex items-center"
               onClick={() => trackEvent('footer_link_clicked', {
                 metadata: { link: 'privacy_policy', url: 'https://www.srimandir.com/privacy-policy' }
               })}
@@ -200,7 +200,7 @@ export default function Footer() {
               href="https://www.srimandir.com/terms-of-use"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:underline"
+              className="hover:underline min-h-[44px] flex items-center"
               onClick={() => trackEvent('footer_link_clicked', {
                 metadata: { link: 'terms_of_use', url: 'https://www.srimandir.com/terms-of-use' }
               })}
@@ -208,7 +208,7 @@ export default function Footer() {
               {t('footer.terms')}
             </a>
           </div>
-          <p className="text-sm mt-4 opacity-80">
+          <p className="text-sm sm:text-base mt-3 sm:mt-4 opacity-80">
             {t('footer.copyright')}
           </p>
         </div>

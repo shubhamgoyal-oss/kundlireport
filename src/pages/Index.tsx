@@ -40,18 +40,19 @@ const Index = () => {
             {/* Left Content */}
             <div className="space-y-8 mx-auto lg:mx-0 max-w-2xl w-full">
               <div className="text-center lg:text-left">
-                <div className="mb-8 space-y-2">
+                <div className="mb-8 space-y-1.5">
                   <img 
                     src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
                     alt="Sri Mandir" 
                     className="h-20 w-auto mx-auto lg:mx-0"
                   />
-                  <p className="text-sm text-muted-foreground font-medium text-center lg:text-left flex items-center justify-center lg:justify-start gap-2">
-                    <span className="text-primary">✦</span>
-                    <span>India's most trusted devotion app</span>
-                    <span className="text-primary">•</span>
-                    <span className="font-semibold text-foreground">3 Cr.+ downloads</span>
-                  </p>
+                  <div className="text-xs sm:text-sm text-muted-foreground font-medium text-center lg:text-left space-y-0.5">
+                    <div className="flex items-center justify-center lg:justify-start gap-1.5">
+                      <span className="text-primary text-[10px]">✦</span>
+                      <span>India's most trusted devotion app</span>
+                    </div>
+                    <div className="font-semibold text-foreground">3 Cr.+ downloads</div>
+                  </div>
                 </div>
                 
                 {/* Hero Heading */}

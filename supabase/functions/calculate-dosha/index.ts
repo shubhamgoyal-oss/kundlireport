@@ -723,6 +723,62 @@ serve(async (req) => {
     console.log('📋 [MAIN] Summary:', JSON.stringify(doshaResults.summary, null, 2));
     console.log('═══════════════════════════════════════════════════════');
 
+    // Persist calculation to database using service role (bypasses RLS)
+    const isActive = (status: unknown): boolean => {
+      if (typeof status === 'boolean') return status;
+      const s = String(status ?? '').toLowerCase();
+      return s === 'present' || s === 'active' || s === 'suggested';
+    };
+
+    let calculationId: string | null = null;
+
+    try {
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from('dosha_calculator2')
+        .insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          user_id: null,
+          name: (rawInput as any).name ?? '',
+          date_of_birth: input.date,
+          time_of_birth: input.time || '00:00',
+          place_of_birth: input.place || `${input.lat},${input.lon}`,
+          latitude: input.lat,
+          longitude: input.lon,
+          user_country: userLocation.country,
+          user_city: userLocation.city,
+          user_latitude: userLocation.latitude,
+          user_longitude: userLocation.longitude,
+          mangal_dosha: isActive(doshaResults.summary.mangal),
+          kaal_sarp_dosha: isActive(doshaResults.summary.kaalSarp),
+          pitra_dosha: isActive(doshaResults.summary.pitra),
+          sade_sati: isActive(doshaResults.summary.shaniSadeSati),
+          grahan_dosha: isActive(doshaResults.summary.grahan),
+          shrapit_dosha: isActive(doshaResults.summary.shrapit),
+          guru_chandal_dosha: isActive(doshaResults.summary.guruChandal),
+          punarphoo_dosha: isActive(doshaResults.summary.punarphoo),
+          kemadruma_yoga: isActive(doshaResults.summary.kemadruma),
+          gandmool_dosha: isActive(doshaResults.summary.gandmool),
+          kalathra_dosha: isActive(doshaResults.summary.kalathra),
+          vish_daridra_yoga: isActive(doshaResults.summary.vishDaridra),
+          ketu_naga_dosha: isActive(doshaResults.summary.ketuNaga),
+          navagraha_umbrella: isActive(doshaResults.summary.navagrahaUmbrella),
+          calculation_results: doshaResults,
+          book_puja_clicked: false,
+        })
+        .select('id')
+        .maybeSingle();
+
+      if (insertError) {
+        console.error('⚠️ [DB] Failed to save dosha calculation:', insertError);
+      } else if (inserted && (inserted as any).id) {
+        calculationId = (inserted as any).id as string;
+        console.log('✅ [DB] Dosha calculation saved with id:', calculationId);
+      }
+    } catch (dbError) {
+      console.error('⚠️ [DB] Error inserting dosha calculation:', dbError);
+    }
+
     // Build chart structure for response (using Seer data)
     const chartData = {
       grahas: {} as any,
@@ -756,6 +812,7 @@ serve(async (req) => {
       summary: doshaResults.summary,
       details: doshaResults.details,
       chart: chartData,
+      calculationId,
       metadata: {
         ayanamsha: 'Lahiri',
         system: 'Sidereal',

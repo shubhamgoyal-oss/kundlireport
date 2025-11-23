@@ -16,6 +16,7 @@ import DoshaResults from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
+import { getUserLocation } from '@/utils/geolocation';
 
 // Form validation schema
 const birthInputSchema = z
@@ -246,51 +247,58 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       toast.success(t('dosha.calculationSuccess'));
       
       // Save calculation to database asynchronously (non-blocking)
-      
-      // Helper function to convert status strings to boolean
-      const isActive = (status?: string | boolean) => {
-        if (typeof status === 'boolean') return status;
-        const s = String(status || '').toLowerCase();
-        return s === 'present' || s === 'active' || s === 'suggested';
-      };
-      
-      // Non-blocking database save
-      supabase.from('dosha_calculator2').insert({
-        visitor_id: visitorId,
-        session_id: sessionId,
-        user_id: null,
-        name: data.name || '',
-        date_of_birth: data.date,
-        time_of_birth: data.time || '00:00',
-        place_of_birth: data.place,
-        latitude: data.lat || null,
-        longitude: data.lon || null,
-        mangal_dosha: isActive(result.summary?.mangal),
-        kaal_sarp_dosha: isActive(result.summary?.kaalSarp),
-        pitra_dosha: isActive(result.summary?.pitra),
-        sade_sati: isActive(result.summary?.shaniSadeSati),
-        grahan_dosha: isActive(result.summary?.grahan),
-        shrapit_dosha: isActive(result.summary?.shrapit),
-        guru_chandal_dosha: isActive(result.summary?.guruChandal),
-        punarphoo_dosha: isActive(result.summary?.punarphoo),
-        kemadruma_yoga: isActive(result.summary?.kemadruma),
-        gandmool_dosha: isActive(result.summary?.gandmool),
-        kalathra_dosha: isActive(result.summary?.kalathra),
-        vish_daridra_yoga: isActive(result.summary?.vishDaridra),
-        ketu_naga_dosha: isActive(result.summary?.ketuNaga),
-        navagraha_umbrella: isActive(result.summary?.navagrahaUmbrella),
-        calculation_results: result,
-        book_puja_clicked: false,
-      } as any).select('id').then(({ data, error }) => {
-        if (error) {
-          console.error('Failed to save calculation to database:', error);
-        } else {
-          console.log('Calculation saved to database');
-          if (data && data[0]?.id) {
-            setCalculationId(data[0].id);
+      (async () => {
+        const userLocation = await getUserLocation();
+        
+        // Helper function to convert status strings to boolean
+        const isActive = (status?: string | boolean) => {
+          if (typeof status === 'boolean') return status;
+          const s = String(status || '').toLowerCase();
+          return s === 'present' || s === 'active' || s === 'suggested';
+        };
+        
+        // Non-blocking database save
+        supabase.from('dosha_calculator2').insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          user_id: null,
+          name: data.name || '',
+          date_of_birth: data.date,
+          time_of_birth: data.time || '00:00',
+          place_of_birth: data.place,
+          latitude: data.lat || null,
+          longitude: data.lon || null,
+          user_country: userLocation.country,
+          user_city: userLocation.city,
+          user_latitude: userLocation.latitude,
+          user_longitude: userLocation.longitude,
+          mangal_dosha: isActive(result.summary?.mangal),
+          kaal_sarp_dosha: isActive(result.summary?.kaalSarp),
+          pitra_dosha: isActive(result.summary?.pitra),
+          sade_sati: isActive(result.summary?.shaniSadeSati),
+          grahan_dosha: isActive(result.summary?.grahan),
+          shrapit_dosha: isActive(result.summary?.shrapit),
+          guru_chandal_dosha: isActive(result.summary?.guruChandal),
+          punarphoo_dosha: isActive(result.summary?.punarphoo),
+          kemadruma_yoga: isActive(result.summary?.kemadruma),
+          gandmool_dosha: isActive(result.summary?.gandmool),
+          kalathra_dosha: isActive(result.summary?.kalathra),
+          vish_daridra_yoga: isActive(result.summary?.vishDaridra),
+          ketu_naga_dosha: isActive(result.summary?.ketuNaga),
+          navagraha_umbrella: isActive(result.summary?.navagrahaUmbrella),
+          calculation_results: result,
+          book_puja_clicked: false,
+        } as any).select('id').then(({ data, error }) => {
+          if (error) {
+            console.error('Failed to save calculation to database:', error);
+          } else {
+            console.log('Calculation saved to database');
+            if (data && data[0]?.id) {
+              setCalculationId(data[0].id);
+            }
           }
-        }
-      });
+        });
+      })();
       
       if (onCalculate) {
         onCalculate(data);

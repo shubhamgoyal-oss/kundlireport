@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getUserLocation } from "@/utils/geolocation";
 
 const SESSION_KEY = "analytics_session_id";
 
@@ -70,12 +71,19 @@ export type TrackEventPayload = {
   puja_id?: number;
   puja_name?: string;
   metadata?: Record<string, any> | null;
+  user_country?: string | null;
+  user_city?: string | null;
+  user_latitude?: number | null;
+  user_longitude?: number | null;
 };
 
 export async function trackEvent(event_name: string, payload: TrackEventPayload = {}) {
   try {
     const session_id = getSessionId();
     const visitor_id = getVisitorId();
+
+    // Get user's current location
+    const location = await getUserLocation();
 
     const now = new Date();
     const nowUtcIso = now.toISOString();
@@ -107,6 +115,10 @@ export async function trackEvent(event_name: string, payload: TrackEventPayload 
         session_id,
         visitor_id,
         user_id: null,
+        user_country: payload.user_country ?? location.country,
+        user_city: payload.user_city ?? location.city,
+        user_latitude: payload.user_latitude ?? location.latitude,
+        user_longitude: payload.user_longitude ?? location.longitude,
       },
     ]);
   } catch (err) {

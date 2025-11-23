@@ -25,7 +25,11 @@ export type Database = {
           puja_name: string | null
           session_id: string
           step: number | null
+          user_city: string | null
+          user_country: string | null
           user_id: string | null
+          user_latitude: number | null
+          user_longitude: number | null
           visitor_id: string
         }
         Insert: {
@@ -38,7 +42,11 @@ export type Database = {
           puja_name?: string | null
           session_id: string
           step?: number | null
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           visitor_id: string
         }
         Update: {
@@ -51,7 +59,11 @@ export type Database = {
           puja_name?: string | null
           session_id?: string
           step?: number | null
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           visitor_id?: string
         }
         Relationships: []
@@ -84,7 +96,11 @@ export type Database = {
           shrapit_dosha: boolean
           time_of_birth: string
           updated_at: string
+          user_city: string | null
+          user_country: string | null
           user_id: string | null
+          user_latitude: number | null
+          user_longitude: number | null
           vish_daridra_yoga: boolean
           visitor_id: string
         }
@@ -115,7 +131,11 @@ export type Database = {
           shrapit_dosha?: boolean
           time_of_birth: string
           updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           vish_daridra_yoga?: boolean
           visitor_id: string
         }
@@ -146,7 +166,11 @@ export type Database = {
           shrapit_dosha?: boolean
           time_of_birth?: string
           updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           vish_daridra_yoga?: boolean
           visitor_id?: string
         }
@@ -180,7 +204,11 @@ export type Database = {
           shrapit_dosha: boolean
           time_of_birth: string
           updated_at: string
+          user_city: string | null
+          user_country: string | null
           user_id: string | null
+          user_latitude: number | null
+          user_longitude: number | null
           vish_daridra_yoga: boolean
           visitor_id: string
         }
@@ -211,7 +239,11 @@ export type Database = {
           shrapit_dosha?: boolean
           time_of_birth: string
           updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           vish_daridra_yoga?: boolean
           visitor_id: string
         }
@@ -242,7 +274,11 @@ export type Database = {
           shrapit_dosha?: boolean
           time_of_birth?: string
           updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
           user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           vish_daridra_yoga?: boolean
           visitor_id?: string
         }
@@ -271,6 +307,10 @@ export type Database = {
           session_id: string
           shani_dosha: boolean | null
           timezone: number
+          user_city: string | null
+          user_country: string | null
+          user_latitude: number | null
+          user_longitude: number | null
           visitor_id: string
         }
         Insert: {
@@ -295,6 +335,10 @@ export type Database = {
           session_id: string
           shani_dosha?: boolean | null
           timezone: number
+          user_city?: string | null
+          user_country?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           visitor_id: string
         }
         Update: {
@@ -319,6 +363,10 @@ export type Database = {
           session_id?: string
           shani_dosha?: boolean | null
           timezone?: number
+          user_city?: string | null
+          user_country?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
           visitor_id?: string
         }
         Relationships: [

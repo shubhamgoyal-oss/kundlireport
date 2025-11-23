@@ -39,6 +39,38 @@ const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 5;
 const RATE_WINDOW = 60000; // 1 minute in milliseconds
 
+// Helper function to get user location from IP
+async function getUserLocationFromIP(ip: string): Promise<{
+  country: string | null;
+  city: string | null;
+  latitude: number | null;
+  longitude: number | null;
+}> {
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,lat,lon`);
+    
+    if (!response.ok) {
+      return { country: null, city: null, latitude: null, longitude: null };
+    }
+
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      return {
+        country: data.country || null,
+        city: data.city || null,
+        latitude: data.lat || null,
+        longitude: data.lon || null,
+      };
+    }
+
+    return { country: null, city: null, latitude: null, longitude: null };
+  } catch (error) {
+    console.warn('Failed to get user location from IP:', error);
+    return { country: null, city: null, latitude: null, longitude: null };
+  }
+}
+
 function checkRateLimit(identifier: string): { allowed: boolean; remaining: number; resetTime: number } {
   const now = Date.now();
   const record = rateLimitMap.get(identifier);
@@ -245,6 +277,10 @@ serve(async (req) => {
     const sessionId = req.headers.get('x-session-id') || 'unknown';
     const visitorId = req.headers.get('x-visitor-id') || 'unknown';
     
+    // Get user location from IP
+    const userIP = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
+    const userLocation = await getUserLocationFromIP(userIP);
+    
     try {
       const { error: logError } = await supabaseAdmin.from('seer_api_logs').insert({
         request_payload: seerRequest,
@@ -259,6 +295,10 @@ serve(async (req) => {
         response_data: seerData,
         session_id: sessionId,
         visitor_id: visitorId,
+        user_country: userLocation.country,
+        user_city: userLocation.city,
+        user_latitude: userLocation.latitude,
+        user_longitude: userLocation.longitude,
         adapted_planets: {
           ascendant: kundli.asc,
           planets: kundli.planets

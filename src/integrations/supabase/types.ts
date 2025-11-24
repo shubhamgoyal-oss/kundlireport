@@ -393,6 +393,7 @@ export type Database = {
           calculate_dosha_clicked_pct: number | null
           date: string | null
           dosha_calculate_pct: number | null
+          dosha_calculate_unsuccessful_pct: number | null
           form_field_filled_pct: number | null
           page_view_pct: number | null
           total_unique_visitors: number | null
@@ -406,6 +407,7 @@ export type Database = {
           calculate_dosha_clicked_pct: number | null
           date: string | null
           dosha_calculate_pct: number | null
+          dosha_calculate_unsuccessful_pct: number | null
           form_field_filled_pct: number | null
           page_view_pct: number | null
           total_unique_visitors: number | null

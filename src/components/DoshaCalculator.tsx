@@ -227,6 +227,17 @@ const DoshaCalculator = () => {
       }
     } catch (error) {
       console.error('Calculation error:', error);
+      
+      // Track unsuccessful calculation
+      trackEvent('dosha_calculate_unsuccessful', {
+        metadata: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          place: submissionData.place,
+          date: submissionData.date,
+          hasTime: !submissionData.unknownTime
+        }
+      });
+      
       toast.error(t('dosha.calculationError'));
     } finally {
       setIsCalculating(false);

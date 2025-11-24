@@ -389,29 +389,29 @@ export type Database = {
     Views: {
       daily_data: {
         Row: {
-          book_puja_clicked_pct: number | null
-          category_puja_viewed_pct: number | null
+          book_puja_clicked: number | null
+          category_puja_viewed: number | null
           date: string | null
-          dosha_calculation_completed_pct: number | null
-          dosha_calculation_started_pct: number | null
-          language_changed_pct: number | null
-          page_view_pct: number | null
-          puja_card_viewed_pct: number | null
-          total_visitors: number | null
+          dosha_calculation_completed: number | null
+          dosha_calculation_started: number | null
+          language_changed: number | null
+          page_view: number | null
+          puja_card_viewed: number | null
+          total_unique_visitors: number | null
         }
         Relationships: []
       }
       daily_data_secure: {
         Row: {
-          book_puja_clicked_pct: number | null
-          category_puja_viewed_pct: number | null
+          book_puja_clicked: number | null
+          category_puja_viewed: number | null
           date: string | null
-          dosha_calculation_completed_pct: number | null
-          dosha_calculation_started_pct: number | null
-          language_changed_pct: number | null
-          page_view_pct: number | null
-          puja_card_viewed_pct: number | null
-          total_visitors: number | null
+          dosha_calculation_completed: number | null
+          dosha_calculation_started: number | null
+          language_changed: number | null
+          page_view: number | null
+          puja_card_viewed: number | null
+          total_unique_visitors: number | null
         }
         Relationships: []
       }

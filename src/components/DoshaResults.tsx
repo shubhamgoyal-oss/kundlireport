@@ -173,24 +173,29 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
     return s;
   };
 
+  // Check if any doshas are present
+  const hasAnyDosha = 
+    (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
+    isDoshaPresent(summary.kaalSarp) ||
+    isDoshaPresent(summary.pitra) ||
+    isDoshaPresent(summary.shaniSadeSati);
+
   return (
     <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
           <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
-            {isHindi ? 'आपके कुछ दोष पाए गए हैं' : 'Some Doshas Have Been Detected'}
+            {hasAnyDosha 
+              ? (isHindi ? 'आपके कुछ दोष पाए गए हैं' : 'Some Doshas Have Been Detected')
+              : (isHindi ? 'कोई प्रमुख दोष नहीं मिला' : 'No Major Doshas Found')
+            }
           </CardTitle>
         </CardHeader>
         
         <CardContent className="space-y-4">
           {/* Check if any doshas are present */}
           {(() => {
-            const hasAnyDosha = 
-              (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
-              isDoshaPresent(summary.kaalSarp) ||
-              isDoshaPresent(summary.pitra) ||
-              isDoshaPresent(summary.shaniSadeSati);
             
             if (!hasAnyDosha) {
               return (

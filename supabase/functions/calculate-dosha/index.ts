@@ -464,6 +464,10 @@ serve(async (req) => {
     console.log("[CALC] Saving to database...");
     const sessionId = req.headers.get("x-session-id") || "unknown";
     const visitorId = req.headers.get("x-visitor-id") || "unknown";
+    
+    // Extract country from request headers (Cloudflare provides this)
+    const userCountry = req.headers.get("cf-ipcountry") || req.headers.get("x-vercel-ip-country") || null;
+    console.log("[CALC] User country from headers:", userCountry);
 
     const isActive = (status: unknown): boolean => {
       if (typeof status === "boolean") return status;
@@ -486,7 +490,7 @@ serve(async (req) => {
           place_of_birth: input.place || `${input.lat},${input.lon}`,
           latitude: input.lat,
           longitude: input.lon,
-          user_country: null,
+          user_country: userCountry,
           user_city: null,
           user_latitude: null,
           user_longitude: null,

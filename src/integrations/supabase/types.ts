@@ -17,6 +17,7 @@ export type Database = {
       analytics_events: {
         Row: {
           created_at: string
+          date: string | null
           event_name: string
           id: string
           metadata: Json | null
@@ -34,6 +35,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          date?: string | null
           event_name: string
           id?: string
           metadata?: Json | null
@@ -51,6 +53,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          date?: string | null
           event_name?: string
           id?: string
           metadata?: Json | null
@@ -182,6 +185,7 @@ export type Database = {
           calculation_number: number
           calculation_results: Json | null
           created_at: string
+          date: string | null
           date_of_birth: string
           gandmool_dosha: boolean
           grahan_dosha: boolean
@@ -217,6 +221,7 @@ export type Database = {
           calculation_number?: number
           calculation_results?: Json | null
           created_at?: string
+          date?: string | null
           date_of_birth: string
           gandmool_dosha?: boolean
           grahan_dosha?: boolean
@@ -252,6 +257,7 @@ export type Database = {
           calculation_number?: number
           calculation_results?: Json | null
           created_at?: string
+          date?: string | null
           date_of_birth?: string
           gandmool_dosha?: boolean
           grahan_dosha?: boolean
@@ -381,7 +387,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      daily_data: {
+        Row: {
+          date: string | null
+          event_name: string | null
+          grand_total: number | null
+          unique_visitors: number | null
+          visitor_percentage: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

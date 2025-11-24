@@ -3,20 +3,21 @@
 import { SeerKundli, SeerPlanet, houseFrom, degDelta, insideRahuKetuArc } from "./seer-adapter.ts";
 
 export interface DoshaResult {
-  status: "present" | "partial" | "absent";
+  status: "present" | "partial" | "absent" | "present (nullified)";
   severity?: "mild" | "moderate" | "strong";
   triggeredBy: string[];
   cancellations: string[];
   mitigations: string[];
   placements: string[];
   notes: string[];
+  nullified?: boolean;
 }
 
 function getPlanet(kundli: SeerKundli, name: string): SeerPlanet | undefined {
   return kundli.planets.find(p => p.name === name);
 }
 
-// Mangal Dosha (Manglik/Kuja)
+// Mangal Dosha (Manglik/Kuja) with Nullification Logic
 export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
   const mars = getPlanet(kundli, "Mars");
   const moon = getPlanet(kundli, "Moon");
@@ -30,12 +31,14 @@ export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
       cancellations: [],
       mitigations: [],
       placements: [],
-      notes: ["Mars position not available"]
+      notes: ["Mars position not available"],
+      nullified: false
     };
   }
 
   const triggeredBy: string[] = [];
   const cancellations: string[] = [];
+  const nullificationReasons: string[] = [];
   const mitigations: string[] = [];
   const placements: string[] = [];
   
@@ -67,61 +70,82 @@ export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
     }
   }
 
-  // Hard cancellations
-  // 1. Mars in own sign (Aries/Scorpio) or exalted (Capricorn)
-  if (mars.sign === "Aries" || mars.sign === "Scorpio") {
-    cancellations.push("Mars in own sign (" + mars.sign + ")");
-  }
-  if (mars.sign === "Capricorn") {
-    cancellations.push("Mars exalted in Capricorn");
-  }
-
-  // 2. Sign-house exceptions
-  if (marsHouseFromLagna === 2 && (mars.sign === "Gemini" || mars.sign === "Virgo")) {
-    cancellations.push("H2 in Gemini/Virgo exception");
-  }
-  if (marsHouseFromLagna === 12 && (mars.sign === "Taurus" || mars.sign === "Libra")) {
-    cancellations.push("H12 in Taurus/Libra exception");
-  }
-  if (marsHouseFromLagna === 7 && (mars.sign === "Cancer" || mars.sign === "Capricorn")) {
-    cancellations.push("H7 in Cancer/Capricorn exception");
-  }
-  if (marsHouseFromLagna === 8 && (mars.sign === "Sagittarius" || mars.sign === "Pisces")) {
-    cancellations.push("H8 in Sagittarius/Pisces exception");
-  }
-
-  // Mitigations
-  if (jupiter) {
-    const jupMarsDistance = degDelta(jupiter.deg, mars.deg);
-    if (jupMarsDistance <= 8) {
-      mitigations.push("Jupiter conjunct/aspect Mars");
-    }
-    
-    const jupAscDistance = degDelta(jupiter.deg, kundli.asc.deg);
-    if (jupAscDistance <= 8) {
-      mitigations.push("Jupiter conjunct/aspect Ascendant");
-    }
-  }
-
-  if (venus) {
-    const venMarsDistance = degDelta(venus.deg, mars.deg);
-    if (venMarsDistance <= 8) {
-      mitigations.push("Venus conjunct Mars");
-    }
-  }
-
-  // Determine status
-  if (cancellations.length > 0) {
+  // If no triggers at all, return absent
+  if (triggeredBy.length === 0) {
     return {
       status: "absent",
       triggeredBy,
       cancellations,
       mitigations,
       placements,
-      notes: ["Hard cancellation applied"]
+      notes: [],
+      nullified: false
     };
   }
 
+  // Only apply nullification if API says present
+  // Rule 1: Own/Exaltation Sign (Hard Nullification)
+  if (mars.sign === "Aries" || mars.sign === "Scorpio") {
+    nullificationReasons.push("Mars in own sign (" + mars.sign + ")");
+  }
+  if (mars.sign === "Capricorn") {
+    nullificationReasons.push("Mars exalted in Capricorn");
+  }
+
+  // Rule 2: House-Sign Exception Set
+  if (marsHouseFromLagna === 2 && (mars.sign === "Gemini" || mars.sign === "Virgo")) {
+    nullificationReasons.push("H2 exception: Mars in " + mars.sign);
+  }
+  if (marsHouseFromLagna === 4 && (mars.sign === "Aries" || mars.sign === "Scorpio")) {
+    nullificationReasons.push("H4 exception: Mars in " + mars.sign);
+  }
+  if (marsHouseFromLagna === 7 && (mars.sign === "Cancer" || mars.sign === "Capricorn")) {
+    nullificationReasons.push("H7 exception: Mars in " + mars.sign);
+  }
+  if (marsHouseFromLagna === 8 && (mars.sign === "Sagittarius" || mars.sign === "Pisces")) {
+    nullificationReasons.push("H8 exception: Mars in " + mars.sign);
+  }
+  if (marsHouseFromLagna === 12 && (mars.sign === "Taurus" || mars.sign === "Libra")) {
+    nullificationReasons.push("H12 exception: Mars in " + mars.sign);
+  }
+
+  // Rule 3: Strong Jupiter Protection
+  if (jupiter) {
+    const jupMarsDistance = degDelta(jupiter.deg, mars.deg);
+    if (jupMarsDistance <= 8) {
+      nullificationReasons.push(`Jupiter conjunct Mars (Δ=${jupMarsDistance.toFixed(1)}°)`);
+    } else {
+      // Whole-sign aspects: 5th, 7th, 9th from Mars
+      const jupiterHouseFromMars = houseFrom(mars.signIdx, jupiter.signIdx);
+      if ([5, 7, 9].includes(jupiterHouseFromMars)) {
+        nullificationReasons.push(`Jupiter ${jupiterHouseFromMars}th aspect to Mars (whole-sign)`);
+      }
+    }
+  }
+
+  // Rule 4: Venus softening
+  if (venus) {
+    const venMarsDistance = degDelta(venus.deg, mars.deg);
+    if (venMarsDistance <= 8) {
+      nullificationReasons.push(`Venus conjunct Mars (Δ=${venMarsDistance.toFixed(1)}°)`);
+    }
+  }
+
+  // Decision: if any nullification rule applies AND primary trigger is present
+  if (primaryTriggered && nullificationReasons.length > 0) {
+    return {
+      status: "present (nullified)",
+      severity: "mild",
+      triggeredBy,
+      cancellations: nullificationReasons,
+      mitigations: [],
+      placements,
+      notes: ["API indicates presence; nullification rules apply"],
+      nullified: true
+    };
+  }
+
+  // If no primary trigger but has helper triggers
   if (!primaryTriggered && triggeredBy.length > 0) {
     return {
       status: "partial",
@@ -130,26 +154,21 @@ export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
       cancellations,
       mitigations,
       placements,
-      notes: ["Helper triggers only, no primary Lagna trigger"]
+      notes: ["Helper triggers only, no primary Lagna trigger"],
+      nullified: false
     };
   }
 
-  if (triggeredBy.length === 0) {
-    return {
-      status: "absent",
-      triggeredBy,
-      cancellations,
-      mitigations,
-      placements,
-      notes: []
-    };
-  }
-
-  // Determine severity
+  // Present without nullification
   let severity: "mild" | "moderate" | "strong" = "moderate";
   
-  if (mitigations.length > 0) {
-    severity = "mild";
+  // Check for additional mitigations (not nullifications)
+  if (jupiter) {
+    const jupAscDistance = degDelta(jupiter.deg, kundli.asc.deg);
+    if (jupAscDistance <= 8) {
+      mitigations.push("Jupiter aspect to Ascendant");
+      severity = "mild";
+    }
   }
   
   // Strong if tight aspect to Ascendant
@@ -162,10 +181,11 @@ export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
     status: "present",
     severity,
     triggeredBy,
-    cancellations,
+    cancellations: [],
     mitigations,
     placements,
-    notes: []
+    notes: [],
+    nullified: false
   };
 }
 

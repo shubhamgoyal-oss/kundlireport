@@ -283,7 +283,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           <Flame className="w-5 h-5 text-destructive" />
                           {t('doshaResults.mangal.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.mangal.impact')}</p>
                         </div>
@@ -299,7 +299,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           <Waves className="w-5 h-5 text-primary" />
                           {t('doshaResults.kaalSarp.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.kaalSarp.impact')}</p>
                         </div>
@@ -315,7 +315,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           <Users className="w-5 h-5 text-accent" />
                           {t('doshaResults.pitra.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.pitra.impact')}</p>
                         </div>
@@ -331,7 +331,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           <Moon className="w-5 h-5 text-secondary" />
                           {t('doshaResults.shaniSadeSati.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.shaniSadeSati.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.shaniSadeSati.impact')}</p>
                         </div>
@@ -360,7 +360,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                               <AlertTriangle className="w-5 h-5 text-warning" />
                               {isHindi ? 'अन्य दोष' : 'Other Doshas'}
                             </h4>
-                            <div className="p-3 bg-muted/50 rounded-md">
+                            <div className="p-3 bg-muted/50 rounded-md break-words">
                               <p className="text-sm text-muted-foreground font-medium">
                                 {otherDoshas.join(', ')}
                               </p>
@@ -375,7 +375,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                 {/* Combined Summary (Hindi - Emotional, Short) - Personalized */}
                 <div className="p-4 bg-muted/30 rounded-lg border border-border/50 mb-6">
-                  <p className="text-sm text-foreground leading-relaxed">
+                  <p className="text-sm text-foreground leading-relaxed break-words">
                     {(() => {
                       const activeDoshasList = [];
                       if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) activeDoshasList.push({ key: 'mangal', hi: 'मंगल दोष', en: 'Mangal Dosha', effect: { hi: 'विवाह और रिश्तों में', en: 'marriage and relationships' } });

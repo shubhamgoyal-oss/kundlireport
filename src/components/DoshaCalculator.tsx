@@ -392,10 +392,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </Label>
             <Input
               id="date"
-              type="text"
+              type="date"
               {...register('date')}
-              placeholder="YYYY-MM-DD (e.g., 1990-01-15)"
-              pattern="\d{4}-\d{2}-\d{2}"
               className="bg-input min-h-[44px] text-base"
               required
               onBlur={(e) => {
@@ -406,7 +404,6 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 }
               }}
             />
-            <p className="text-xs text-muted-foreground">{t('dosha.dateFormat', 'Format: YYYY-MM-DD')}</p>
             {errors.date && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
@@ -445,10 +442,8 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               <>
                 <Input
                   id="time"
-                  type="text"
+                  type="time"
                   {...register('time')}
-                  placeholder="HH:MM (e.g., 14:30)"
-                  pattern="([01]\d|2[0-3]):([0-5]\d)"
                   className="bg-input min-h-[44px] text-base"
                   required={!unknownTime}
                   onBlur={(e) => {
@@ -459,7 +454,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                     }
                   }}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat', 'Format: HH:MM (24-hour)')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat')}</p>
               </>
             )}
             

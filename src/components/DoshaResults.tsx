@@ -55,12 +55,13 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
+  const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    // Scroll to results when component mounts
-    if (resultsRef.current) {
-      const yOffset = -20; // Small offset from top
-      const element = resultsRef.current;
+    // Scroll to status message when component mounts
+    if (statusMessageRef.current) {
+      const yOffset = -100; // Offset to show the status message near the top
+      const element = statusMessageRef.current;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
@@ -196,7 +197,10 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
-          <CardTitle className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
+          <CardTitle 
+            ref={statusMessageRef}
+            className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}
+          >
             {hasAnyDosha 
               ? (isHindi ? '⚠️ आपके कुछ दोष पाए गए हैं ⚠️' : '⚠️ Some Doshas Have Been Detected ⚠️')
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')

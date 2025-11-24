@@ -373,23 +373,13 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                         
                         <div className="max-w-2xl mx-auto">
                           {isHindi ? (
-                            <>
-                              <p className="text-sm text-foreground leading-relaxed mb-2">
-                                वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।
-                              </p>
-                              <p className="text-sm text-muted-foreground leading-relaxed">
-                                हमारे पंडित आपके नाम, गोत्र और जन्म विवरण के साथ पूरी विधि करते हैं, हर वैदिक चरण को प्रामाणिकता और भक्ति के साथ पूरा करते हैं।
-                              </p>
-                            </>
+                            <p className="text-sm text-foreground leading-relaxed mb-2">
+                              वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।
+                            </p>
                           ) : (
-                            <>
-                              <p className="text-sm text-foreground leading-relaxed mb-2">
-                                Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
-                              </p>
-                              <p className="text-sm text-muted-foreground leading-relaxed">
-                                Our pandits perform the complete ritual with your name, gotra and birth details, following every Vedic step with authenticity and devotion.
-                              </p>
-                            </>
+                            <p className="text-sm text-foreground leading-relaxed mb-2">
+                              Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
+                            </p>
                           )}
                         </div>
 

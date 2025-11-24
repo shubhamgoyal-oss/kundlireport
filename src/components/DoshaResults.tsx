@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
@@ -52,8 +52,14 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+  const resultsRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Scroll to results when component mounts
+    if (resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     // Fetch latest pujas
     setIsLoadingPujas(true);
     fetchSriMandirPujas()
@@ -181,14 +187,14 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
     isDoshaPresent(summary.shaniSadeSati);
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-8 space-y-6">
+    <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold gradient-spiritual bg-clip-text text-transparent">
+          <CardTitle className={`text-2xl font-bold ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
             {hasAnyDosha 
-              ? (isHindi ? 'आपके कुछ दोष पाए गए हैं' : 'Some Doshas Have Been Detected')
-              : (isHindi ? 'कोई प्रमुख दोष नहीं मिला' : 'No Major Doshas Found')
+              ? (isHindi ? '⚠️ आपके कुछ दोष पाए गए हैं ⚠️' : '⚠️ Some Doshas Have Been Detected ⚠️')
+              : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')
             }
           </CardTitle>
         </CardHeader>

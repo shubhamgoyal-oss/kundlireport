@@ -251,10 +251,6 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       // Store and display results IMMEDIATELY (don't wait for DB save)
       setDoshaResults(normalized);
       setIsFormCollapsed(true);
-      
-      // Scroll to top to show results
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
       toast.success(t('dosha.calculationSuccess'));
       
       // Persist calculation id coming from backend (if available)

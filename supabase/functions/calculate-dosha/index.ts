@@ -101,7 +101,7 @@ setInterval(() => {
 // Input validation schema
 const birthInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  gender: z.enum(['male', 'female']).optional().default('male'),
+  gender: z.enum(['male', 'female']).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").or(z.literal("")).optional(),
   tz: z.string().min(1).max(50, "Timezone string too long"),

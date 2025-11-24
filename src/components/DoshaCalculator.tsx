@@ -318,6 +318,23 @@ const DoshaCalculator = () => {
               <Clock className="w-4 h-4 flex-shrink-0" />
               {t('dosha.timeOfBirth')} *
             </Label>
+            
+            <div className="flex items-center gap-2 mb-2">
+              <Switch
+                id="unknownTime"
+                checked={unknownTime}
+                onCheckedChange={(checked) => {
+                  setValue('unknownTime', checked);
+                  if (checked) {
+                    setValue('time', '');
+                  }
+                }}
+              />
+              <Label htmlFor="unknownTime" className="text-sm cursor-pointer">
+                {t('dosha.unknownTime')}
+              </Label>
+            </div>
+
             <Input
               id="time"
               type="time"
@@ -335,22 +352,6 @@ const DoshaCalculator = () => {
                 {errors.time.message}
               </p>
             )}
-            
-            <div className="flex items-center gap-2">
-              <Switch
-                id="unknownTime"
-                checked={unknownTime}
-                onCheckedChange={(checked) => {
-                  setValue('unknownTime', checked);
-                  if (checked) {
-                    setValue('time', '');
-                  }
-                }}
-              />
-              <Label htmlFor="unknownTime" className="text-sm cursor-pointer">
-                {t('dosha.unknownTime')}
-              </Label>
-            </div>
           </div>
 
           {/* Place of Birth */}

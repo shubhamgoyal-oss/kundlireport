@@ -323,6 +323,7 @@ const DoshaCalculator = () => {
               type="time"
               {...register('time')}
               disabled={unknownTime}
+              placeholder={t('dosha.timeFormat')}
               className="bg-input min-h-[44px] text-base"
               required={!unknownTime}
             />

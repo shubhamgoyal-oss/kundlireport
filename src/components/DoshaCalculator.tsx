@@ -21,8 +21,8 @@ import { getUserLocation } from '@/utils/geolocation';
 // Form validation schema
 const birthInputSchema = z
   .object({
-    name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-    gender: z.enum(["male", "female"], { required_error: "Gender is required" }),
+    name: z.string().max(100, "Name must be less than 100 characters").optional(),
+    gender: z.enum(["male", "female"]).optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),
@@ -197,12 +197,19 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
   const onSubmit = async (data: BirthInput) => {
     console.log('Form submitted with data:', data);
     
+    // Apply defaults for optional fields
+    const submissionData = {
+      ...data,
+      name: data.name && data.name.trim() !== '' ? data.name : 'Default User',
+      gender: data.gender || 'male',
+    };
+    
     // Track calculate button click
     trackEvent('calculate_dosha_clicked', {
       metadata: {
-        hasTime: !data.unknownTime,
-        place: data.place,
-        date: data.date
+        hasTime: !submissionData.unknownTime,
+        place: submissionData.place,
+        date: submissionData.date
       }
     });
     
@@ -214,7 +221,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
       const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
       
       const response = await supabase.functions.invoke('calculate-dosha', {
-        body: data,
+        body: submissionData,
         headers: {
           'x-visitor-id': visitorId,
           'x-session-id': sessionId,
@@ -322,15 +329,14 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             || t('dosha.formError', 'Please correct the highlighted fields');
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
-          {/* Name (Required) */}
+          {/* Name (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm sm:text-base">{t('dosha.name')} *</Label>
+            <Label htmlFor="name" className="text-sm sm:text-base">{t('dosha.name')}</Label>
             <Input
               id="name"
               {...register('name')}
               placeholder={t('dosha.enterName')}
               className="bg-input min-h-[44px] text-base"
-              required
               onBlur={(e) => {
                 if (e.target.value) {
                   trackEvent('form_field_filled', {
@@ -347,9 +353,9 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             )}
           </div>
 
-          {/* Gender */}
+          {/* Gender (Optional) */}
           <div className="space-y-2">
-            <Label className="text-sm sm:text-base">{t('dosha.gender')} *</Label>
+            <Label className="text-sm sm:text-base">{t('dosha.gender')}</Label>
             <div className="flex gap-4 sm:gap-6">
               <label className="flex items-center gap-2 cursor-pointer min-h-[44px]">
                 <input
@@ -386,8 +392,10 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
             </Label>
             <Input
               id="date"
-              type="date"
+              type="text"
               {...register('date')}
+              placeholder="YYYY-MM-DD (e.g., 1990-01-15)"
+              pattern="\d{4}-\d{2}-\d{2}"
               className="bg-input min-h-[44px] text-base"
               required
               onBlur={(e) => {
@@ -398,6 +406,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                 }
               }}
             />
+            <p className="text-xs text-muted-foreground">{t('dosha.dateFormat', 'Format: YYYY-MM-DD')}</p>
             {errors.date && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
@@ -436,8 +445,10 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
               <>
                 <Input
                   id="time"
-                  type="time"
+                  type="text"
                   {...register('time')}
+                  placeholder="HH:MM (e.g., 14:30)"
+                  pattern="([01]\d|2[0-3]):([0-5]\d)"
                   className="bg-input min-h-[44px] text-base"
                   required={!unknownTime}
                   onBlur={(e) => {
@@ -448,7 +459,7 @@ const DoshaCalculator = ({ onCalculate }: DoshaCalculatorProps) => {
                     }
                   }}
                 />
-                <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('dosha.timeFormat', 'Format: HH:MM (24-hour)')}</p>
               </>
             )}
             

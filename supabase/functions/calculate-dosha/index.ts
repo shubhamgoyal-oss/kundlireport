@@ -148,6 +148,11 @@ serve(async (req) => {
   try {
     const rawInput = await req.json();
     
+    // Normalize optional fields before validation (treat null gender as missing)
+    if (rawInput && rawInput.gender == null) {
+      delete rawInput.gender;
+    }
+    
     // Extract debug flag from query params
     const url = new URL(req.url);
     const debugMode = url.searchParams.get('debugDosha') === 'true';

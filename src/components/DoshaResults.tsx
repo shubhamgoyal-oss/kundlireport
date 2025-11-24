@@ -194,7 +194,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
-          <CardTitle className={`text-3xl sm:text-4xl font-bold ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
+          <CardTitle className={`text-3xl sm:text-4xl font-bold break-words ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
             {hasAnyDosha 
               ? (isHindi ? '⚠️ आपके कुछ दोष पाए गए हैं ⚠️' : '⚠️ Some Doshas Have Been Detected ⚠️')
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')
@@ -271,6 +271,106 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       {isHindi ? '(अधिक दोष)' : '(More Doshas)'}
                     </p>
                   )}
+                 </div>
+
+                {/* Individual Dosha Boxes for Major Doshas */}
+                <div className="space-y-4 mb-6">
+                  {/* Mangal Dosha Box */}
+                  {(isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden bg-background">
+                      <div className="p-4">
+                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                          <Flame className="w-5 h-5 text-destructive" />
+                          {t('doshaResults.mangal.name')}
+                        </h4>
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.mangal.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Kaal Sarp Dosha Box */}
+                  {isDoshaPresent(summary.kaalSarp) && (
+                    <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-background">
+                      <div className="p-4">
+                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                          <Waves className="w-5 h-5 text-primary" />
+                          {t('doshaResults.kaalSarp.name')}
+                        </h4>
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.kaalSarp.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pitra Dosha Box */}
+                  {isDoshaPresent(summary.pitra) && (
+                    <div className="border-l-4 border-accent rounded-lg overflow-hidden bg-background">
+                      <div className="p-4">
+                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                          <Users className="w-5 h-5 text-accent" />
+                          {t('doshaResults.pitra.name')}
+                        </h4>
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.pitra.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Shani Sade Sati Box */}
+                  {isDoshaPresent(summary.shaniSadeSati) && (
+                    <div className="border-l-4 border-secondary rounded-lg overflow-hidden bg-background">
+                      <div className="p-4">
+                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                          <Moon className="w-5 h-5 text-secondary" />
+                          {t('doshaResults.shaniSadeSati.name')}
+                        </h4>
+                        <div className="p-3 bg-muted/50 rounded-md space-y-2">
+                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.shaniSadeSati.description')}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.shaniSadeSati.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Other Doshas Box */}
+                  {(() => {
+                    const otherDoshas = [];
+                    if (isDoshaPresent(summary.vishDaridra)) otherDoshas.push(isHindi ? 'विष/दारिद्र्य योग' : 'Vish/Daridra Yoga');
+                    if (isDoshaPresent(summary.grahan)) otherDoshas.push(isHindi ? 'ग्रहण दोष' : 'Grahan Dosha');
+                    if (isDoshaPresent(summary.shrapit)) otherDoshas.push(isHindi ? 'श्रापित दोष' : 'Shrapit Dosha');
+                    if (isDoshaPresent(summary.guruChandal)) otherDoshas.push(isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha');
+                    if (isDoshaPresent(summary.punarphoo)) otherDoshas.push(isHindi ? 'पुनर्फू दोष' : 'Punarphoo Dosha');
+                    if (isDoshaPresent(summary.kemadruma)) otherDoshas.push(isHindi ? 'केमद्रुम योग' : 'Kemadruma Yoga');
+                    if (isDoshaPresent(summary.gandmool)) otherDoshas.push(isHindi ? 'गंडमूल दोष' : 'Gandmool Dosha');
+                    if (isDoshaPresent(summary.kalathra)) otherDoshas.push(isHindi ? 'कलत्र दोष' : 'Kalathra Dosha');
+                    if (isDoshaPresent(summary.ketuNaga)) otherDoshas.push(isHindi ? 'केतु नाग दोष' : 'Ketu Naga Dosha');
+
+                    if (otherDoshas.length > 0) {
+                      return (
+                        <div className="border-l-4 border-warning rounded-lg overflow-hidden bg-background">
+                          <div className="p-4">
+                            <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                              <AlertTriangle className="w-5 h-5 text-warning" />
+                              {isHindi ? 'अन्य दोष' : 'Other Doshas'}
+                            </h4>
+                            <div className="p-3 bg-muted/50 rounded-md">
+                              <p className="text-sm text-muted-foreground font-medium">
+                                {otherDoshas.join(', ')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 {/* Combined Summary (Hindi - Emotional, Short) - Personalized */}

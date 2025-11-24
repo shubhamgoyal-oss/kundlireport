@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
+import { SriMandirPujaCard } from '@/components/SriMandirPujaCard';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
@@ -327,48 +328,44 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                 </div>
 
 
-                {/* Remedies For You - Moved here from below */}
+                {/* Remedies For You - Organized by Dosha */}
                 {(() => {
-                  const activeDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
+                  // Define major doshas in priority order
+                  const majorDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani'; label: string }> = [];
+                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
                   
-                  // Check each dosha and add to list if present/active (exclude nullified)
+                  // Check major doshas first (exclude nullified)
                   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
-                    activeDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
+                    majorDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
                   }
                   if (isDoshaPresent(summary.kaalSarp)) {
-                    activeDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
+                    majorDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
                   }
                   if (isDoshaPresent(summary.pitra)) {
-                    activeDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
+                    majorDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
                   }
                   if (isDoshaPresent(summary.shaniSadeSati)) {
-                    activeDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
+                    majorDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
                   }
+                  
+                  // Check other doshas
                   if (summary.grahan && isDoshaPresent(summary.grahan)) {
-                    activeDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
+                    otherDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
                   }
                   if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
-                    activeDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
+                    otherDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
                   }
                   if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
-                    activeDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+                    otherDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
                   }
 
-                  // Get personalized pujas for each active dosha
-                  const personalizedPujas: SriMandirPuja[] = [];
-                  activeDoshas.forEach(dosha => {
-                    const filtered = filterPujasByDosha(pujas, dosha.type);
-                    const upcoming = getUpcomingPujas(filtered, 3); // Get up to 3 pujas per dosha
-                    personalizedPujas.push(...upcoming);
-                  });
-
-                  // Remove duplicates based on store_id
-                  const uniquePersonalizedPujas = personalizedPujas.filter(
-                    (puja, index, self) => index === self.findIndex(p => p.store_id === puja.store_id)
-                  );
+                  // Combine in priority order
+                  const allActiveDoshas = [...majorDoshas, ...otherDoshas];
+                  
+                  if (allActiveDoshas.length === 0) return null;
 
                   return (
-                    <div className="mt-6 space-y-4">
+                    <div className="mt-6 space-y-6">
                       <div className="text-center space-y-3">
                         <h3 className="text-2xl font-bold">
                           {isHindi ? '🪔 आपके लिए उपाय' : '🪔 Remedies For You'}
@@ -397,7 +394,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                         </div>
 
                         <p className="text-base font-medium text-foreground pt-2">
-                          {isHindi ? '📿 यह पूजा आपके दोष निवारण के लिए सबसे उपयुक्त है।' : '📿 Here is the puja best suited for your dosha relief.'}
+                          {isHindi ? '📿 यह पूजा आपके दोष निवारण के लिए सबसे उपयुक्त है।' : '📿 Here are the pujas best suited for your dosha relief.'}
                         </p>
                       </div>
                       
@@ -408,26 +405,92 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                             {isHindi ? 'उपाय लोड हो रहे हैं...' : 'Loading...'}
                           </p>
                         </div>
-                      ) : uniquePersonalizedPujas.length === 0 ? null : (
-                        <SriMandirPujaCarousel 
-                          pujas={uniquePersonalizedPujas} 
-                          doshaType="personalized"
-                          calculationId={calculationId}
-                          onBookPujaClick={async () => {
-                            if (!hasTrackedBookPuja && calculationId) {
-                              try {
-                                await supabase
-                                  .from('dosha_calculator2')
-                                  .update({ book_puja_clicked: true })
-                                  .eq('id', calculationId);
-                                setHasTrackedBookPuja(true);
-                                console.log('Book puja tracked for calculation:', calculationId);
-                              } catch (err) {
-                                console.error('Failed to track book puja:', err);
-                              }
-                            }
-                          }}
-                        />
+                      ) : (
+                        <div className="space-y-8">
+                          {/* Major Doshas Section */}
+                          {majorDoshas.map(dosha => {
+                            const filtered = filterPujasByDosha(pujas, dosha.type);
+                            const upcoming = getUpcomingPujas(filtered, 3);
+                            
+                            if (upcoming.length === 0) return null;
+                            
+                            return (
+                              <div key={dosha.type} className="space-y-3">
+                                <h4 className="text-lg font-semibold text-center">
+                                  {dosha.label}
+                                </h4>
+                                <div className="space-y-4">
+                                  {upcoming.map((puja) => (
+                                    <div 
+                                      key={puja.store_id}
+                                      onClick={async () => {
+                                        if (!hasTrackedBookPuja && calculationId) {
+                                          try {
+                                            await supabase
+                                              .from('dosha_calculator2')
+                                              .update({ book_puja_clicked: true })
+                                              .eq('id', calculationId);
+                                            setHasTrackedBookPuja(true);
+                                            console.log('Book puja tracked for calculation:', calculationId);
+                                          } catch (err) {
+                                            console.error('Failed to track book puja:', err);
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      <SriMandirPujaCard 
+                                        puja={puja} 
+                                        doshaType={dosha.type}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          
+                          {/* Other Doshas Section */}
+                          {otherDoshas.map(dosha => {
+                            const filtered = filterPujasByDosha(pujas, dosha.type);
+                            const upcoming = getUpcomingPujas(filtered, 3);
+                            
+                            if (upcoming.length === 0) return null;
+                            
+                            return (
+                              <div key={dosha.type} className="space-y-3">
+                                <h4 className="text-lg font-semibold text-center">
+                                  {dosha.label}
+                                </h4>
+                                <div className="space-y-4">
+                                  {upcoming.map((puja) => (
+                                    <div 
+                                      key={puja.store_id}
+                                      onClick={async () => {
+                                        if (!hasTrackedBookPuja && calculationId) {
+                                          try {
+                                            await supabase
+                                              .from('dosha_calculator2')
+                                              .update({ book_puja_clicked: true })
+                                              .eq('id', calculationId);
+                                            setHasTrackedBookPuja(true);
+                                            console.log('Book puja tracked for calculation:', calculationId);
+                                          } catch (err) {
+                                            console.error('Failed to track book puja:', err);
+                                          }
+                                        }
+                                      }}
+                                    >
+                                      <SriMandirPujaCard 
+                                        puja={puja} 
+                                        doshaType={dosha.type}
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                   );
@@ -753,7 +816,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {getUpcomingPujas(pujas, 10).length} {t('doshaResults.upcomingPujas')}
                 </p>
               </div>
-              <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
+              <div className="space-y-4">
+                {getUpcomingPujas(pujas, 10).map((puja) => (
+                  <SriMandirPujaCard 
+                    key={puja.store_id}
+                    puja={puja} 
+                    doshaType="all"
+                  />
+                ))}
+              </div>
             </div>
           )}
 

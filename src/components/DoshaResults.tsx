@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } 
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaCard } from '@/components/SriMandirPujaCard';
+import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
 import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
@@ -411,9 +412,11 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                                 </h4>
                                 <div className="space-y-4">
                                   {upcoming.map((puja) => (
-                                    <div 
+                                    <SriMandirPujaVerticalCard 
                                       key={puja.store_id}
-                                      onClick={async () => {
+                                      puja={puja} 
+                                      doshaType={dosha.type}
+                                      onBookClick={async () => {
                                         if (!hasTrackedBookPuja && calculationId) {
                                           try {
                                             await supabase
@@ -427,12 +430,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                                           }
                                         }
                                       }}
-                                    >
-                                      <SriMandirPujaCard 
-                                        puja={puja} 
-                                        doshaType={dosha.type}
-                                      />
-                                    </div>
+                                    />
                                   ))}
                                 </div>
                               </div>
@@ -453,9 +451,11 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                                 </h4>
                                 <div className="space-y-4">
                                   {upcoming.map((puja) => (
-                                    <div 
+                                    <SriMandirPujaVerticalCard 
                                       key={puja.store_id}
-                                      onClick={async () => {
+                                      puja={puja} 
+                                      doshaType={dosha.type}
+                                      onBookClick={async () => {
                                         if (!hasTrackedBookPuja && calculationId) {
                                           try {
                                             await supabase
@@ -469,12 +469,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                                           }
                                         }
                                       }}
-                                    >
-                                      <SriMandirPujaCard 
-                                        puja={puja} 
-                                        doshaType={dosha.type}
-                                      />
-                                    </div>
+                                    />
                                   ))}
                                 </div>
                               </div>

@@ -291,11 +291,11 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       <div className="p-3">
                         <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
                           <Moon className="w-4 h-4 text-secondary" />
-                          {t('doshaResults.shaniSadeSati.name')}
+                          {t('doshaResults.sadeSati.name')}
                         </h4>
                         <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
-                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.shaniSadeSati.description')}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.shaniSadeSati.impact')}</p>
+                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.sadeSati.description')}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.sadeSati.impact')}</p>
                         </div>
                       </div>
                     </div>

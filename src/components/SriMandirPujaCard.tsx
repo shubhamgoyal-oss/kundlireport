@@ -41,7 +41,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
       <div className="flex flex-col sm:flex-row">
         {/* Image */}
         {puja.cover_media_url && (
-          <div className="w-full sm:w-40 h-40 sm:h-auto flex-shrink-0">
+          <div className="w-full sm:w-48 h-48 sm:h-auto flex-shrink-0">
             <img
               src={puja.cover_media_url}
               alt={displayTitle}

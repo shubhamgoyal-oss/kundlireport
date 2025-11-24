@@ -60,7 +60,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   useEffect(() => {
     // Scroll to status message when component mounts
     if (statusMessageRef.current) {
-      const yOffset = -100; // Offset to show the status message near the top
+      const yOffset = -150; // Larger offset to keep status message clearly visible
       const element = statusMessageRef.current;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });

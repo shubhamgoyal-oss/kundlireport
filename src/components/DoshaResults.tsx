@@ -240,12 +240,12 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {/* Mangal Dosha Box */}
                   {(isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) && (
                     <div className="border-l-4 border-destructive rounded-lg overflow-hidden bg-background">
-                      <div className="p-4">
-                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                          <Flame className="w-5 h-5 text-destructive" />
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                          <Flame className="w-4 h-4 text-destructive" />
                           {t('doshaResults.mangal.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
+                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.mangal.impact')}</p>
                         </div>
@@ -256,12 +256,12 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {/* Kaal Sarp Dosha Box */}
                   {isDoshaPresent(summary.kaalSarp) && (
                     <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-background">
-                      <div className="p-4">
-                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                          <Waves className="w-5 h-5 text-primary" />
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                          <Waves className="w-4 h-4 text-primary" />
                           {t('doshaResults.kaalSarp.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
+                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.kaalSarp.impact')}</p>
                         </div>
@@ -272,12 +272,12 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {/* Pitra Dosha Box */}
                   {isDoshaPresent(summary.pitra) && (
                     <div className="border-l-4 border-accent rounded-lg overflow-hidden bg-background">
-                      <div className="p-4">
-                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                          <Users className="w-5 h-5 text-accent" />
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-accent" />
                           {t('doshaResults.pitra.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
+                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.pitra.impact')}</p>
                         </div>
@@ -288,12 +288,12 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {/* Shani Sade Sati Box */}
                   {isDoshaPresent(summary.shaniSadeSati) && (
                     <div className="border-l-4 border-secondary rounded-lg overflow-hidden bg-background">
-                      <div className="p-4">
-                        <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                          <Moon className="w-5 h-5 text-secondary" />
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                          <Moon className="w-4 h-4 text-secondary" />
                           {t('doshaResults.shaniSadeSati.name')}
                         </h4>
-                        <div className="p-3 bg-muted/50 rounded-md space-y-2 break-words">
+                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
                           <p className="text-sm text-muted-foreground italic">{t('doshaResults.shaniSadeSati.description')}</p>
                           <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.shaniSadeSati.impact')}</p>
                         </div>
@@ -317,12 +317,12 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                     if (otherDoshas.length > 0) {
                       return (
                         <div className="border-l-4 border-warning rounded-lg overflow-hidden bg-background">
-                          <div className="p-4">
-                            <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                              <AlertTriangle className="w-5 h-5 text-warning" />
+                          <div className="p-3">
+                            <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-warning" />
                               {isHindi ? 'अन्य दोष' : 'Other Doshas'}
                             </h4>
-                            <div className="p-3 bg-muted/50 rounded-md break-words">
+                            <div className="p-2 bg-muted/50 rounded-md break-words">
                               <p className="text-sm text-muted-foreground font-medium">
                                 {otherDoshas.join(', ')}
                               </p>

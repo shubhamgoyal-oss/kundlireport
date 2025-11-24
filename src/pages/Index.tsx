@@ -118,17 +118,7 @@ const Index = () => {
 
               {/* Dosha Calculator Card - Replaces the CTA Button */}
               <div className="w-full">
-                <DoshaCalculator
-                  onCalculate={(data) => {
-                    trackEvent('dosha_calculate', { 
-                      page: 'home',
-                      metadata: {
-                        hasTime: !data.unknownTime,
-                        place: data.place 
-                      }
-                    });
-                  }}
-                />
+                <DoshaCalculator />
               </div>
             </div>
 

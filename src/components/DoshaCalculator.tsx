@@ -22,7 +22,7 @@ import { getUserLocation } from '@/utils/geolocation';
 const birthInputSchema = z
   .object({
     name: z.string().max(100, "Name must be less than 100 characters").optional(),
-    gender: z.enum(["male", "female"]).optional(),
+    gender: z.enum(["male", "female"]).nullable().optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),

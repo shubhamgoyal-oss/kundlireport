@@ -806,15 +806,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   {getUpcomingPujas(pujas, 10).length} {t('doshaResults.upcomingPujas')}
                 </p>
               </div>
-              <div className="space-y-4">
-                {getUpcomingPujas(pujas, 10).map((puja) => (
-                  <SriMandirPujaCard 
-                    key={puja.store_id}
-                    puja={puja} 
-                    doshaType="all"
-                  />
-                ))}
-              </div>
+              <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
             </div>
           )}
 

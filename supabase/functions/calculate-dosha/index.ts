@@ -149,19 +149,25 @@ serve(async (req) => {
   }
 
   try {
+    console.log('📥 [STEP 1] Parsing request body...');
     const rawInput = await req.json();
+    console.log('✅ [STEP 1] Body parsed:', JSON.stringify(rawInput).substring(0, 100));
     
     // Normalize optional fields before validation (treat null gender as missing)
     if (rawInput && rawInput.gender == null) {
+      console.log('⚠️ [STEP 1] Removing null gender field');
       delete rawInput.gender;
     }
     
     // Extract debug flag from query params
     const url = new URL(req.url);
     const debugMode = url.searchParams.get('debugDosha') === 'true';
+    console.log('🔍 [STEP 1] Debug mode:', debugMode);
     
     // Validate input using Zod schema
+    console.log('📋 [STEP 2] Validating input...');
     const validationResult = birthInputSchema.safeParse(rawInput);
+    console.log('✅ [STEP 2] Validation result:', validationResult.success ? 'SUCCESS' : 'FAILED');
     
     if (!validationResult.success) {
       console.error('Validation failed:', validationResult.error.errors);
@@ -185,6 +191,7 @@ serve(async (req) => {
     }
     
     const input = validationResult.data;
+    console.log('✅ [STEP 3] Input validated successfully');
     
     // HARD ASSERTIONS - Fail if configuration is violated
     const configAssertions = {
@@ -225,6 +232,7 @@ serve(async (req) => {
       tz: input.tz 
     });
 
+    console.log('⏰ [STEP 4] Parsing date/time...');
     // Parse date and time for Seer API
     const [year, month, day] = input.date.split('-').map(Number);
     let hour = 12;
@@ -233,6 +241,7 @@ serve(async (req) => {
     if (input.time && !input.unknownTime) {
       [hour, min] = input.time.split(':').map(Number);
     }
+    console.log('✅ [STEP 4] Date/time parsed:', { year, month, day, hour, min });
     
     // Timezone conversion (Seer expects tzone as hours from UTC)
     const tzOffsetMap: Record<string, number> = {
@@ -242,6 +251,7 @@ serve(async (req) => {
       'GMT': 0,
     };
     const tzone = tzOffsetMap[input.tz] || 5.5;
+    console.log('✅ [STEP 4] Timezone offset:', tzone);
 
     // Fetch Kundli from Seer API
     console.log('═══════════════════════════════════════════════════════');
@@ -254,8 +264,11 @@ serve(async (req) => {
       timezone: `UTC+${tzone}`
     });
     
+    console.log('👤 [STEP 5] Processing gender...');
     const genderCode = input.gender === 'female' ? 'F' : 'M';
+    console.log('✅ [STEP 5] Gender code:', genderCode);
 
+    console.log('📦 [STEP 6] Building Seer request...');
     const seerRequest: SeerKundliRequest = {
       day,
       month,
@@ -266,16 +279,20 @@ serve(async (req) => {
       lon: input.lon,
       tzone,
       user_id: 505, // Fixed user_id for all Seer API calls
-      name: (input as any).name,
+      name: input.name,
       gender: genderCode
     };
+    console.log('✅ [STEP 6] Seer request built');
     
+    console.log('🌐 [STEP 7] Calling Seer API...');
     const seerApiStart = Date.now();
     const { data: seerData, responseTimeMs, status: seerStatus } = await fetchSeerKundli(seerRequest);
+    console.log('✅ [STEP 7] Seer API responded:', { status: seerStatus, timeMs: responseTimeMs });
     
+    console.log('🔄 [STEP 8] Adapting Seer response...');
     // Adapt Hindi JSON to English
     const kundli = adaptSeerResponse(seerData);
-    console.log('✅ [MAIN] Kundli adapted successfully');
+    console.log('✅ [STEP 8] Kundli adapted successfully with', kundli.planets.length, 'planets');
     console.log('📊 [MAIN] Planetary positions:');
     kundli.planets.forEach(p => {
       console.log(`  ${p.name.padEnd(10)}: ${p.sign.padEnd(12)} ${p.deg.toFixed(1).padStart(6)}° (H${p.house})`);

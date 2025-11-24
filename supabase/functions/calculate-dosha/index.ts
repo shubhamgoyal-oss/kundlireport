@@ -1,5 +1,31 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { fetchSeerKundli, adaptSeerResponse, type SeerKundliRequest } from "./seer-adapter.ts";
+import {
+  calculateMangalDosha as calculateMangalDoshaSeer,
+  calculatePitraDosha as calculatePitraDoshaSeer,
+  calculateShaniDosha as calculateShaniDoshaSeer,
+  calculateKaalSarpaDosha as calculateKaalSarpaDoshaSeer,
+} from "./seer-doshas.ts";
+import {
+  calculateAllOtherDoshas
+} from "./other-doshas.ts";
+import {
+  getMangalExplanationSeer,
+  getMangalRemediesSeer,
+  getPitraExplanationSeer,
+  getPitraRemediesSeer,
+  getShaniExplanationSeer,
+  getShaniRemediesSeer,
+  getKaalSarpExplanationSeer,
+  getKaalSarpRemediesSeer,
+} from "./seer-explanations.ts";
+
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +33,6 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Minimal schema to keep API the same
 const birthInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   gender: z.enum(["male", "female"]).optional(),
@@ -21,17 +46,17 @@ const birthInputSchema = z.object({
 });
 
 serve(async (req) => {
-  console.log("[MINIMAL] calculate-dosha handler entered", { method: req.method, url: req.url });
+  console.log("[CALC] Request received", { method: req.method });
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const raw = await req.json().catch(() => ({}));
-    console.log("[MINIMAL] Raw body:", raw);
+    const raw = await req.json();
+    console.log("[CALC] Body parsed");
 
-    // Allow null gender and fill defaults here
+    // Normalize null gender
     if (raw && raw.gender == null) {
       raw.gender = "male";
     }
@@ -41,7 +66,7 @@ serve(async (req) => {
 
     const parsed = birthInputSchema.safeParse(raw);
     if (!parsed.success) {
-      console.error("[MINIMAL] Validation failed:", parsed.error.issues);
+      console.error("[CALC] Validation failed:", parsed.error.issues);
       return new Response(
         JSON.stringify({
           success: false,
@@ -53,53 +78,472 @@ serve(async (req) => {
     }
 
     const input = parsed.data;
-    console.log("[MINIMAL] Parsed input:", input);
 
-    // For now, return a deterministic "no major doshas" response so frontend can work
-    const summary = {
-      mangal: "absent",
-      mangalSeverity: null,
-      kaalSarp: "absent",
-      kaalSarpType: null,
-      pitra: "absent",
-      shaniSadeSati: "inactive",
-      shaniPhase: null,
-      grahan: "absent",
-      grahanSeverity: undefined,
-      grahanSubtype: undefined,
-      rahuSurya: "absent",
-      shrapit: "absent",
-      guruChandal: "absent",
-      punarphoo: "absent",
-      kemadruma: "absent",
-      gandmool: "absent",
-      kalathra: "absent",
-      vishDaridra: "absent",
-      ketuNaga: "absent",
-      navagrahaUmbrella: "not_suggested",
-    } as const;
+    // Parse date/time for Seer API
+    const [year, month, day] = input.date.split("-").map(Number);
+    let hour = 12;
+    let min = 0;
+
+    if (input.time && !input.unknownTime) {
+      [hour, min] = input.time.split(":").map(Number);
+    }
+
+    const tzOffsetMap: Record<string, number> = {
+      "Asia/Kolkata": 5.5,
+      "Asia/Calcutta": 5.5,
+      "UTC": 0,
+      "GMT": 0,
+    };
+    const tzone = tzOffsetMap[input.tz] || 5.5;
+
+    const genderCode = input.gender === "female" ? "F" : "M";
+
+    const seerRequest: SeerKundliRequest = {
+      day,
+      month,
+      year,
+      hour,
+      min,
+      lat: input.lat,
+      lon: input.lon,
+      tzone,
+      user_id: 505,
+      name: input.name,
+      gender: genderCode,
+    };
+
+    console.log("[CALC] Calling Seer API...");
+    const { data: seerData, responseTimeMs, status: seerStatus } = await fetchSeerKundli(seerRequest);
+    console.log("[CALC] Seer responded:", seerStatus, "in", responseTimeMs, "ms");
+
+    console.log("[CALC] Adapting Seer response...");
+    const kundli = adaptSeerResponse(seerData);
+    console.log("[CALC] Kundli adapted:", kundli.planets.length, "planets");
+
+    // Extract Seer's dosha results from response
+    const seerVedic = seerData?.data?.vedic_horoscope || seerData?.vedic_horoscope;
+    console.log("[CALC] Extracting doshas from Seer...");
+
+    // Mangal Dosha
+    let mangal;
+    if (seerVedic?.manglik_dosha) {
+      const seerMangal = seerVedic.manglik_dosha;
+      const isManglik = seerMangal.from_ascendant?.is_manglik || 
+                        seerMangal.from_moon?.is_manglik || 
+                        seerMangal.from_venus?.is_manglik;
+      
+      if (isManglik) {
+        mangal = {
+          status: 'present' as const,
+          severity: 'moderate' as const,
+          triggeredBy: [
+            seerMangal.from_ascendant?.is_manglik ? `Mars from Lagna (H${seerMangal.from_ascendant.mars_house})` : null,
+            seerMangal.from_moon?.is_manglik ? `Mars from Moon (H${seerMangal.from_moon.mars_house})` : null,
+            seerMangal.from_venus?.is_manglik ? `Mars from Venus (H${seerMangal.from_venus.mars_house})` : null,
+          ].filter(Boolean) as string[],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      } else {
+        mangal = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+    } else {
+      mangal = calculateMangalDoshaSeer(kundli);
+    }
+    console.log("[CALC] Mangal:", mangal.status);
+
+    // Pitra Dosha
+    let pitra;
+    if (seerVedic?.pitri_dosha) {
+      const seerPitra = seerVedic.pitri_dosha;
+      if (seerPitra.is_pitri_dosha_present) {
+        pitra = {
+          status: 'present' as const,
+          severity: 'moderate' as const,
+          triggeredBy: seerPitra.rules_matched || ['Pitra Dosha detected by Seer'],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      } else {
+        pitra = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+    } else {
+      pitra = calculatePitraDoshaSeer(kundli);
+    }
+    console.log("[CALC] Pitra:", pitra.status);
+
+    // Shani Dosha
+    const shani = calculateShaniDoshaSeer(kundli);
+    console.log("[CALC] Shani:", shani.status);
+
+    // Sade Sati
+    let sadeSatiActive = false;
+    let sadeSatiPhase: string | null = null;
+
+    if (seerVedic?.shadhe_sati_dosha && Array.isArray(seerVedic.shadhe_sati_dosha)) {
+      const now = Date.now();
+      for (const period of seerVedic.shadhe_sati_dosha) {
+        const periodTime = parseInt(period.millisecond);
+        if (periodTime <= now) {
+          if (period.type?.includes("START")) {
+            sadeSatiActive = true;
+            sadeSatiPhase = period.type;
+          } else if (period.type?.includes("END")) {
+            sadeSatiActive = false;
+            sadeSatiPhase = null;
+          }
+        }
+      }
+    }
+    console.log("[CALC] Sade Sati:", sadeSatiActive ? "active" : "inactive");
+
+    // Kaal Sarp Dosha
+    let kaalSarp;
+    if (seerVedic?.kalsarpa_dosha) {
+      const seerKS = seerVedic.kalsarpa_dosha;
+      if (seerKS.present) {
+        kaalSarp = {
+          status: 'present' as const,
+          severity: seerKS.type?.includes('Partial') ? 'moderate' as const : 'strong' as const,
+          triggeredBy: [seerKS.name ? `${seerKS.name} (${seerKS.type})` : 'Kaal Sarpa Dosha detected by Seer'],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: seerKS.type ? [`Type: ${seerKS.type}`] : []
+        };
+      } else {
+        kaalSarp = {
+          status: 'absent' as const,
+          triggeredBy: [],
+          cancellations: [],
+          mitigations: [],
+          placements: [],
+          notes: []
+        };
+      }
+    } else {
+      kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
+    }
+    console.log("[CALC] Kaal Sarp:", kaalSarp.status);
+
+    // Other doshas
+    console.log("[CALC] Calculating other doshas...");
+    const otherDoshasResult = calculateAllOtherDoshas(seerData);
+    const { otherDoshas, navagrahaUmbrella } = otherDoshasResult;
+    console.log("[CALC] Other doshas calculated");
+
+    // Build summary
+    const summary: any = {
+      mangal: mangal.status,
+      mangalSeverity: mangal.severity,
+      pitra: pitra.status,
+      shaniDosha: shani.status,
+      sadeSati: sadeSatiActive ? "active" : "not_active",
+      sadeSatiPhase,
+      shaniSadeSati: sadeSatiActive ? "active" : "inactive",
+      shaniPhase: sadeSatiPhase
+        ? (sadeSatiPhase.includes('RISING') ? 1
+          : (sadeSatiPhase.includes('PEAK') ? 2
+            : (sadeSatiPhase.includes('SETTING') ? 3 : null)))
+        : null,
+      kaalSarp: kaalSarp.status,
+      grahan: otherDoshas.grahan.status,
+      rahuSurya: otherDoshas.grahan.rahuSurya,
+      shrapit: otherDoshas.shrapit.status,
+      guruChandal: otherDoshas.guruChandal.status,
+      punarphoo: otherDoshas.punarphoo.status,
+      kemadruma: otherDoshas.kemadruma.status,
+      gandmool: otherDoshas.gandmool.status,
+      kalathra: otherDoshas.kalathra.status,
+      vishDaridra: otherDoshas.vishDaridra.status,
+      ketuNaga: otherDoshas.ketuNaga.status,
+      navagrahaUmbrella: navagrahaUmbrella.status
+    };
+
+    const doshaResults = {
+      summary,
+      details: {
+        mangal: {
+          triggeredBy: mangal.triggeredBy,
+          placements: mangal.placements,
+          notes: [...mangal.notes, ...mangal.cancellations, ...mangal.mitigations],
+          explanation: getMangalExplanationSeer(mangal),
+          remedies: getMangalRemediesSeer(mangal)
+        },
+        pitra: {
+          triggeredBy: pitra.triggeredBy,
+          placements: pitra.placements,
+          notes: pitra.notes,
+          explanation: getPitraExplanationSeer(pitra),
+          remedies: getPitraRemediesSeer(pitra)
+        },
+        shaniDosha: {
+          triggeredBy: shani.triggeredBy,
+          placements: shani.placements,
+          notes: [...shani.notes, ...shani.mitigations],
+          explanation: getShaniExplanationSeer(shani),
+          remedies: getShaniRemediesSeer(shani)
+        },
+        sadeSati: {
+          isActive: sadeSatiActive,
+          currentPhase: sadeSatiPhase,
+          periods: seerVedic?.shadhe_sati_dosha ?? [],
+          explanation: sadeSatiActive 
+            ? `Sade Sati is currently active (Phase: ${sadeSatiPhase}). This is a 7.5-year period when Saturn transits through the 12th, 1st, and 2nd houses from your Moon sign.`
+            : "Sade Sati is not currently active in your chart.",
+          remedies: sadeSatiActive ? [
+            "Worship Lord Hanuman and recite Hanuman Chalisa daily",
+            "Donate mustard oil, black sesame seeds, and black clothes on Saturdays"
+          ] : []
+        },
+        kaalSarp: {
+          triggeredBy: kaalSarp.triggeredBy,
+          placements: kaalSarp.placements,
+          notes: kaalSarp.notes,
+          explanation: getKaalSarpExplanationSeer(kaalSarp),
+          remedies: getKaalSarpRemediesSeer()
+        },
+        grahan: {
+          triggeredBy: otherDoshas.grahan.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.grahan.status === "present" 
+            ? `Grahan Dosha detected: ${otherDoshas.grahan.reason.join(', ')}`
+            : "No Grahan Dosha detected.",
+          remedies: otherDoshas.grahan.status === "present" 
+            ? ["Mindfulness, stable routines, breath practices"]
+            : []
+        },
+        shrapit: {
+          triggeredBy: otherDoshas.shrapit.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.shrapit.status === "present"
+            ? `Shrapit Dosha detected: ${otherDoshas.shrapit.reason.join(', ')}`
+            : "No Shrapit Dosha detected.",
+          remedies: otherDoshas.shrapit.status === "present"
+            ? ["Saturday discipline; service and humility"]
+            : []
+        },
+        guruChandal: {
+          triggeredBy: otherDoshas.guruChandal.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.guruChandal.status === "present"
+            ? `Guru Chandal Dosha detected: ${otherDoshas.guruChandal.reason.join(', ')}`
+            : "No Guru Chandal Dosha detected.",
+          remedies: otherDoshas.guruChandal.status === "present"
+            ? ["Study with grounded mentors; donation of knowledge/education items"]
+            : []
+        },
+        punarphoo: {
+          triggeredBy: otherDoshas.punarphoo.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.punarphoo.status === "present"
+            ? `Punarphoo Dosha detected: ${otherDoshas.punarphoo.reason.join(', ')}`
+            : "No Punarphoo Dosha detected.",
+          remedies: otherDoshas.punarphoo.status === "present"
+            ? ["Monday calm practices; moon-soothing disciplines"]
+            : []
+        },
+        kemadruma: {
+          triggeredBy: otherDoshas.kemadruma.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.kemadruma.status === "present"
+            ? `Kemadruma Yoga detected: ${otherDoshas.kemadruma.reason.join(', ')}`
+            : "No Kemadruma Yoga detected.",
+          remedies: otherDoshas.kemadruma.status === "present"
+            ? ["Community seva; gratitude and consistency rituals"]
+            : []
+        },
+        gandmool: {
+          triggeredBy: otherDoshas.gandmool.reason,
+          placements: [],
+          notes: otherDoshas.gandmool.nakshatra ? [`Moon nakshatra: ${otherDoshas.gandmool.nakshatra}`] : [],
+          explanation: otherDoshas.gandmool.status === "present"
+            ? `Gandmool Dosha detected: Moon in ${otherDoshas.gandmool.nakshatra} nakshatra`
+            : "No Gandmool Dosha detected.",
+          remedies: otherDoshas.gandmool.status === "present"
+            ? ["Gandmool Shanti with family blessings"]
+            : []
+        },
+        kalathra: {
+          triggeredBy: otherDoshas.kalathra.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.kalathra.status === "present"
+            ? `Kalathra Dosha detected: ${otherDoshas.kalathra.reason.join(', ')}`
+            : "No Kalathra Dosha detected.",
+          remedies: otherDoshas.kalathra.status === "present"
+            ? ["Friday harmony practices; counseling/mediation mindset"]
+            : []
+        },
+        vishDaridra: {
+          triggeredBy: otherDoshas.vishDaridra.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.vishDaridra.status === "present"
+            ? `Vish/Daridra Yoga detected: ${otherDoshas.vishDaridra.reason.join(', ')}`
+            : "No Vish/Daridra Yoga detected.",
+          remedies: otherDoshas.vishDaridra.status === "present"
+            ? ["Structured effort; conflict-avoidance sadhana"]
+            : []
+        },
+        ketuNaga: {
+          triggeredBy: otherDoshas.ketuNaga.reason,
+          placements: [],
+          notes: [],
+          explanation: otherDoshas.ketuNaga.status === "present"
+            ? `Ketu/Naga Dosha detected: ${otherDoshas.ketuNaga.reason.join(', ')}`
+            : "No Ketu/Naga Dosha detected.",
+          remedies: otherDoshas.ketuNaga.status === "present"
+            ? ["Naga devotion where traditional; steady devotional routines"]
+            : []
+        },
+        navagrahaUmbrella: {
+          triggeredBy: navagrahaUmbrella.reason,
+          placements: [],
+          notes: [],
+          explanation: navagrahaUmbrella.status === "suggested"
+            ? `Navagraha Shanti suggested: ${navagrahaUmbrella.reason.join(', ')}`
+            : "Navagraha Shanti not needed.",
+          remedies: navagrahaUmbrella.status === "suggested"
+            ? ["Balanced discipline; regular simple worship"]
+            : []
+        }
+      }
+    };
+
+    console.log("[CALC] Building chart data...");
+    const chartData = {
+      grahas: {} as any,
+      ascendant: {
+        lon: kundli.asc.deg,
+        sign: kundli.asc.sign,
+        deg: kundli.asc.deg,
+        house: 1,
+      },
+      houses: Array.from({ length: 12 }, (_, i) => ({
+        house: i + 1,
+        sign: ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"][(kundli.asc.signIdx + i) % 12],
+        cusp: ((kundli.asc.signIdx + i) * 30) % 360,
+      })),
+      ayanamsha: 23.8,
+    };
+
+    for (const p of kundli.planets) {
+      chartData.grahas[p.name] = {
+        lon: p.deg,
+        sign: p.sign,
+        deg: p.deg % 30,
+        house: p.house,
+      };
+    }
+
+    // Persist to database
+    console.log("[CALC] Saving to database...");
+    const sessionId = req.headers.get("x-session-id") || "unknown";
+    const visitorId = req.headers.get("x-visitor-id") || "unknown";
+
+    const isActive = (status: unknown): boolean => {
+      if (typeof status === "boolean") return status;
+      const s = String(status ?? "").toLowerCase();
+      return s === "present" || s === "active" || s === "suggested";
+    };
+
+    let calculationId: string | null = null;
+
+    try {
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from("dosha_calculator2")
+        .insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          user_id: null,
+          name: raw.name ?? '',
+          date_of_birth: input.date,
+          time_of_birth: input.time || "00:00",
+          place_of_birth: input.place || `${input.lat},${input.lon}`,
+          latitude: input.lat,
+          longitude: input.lon,
+          user_country: null,
+          user_city: null,
+          user_latitude: null,
+          user_longitude: null,
+          mangal_dosha: isActive(summary.mangal),
+          kaal_sarp_dosha: isActive(summary.kaalSarp),
+          pitra_dosha: isActive(summary.pitra),
+          sade_sati: isActive(summary.shaniSadeSati),
+          grahan_dosha: isActive(summary.grahan),
+          shrapit_dosha: isActive(summary.shrapit),
+          guru_chandal_dosha: isActive(summary.guruChandal),
+          punarphoo_dosha: isActive(summary.punarphoo),
+          kemadruma_yoga: isActive(summary.kemadruma),
+          gandmool_dosha: isActive(summary.gandmool),
+          kalathra_dosha: isActive(summary.kalathra),
+          vish_daridra_yoga: isActive(summary.vishDaridra),
+          ketu_naga_dosha: isActive(summary.ketuNaga),
+          navagraha_umbrella: isActive(summary.navagrahaUmbrella),
+          calculation_results: doshaResults,
+          book_puja_clicked: false,
+        })
+        .select("id")
+        .maybeSingle();
+
+      if (insertError) {
+        console.error("[CALC] Failed to save:", insertError);
+      } else if (inserted && (inserted as any).id) {
+        calculationId = (inserted as any).id as string;
+        console.log("[CALC] Saved with id:", calculationId);
+      }
+    } catch (dbErr) {
+      console.error("[CALC] DB error:", dbErr);
+    }
 
     const responseBody = {
       success: true,
-      summary,
-      details: {},
-      chart: null,
-      calculationId: null,
+      summary: doshaResults.summary,
+      details: doshaResults.details,
+      chart: chartData,
+      calculationId,
       metadata: {
-        mode: "minimal-debug",
-        note: "This is a temporary minimal implementation used for debugging.",
+        ayanamsha: "Lahiri",
+        system: "Sidereal",
+        calculationUTC: new Date().toISOString(),
+        rules_version: "india-popular-v1",
       },
     };
 
-    console.log("[MINIMAL] Returning success response");
+    console.log("[CALC] Returning response");
 
     return new Response(JSON.stringify(responseBody), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("[MINIMAL] Fatal error:", error);
+    console.error("[CALC] Fatal error:", error);
+    console.error("[CALC] Stack:", (error as any)?.stack);
     return new Response(
-      JSON.stringify({ success: false, error: "Internal error in calculate-dosha" }),
+      JSON.stringify({ success: false, error: "Unable to calculate dosha. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

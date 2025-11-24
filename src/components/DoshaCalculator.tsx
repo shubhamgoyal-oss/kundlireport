@@ -1,227 +1,431 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Typography,
-  Container,
-  TextField,
-  Grid,
-  MenuItem,
-  Select,
-  InputLabel,
-} from '@mui/material';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit } from 'lucide-react';
+import { toast } from 'sonner';
+import { searchPlaces, type Place } from '@/utils/geocoding';
+import DoshaResults from './DoshaResults';
+import { useTranslation } from 'react-i18next';
+import { trackEvent } from '@/lib/analytics';
+import { supabase } from '@/integrations/supabase/client';
 
-interface DoshaResult {
-  vata: number;
-  pitta: number;
-  kapha: number;
-}
+// Form validation schema - no name or gender fields
+const birthInputSchema = z
+  .object({
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
+    time: z.string().optional().nullable(),
+    unknownTime: z.boolean().default(false),
+    place: z.string().min(1, "Birth place is required"),
+    lat: z.number().optional(),
+    lon: z.number().optional(),
+    tz: z.string().optional(),
+    chartStyle: z.enum(["north", "south"]).default("north").optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.time && !/^([01]\d|2[0-3]):([0-5]\d)$/.test(data.time)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["time"],
+        message: "Invalid time format (HH:MM)",
+      });
+    }
 
-const DoshaCalculator: React.FC = () => {
-  // State variables
-  const [answers, setAnswers] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-  const [doshaResult, setDoshaResult] = useState<DoshaResult | null>(null);
-  const [showResult, setShowResult] = useState<boolean>(false);
-  const [age, setAge] = useState<number | null>(null);
-  const [submitted, setSubmitted] = useState<boolean>(false);
-  const [timeOfDay, setTimeOfDay] = useState<string>('');
-  const [season, setSeason] = useState<string>('');
+    if (!data.unknownTime && (!data.time || data.time.trim() === '')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["time"],
+        message: "Time is required when birth time is known",
+      });
+    }
 
-  // Questions array
-  const questions = [
-    'I tend to have dry skin.',
-    'I often feel cold, even in warm environments.',
-    'I am a restless sleeper and wake up easily.',
-    'I have a small appetite and often forget to eat.',
-    'I tend to be anxious or worried.',
-    'I have a sharp, penetrating intellect.',
-    'I have a medium build and weight.',
-    'I often feel warm or hot.',
-    'I am easily irritated and can become angry quickly.',
-    'I have a strong appetite and can eat a lot.',
-    'I am ambitious and driven.',
-    'I have oily skin and hair.',
-    'I have a solid, sturdy build.',
-    'I am calm and easy-going.',
-    'I sleep deeply and have difficulty waking up.',
-    'I have a slow metabolism and can gain weight easily.',
-    'I am loyal and supportive.',
-    'I tend to be lethargic and prefer to relax.',
-    'I forgive easily and avoid confrontation.',
-    'I have a sweet tooth and enjoy rich foods.',
-  ];
+    if (data.place && (data.lat == null || data.lon == null || !data.tz)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["place"],
+        message: "Please select a place from the dropdown list",
+      });
+    }
+  });
 
-  // Handlers
-  const handleAnswerChange = (index: number, value: string) => {
-    const newAnswers = [...answers];
-    newAnswers[index] = parseInt(value);
-    setAnswers(newAnswers);
-  };
+type BirthInput = z.infer<typeof birthInputSchema>;
 
-  const handleAgeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(event.target.value);
-    setAge(isNaN(value) ? null : value);
-  };
+const DoshaCalculator = () => {
+  const { t } = useTranslation();
+  const [placeSearchResults, setPlaceSearchResults] = useState<Place[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showPlaceResults, setShowPlaceResults] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [doshaResults, setDoshaResults] = useState<any>(null);
+  const [calculationId, setCalculationId] = useState<string | null>(null);
+  const [isFormCollapsed, setIsFormCollapsed] = useState(false);
+  const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
+  const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
 
-  const handleTimeOfDayChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setTimeOfDay(event.target.value);
-  };
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<BirthInput>({
+    resolver: zodResolver(birthInputSchema),
+    defaultValues: {
+      unknownTime: false,
+      chartStyle: "north",
+    },
+  });
 
-  const handleSeasonChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSeason(event.target.value);
-  };
+  const unknownTime = watch('unknownTime');
+  const placeValue = watch('place');
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-  
-    if (age === null || timeOfDay === '' || season === '') {
-      alert('Please fill in all the fields.');
+  const handlePlaceSearch = (searchTerm: string) => {
+    if (searchTimer) {
+      clearTimeout(searchTimer);
+    }
+
+    if (searchTerm.length < 2) {
+      setPlaceSearchResults([]);
+      setShowPlaceResults(false);
       return;
     }
-  
-    // Dosha calculation logic
-    let vata = 0;
-    let pitta = 0;
-    let kapha = 0;
-  
-    for (let i = 0; i < questions.length; i++) {
-      if (i % 3 === 0) vata += answers[i];
-      if ((i - 1) % 3 === 0) pitta += answers[i];
-      if ((i - 2) % 3 === 0) kapha += answers[i];
+
+    setIsSearching(true);
+    
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchPlaces(searchTerm);
+        
+        if (results.length === 0) {
+          const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+          const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+            city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setPlaceSearchResults(fallback);
+        } else {
+          setPlaceSearchResults(results);
+        }
+        
+        setShowPlaceResults(true);
+        setSelectedPlaceIndex(-1);
+      } catch (error) {
+        console.error('Place search error:', error);
+        const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+        const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+          city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setPlaceSearchResults(fallback);
+        setShowPlaceResults(true);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
+
+    setSearchTimer(timer);
+  };
+
+  const handlePlaceSelect = async (place: Place) => {
+    setValue('place', place.display_name);
+    setValue('lat', place.lat);
+    setValue('lon', place.lon);
+    setValue('tz', 'Asia/Kolkata');
+    
+    setShowPlaceResults(false);
+    setPlaceSearchResults([]);
+    setSelectedPlaceIndex(-1);
+    
+    toast.success(t('dosha.locationSelected'));
+  };
+
+  const handlePlaceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showPlaceResults || placeSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedPlaceIndex(prev => 
+          prev < placeSearchResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedPlaceIndex(prev => prev > 0 ? prev - 1 : -1);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedPlaceIndex >= 0 && selectedPlaceIndex < placeSearchResults.length) {
+          handlePlaceSelect(placeSearchResults[selectedPlaceIndex]);
+        }
+        break;
+      case 'Escape':
+        setShowPlaceResults(false);
+        setSelectedPlaceIndex(-1);
+        break;
     }
-  
-    // Adjustments based on age
-    if (age <= 20) {
-      kapha += 5;
-    } else if (age <= 60) {
-      pitta += 5;
-    } else {
-      vata += 5;
+  };
+
+  const onSubmit = async (data: BirthInput) => {
+    // Always send default name and gender
+    const submissionData = {
+      ...data,
+      name: 'Default User',
+      gender: 'male',
+    };
+    
+    trackEvent('calculate_dosha_clicked', {
+      metadata: {
+        hasTime: !submissionData.unknownTime,
+        place: submissionData.place,
+        date: submissionData.date
+      }
+    });
+    
+    setIsCalculating(true);
+    
+    try {
+      const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
+      const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
+      
+      const response = await supabase.functions.invoke('calculate-dosha', {
+        body: submissionData,
+        headers: {
+          'x-visitor-id': visitorId,
+          'x-session-id': sessionId,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Calculation failed');
+      }
+
+      const result = response.data;
+      
+      const normalized = { ...result, summary: { ...(result?.summary || {}) } } as any;
+      if (!normalized.summary.shaniSadeSati) {
+        if (normalized.summary.sadeSati) {
+          normalized.summary.shaniSadeSati = normalized.summary.sadeSati === 'active' ? 'active' : 'inactive';
+        }
+        if (normalized.summary.sadeSatiPhase && normalized.summary.shaniPhase == null) {
+          const phaseStr = String(normalized.summary.sadeSatiPhase);
+          normalized.summary.shaniPhase = phaseStr.includes('RISING') ? 1 : (phaseStr.includes('PEAK') ? 2 : (phaseStr.includes('SETTING') ? 3 : null));
+        }
+      }
+      
+      setDoshaResults(normalized);
+      setIsFormCollapsed(true);
+      toast.success(t('dosha.calculationSuccess'));
+      
+      if ((normalized as any).calculationId) {
+        setCalculationId((normalized as any).calculationId);
+      }
+    } catch (error) {
+      console.error('Calculation error:', error);
+      toast.error(t('dosha.calculationError'));
+    } finally {
+      setIsCalculating(false);
     }
-  
-    // Adjustments based on time of day
-    if (timeOfDay === 'morning') {
-      kapha += 3;
-    } else if (timeOfDay === 'afternoon') {
-      pitta += 3;
-    } else if (timeOfDay === 'evening') {
-      vata += 3;
-    }
-  
-    // Adjustments based on season
-    if (season === 'spring') {
-      kapha += 3;
-    } else if (season === 'summer') {
-      pitta += 3;
-    } else if (season === 'autumn') {
-      vata += 3;
-    } else if (season === 'winter') {
-      vata += 1;
-      kapha += 2;
-    }
-  
-    setDoshaResult({ vata, pitta, kapha });
-    setShowResult(true);
-    setSubmitted(true);
   };
 
   return (
-    <Container maxWidth="md">
-      <Typography variant="h4" component="h1" gutterBottom>
-        Ayurvedic Dosha Calculator
-      </Typography>
-      <Box sx={{ mt: 3 }}>
-        <form onSubmit={handleSubmit}>
-          {/* Name and Gender removed: default values are used in submission */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Age"
-                type="number"
-                fullWidth
-                value={age === null ? '' : age.toString()}
-                onChange={handleAgeChange}
-                required
+    <>
+      <Card className="w-full max-w-4xl mx-auto spiritual-glow">
+      <Collapsible open={!isFormCollapsed} onOpenChange={(open) => setIsFormCollapsed(!open)}>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-6">
+          <div className="flex-1">
+            <CardTitle className="text-2xl sm:text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
+              {t('dosha.calculatorTitle')}
+            </CardTitle>
+            <CardDescription className="text-center sm:text-left text-sm sm:text-base mt-1">
+              {t('dosha.calculatorDesc')}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2 justify-center sm:justify-end">
+            {isFormCollapsed && (
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="min-h-[44px] px-4"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  {t('dosha.edit', 'Edit')}
+                </Button>
+              </CollapsibleTrigger>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground min-h-[44px] px-4"
+              onClick={() => {
+                reset();
+                setPlaceSearchResults([]);
+                setShowPlaceResults(false);
+                setDoshaResults(null);
+                setIsFormCollapsed(false);
+                toast.success(t('dosha.formRefreshed'));
+              }}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              {t('dosha.refresh')}
+            </Button>
+          </div>
+        </CardHeader>
+        
+        <CollapsibleContent>
+          <CardContent className="p-4 sm:p-6">
+        <form onSubmit={handleSubmit(onSubmit, (errs) => {
+          const msg = (errs.place?.message as string)
+            || (errs.time?.message as string)
+            || (errs.date?.message as string)
+            || (Object.values(errs)[0]?.message as string)
+            || t('dosha.formError', 'Please correct the highlighted fields');
+          toast.error(msg);
+        })} className="space-y-4 sm:space-y-6">
+
+          {/* Date of Birth */}
+          <div className="space-y-2">
+            <Label htmlFor="date" className="flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.dateOfBirth')} *
+            </Label>
+            <Input
+              id="date"
+              type="date"
+              {...register('date')}
+              className="bg-input min-h-[44px] text-base"
+              required
+            />
+            {errors.date && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.date.message}
+              </p>
+            )}
+          </div>
+
+          {/* Birth Time */}
+          <div className="space-y-2">
+            <Label htmlFor="time" className="flex items-center gap-2 text-sm sm:text-base">
+              <Clock className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.timeOfBirth')} *
+            </Label>
+            <Input
+              id="time"
+              type="time"
+              {...register('time')}
+              disabled={unknownTime}
+              className="bg-input min-h-[44px] text-base"
+              required={!unknownTime}
+            />
+            {errors.time && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.time.message}
+              </p>
+            )}
+            
+            <div className="flex items-center gap-2">
+              <Switch
+                id="unknownTime"
+                checked={unknownTime}
+                onCheckedChange={(checked) => {
+                  setValue('unknownTime', checked);
+                  if (checked) {
+                    setValue('time', '');
+                  }
+                }}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel id="time-of-day-label">Time of Day</InputLabel>
-                <Select
-                  labelId="time-of-day-label"
-                  id="time-of-day"
-                  value={timeOfDay}
-                  label="Time of Day"
-                  onChange={handleTimeOfDayChange}
-                  required
-                >
-                  <MenuItem value="morning">Morning</MenuItem>
-                  <MenuItem value="afternoon">Afternoon</MenuItem>
-                  <MenuItem value="evening">Evening</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel id="season-label">Season</InputLabel>
-                <Select
-                  labelId="season-label"
-                  id="season"
-                  value={season}
-                  label="Season"
-                  onChange={handleSeasonChange}
-                  required
-                >
-                  <MenuItem value="spring">Spring</MenuItem>
-                  <MenuItem value="summer">Summer</MenuItem>
-                  <MenuItem value="autumn">Autumn</MenuItem>
-                  <MenuItem value="winter">Winter</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+              <Label htmlFor="unknownTime" className="text-sm cursor-pointer">
+                {t('dosha.unknownTime')}
+              </Label>
+            </div>
+          </div>
 
-          <Typography variant="h6" component="h2" sx={{ mt: 3 }}>
-            Answer the following questions:
-          </Typography>
-          {questions.map((question, index) => (
-            <FormControl key={index} component="fieldset" sx={{ mt: 2, width: '100%' }}>
-              <FormLabel component="legend">{question}</FormLabel>
-              <RadioGroup
-                row
-                aria-label={`question-${index}`}
-                name={`question-${index}`}
-                value={answers[index].toString()}
-                onChange={(e) => handleAnswerChange(index, e.target.value)}
-              >
-                <FormControlLabel value="1" control={<Radio />} label="Yes" />
-                <FormControlLabel value="0" control={<Radio />} label="No" />
-              </RadioGroup>
-            </FormControl>
-          ))}
+          {/* Place of Birth */}
+          <div className="space-y-2 relative">
+            <Label htmlFor="place" className="flex items-center gap-2 text-sm sm:text-base">
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.placeOfBirth')} *
+            </Label>
+            <Input
+              id="place"
+              {...register('place')}
+              placeholder={t('dosha.enterPlace')}
+              className="bg-input min-h-[44px] text-base"
+              onChange={(e) => handlePlaceSearch(e.target.value)}
+              onKeyDown={handlePlaceKeyDown}
+              autoComplete="off"
+              required
+            />
+            
+            {showPlaceResults && placeSearchResults.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+                {placeSearchResults.map((place, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors ${
+                      index === selectedPlaceIndex ? 'bg-accent' : ''
+                    }`}
+                    onClick={() => handlePlaceSelect(place)}
+                  >
+                    <div className="text-sm font-medium">{place.display_name}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {isSearching && (
+              <div className="absolute right-3 top-9">
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            
+            {errors.place && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.place.message}
+              </p>
+            )}
+          </div>
 
-          <Button type="submit" variant="contained" color="primary" sx={{ mt: 3 }}>
-            Calculate Dosha
+          <Button
+            type="submit"
+            disabled={isCalculating}
+            className="w-full min-h-[44px] text-base font-medium"
+          >
+            {isCalculating ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                {t('dosha.calculating')}
+              </>
+            ) : (
+              t('dosha.calculateButton')
+            )}
           </Button>
         </form>
-      </Box>
+        </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+      </Card>
 
-      {showResult && doshaResult && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Your Dosha Results:
-          </Typography>
-          <Typography>Vata: {doshaResult.vata}</Typography>
-          <Typography>Pitta: {doshaResult.pitta}</Typography>
-          <Typography>Kapha: {doshaResult.kapha}</Typography>
-        </Box>
+      {doshaResults && (
+        <DoshaResults
+          summary={doshaResults.summary}
+          details={doshaResults.details}
+          calculationId={calculationId}
+        />
       )}
-    </Container>
+    </>
   );
 };
 

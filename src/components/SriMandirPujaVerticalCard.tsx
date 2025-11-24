@@ -38,63 +38,56 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-      <div className="relative">
+      <div className="flex flex-col sm:flex-row">
         {/* Image */}
         {puja.cover_media_url && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+          <div className="w-full sm:w-40 h-40 sm:h-auto flex-shrink-0">
             <img
-              src={puja.cover_media_url}
+              src={displayTitle ? puja.cover_media_url : ''}
               alt={displayTitle}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
         )}
 
         {/* Details */}
-        <div className="p-4 space-y-3">
-          {/* Puja Title */}
-          <h4 className="font-semibold text-base line-clamp-2">
-            {displayTitle}
-          </h4>
-          
-          {/* Temple Name */}
+        <div className="flex-1 p-4 space-y-2">
+          <h4 className="font-semibold text-base line-clamp-2">{displayTitle}</h4>
+
           {puja.temple_name && (
-            <p className="text-sm text-muted-foreground">
-              {displayTempleName}
-            </p>
+            <p className="text-sm text-muted-foreground">{displayTempleName}</p>
           )}
 
-          {/* Date */}
-          {puja.schedule_date_ist && (
-            <p className="text-sm font-medium text-foreground">
-              {formattedDate}
-            </p>
-          )}
-          
-          {/* Price */}
-          {puja.individual_pack_price_inr > 0 && (
-            <p className="text-base font-semibold text-primary">
-              {isHindi ? '₹' : 'Starting from ₹'}{puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            {puja.schedule_date_ist && (
+              <span className="font-medium">
+                {isHindi ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
+              </span>
+            )}
+            {puja.individual_pack_price_inr > 0 && (
+              <span className="font-semibold text-primary">₹{puja.individual_pack_price_inr}</span>
+            )}
+          </div>
 
-          {/* Book Button */}
-          <Button
-            asChild
-            className="w-full"
-            onClick={handleBookClick}
-          >
-            <a href={pujaLink} target="_blank" rel="noopener noreferrer">
-              {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </a>
-          </Button>
-          
-          <p className="text-xs text-center text-muted-foreground">
-            {isHindi ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
-          </p>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button
+              asChild
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={handleBookClick}
+            >
+              <a href={pujaLink} target="_blank" rel="noopener noreferrer">
+                {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              {isHindi ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
+            </p>
+          </div>
         </div>
       </div>
     </Card>
   );
+
 };

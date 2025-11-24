@@ -41,7 +41,7 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
       <div className="relative">
         {/* Image */}
         {puja.cover_media_url && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
             <img
               src={puja.cover_media_url}
               alt={displayTitle}
@@ -51,29 +51,29 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
         )}
 
         {/* Details */}
-        <div className="p-4 space-y-3">
+        <div className="p-3 space-y-2">
           {/* Puja Title */}
-          <h4 className="font-semibold text-base line-clamp-2">
+          <h4 className="font-semibold text-sm line-clamp-2">
             {displayTitle}
           </h4>
           
           {/* Temple Name */}
           {puja.temple_name && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {displayTempleName}
             </p>
           )}
 
           {/* Date */}
           {puja.schedule_date_ist && (
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-xs font-medium text-foreground">
               {formattedDate}
             </p>
           )}
           
           {/* Price */}
           {puja.individual_pack_price_inr > 0 && (
-            <p className="text-base font-semibold text-primary">
+            <p className="text-sm font-semibold text-primary">
               {isHindi ? '₹' : 'Starting from ₹'}{puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
             </p>
           )}
@@ -81,16 +81,16 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
           {/* Book Button */}
           <Button
             asChild
-            className="w-full"
+            className="w-full text-sm h-9"
             onClick={handleBookClick}
           >
             <a href={pujaLink} target="_blank" rel="noopener noreferrer">
               {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
-              <ExternalLink className="ml-2 h-4 w-4" />
+              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </a>
           </Button>
           
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-[10px] text-center text-muted-foreground">
             {isHindi ? 'श्री मंदिर द्वारा संचालित' : 'Powered by Sri Mandir'}
           </p>
         </div>

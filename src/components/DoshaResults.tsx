@@ -57,7 +57,10 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   useEffect(() => {
     // Scroll to results when component mounts
     if (resultsRef.current) {
-      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const yOffset = -20; // Small offset from top
+      const element = resultsRef.current;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
 
     // Fetch latest pujas
@@ -191,7 +194,7 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow">
         <CardHeader>
-          <CardTitle className={`text-2xl font-bold ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
+          <CardTitle className={`text-3xl sm:text-4xl font-bold ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}>
             {hasAnyDosha 
               ? (isHindi ? '⚠️ आपके कुछ दोष पाए गए हैं ⚠️' : '⚠️ Some Doshas Have Been Detected ⚠️')
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')

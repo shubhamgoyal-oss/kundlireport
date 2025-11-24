@@ -114,7 +114,10 @@ const birthInputSchema = z.object({
 type BirthInput = z.infer<typeof birthInputSchema>;
 
 serve(async (req) => {
+  console.log('➡️ [ENTRY] calculate-dosha request received', { method: req.method, url: req.url });
+
   if (req.method === 'OPTIONS') {
+    console.log('➡️ [ENTRY] OPTIONS preflight');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -869,12 +872,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error calculating dosha:', error);
+    console.error('❌ [FATAL] Error calculating dosha:', error);
+    console.error('❌ [FATAL] Stack:', (error as any)?.stack || 'no stack');
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Unable to calculate dosha. Please verify your birth details and try again.' 
+        error: 'Unable to calculate dosha. Please verify your birth details and try again.',
+        diagnostic: 'handler_catch'
       }),
       { 
         status: 400,

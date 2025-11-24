@@ -320,13 +320,15 @@ const DoshaCalculator = () => {
             </Label>
             <Input
               id="time"
-              type="text"
+              type="time"
               {...register('time')}
               disabled={unknownTime}
-              placeholder="hh:mm (e.g., 14:30)"
               className="bg-input min-h-[44px] text-base"
               required={!unknownTime}
             />
+            <p className="text-xs text-muted-foreground">
+              {t('dosha.timeFormat')}
+            </p>
             {errors.time && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />

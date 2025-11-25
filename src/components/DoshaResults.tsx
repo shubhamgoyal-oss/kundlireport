@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaCard } from '@/components/SriMandirPujaCard';
 import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
-import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
+import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, getPrioritizedPuja, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
@@ -408,33 +408,40 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           {/* Major Doshas Section */}
                           {majorDoshas.map(dosha => {
                             const filtered = filterPujasByDosha(pujas, dosha.type);
-                            const upcoming = getUpcomingPujas(filtered, 3);
                             
-                            if (upcoming.length === 0) return null;
+                            // Get prioritized single puja
+                            let pujaToShow: SriMandirPuja | null = null;
+                            if (dosha.type === 'pitra') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'pitra');
+                            } else if (dosha.type === 'shani') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'shani');
+                            } else {
+                              pujaToShow = getUpcomingPujas(filtered, 1)[0] || null;
+                            }
+                            
+                            if (!pujaToShow) return null;
                             
                             return (
                               <div key={dosha.type} className="space-y-4">
-                                {upcoming.map((puja) => (
-                                  <SriMandirPujaVerticalCard 
-                                    key={puja.store_id}
-                                    puja={puja} 
-                                    doshaType={dosha.type}
-                                    onBookClick={async () => {
-                                      if (!hasTrackedBookPuja && calculationId) {
-                                        try {
-                                          await supabase
-                                            .from('dosha_calculator2')
-                                            .update({ book_puja_clicked: true })
-                                            .eq('id', calculationId);
-                                          setHasTrackedBookPuja(true);
-                                          console.log('Book puja tracked for calculation:', calculationId);
-                                        } catch (err) {
-                                          console.error('Failed to track book puja:', err);
-                                        }
+                                <SriMandirPujaVerticalCard 
+                                  key={pujaToShow.store_id}
+                                  puja={pujaToShow} 
+                                  doshaType={dosha.type}
+                                  onBookClick={async () => {
+                                    if (!hasTrackedBookPuja && calculationId) {
+                                      try {
+                                        await supabase
+                                          .from('dosha_calculator2')
+                                          .update({ book_puja_clicked: true })
+                                          .eq('id', calculationId);
+                                        setHasTrackedBookPuja(true);
+                                        console.log('Book puja tracked for calculation:', calculationId);
+                                      } catch (err) {
+                                        console.error('Failed to track book puja:', err);
                                       }
-                                    }}
-                                  />
-                                ))}
+                                    }
+                                  }}
+                                />
                               </div>
                             );
                           })}
@@ -442,33 +449,31 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                           {/* Other Doshas Section */}
                           {otherDoshas.map(dosha => {
                             const filtered = filterPujasByDosha(pujas, dosha.type);
-                            const upcoming = getUpcomingPujas(filtered, 3);
+                            const upcoming = getUpcomingPujas(filtered, 1);
                             
                             if (upcoming.length === 0) return null;
                             
                             return (
                               <div key={dosha.type} className="space-y-4">
-                                {upcoming.map((puja) => (
-                                  <SriMandirPujaVerticalCard 
-                                    key={puja.store_id}
-                                    puja={puja} 
-                                    doshaType={dosha.type}
-                                    onBookClick={async () => {
-                                      if (!hasTrackedBookPuja && calculationId) {
-                                        try {
-                                          await supabase
-                                            .from('dosha_calculator2')
-                                            .update({ book_puja_clicked: true })
-                                            .eq('id', calculationId);
-                                          setHasTrackedBookPuja(true);
-                                          console.log('Book puja tracked for calculation:', calculationId);
-                                        } catch (err) {
-                                          console.error('Failed to track book puja:', err);
-                                        }
+                                <SriMandirPujaVerticalCard 
+                                  key={upcoming[0].store_id}
+                                  puja={upcoming[0]} 
+                                  doshaType={dosha.type}
+                                  onBookClick={async () => {
+                                    if (!hasTrackedBookPuja && calculationId) {
+                                      try {
+                                        await supabase
+                                          .from('dosha_calculator2')
+                                          .update({ book_puja_clicked: true })
+                                          .eq('id', calculationId);
+                                        setHasTrackedBookPuja(true);
+                                        console.log('Book puja tracked for calculation:', calculationId);
+                                      } catch (err) {
+                                        console.error('Failed to track book puja:', err);
                                       }
-                                    }}
-                                  />
-                                ))}
+                                    }
+                                  }}
+                                />
                               </div>
                             );
                           })}

@@ -13,6 +13,9 @@ const SIGN_NAMES = [
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
 ];
 
+// CURRENT transiting Saturn sign (sidereal) - UPDATE when Saturn changes sign
+const CURRENT_SATURN_SIGN = "Pisces";
+
 // Helper: Check if point p is between start and end on forward arc (modulo 360)
 function isBetweenOnArc(p: number, start: number, end: number, inclusive = true): boolean {
   const dist = (p - start + 360) % 360;

@@ -5,13 +5,13 @@ import {
   fetchSeerKundli,
   adaptSeerResponse,
   type SeerKundliRequest,
-} from "../calculate-dosha/seer-adapter.ts";
+} from "./seer-adapter.ts";
 import {
   calculateMangalDosha as calculateMangalDoshaSeer,
   calculatePitraDosha as calculatePitraDoshaSeer,
   calculateShaniDosha as calculateShaniDoshaSeer,
   calculateKaalSarpaDosha as calculateKaalSarpaDoshaSeer,
-} from "../calculate-dosha/seer-doshas.ts";
+} from "./seer-doshas.ts";
 
 // Simple Supabase admin client for DB logging (service role)
 const supabaseAdmin = createClient(

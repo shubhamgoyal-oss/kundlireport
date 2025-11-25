@@ -13,6 +13,9 @@ const SIGN_NAMES = [
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
 ];
 
+// CURRENT transiting Saturn sign (sidereal) - UPDATE when Saturn changes sign
+const CURRENT_SATURN_SIGN = "Pisces";
+
 // Helper: Check if point p is between start and end on forward arc (modulo 360)
 function isBetweenOnArc(p: number, start: number, end: number, inclusive = true): boolean {
   const dist = (p - start + 360) % 360;
@@ -297,79 +300,67 @@ export function calculateSadeSatiAlgorithmic(
     };
   }
 
-  // Try to use shadhe_sati_dosha events first (PREFERRED METHOD)
-  const vedic = seerResponse?.vedic_horoscope || seerResponse?.data?.vedic_horoscope;
-  const events = vedic?.shadhe_sati_dosha;
-
-  if (events && Array.isArray(events) && events.length > 0) {
-    // Use events-based calculation
-    const now = Date.now();
-    const windows: any[] = [];
-    
-    let currentWindow: any = null;
-    
-    for (const event of events) {
-      const eventTime = parseInt(event.millisecond);
-      const eventDate = new Date(eventTime).toISOString().split('T')[0];
-      
-      if (event.type?.includes("RISING_START")) {
-        currentWindow = { phase: "rising", start: eventDate, startTime: eventTime };
-      } else if (event.type?.includes("PEAK_START")) {
-        if (currentWindow) {
-          currentWindow.end = eventDate;
-          windows.push(currentWindow);
-        }
-        currentWindow = { phase: "peak", start: eventDate, startTime: eventTime };
-      } else if (event.type?.includes("SETTING_START")) {
-        if (currentWindow) {
-          currentWindow.end = eventDate;
-          windows.push(currentWindow);
-        }
-        currentWindow = { phase: "setting", start: eventDate, startTime: eventTime };
-      } else if (event.type?.includes("SETTING_END")) {
-        if (currentWindow) {
-          currentWindow.end = eventDate;
-          currentWindow.endTime = eventTime;
-          windows.push(currentWindow);
-          currentWindow = null;
-        }
-      }
-    }
-
-    // Check which window contains today
-    for (const window of windows) {
-      if (window.startTime <= now && (!window.endTime || window.endTime >= now)) {
-        return {
-          active: true,
-          phase: window.phase,
-          source: "events",
-          window: { start: window.start, end: window.end || "ongoing" },
-          reasons: [`Currently in ${window.phase} phase of Sade Sati`],
-          debug: { windows, now, moonSign: moon.sign }
-        };
-      }
-    }
-
-    // Not in any window - use events as authoritative source
+  // Use CURRENT_SATURN_SIGN constant for transit calculation
+  // Map sign name to index
+  const currentSaturnIdx = SIGN_NAMES.indexOf(CURRENT_SATURN_SIGN);
+  
+  if (currentSaturnIdx === -1) {
     return {
       active: false,
       phase: null,
-      source: "events",
+      source: "current_saturn",
       window: null,
-      reasons: ["Not currently in Sade Sati period according to event timeline"],
-      debug: { windows, moonSign: moon.sign }
+      reasons: ["Invalid CURRENT_SATURN_SIGN configuration"],
+      debug: { CURRENT_SATURN_SIGN }
     };
   }
 
-  // CRITICAL: Do NOT use natal Saturn position as fallback
-  // Sade Sati requires CURRENT transiting Saturn position, which we don't have
-  // If events are not available, mark as inactive rather than give wrong answer
+  // Calculate Saturn's position relative to Moon
+  // saturnRelToMoon = 0 means same sign (Peak)
+  // saturnRelToMoon = 11 means Saturn 1 sign before Moon (Rising)
+  // saturnRelToMoon = 1 means Saturn 1 sign after Moon (Setting)
+  const saturnRelToMoon = (currentSaturnIdx - moon.signIdx + 12) % 12;
+  
+  console.log(`[SADE_SATI_DEBUG] Moon: ${moon.sign} (idx ${moon.signIdx}), Current Saturn: ${CURRENT_SATURN_SIGN} (idx ${currentSaturnIdx}), Relative: ${saturnRelToMoon}`);
+  
+  if (saturnRelToMoon === 11) {
+    // Saturn is 1 sign before Moon (12th from Moon = Rising phase)
+    return {
+      active: true,
+      phase: "rising",
+      source: "current_saturn",
+      window: null,
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Rising phase)`],
+      debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
+    };
+  } else if (saturnRelToMoon === 0) {
+    // Saturn same sign as Moon (Peak phase)
+    return {
+      active: true,
+      phase: "peak",
+      source: "current_saturn",
+      window: null,
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Peak phase)`],
+      debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
+    };
+  } else if (saturnRelToMoon === 1) {
+    // Saturn is 1 sign after Moon (Setting phase)
+    return {
+      active: true,
+      phase: "setting",
+      source: "current_saturn",
+      window: null,
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Setting phase)`],
+      debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
+    };
+  }
+
   return {
     active: false,
     phase: null,
     source: "current_saturn",
     window: null,
-    reasons: ["Sade Sati event data not available from API; cannot determine current transit status"],
-    debug: { moonSign: moon.sign, note: "Natal Saturn position cannot be used for transit calculation" }
+    reasons: [`Saturn not in Sade Sati position. Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign}`],
+    debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
   };
 }

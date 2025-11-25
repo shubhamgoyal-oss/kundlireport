@@ -257,38 +257,19 @@ const DoshaCalculator = () => {
               {t('dosha.calculatorDesc')}
             </CardDescription>
           </div>
-          <div className="flex gap-2 justify-center sm:justify-end">
-            {isFormCollapsed && (
-              <CollapsibleTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="min-h-[44px] px-4"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  {t('dosha.edit', 'Edit')}
-                </Button>
-              </CollapsibleTrigger>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground min-h-[32px] px-2"
-              onClick={() => {
-                reset();
-                setPlaceSearchResults([]);
-                setShowPlaceResults(false);
-                setDoshaResults(null);
-                setIsFormCollapsed(false);
-                toast.success(t('dosha.formRefreshed'));
-              }}
-            >
-              <RotateCcw className="w-3 h-3 mr-1" />
-              {t('dosha.refresh')}
-            </Button>
-          </div>
+          {isFormCollapsed && (
+            <CollapsibleTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="min-h-[44px] px-4"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                {t('dosha.edit', 'Edit')}
+              </Button>
+            </CollapsibleTrigger>
+          )}
         </CardHeader>
         
         <CollapsibleContent>

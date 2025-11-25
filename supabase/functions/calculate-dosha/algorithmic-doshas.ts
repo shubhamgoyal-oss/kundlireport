@@ -144,8 +144,6 @@ export interface MangalDoshaResult {
 
 export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDoshaResult {
   const mars = getPlanet(kundli, "Mars");
-  const moon = getPlanet(kundli, "Moon");
-  const venus = getPlanet(kundli, "Venus");
   const jupiter = getPlanet(kundli, "Jupiter");
   const asc = kundli.asc;
 
@@ -159,49 +157,32 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
     };
   }
 
-  const triggerHouses = [1, 2, 4, 7, 8, 12];
+  // Traditional Mangal Dosha: only houses 1, 4, 7, 8 from Lagna (not 2 and 12)
+  const triggerHouses = [1, 4, 7, 8];
   const reasons: string[] = [];
   const nullifications: string[] = [];
   
-  // Check presence from each reference
+  // Check presence ONLY from Ascendant (as per Lagna)
   const sources = {
     fromAsc: false,
     fromMoon: false,
     fromVenus: false
   };
 
-  // House from Ascendant
+  // House from Ascendant ONLY
   if (triggerHouses.includes(mars.house)) {
     sources.fromAsc = true;
     reasons.push(`Mars in H${mars.house} from Ascendant`);
   }
 
-  // House from Moon
-  if (moon) {
-    const houseFromMoon = ((mars.signIdx - moon.signIdx + 12) % 12) + 1;
-    if (triggerHouses.includes(houseFromMoon)) {
-      sources.fromMoon = true;
-      reasons.push(`Mars in H${houseFromMoon} from Moon`);
-    }
-  }
-
-  // House from Venus
-  if (venus) {
-    const houseFromVenus = ((mars.signIdx - venus.signIdx + 12) % 12) + 1;
-    if (triggerHouses.includes(houseFromVenus)) {
-      sources.fromVenus = true;
-      reasons.push(`Mars in H${houseFromVenus} from Venus`);
-    }
-  }
-
-  const isPresent = sources.fromAsc || sources.fromMoon || sources.fromVenus;
+  const isPresent = sources.fromAsc;
   
   if (!isPresent) {
     return {
       sources,
       status: "absent",
       nullified: false,
-      reasons: ["Mars not in trigger houses (1,2,4,7,8,12) from any reference"],
+      reasons: ["Mars not in trigger houses (1,4,7,8) from Ascendant"],
       debug: { marsHouse: mars.house, marsSign: mars.sign }
     };
   }
@@ -245,14 +226,7 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
     }
   }
 
-  // Rule 4: Venus softening
-  if (venus) {
-    const marsVenDelta = degDelta(mars.deg, venus.deg);
-    if (marsVenDelta <= CONJ_ORB) {
-      nullified = true;
-      nullifications.push(`Venus conjunction (${marsVenDelta.toFixed(1)}° orb)`);
-    }
-  }
+  // Rule 4: Venus softening (removed - only checking from Lagna now)
 
   const status = nullified ? "present (nullified)" : "present";
 

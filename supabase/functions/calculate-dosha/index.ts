@@ -285,8 +285,7 @@ serve(async (req) => {
             ? `Sade Sati is currently active in ${sadeSatiAlgo.phase || "unknown"} phase. ${sadeSatiAlgo.reasons.join('. ')}`
             : "Sade Sati is not currently active in your chart.",
           remedies: sadeSatiActive ? [
-            "Worship Lord Hanuman and recite Hanuman Chalisa daily",
-            "Donate mustard oil, black sesame seeds, and black clothes on Saturdays"
+            "Worship Lord Hanuman and recite Hanuman Chalisa daily"
           ] : []
         },
         kaalSarp: {

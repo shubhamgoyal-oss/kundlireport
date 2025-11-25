@@ -3,11 +3,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 import { fetchSeerKundli, adaptSeerResponse, type SeerKundliRequest } from "./seer-adapter.ts";
 import {
-  calculateMangalDosha as calculateMangalDoshaSeer,
   calculatePitraDosha as calculatePitraDoshaSeer,
   calculateShaniDosha as calculateShaniDoshaSeer,
-  calculateKaalSarpaDosha as calculateKaalSarpaDoshaSeer,
 } from "./seer-doshas.ts";
+import {
+  calculateKaalSarpaDoshaAlgorithmic,
+  calculateMangalDoshaAlgorithmic,
+  calculateSadeSatiAlgorithmic,
+} from "./algorithmic-doshas.ts";
 import {
   calculateAllOtherDoshas
 } from "./other-doshas.ts";
@@ -120,45 +123,29 @@ serve(async (req) => {
     const kundli = adaptSeerResponse(seerData);
     console.log("[CALC] Kundli adapted:", kundli.planets.length, "planets");
 
-    // Extract Seer's dosha results from response
+    // Calculate doshas ALGORITHMICALLY from planetary positions
+    // DO NOT trust Seer dosha flags!
+    console.log("[CALC] Calculating doshas algorithmically from planet positions...");
+    
+    // Extract vedic horoscope for reference
     const seerVedic = seerData?.data?.vedic_horoscope || seerData?.vedic_horoscope;
-    console.log("[CALC] Extracting doshas from Seer...");
 
-    // Mangal Dosha
-    let mangal;
-    if (seerVedic?.manglik_dosha) {
-      const seerMangal = seerVedic.manglik_dosha;
-      const isManglik = seerMangal.from_ascendant?.is_manglik || 
-                        seerMangal.from_moon?.is_manglik || 
-                        seerMangal.from_venus?.is_manglik;
-      
-      if (isManglik) {
-        mangal = {
-          status: 'present' as const,
-          severity: 'moderate' as const,
-          triggeredBy: [
-            seerMangal.from_ascendant?.is_manglik ? `Mars from Lagna (H${seerMangal.from_ascendant.mars_house})` : null,
-            seerMangal.from_moon?.is_manglik ? `Mars from Moon (H${seerMangal.from_moon.mars_house})` : null,
-            seerMangal.from_venus?.is_manglik ? `Mars from Venus (H${seerMangal.from_venus.mars_house})` : null,
-          ].filter(Boolean) as string[],
-          cancellations: [],
-          mitigations: [],
-          placements: [],
-          notes: []
-        };
-      } else {
-        mangal = {
-          status: 'absent' as const,
-          triggeredBy: [],
-          cancellations: [],
-          mitigations: [],
-          placements: [],
-          notes: []
-        };
-      }
-    } else {
-      mangal = calculateMangalDoshaSeer(kundli);
-    }
+    // Mangal Dosha (Algorithmic)
+    const mangalAlgo = calculateMangalDoshaAlgorithmic(kundli);
+    console.log("[CALC] Mangal (Algorithmic):", mangalAlgo.status, mangalAlgo.reasons);
+    
+    const mangal = {
+      status: mangalAlgo.status as any,
+      severity: mangalAlgo.status === "absent" ? undefined : 
+                (mangalAlgo.nullified ? 'mild' as const : 'moderate' as const),
+      triggeredBy: mangalAlgo.reasons,
+      cancellations: [],
+      mitigations: [],
+      placements: [],
+      notes: [],
+      sources: mangalAlgo.sources,
+      nullified: mangalAlgo.nullified
+    };
     console.log("[CALC] Mangal:", mangal.status);
 
     // Pitra Dosha
@@ -194,54 +181,39 @@ serve(async (req) => {
     const shani = calculateShaniDoshaSeer(kundli);
     console.log("[CALC] Shani:", shani.status);
 
-    // Sade Sati
-    let sadeSatiActive = false;
-    let sadeSatiPhase: string | null = null;
-
-    if (seerVedic?.shadhe_sati_dosha && Array.isArray(seerVedic.shadhe_sati_dosha)) {
-      const now = Date.now();
-      for (const period of seerVedic.shadhe_sati_dosha) {
-        const periodTime = parseInt(period.millisecond);
-        if (periodTime <= now) {
-          if (period.type?.includes("START")) {
-            sadeSatiActive = true;
-            sadeSatiPhase = period.type;
-          } else if (period.type?.includes("END")) {
-            sadeSatiActive = false;
-            sadeSatiPhase = null;
-          }
-        }
-      }
-    }
+    // Sade Sati (Algorithmic)
+    const sadeSatiAlgo = calculateSadeSatiAlgorithmic(kundli, seerData);
+    console.log("[CALC] Sade Sati (Algorithmic):", sadeSatiAlgo.active ? "active" : "inactive", 
+                sadeSatiAlgo.phase || "no phase", sadeSatiAlgo.reasons);
+    
+    const sadeSatiActive = sadeSatiAlgo.active;
+    const sadeSatiPhase = sadeSatiAlgo.phase 
+      ? (sadeSatiAlgo.phase === "rising" ? "RISING_START" :
+         sadeSatiAlgo.phase === "peak" ? "PEAK_START" : "SETTING_START")
+      : null;
     console.log("[CALC] Sade Sati:", sadeSatiActive ? "active" : "inactive");
 
-    // Kaal Sarp Dosha
-    let kaalSarp;
-    if (seerVedic?.kalsarpa_dosha) {
-      const seerKS = seerVedic.kalsarpa_dosha;
-      if (seerKS.present) {
-        kaalSarp = {
-          status: 'present' as const,
-          severity: seerKS.type?.includes('Partial') ? 'moderate' as const : 'strong' as const,
-          triggeredBy: [seerKS.name ? `${seerKS.name} (${seerKS.type})` : 'Kaal Sarpa Dosha detected by Seer'],
-          cancellations: [],
-          mitigations: [],
-          placements: [],
-          notes: seerKS.type ? [`Type: ${seerKS.type}`] : []
-        };
-      } else {
-        kaalSarp = {
-          status: 'absent' as const,
-          triggeredBy: [],
-          cancellations: [],
-          mitigations: [],
-          placements: [],
-          notes: []
-        };
-      }
-    } else {
-      kaalSarp = calculateKaalSarpaDoshaSeer(kundli);
-    }
+    // Kaal Sarp Dosha (Algorithmic)
+    const kaalSarpAlgo = calculateKaalSarpaDoshaAlgorithmic(kundli);
+    console.log("[CALC] Kaal Sarp (Algorithmic):", kaalSarpAlgo.status, kaalSarpAlgo.type, kaalSarpAlgo.reasons);
+    
+    const kaalSarp = {
+      status: (kaalSarpAlgo.status === "present_full" || kaalSarpAlgo.status === "present_partial") 
+        ? 'present' as const 
+        : 'absent' as const,
+      severity: kaalSarpAlgo.status === "present_full" 
+        ? 'strong' as const 
+        : (kaalSarpAlgo.status === "present_partial" ? 'moderate' as const : undefined),
+      triggeredBy: kaalSarpAlgo.reasons,
+      cancellations: [],
+      mitigations: [],
+      placements: [],
+      notes: kaalSarpAlgo.type 
+        ? [`Type: ${kaalSarpAlgo.type}`, `Orientation: ${kaalSarpAlgo.orientation}`]
+        : [],
+      algorithmicStatus: kaalSarpAlgo.status,
+      variant: kaalSarpAlgo.type
+    };
     console.log("[CALC] Kaal Sarp:", kaalSarp.status);
 
     // Other doshas
@@ -305,9 +277,12 @@ serve(async (req) => {
         sadeSati: {
           isActive: sadeSatiActive,
           currentPhase: sadeSatiPhase,
-          periods: seerVedic?.shadhe_sati_dosha ?? [],
+          algorithmicPhase: sadeSatiAlgo.phase,
+          source: sadeSatiAlgo.source,
+          window: sadeSatiAlgo.window,
+          periods: (seerData?.vedic_horoscope || seerData?.data?.vedic_horoscope)?.shadhe_sati_dosha ?? [],
           explanation: sadeSatiActive 
-            ? `Sade Sati is currently active (Phase: ${sadeSatiPhase}). This is a 7.5-year period when Saturn transits through the 12th, 1st, and 2nd houses from your Moon sign.`
+            ? `Sade Sati is currently active in ${sadeSatiAlgo.phase || "unknown"} phase. ${sadeSatiAlgo.reasons.join('. ')}`
             : "Sade Sati is not currently active in your chart.",
           remedies: sadeSatiActive ? [
             "Worship Lord Hanuman and recite Hanuman Chalisa daily",

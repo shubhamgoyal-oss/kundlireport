@@ -275,7 +275,7 @@ const DoshaCalculator = () => {
               type="button"
               variant="ghost"
               size="sm"
-              className="text-muted-foreground min-h-[44px] px-4"
+              className="text-muted-foreground min-h-[32px] px-2"
               onClick={() => {
                 reset();
                 setPlaceSearchResults([]);
@@ -285,7 +285,7 @@ const DoshaCalculator = () => {
                 toast.success(t('dosha.formRefreshed'));
               }}
             >
-              <RotateCcw className="w-4 h-4 mr-2" />
+              <RotateCcw className="w-3 h-3 mr-1" />
               {t('dosha.refresh')}
             </Button>
           </div>

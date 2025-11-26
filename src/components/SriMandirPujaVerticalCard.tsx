@@ -70,13 +70,6 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
               {formattedDate}
             </p>
           )}
-          
-          {/* Price */}
-          {puja.individual_pack_price_inr > 0 && (
-            <p className="text-sm font-semibold text-primary">
-              {isHindi ? '₹' : 'Starting from ₹'}{puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
-            </p>
-          )}
 
           {/* Book Button */}
           <Button

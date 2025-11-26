@@ -313,60 +313,42 @@ const AnalyticsDashboard = () => {
 
       console.log('Loading variant data for puja_carousel_test...', { timeRange, startDate });
 
-      // Fetch analytics events with variant assignments for puja_carousel_test
+      // Fetch analytics events for the selected window
       const { data: analyticsData, error } = await supabase
         .from('analytics_events')
-        .select(`
-          *,
-          visitor_id
-        `)
+        .select('*')
         .gte('created_at', startDate);
 
       if (error) {
         console.error('Error loading variant data:', error);
+        setVariantData([]);
         return;
       }
 
-      console.log('Analytics data fetched:', analyticsData?.length);
+      console.log('Analytics data fetched for variants:', analyticsData?.length ?? 0);
 
-      // Fetch variant assignments for puja_carousel_test experiment
-      const { data: assignments, error: assignmentError } = await supabase
-        .from('variant_assignments')
-        .select('visitor_id, variant_name, experiment_id')
-        .gte('assigned_at', startDate);
-
-      if (assignmentError) {
-        console.error('Error loading variant assignments:', assignmentError);
+      if (!analyticsData || analyticsData.length === 0) {
+        setVariantData([]);
         return;
       }
 
-      console.log('Variant assignments fetched:', assignments?.length);
-
-      // Get experiment ID for puja_carousel_test
-      const { data: experiments, error: expError } = await supabase
-        .from('experiments')
-        .select('id, name')
-        .eq('name', 'puja_carousel_test')
-        .single();
-
-      if (expError || !experiments) {
-        console.log('No puja_carousel_test experiment found:', expError);
-        return;
-      }
-
-      console.log('Experiment found:', experiments);
-
-      // Create a map of visitor_id to variant
+      // Build a visitor → variant map from experiment_exposed events
       const visitorVariantMap = new Map<string, string>();
-      assignments
-        ?.filter(a => a.experiment_id === experiments.id)
-        .forEach(assignment => {
-          visitorVariantMap.set(assignment.visitor_id, assignment.variant_name);
+
+      analyticsData
+        .filter((event: any) =>
+          event.event_name === 'experiment_exposed' &&
+          event.metadata &&
+          event.metadata.experiment_name === 'puja_carousel_test' &&
+          typeof event.metadata.variant_name === 'string'
+        )
+        .forEach((event: any) => {
+          visitorVariantMap.set(event.visitor_id, event.metadata.variant_name as string);
         });
 
-      console.log('Visitor-variant map size:', visitorVariantMap.size);
+      console.log('Visitor-variant map size (from analytics_events):', visitorVariantMap.size);
 
-      // Process data by variant
+      // Process funnel data by variant (control vs carousel)
       const variantMap = new Map<string, {
         visitors: Set<string>;
         page_views: Set<string>;
@@ -376,9 +358,9 @@ const AnalyticsDashboard = () => {
         puja_clicks: Set<string>;
       }>();
 
-      analyticsData?.forEach((event) => {
+      analyticsData.forEach((event: any) => {
         const variant = visitorVariantMap.get(event.visitor_id) || 'unassigned';
-        
+
         if (!variantMap.has(variant)) {
           variantMap.set(variant, {
             visitors: new Set(),
@@ -401,6 +383,7 @@ const AnalyticsDashboard = () => {
       });
 
       const processed: VariantFunnelData[] = Array.from(variantMap.entries())
+        // Only show real variants (control / carousel), skip visitors not in the experiment
         .filter(([variant]) => variant !== 'unassigned')
         .map(([variant, data]) => ({
           variant,
@@ -409,17 +392,30 @@ const AnalyticsDashboard = () => {
           calculate_clicked: data.calculate_clicked.size,
           calculations_completed: data.calculations_completed.size,
           puja_clicks: data.puja_clicks.size,
-          form_conversion_pct: data.page_views.size > 0 ? (data.form_interactions.size / data.page_views.size * 100) : 0,
-          click_conversion_pct: data.form_interactions.size > 0 ? (data.calculate_clicked.size / data.form_interactions.size * 100) : 0,
-          calc_completion_pct: data.calculate_clicked.size > 0 ? (data.calculations_completed.size / data.calculate_clicked.size * 100) : 0,
-          puja_conversion_pct: data.calculations_completed.size > 0 ? (data.puja_clicks.size / data.calculations_completed.size * 100) : 0,
+          form_conversion_pct:
+            data.page_views.size > 0
+              ? (data.form_interactions.size / data.page_views.size) * 100
+              : 0,
+          click_conversion_pct:
+            data.form_interactions.size > 0
+              ? (data.calculate_clicked.size / data.form_interactions.size) * 100
+              : 0,
+          calc_completion_pct:
+            data.calculate_clicked.size > 0
+              ? (data.calculations_completed.size / data.calculate_clicked.size) * 100
+              : 0,
+          puja_conversion_pct:
+            data.calculations_completed.size > 0
+              ? (data.puja_clicks.size / data.calculations_completed.size) * 100
+              : 0,
         }))
         .sort((a, b) => a.variant.localeCompare(b.variant));
 
-      console.log('Processed variant data:', processed);
+      console.log('Processed variant data (from analytics_events):', processed);
       setVariantData(processed);
     } catch (err) {
       console.error('Error loading variant funnel data:', err);
+      setVariantData([]);
     }
   };
 

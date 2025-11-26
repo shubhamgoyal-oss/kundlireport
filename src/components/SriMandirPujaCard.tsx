@@ -58,16 +58,11 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
             <p className="text-sm text-muted-foreground">{displayTempleName}</p>
           )}
           
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            {puja.schedule_date_ist && (
-              <span className="font-medium">
-                {isHindi ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
-              </span>
-            )}
-            {puja.individual_pack_price_inr > 0 && (
-              <span className="font-semibold text-primary">₹{puja.individual_pack_price_inr}</span>
-            )}
-          </div>
+          {puja.schedule_date_ist && (
+            <p className="text-sm text-muted-foreground font-medium">
+              {isHindi ? 'निर्धारित' : 'Scheduled'}: {formattedDate}
+            </p>
+          )}
 
           <div className="flex flex-col gap-2 pt-2">
             <Button

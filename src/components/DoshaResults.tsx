@@ -809,16 +809,56 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
           <OtherDoshas 
             pujas={pujas}
             doshaFlags={{
-              rahuKetu: summary.grahan ? { status: summary.grahan } : undefined,
-              shrapit: summary.shrapit ? { status: summary.shrapit } : undefined,
-              guruChandal: summary.guruChandal ? { status: summary.guruChandal } : undefined,
-              punarphoo: summary.punarphoo ? { status: summary.punarphoo } : undefined,
-              kemadruma: summary.kemadruma ? { status: summary.kemadruma } : undefined,
-              gandmool: summary.gandmool ? { status: summary.gandmool } : undefined,
-              kalathra: summary.kalathra ? { status: summary.kalathra } : undefined,
-              vishDaridra: summary.vishDaridra ? { status: summary.vishDaridra } : undefined,
-              ketuNaga: summary.ketuNaga ? { status: summary.ketuNaga } : undefined,
-              navagraha: summary.navagrahaUmbrella ? { status: summary.navagrahaUmbrella } : undefined,
+              rahuKetu: summary.grahan ? { 
+                status: summary.grahan,
+                explanation: details.grahan?.explanation,
+                placements: details.grahan?.placements
+              } : undefined,
+              shrapit: summary.shrapit ? { 
+                status: summary.shrapit,
+                explanation: details.shrapit?.explanation,
+                placements: details.shrapit?.placements
+              } : undefined,
+              guruChandal: summary.guruChandal ? { 
+                status: summary.guruChandal,
+                explanation: details.guruChandal?.explanation,
+                placements: details.guruChandal?.placements
+              } : undefined,
+              punarphoo: summary.punarphoo ? { 
+                status: summary.punarphoo,
+                explanation: details.punarphoo?.explanation,
+                placements: details.punarphoo?.placements
+              } : undefined,
+              kemadruma: summary.kemadruma ? { 
+                status: summary.kemadruma,
+                explanation: details.kemadruma?.explanation,
+                placements: details.kemadruma?.placements
+              } : undefined,
+              gandmool: summary.gandmool ? { 
+                status: summary.gandmool,
+                explanation: details.gandmool?.explanation,
+                placements: details.gandmool?.placements
+              } : undefined,
+              kalathra: summary.kalathra ? { 
+                status: summary.kalathra,
+                explanation: details.kalathra?.explanation,
+                placements: details.kalathra?.placements
+              } : undefined,
+              vishDaridra: summary.vishDaridra ? { 
+                status: summary.vishDaridra,
+                explanation: details.vishDaridra?.explanation,
+                placements: details.vishDaridra?.placements
+              } : undefined,
+              ketuNaga: summary.ketuNaga ? { 
+                status: summary.ketuNaga,
+                explanation: details.ketuNaga?.explanation,
+                placements: details.ketuNaga?.placements
+              } : undefined,
+              navagraha: summary.navagrahaUmbrella ? { 
+                status: summary.navagrahaUmbrella,
+                explanation: details.navagraha?.explanation,
+                placements: details.navagraha?.placements
+              } : undefined,
             }}
           />
 

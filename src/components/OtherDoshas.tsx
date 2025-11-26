@@ -10,18 +10,17 @@ import { SriMandirPuja, filterPujasByDosha, getUpcomingPujas } from '@/utils/sri
 
 interface OtherDoshasProps {
   pujas: SriMandirPuja[];
-  // Future: backend will pass these flags when computed
   doshaFlags?: {
-    rahuKetu?: { status: string };
-    shrapit?: { status: string };
-    guruChandal?: { status: string };
-    punarphoo?: { status: string };
-    kemadruma?: { status: string };
-    gandmool?: { status: string };
-    kalathra?: { status: string };
-    vishDaridra?: { status: string };
-    ketuNaga?: { status: string };
-    navagraha?: { status: string };
+    rahuKetu?: { status: string; explanation?: string; placements?: string[] };
+    shrapit?: { status: string; explanation?: string; placements?: string[] };
+    guruChandal?: { status: string; explanation?: string; placements?: string[] };
+    punarphoo?: { status: string; explanation?: string; placements?: string[] };
+    kemadruma?: { status: string; explanation?: string; placements?: string[] };
+    gandmool?: { status: string; explanation?: string; placements?: string[] };
+    kalathra?: { status: string; explanation?: string; placements?: string[] };
+    vishDaridra?: { status: string; explanation?: string; placements?: string[] };
+    ketuNaga?: { status: string; explanation?: string; placements?: string[] };
+    navagraha?: { status: string; explanation?: string; placements?: string[] };
   };
 }
 
@@ -150,7 +149,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
   const renderDoshaPanel = (
     key: keyof typeof otherDoshasData,
-    statusFlag?: { status: string }
+    statusFlag?: { status: string; explanation?: string; placements?: string[] }
   ) => {
     const dosha = otherDoshasData[key];
     const isPresent = isDoshaPresent(statusFlag?.status);
@@ -201,6 +200,32 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             <p className="text-xs sm:text-sm text-muted-foreground italic leading-relaxed">{translatedDosha.whatItIs}</p>
             <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
           </div>
+
+          {/* Explanation from planetary positions */}
+          {statusFlag?.explanation && (
+            <div>
+              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
+                <Info className="w-4 h-4" />
+                {t('doshaResults.explanation')}
+              </h5>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{statusFlag.explanation}</p>
+            </div>
+          )}
+
+          {/* Planetary Positions */}
+          {statusFlag?.placements && statusFlag.placements.length > 0 && (
+            <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
+              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
+                <Info className="w-4 h-4" />
+                {t('doshaResults.placements') || 'Planetary Positions'}
+              </h5>
+              <ul className="list-disc list-inside text-xs sm:text-sm text-muted-foreground space-y-2 leading-relaxed">
+                {statusFlag.placements.map((p, i) => (
+                  <li key={i}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Traditional Remedies - Only show if present */}
           {isPresent && (

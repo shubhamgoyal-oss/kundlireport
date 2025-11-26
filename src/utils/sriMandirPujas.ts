@@ -265,7 +265,7 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
  */
 export function filterPujasByDosha(
   pujas: SriMandirPuja[], 
-  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal'
+  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha'
 ): SriMandirPuja[] {
   const keywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
@@ -276,7 +276,8 @@ export function filterPujasByDosha(
     shani: ['shani', 'saturn', 'शनि'],
     rahu: ['rahu', 'राहु'],
     shrapit: ['shrapit', 'श्रापित'],
-    'guru-chandal': ['guru chandal', 'गुरु चांडाल'],
+    'guru-chandal': ['brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
+    navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
   };
 
   const searchTerms = keywords[doshaType];
@@ -323,11 +324,13 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 1): SriMandi
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
-  doshaType: 'pitra' | 'shani'
+  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha'
 ): SriMandirPuja | null {
   const priorityKeywords: Record<string, string[]> = {
     pitra: ['pishach mochan', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
-    shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति']
+    shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
+    'guru-chandal': ['brihaspati rahu', 'बृहस्पति राहु'],
+    navagraha: ['navagraha shanti', 'navagrah shanti', 'नवग्रह शांति']
   };
 
   const keywords = priorityKeywords[doshaType];

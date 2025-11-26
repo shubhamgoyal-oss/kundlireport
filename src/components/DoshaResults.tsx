@@ -347,7 +347,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                 {(() => {
                   // Define major doshas in priority order
                   const majorDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani'; label: string }> = [];
-                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal'; label: string }> = [];
+                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha'; label: string }> = [];
                   
                   // Check major doshas first (exclude nullified)
                   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
@@ -372,6 +372,20 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   }
                   if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
                     otherDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+                  }
+                  
+                  // Check remaining doshas for Navagraha Shanti Puja
+                  const remainingDoshasPresent = [
+                    isDoshaPresent(summary.vishDaridra),
+                    isDoshaPresent(summary.punarphoo),
+                    isDoshaPresent(summary.kemadruma),
+                    isDoshaPresent(summary.gandmool),
+                    isDoshaPresent(summary.kalathra),
+                    isDoshaPresent(summary.ketuNaga)
+                  ].some(present => present);
+                  
+                  if (remainingDoshasPresent) {
+                    otherDoshas.push({ type: 'navagraha', label: isHindi ? 'अन्य दोष' : 'Other Doshas' });
                   }
 
                   // Combine in priority order
@@ -456,15 +470,22 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           {/* Other Doshas Section */}
                           {otherDoshas.map(dosha => {
                             const filtered = filterPujasByDosha(pujas, dosha.type);
-                            const upcoming = getUpcomingPujas(filtered, 1);
                             
-                            if (upcoming.length === 0) return null;
+                            // Get prioritized puja for guru-chandal and navagraha, otherwise get upcoming
+                            let pujaToShow: SriMandirPuja | null = null;
+                            if (dosha.type === 'guru-chandal' || dosha.type === 'navagraha') {
+                              pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                            } else {
+                              pujaToShow = getUpcomingPujas(filtered, 1)[0] || null;
+                            }
+                            
+                            if (!pujaToShow) return null;
                             
                             return (
                               <div key={dosha.type} className="space-y-4">
                                 <SriMandirPujaVerticalCard 
-                                  key={upcoming[0].store_id}
-                                  puja={upcoming[0]} 
+                                  key={pujaToShow.store_id}
+                                  puja={pujaToShow} 
                                   doshaType={dosha.type}
                                   onBookClick={async () => {
                                     if (!hasTrackedBookPuja && calculationId) {

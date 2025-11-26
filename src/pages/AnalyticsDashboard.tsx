@@ -73,14 +73,13 @@ const AnalyticsDashboard = () => {
 
   const loadTodayISTData = async () => {
     try {
-      // Get today's data
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // Get last 48 hours of data and filter client-side for today in IST
+      const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
       
       const { data: analyticsData, error } = await supabase
         .from('analytics_events')
         .select('*')
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', twoDaysAgo);
 
       if (error) {
         console.error('Error loading IST data:', error);
@@ -89,7 +88,11 @@ const AnalyticsDashboard = () => {
 
       if (!analyticsData) return;
 
-      // Process data by IST hour
+      // Get today's date in IST
+      const nowIST = new Date(new Date().getTime() + (5.5 * 60 * 60 * 1000));
+      const todayISTDate = nowIST.toISOString().slice(0, 10);
+
+      // Process data by IST hour, filtering for today only
       const hourlyMap = new Map<number, {
         visitors: Set<string>;
         calculateClicked: Set<string>;
@@ -101,6 +104,11 @@ const AnalyticsDashboard = () => {
         // Convert to IST (UTC+5:30)
         const utcDate = new Date(event.created_at);
         const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+        const eventISTDate = istDate.toISOString().slice(0, 10);
+        
+        // Only include events from today in IST
+        if (eventISTDate !== todayISTDate) return;
+        
         const hour = istDate.getHours();
 
         if (!hourlyMap.has(hour)) {

@@ -343,72 +343,72 @@ const AnalyticsDashboard = () => {
           typeof event.metadata.variant_name === 'string'
         )
         .forEach((event: any) => {
+          // Use the latest variant assignment for each visitor
           visitorVariantMap.set(event.visitor_id, event.metadata.variant_name as string);
         });
 
       console.log('Visitor-variant map size (from analytics_events):', visitorVariantMap.size);
 
-      // Process funnel data by variant (control vs carousel)
+      // Process data by variant (control vs carousel)
+      // For this post-calculation experiment, we care about:
+      // - Exposed visitors (who saw the results page)
+      // - Puja clicks (who clicked on a puja recommendation)
       const variantMap = new Map<string, {
-        visitors: Set<string>;
-        page_views: Set<string>;
-        form_interactions: Set<string>;
-        calculate_clicked: Set<string>;
-        calculations_completed: Set<string>;
+        exposed_visitors: Set<string>;
         puja_clicks: Set<string>;
       }>();
 
-      analyticsData.forEach((event: any) => {
-        const variant = visitorVariantMap.get(event.visitor_id) || 'unassigned';
-
-        if (!variantMap.has(variant)) {
-          variantMap.set(variant, {
-            visitors: new Set(),
-            page_views: new Set(),
-            form_interactions: new Set(),
-            calculate_clicked: new Set(),
-            calculations_completed: new Set(),
-            puja_clicks: new Set(),
-          });
-        }
-
-        const varData = variantMap.get(variant)!;
-        varData.visitors.add(event.visitor_id);
-
-        if (event.event_name === 'page_view') varData.page_views.add(event.visitor_id);
-        if (event.event_name === 'form_field_filled') varData.form_interactions.add(event.visitor_id);
-        if (event.event_name === 'calculate_dosha_clicked') varData.calculate_clicked.add(event.visitor_id);
-        if (event.event_name === 'dosha_calculate') varData.calculations_completed.add(event.visitor_id);
-        if (event.event_name === 'srimandir_puja_click') varData.puja_clicks.add(event.visitor_id);
+      // Initialize variants
+      ['control', 'carousel'].forEach(variant => {
+        variantMap.set(variant, {
+          exposed_visitors: new Set(),
+          puja_clicks: new Set(),
+        });
       });
 
+      // Count exposed visitors per variant
+      analyticsData
+        .filter((event: any) =>
+          event.event_name === 'experiment_exposed' &&
+          event.metadata &&
+          event.metadata.experiment_name === 'puja_carousel_test'
+        )
+        .forEach((event: any) => {
+          const variant = event.metadata.variant_name as string;
+          if (variantMap.has(variant)) {
+            variantMap.get(variant)!.exposed_visitors.add(event.visitor_id);
+          }
+        });
+
+      // Count puja clicks per variant
+      analyticsData
+        .filter((event: any) => event.event_name === 'srimandir_puja_click')
+        .forEach((event: any) => {
+          const variant = visitorVariantMap.get(event.visitor_id);
+          if (variant && variantMap.has(variant)) {
+            variantMap.get(variant)!.puja_clicks.add(event.visitor_id);
+          }
+        });
+
       const processed: VariantFunnelData[] = Array.from(variantMap.entries())
-        // Only show real variants (control / carousel), skip visitors not in the experiment
-        .filter(([variant]) => variant !== 'unassigned')
-        .map(([variant, data]) => ({
-          variant,
-          page_views: data.page_views.size,
-          form_interactions: data.form_interactions.size,
-          calculate_clicked: data.calculate_clicked.size,
-          calculations_completed: data.calculations_completed.size,
-          puja_clicks: data.puja_clicks.size,
-          form_conversion_pct:
-            data.page_views.size > 0
-              ? (data.form_interactions.size / data.page_views.size) * 100
-              : 0,
-          click_conversion_pct:
-            data.form_interactions.size > 0
-              ? (data.calculate_clicked.size / data.form_interactions.size) * 100
-              : 0,
-          calc_completion_pct:
-            data.calculate_clicked.size > 0
-              ? (data.calculations_completed.size / data.calculate_clicked.size) * 100
-              : 0,
-          puja_conversion_pct:
-            data.calculations_completed.size > 0
-              ? (data.puja_clicks.size / data.calculations_completed.size) * 100
-              : 0,
-        }))
+        .map(([variant, data]) => {
+          const exposedCount = data.exposed_visitors.size;
+          const clickCount = data.puja_clicks.size;
+          const pujaCTR = exposedCount > 0 ? (clickCount / exposedCount) * 100 : 0;
+
+          return {
+            variant,
+            page_views: exposedCount, // Reusing this field for "Exposed Visitors"
+            form_interactions: 0,
+            calculate_clicked: 0,
+            calculations_completed: exposedCount,
+            puja_clicks: clickCount,
+            form_conversion_pct: 0,
+            click_conversion_pct: 0,
+            calc_completion_pct: 100, // All exposed = completed calculation
+            puja_conversion_pct: pujaCTR,
+          };
+        })
         .sort((a, b) => a.variant.localeCompare(b.variant));
 
       console.log('Processed variant data (from analytics_events):', processed);
@@ -754,10 +754,7 @@ const AnalyticsDashboard = () => {
                     <thead>
                       <tr className="border-b">
                         <th className="text-left py-3 px-4 font-medium">Variant</th>
-                        <th className="text-right py-3 px-4 font-medium">Page Views</th>
-                        <th className="text-right py-3 px-4 font-medium">Form Interactions</th>
-                        <th className="text-right py-3 px-4 font-medium">Calculate Clicked</th>
-                        <th className="text-right py-3 px-4 font-medium">Calculations Done</th>
+                        <th className="text-right py-3 px-4 font-medium">Exposed Visitors</th>
                         <th className="text-right py-3 px-4 font-medium">Puja Clicks</th>
                         <th className="text-right py-3 px-4 font-medium">Puja CTR</th>
                       </tr>
@@ -780,10 +777,7 @@ const AnalyticsDashboard = () => {
                               row.variant
                             )}
                           </td>
-                          <td className="text-right py-3 px-4">{row.page_views}</td>
-                          <td className="text-right py-3 px-4">{row.form_interactions}</td>
-                          <td className="text-right py-3 px-4">{row.calculate_clicked}</td>
-                          <td className="text-right py-3 px-4">{row.calculations_completed}</td>
+                          <td className="text-right py-3 px-4 font-medium">{row.page_views}</td>
                           <td className="text-right py-3 px-4 font-bold text-primary">
                             {row.puja_clicks}
                           </td>
@@ -797,7 +791,7 @@ const AnalyticsDashboard = () => {
                 </div>
                 <div className="mt-4 p-4 bg-accent/10 rounded-md border border-accent/30">
                   <p className="text-sm font-medium">
-                    <strong>Puja CTR</strong> is the key metric: percentage of users who clicked a puja after
+                    <strong>Puja CTR</strong> is the key metric: percentage of exposed visitors who clicked a puja after
                     seeing their dosha results. Higher CTR indicates better engagement with puja
                     recommendations.
                   </p>

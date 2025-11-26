@@ -41,14 +41,14 @@ export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
 
 export function getPitraExplanationSeer(pitra: DoshaResult): string {
   if (pitra.status === "absent") {
-    return "No Pitra Dosha indicators detected in your chart. The 9th house (representing ancestors and dharma) and the Sun (representing paternal lineage) are well-placed without affliction from Rahu or Ketu.";
+    return "No Pitra Dosha indicators detected in your chart. The 9th house and Sun are well-placed without affliction from Rahu or Ketu.";
   }
   
   if (pitra.status === "partial") {
-    return "Pitra Dosha shows partial indicators in your chart. This suggests some unresolved ancestral karma patterns that may create subtle obstacles in life. The 9th house or Sun has some affliction from Rahu or Ketu, though not at full strength. Performing remedial actions to honor and seek blessings from ancestors can help clear these patterns and bring relief.";
+    return "Pitra Dosha shows partial indicators. The 9th house or Sun has some affliction from Rahu or Ketu, though not at full strength.";
   }
   
-  return "Pitra Dosha is present in your chart. This indicates unresolved ancestral debts or unfulfilled duties toward forefathers. The affliction involves the 9th house (representing ancestors) or the Sun (representing paternal lineage) being influenced by Rahu or Ketu. This dosha emphasizes the importance of honoring ancestral connections, performing Shraddha ceremonies, and seeking their blessings through appropriate rituals. Addressing this dosha can remove obstacles related to father, elders, fortune, and bring peace to family matters.";
+  return "Pitra Dosha is present in your chart. The affliction involves the 9th house (ancestors) or Sun (paternal lineage) being influenced by Rahu or Ketu.";
 }
 
 export function getPitraRemediesSeer(pitra: DoshaResult): string[] {

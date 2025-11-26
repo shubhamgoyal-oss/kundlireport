@@ -248,23 +248,9 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
           {/* What it is */}
           <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
             <p className="text-sm text-muted-foreground italic leading-relaxed">{translatedDosha.whatItIs}</p>
-            <p className="text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
           </div>
 
-          {/* Explanation from planetary positions */}
-          {statusFlag?.explanation && (
-            <div>
-              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
-                <Info className="w-4 h-4" />
-                {t('doshaResults.explanation')}
-              </h5>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {translatedDosha.whatItIs} {translatedDosha.impact}
-              </p>
-            </div>
-          )}
-
-          {/* Planetary Positions */}
+          {/* Planetary Positions & Reasoning */}
           {statusFlag?.placements && statusFlag.placements.length > 0 && (
             <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
               <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
@@ -276,6 +262,30 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                   <li key={i}>{translatePlacement(p)}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Explanation - Why Present or Absent */}
+          {statusFlag?.explanation && (
+            <div className="p-3 bg-primary/5 rounded-md border-l-4 border-primary">
+              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
+                <Info className="w-4 h-4" />
+                {isPresent ? t('doshaResults.whyPresent') : t('doshaResults.whyAbsent')}
+              </h5>
+              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {statusFlag.explanation}
+              </p>
+            </div>
+          )}
+
+          {/* Impact - Only show if present */}
+          {isPresent && (
+            <div className="p-3 bg-destructive/5 rounded-md border-l-4 border-destructive">
+              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm text-destructive">
+                <AlertTriangle className="w-4 h-4" />
+                {t('doshaResults.impact')}
+              </h5>
+              <p className="text-sm text-muted-foreground leading-relaxed">{translatedDosha.impact}</p>
             </div>
           )}
 

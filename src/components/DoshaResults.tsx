@@ -189,12 +189,21 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     return s;
   };
 
-  // Check if any doshas are present
+  // Check if any doshas are present (including other doshas)
   const hasAnyDosha = 
     (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
     isDoshaPresent(summary.kaalSarp) ||
     isDoshaPresent(summary.pitra) ||
-    isDoshaPresent(summary.shaniSadeSati);
+    isDoshaPresent(summary.shaniSadeSati) ||
+    isDoshaPresent(summary.grahan) ||
+    isDoshaPresent(summary.shrapit) ||
+    isDoshaPresent(summary.guruChandal) ||
+    isDoshaPresent(summary.punarphoo) ||
+    isDoshaPresent(summary.kemadruma) ||
+    isDoshaPresent(summary.gandmool) ||
+    isDoshaPresent(summary.kalathra) ||
+    isDoshaPresent(summary.vishDaridra) ||
+    isDoshaPresent(summary.ketuNaga);
 
   return (
     <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">

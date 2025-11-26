@@ -737,70 +737,79 @@ const AnalyticsDashboard = () => {
         )}
 
         {/* A/B Test Variant Performance */}
-        {variantData.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>A/B Test: Puja Display Variants</CardTitle>
-              <CardDescription>
-                Comparing Control (Static Cards) vs Carousel performance for the selected time period
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Variant</th>
-                      <th className="text-right py-3 px-4 font-medium">Page Views</th>
-                      <th className="text-right py-3 px-4 font-medium">Form Interactions</th>
-                      <th className="text-right py-3 px-4 font-medium">Calculate Clicked</th>
-                      <th className="text-right py-3 px-4 font-medium">Calculations Done</th>
-                      <th className="text-right py-3 px-4 font-medium">Puja Clicks</th>
-                      <th className="text-right py-3 px-4 font-medium">Puja CTR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {variantData.map((row) => (
-                      <tr key={row.variant} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4 font-bold">
-                          {row.variant === 'control' ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                              Control (Static Cards)
-                            </span>
-                          ) : row.variant === 'carousel' ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                              Carousel (Auto-Flip)
-                            </span>
-                          ) : (
-                            row.variant
-                          )}
-                        </td>
-                        <td className="text-right py-3 px-4">{row.page_views}</td>
-                        <td className="text-right py-3 px-4">{row.form_interactions}</td>
-                        <td className="text-right py-3 px-4">{row.calculate_clicked}</td>
-                        <td className="text-right py-3 px-4">{row.calculations_completed}</td>
-                        <td className="text-right py-3 px-4 font-bold text-primary">
-                          {row.puja_clicks}
-                        </td>
-                        <td className="text-right py-3 px-4 font-bold text-primary">
-                          {row.puja_conversion_pct.toFixed(2)}%
-                        </td>
+        <Card>
+          <CardHeader>
+            <CardTitle>A/B Test: Puja Display Variants</CardTitle>
+            <CardDescription>
+              Comparing Control (Static Cards) vs Carousel performance for the selected time period
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {variantData.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                No variant data available yet for <span className="font-semibold">puja_carousel_test</span>.
+                Once visitors are assigned to Control and Carousel variants and start generating events,
+                their funnels will appear here for side-by-side comparison.
+              </p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium">Variant</th>
+                        <th className="text-right py-3 px-4 font-medium">Page Views</th>
+                        <th className="text-right py-3 px-4 font-medium">Form Interactions</th>
+                        <th className="text-right py-3 px-4 font-medium">Calculate Clicked</th>
+                        <th className="text-right py-3 px-4 font-medium">Calculations Done</th>
+                        <th className="text-right py-3 px-4 font-medium">Puja Clicks</th>
+                        <th className="text-right py-3 px-4 font-medium">Puja CTR</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 p-4 bg-accent/10 rounded-md border border-accent/30">
-                <p className="text-sm font-medium">
-                  💡 <strong>Puja CTR</strong> is the key metric: percentage of users who clicked a puja after seeing their dosha results.
-                  Higher CTR indicates better engagement with puja recommendations.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                    </thead>
+                    <tbody>
+                      {variantData.map((row) => (
+                        <tr key={row.variant} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4 font-bold">
+                            {row.variant === 'control' ? (
+                              <span className="inline-flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-primary"></span>
+                                Control (Static Cards)
+                              </span>
+                            ) : row.variant === 'carousel' ? (
+                              <span className="inline-flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-accent"></span>
+                                Carousel (Auto-Flip)
+                              </span>
+                            ) : (
+                              row.variant
+                            )}
+                          </td>
+                          <td className="text-right py-3 px-4">{row.page_views}</td>
+                          <td className="text-right py-3 px-4">{row.form_interactions}</td>
+                          <td className="text-right py-3 px-4">{row.calculate_clicked}</td>
+                          <td className="text-right py-3 px-4">{row.calculations_completed}</td>
+                          <td className="text-right py-3 px-4 font-bold text-primary">
+                            {row.puja_clicks}
+                          </td>
+                          <td className="text-right py-3 px-4 font-bold text-primary">
+                            {row.puja_conversion_pct.toFixed(2)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-4 p-4 bg-accent/10 rounded-md border border-accent/30">
+                  <p className="text-sm font-medium">
+                    <strong>Puja CTR</strong> is the key metric: percentage of users who clicked a puja after
+                    seeing their dosha results. Higher CTR indicates better engagement with puja
+                    recommendations.
+                  </p>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Today's Hourly Performance (IST) */}
         <Card>

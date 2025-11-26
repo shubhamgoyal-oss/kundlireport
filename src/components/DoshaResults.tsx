@@ -239,15 +239,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                 <div className="space-y-4 mb-6">
                   {/* Mangal Dosha Box */}
                   {(isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden bg-background">
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
                       <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
-                          <Flame className="w-4 h-4 text-destructive" />
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Flame className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.mangal.name')}
                         </h4>
-                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
-                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.mangal.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -255,15 +255,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Kaal Sarp Dosha Box */}
                   {isDoshaPresent(summary.kaalSarp) && (
-                    <div className="border-l-4 border-primary rounded-lg overflow-hidden bg-background">
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
                       <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
-                          <Waves className="w-4 h-4 text-primary" />
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Waves className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.kaalSarp.name')}
                         </h4>
-                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
-                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.kaalSarp.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -271,15 +271,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Pitra Dosha Box */}
                   {isDoshaPresent(summary.pitra) && (
-                    <div className="border-l-4 border-accent rounded-lg overflow-hidden bg-background">
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
                       <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
-                          <Users className="w-4 h-4 text-accent" />
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Users className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.pitra.name')}
                         </h4>
-                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
-                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.pitra.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -287,15 +287,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Shani Sade Sati Box */}
                   {isDoshaPresent(summary.shaniSadeSati) && (
-                    <div className="border-l-4 border-secondary rounded-lg overflow-hidden bg-background">
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
                       <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
-                          <Moon className="w-4 h-4 text-secondary" />
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Moon className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.sadeSati.name')}
                         </h4>
-                        <div className="p-2 bg-muted/50 rounded-md space-y-1 break-words">
-                          <p className="text-sm text-muted-foreground italic">{t('doshaResults.sadeSati.description')}</p>
-                          <p className="text-sm text-muted-foreground font-medium">{t('doshaResults.sadeSati.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -541,13 +541,21 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   </div>
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.mangal.placements.map((p, i) => (
-                          <li key={i}>{translatePlacement(p)}</li>
+                          <li key={i} className="leading-relaxed">{translatePlacement(p)}</li>
                         ))}
                       </ul>
+                      <p className="text-xs text-muted-foreground mt-3 italic">
+                        {isHindi 
+                          ? 'ये ग्रहों की स्थितियां मंगल दोष की उपस्थिति का कारण हैं।'
+                          : 'These planetary positions are the basis for Mangal Dosha detection.'}
+                      </p>
                     </div>
                   )}
 
@@ -616,13 +624,21 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   </div>
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.kaalSarp.placements.map((p, i) => (
-                          <li key={i}>{translatePlacement(p)}</li>
+                          <li key={i} className="leading-relaxed">{translatePlacement(p)}</li>
                         ))}
                       </ul>
+                      <p className="text-xs text-muted-foreground mt-3 italic">
+                        {isHindi 
+                          ? 'सभी सात ग्रह राहु और केतु के बीच फंसे हैं, जो काल सर्प दोष का संकेत देता है।'
+                          : 'All seven planets are trapped between Rahu and Ketu, indicating Kaal Sarp Dosha.'}
+                      </p>
                     </div>
                   )}
 
@@ -682,13 +698,21 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                   </div>
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-2">{t('doshaResults.placements')}</h4>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.pitra.placements.map((p, i) => (
-                          <li key={i}>{translatePlacement(p)}</li>
+                          <li key={i} className="leading-relaxed">{translatePlacement(p)}</li>
                         ))}
                       </ul>
+                      <p className="text-xs text-muted-foreground mt-3 italic">
+                        {isHindi 
+                          ? '9वें भाव या सूर्य के साथ राहु/केतु का संबंध पितृ दोष का संकेत देता है।'
+                          : 'Affliction of 9th house or Sun by Rahu/Ketu indicates Pitra Dosha.'}
+                      </p>
                     </div>
                   )}
 

@@ -492,6 +492,51 @@ export type Database = {
           },
         ]
       }
+      traffic_sources: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          landing_page: string | null
+          referrer: string | null
+          session_id: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+          visitor_id: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          landing_page?: string | null
+          referrer?: string | null
+          session_id: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          landing_page?: string | null
+          referrer?: string | null
+          session_id?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       variant_assignments: {
         Row: {
           assigned_at: string

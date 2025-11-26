@@ -9,8 +9,11 @@ import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
 import ExperimentAdmin from "./pages/ExperimentAdmin";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
+import AdminLogin from "./pages/AdminLogin";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { trackTrafficSource } from "./utils/trafficTracking";
 
 const queryClient = new QueryClient();
@@ -57,29 +60,48 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Redirect root to /hi by default */}
-            <Route path="/" element={<Navigate to="/hi" replace />} />
-            
-            {/* Language-specific routes */}
-            <Route path="/:lang" element={<LanguageWrapper />}>
-              <Route index element={<Index />} />
-              <Route path="category/:category" element={<CategoryPujas />} />
-            </Route>
-            
-            {/* Admin routes */}
-            <Route path="/admin/experiments" element={<ExperimentAdmin />} />
-            <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
-            
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Redirect root to /hi by default */}
+              <Route path="/" element={<Navigate to="/hi" replace />} />
+              
+              {/* Language-specific routes */}
+              <Route path="/:lang" element={<LanguageWrapper />}>
+                <Route index element={<Index />} />
+                <Route path="category/:category" element={<CategoryPujas />} />
+              </Route>
+              
+              {/* Admin login route */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              
+              {/* Protected admin routes */}
+              <Route
+                path="/admin/experiments"
+                element={
+                  <ProtectedRoute>
+                    <ExperimentAdmin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute>
+                    <AnalyticsDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Loader2, TrendingUp, Users, MousePointerClick, CheckCircle, ShoppingBag } from 'lucide-react';
+import { Loader2, TrendingUp, Users, MousePointerClick, CheckCircle, ShoppingBag, LogOut } from 'lucide-react';
 
 interface HourlyFunnelData {
   hour: string;
@@ -19,9 +22,16 @@ interface HourlyFunnelData {
 }
 
 const AnalyticsDashboard = () => {
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const [data, setData] = useState<HourlyFunnelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/admin/login');
+  };
 
   useEffect(() => {
     loadFunnelData();
@@ -120,9 +130,18 @@ const AnalyticsDashboard = () => {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
-            <p className="text-muted-foreground mt-2">Hourly funnel metrics and conversion rates</p>
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
+                <p className="text-muted-foreground mt-2">Hourly funnel metrics and conversion rates</p>
+                {user && <p className="text-sm text-muted-foreground mt-1">Logged in as: {user.email}</p>}
+              </div>
+              <Button onClick={handleSignOut} variant="outline" size="sm" className="ml-4">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
           <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="w-full md:w-auto">
             <TabsList>

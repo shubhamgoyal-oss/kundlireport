@@ -577,34 +577,7 @@ export type Database = {
       }
     }
     Views: {
-      daily_data: {
-        Row: {
-          accordion_expanded_pct: number | null
-          calculate_dosha_clicked_pct: number | null
-          date: string | null
-          dosha_calculate_pct: number | null
-          dosha_calculate_unsuccessful_pct: number | null
-          form_field_filled_pct: number | null
-          page_view_pct: number | null
-          total_unique_visitors: number | null
-          unknown_time_toggled_pct: number | null
-        }
-        Relationships: []
-      }
-      daily_data_secure: {
-        Row: {
-          accordion_expanded_pct: number | null
-          calculate_dosha_clicked_pct: number | null
-          date: string | null
-          dosha_calculate_pct: number | null
-          dosha_calculate_unsuccessful_pct: number | null
-          form_field_filled_pct: number | null
-          page_view_pct: number | null
-          total_unique_visitors: number | null
-          unknown_time_toggled_pct: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       [_ in never]: never

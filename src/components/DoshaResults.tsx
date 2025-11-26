@@ -56,6 +56,40 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
+  const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const translateExplanations = async () => {
+      if (!isHindi) return;
+
+      const toTranslate: { key: string; text: string }[] = [];
+      
+      if (details.mangal?.explanation) toTranslate.push({ key: 'mangal', text: details.mangal.explanation });
+      if (details.kaalSarp?.explanation) toTranslate.push({ key: 'kaalSarp', text: details.kaalSarp.explanation });
+      if (details.pitra?.explanation) toTranslate.push({ key: 'pitra', text: details.pitra.explanation });
+      if (details.shani?.explanation) toTranslate.push({ key: 'shani', text: details.shani.explanation });
+
+      const translations: Record<string, string> = {};
+      
+      for (const item of toTranslate) {
+        try {
+          const { data, error } = await supabase.functions.invoke('translate-dosha', {
+            body: { text: item.text }
+          });
+          
+          if (error) throw error;
+          translations[item.key] = data.translatedText;
+        } catch (error) {
+          console.error(`Translation error for ${item.key}:`, error);
+          translations[item.key] = item.text;
+        }
+      }
+      
+      setTranslatedExplanations(translations);
+    };
+
+    translateExplanations();
+  }, [isHindi, details]);
 
   useEffect(() => {
     // Scroll to status message when component mounts
@@ -544,7 +578,9 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.mangal.explanation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {isHindi ? (translatedExplanations.mangal || details.mangal.explanation) : details.mangal.explanation}
+                    </p>
                   </div>
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
@@ -627,7 +663,9 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.kaalSarp.explanation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {isHindi ? (translatedExplanations.kaalSarp || details.kaalSarp.explanation) : details.kaalSarp.explanation}
+                    </p>
                   </div>
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
@@ -701,7 +739,9 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.pitra.explanation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {isHindi ? (translatedExplanations.pitra || details.pitra.explanation) : details.pitra.explanation}
+                    </p>
                   </div>
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
@@ -776,7 +816,9 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.sadeSati.explanation}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {isHindi ? (translatedExplanations.shani || details.sadeSati.explanation) : details.sadeSati.explanation}
+                    </p>
                   </div>
 
                   {details.sadeSati.notes && details.sadeSati.notes.length > 0 && (

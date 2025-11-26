@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.astrology-chat]
 verify_jwt = false
+
+[functions.translate-dosha]
+verify_jwt = false

@@ -89,17 +89,25 @@ const AnalyticsDashboard = () => {
 
   const loadTodayISTData = async () => {
     try {
-      // Get today's data
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      // Get current time in IST (UTC+5:30)
+      const nowUtc = new Date();
+      const nowIst = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
+      
+      // Calculate start of today in IST
+      const startOfDayIst = new Date(nowIst.getFullYear(), nowIst.getMonth(), nowIst.getDate());
+      
+      // Convert back to UTC for database query
+      const startOfDayUtc = new Date(startOfDayIst.getTime() - (5.5 * 60 * 60 * 1000));
       
       const { data: analyticsData, error } = await supabase
         .from('analytics_events')
         .select('*')
-        .gte('created_at', startOfDay.toISOString());
+        .gte('created_at', startOfDayUtc.toISOString());
 
       console.log('AnalyticsDashboard: fetched today IST analytics_events', {
-        startOfDay: startOfDay.toISOString(),
+        startOfDayUtc: startOfDayUtc.toISOString(),
+        startOfDayIst: startOfDayIst.toISOString(),
+        nowIst: nowIst.toISOString(),
         count: analyticsData?.length ?? 0,
         error,
       });
@@ -127,6 +135,9 @@ const AnalyticsDashboard = () => {
         const utcDate = new Date(event.created_at);
         const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
         const hour = istDate.getHours();
+        
+        // Only include if hour is not in the future
+        if (istDate > nowIst) return;
 
         if (!hourlyMap.has(hour)) {
           hourlyMap.set(hour, {
@@ -687,6 +698,73 @@ const AnalyticsDashboard = () => {
                             ).toFixed(2)
                           : 0}
                         % avg
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Daily Performance Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily Performance Summary</CardTitle>
+            <CardDescription>Daily conversion metrics sorted by traffic volume</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {dailyData.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No daily data available for the selected period.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-semibold">Date</th>
+                      <th className="text-right py-3 px-4 font-semibold">Unique Visitors</th>
+                      <th className="text-right py-3 px-4 font-semibold">% Calculate Clicked</th>
+                      <th className="text-right py-3 px-4 font-semibold">% Calculations Done</th>
+                      <th className="text-right py-3 px-4 font-semibold">% Puja Clicked</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dailyData.map((row) => (
+                      <tr key={row.date} className="border-b hover:bg-muted/50 transition-colors">
+                        <td className="py-3 px-4">
+                          {new Date(row.date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })}
+                        </td>
+                        <td className="text-right py-3 px-4 font-medium">{row.unique_visitors}</td>
+                        <td className="text-right py-3 px-4">{row.pct_calculate_clicked}%</td>
+                        <td className="text-right py-3 px-4">{row.pct_calculations_completed}%</td>
+                        <td className="text-right py-3 px-4">{row.pct_puja_clicks}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 font-medium">
+                      <td className="py-3 px-4">Total</td>
+                      <td className="text-right py-3 px-4">
+                        {dailyData.reduce((sum, row) => sum + row.unique_visitors, 0)}
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {dailyData.length > 0
+                          ? (dailyData.reduce((sum, row) => sum + row.pct_calculate_clicked, 0) / dailyData.length).toFixed(2)
+                          : 0}% avg
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {dailyData.length > 0
+                          ? (dailyData.reduce((sum, row) => sum + row.pct_calculations_completed, 0) / dailyData.length).toFixed(2)
+                          : 0}% avg
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {dailyData.length > 0
+                          ? (dailyData.reduce((sum, row) => sum + row.pct_puja_clicks, 0) / dailyData.length).toFixed(2)
+                          : 0}% avg
                       </td>
                     </tr>
                   </tfoot>

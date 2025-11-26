@@ -89,25 +89,19 @@ const AnalyticsDashboard = () => {
 
   const loadTodayISTData = async () => {
     try {
-      // Get current time in IST (UTC+5:30)
-      const nowUtc = new Date();
-      const nowIst = new Date(nowUtc.getTime() + (5.5 * 60 * 60 * 1000));
-      
-      // Calculate start of today in IST
-      const startOfDayIst = new Date(nowIst.getFullYear(), nowIst.getMonth(), nowIst.getDate());
-      
-      // Convert back to UTC for database query
-      const startOfDayUtc = new Date(startOfDayIst.getTime() - (5.5 * 60 * 60 * 1000));
-      
+      // Use browser local time as IST reference (dashboard is viewed in IST)
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
       const { data: analyticsData, error } = await supabase
         .from('analytics_events')
         .select('*')
-        .gte('created_at', startOfDayUtc.toISOString());
+        .gte('created_at', startOfDay.toISOString())
+        .lte('created_at', now.toISOString());
 
       console.log('AnalyticsDashboard: fetched today IST analytics_events', {
-        startOfDayUtc: startOfDayUtc.toISOString(),
-        startOfDayIst: startOfDayIst.toISOString(),
-        nowIst: nowIst.toISOString(),
+        startOfDay: startOfDay.toISOString(),
+        now: now.toISOString(),
         count: analyticsData?.length ?? 0,
         error,
       });
@@ -122,7 +116,7 @@ const AnalyticsDashboard = () => {
         return;
       }
 
-      // Process data by IST hour
+      // Process data by local (IST) hour
       const hourlyMap = new Map<number, {
         visitors: Set<string>;
         calculateClicked: Set<string>;
@@ -130,14 +124,12 @@ const AnalyticsDashboard = () => {
         failed: Set<string>;
       }>();
 
-      analyticsData.forEach(event => {
-        // Convert to IST (UTC+5:30)
-        const utcDate = new Date(event.created_at);
-        const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+      analyticsData.forEach((event) => {
+        const istDate = new Date(event.created_at);
         const hour = istDate.getHours();
-        
-        // Only include if hour is not in the future
-        if (istDate > nowIst) return;
+
+        // Skip any future events just in case
+        if (istDate > now) return;
 
         if (!hourlyMap.has(hour)) {
           hourlyMap.set(hour, {

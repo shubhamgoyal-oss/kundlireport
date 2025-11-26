@@ -434,38 +434,141 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                     </div>
                   )}
 
-                  {/* Other Doshas Box */}
-                  {(() => {
-                    const otherDoshas = [];
-                    if (isDoshaPresent(summary.vishDaridra)) otherDoshas.push(isHindi ? 'विष/दारिद्र्य योग' : 'Vish/Daridra Yoga');
-                    if (isDoshaPresent(summary.grahan)) otherDoshas.push(isHindi ? 'ग्रहण दोष' : 'Grahan Dosha');
-                    if (isDoshaPresent(summary.shrapit)) otherDoshas.push(isHindi ? 'श्रापित दोष' : 'Shrapit Dosha');
-                    if (isDoshaPresent(summary.guruChandal)) otherDoshas.push(isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha');
-                    if (isDoshaPresent(summary.punarphoo)) otherDoshas.push(isHindi ? 'पुनर्फू दोष' : 'Punarphoo Dosha');
-                    if (isDoshaPresent(summary.kemadruma)) otherDoshas.push(isHindi ? 'केमद्रुम योग' : 'Kemadruma Yoga');
-                    if (isDoshaPresent(summary.gandmool)) otherDoshas.push(isHindi ? 'गंडमूल दोष' : 'Gandmool Dosha');
-                    if (isDoshaPresent(summary.kalathra)) otherDoshas.push(isHindi ? 'कलत्र दोष' : 'Kalathra Dosha');
-                    if (isDoshaPresent(summary.ketuNaga)) otherDoshas.push(isHindi ? 'केतु नाग दोष' : 'Ketu Naga Dosha');
-
-                    if (otherDoshas.length > 0) {
-                      return (
-                        <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                          <div className="p-3">
-                            <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                              <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                              {isHindi ? 'अन्य दोष' : 'Other Doshas'}
-                            </h4>
-                            <div className="p-2 rounded-md break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>
-                                {otherDoshas.join(', ')}
-                              </p>
-                            </div>
-                          </div>
+                  {/* Other Doshas - Individual Boxes */}
+                  {isDoshaPresent(summary.vishDaridra) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.vishDaridra.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.vishDaridra.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.vishDaridra.impact')}</p>
                         </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.grahan) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.rahuKetu.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.rahuKetu.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.rahuKetu.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.shrapit) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.shrapit.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.shrapit.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.shrapit.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.guruChandal) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.guruChandal.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.guruChandal.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.guruChandal.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.punarphoo) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.punarphoo.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.punarphoo.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.punarphoo.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.kemadruma) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.kemadruma.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kemadruma.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kemadruma.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.gandmool) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.gandmool.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.gandmool.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.gandmool.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.kalathra) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.kalathra.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kalathra.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kalathra.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isDoshaPresent(summary.ketuNaga) && (
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.otherDoshas.ketuNaga.name')}
+                        </h4>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.ketuNaga.whatItIs')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.ketuNaga.impact')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
 

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import AstrologyChatbot from '@/components/AstrologyChatbot';
 import { supabase } from '@/integrations/supabase/client';
+import { CallbackFloater } from '@/components/CallbackFloater';
 
 interface DoshaResultsProps {
   summary: {
@@ -931,6 +932,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
           </div>
         </CardContent>
       </Card>
+      
+      {/* Callback Floater - appears after calculation */}
+      <CallbackFloater calculationId={calculationId} />
     </div>
   );
 };

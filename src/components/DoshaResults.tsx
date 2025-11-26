@@ -239,15 +239,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
                 <div className="space-y-4 mb-6">
                   {/* Mangal Dosha Box */}
                   {(isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) && (
-                    <div className="rounded-lg overflow-hidden animate-ambulance-blink relative">
-                      <div className="p-4 relative z-10" style={{ backgroundColor: 'hsl(var(--danger-bg))' }}>
-                        <h4 className="font-bold text-lg mb-3 flex items-center gap-2" style={{ color: 'hsl(0 100% 40%)' }}>
-                          <Flame className="w-5 h-5 animate-pulse" style={{ color: 'hsl(0 100% 50%)' }} />
-                          🚨 {t('doshaResults.mangal.name')}
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Flame className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.mangal.name')}
                         </h4>
-                        <div className="p-3 rounded-md space-y-2 break-words bg-white/80">
-                          <p className="text-sm italic font-medium" style={{ color: 'hsl(0 84.2% 30%)' }}>{t('doshaResults.mangal.description')}</p>
-                          <p className="text-sm font-semibold" style={{ color: 'hsl(0 100% 35%)' }}>{t('doshaResults.mangal.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -255,15 +255,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Kaal Sarp Dosha Box */}
                   {isDoshaPresent(summary.kaalSarp) && (
-                    <div className="rounded-lg overflow-hidden animate-ambulance-blink relative">
-                      <div className="p-4 relative z-10" style={{ backgroundColor: 'hsl(var(--danger-bg))' }}>
-                        <h4 className="font-bold text-lg mb-3 flex items-center gap-2" style={{ color: 'hsl(0 100% 40%)' }}>
-                          <Waves className="w-5 h-5 animate-pulse" style={{ color: 'hsl(0 100% 50%)' }} />
-                          🚨 {t('doshaResults.kaalSarp.name')}
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Waves className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.kaalSarp.name')}
                         </h4>
-                        <div className="p-3 rounded-md space-y-2 break-words bg-white/80">
-                          <p className="text-sm italic font-medium" style={{ color: 'hsl(0 84.2% 30%)' }}>{t('doshaResults.kaalSarp.description')}</p>
-                          <p className="text-sm font-semibold" style={{ color: 'hsl(0 100% 35%)' }}>{t('doshaResults.kaalSarp.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -271,15 +271,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Pitra Dosha Box */}
                   {isDoshaPresent(summary.pitra) && (
-                    <div className="rounded-lg overflow-hidden animate-ambulance-blink relative">
-                      <div className="p-4 relative z-10" style={{ backgroundColor: 'hsl(var(--danger-bg))' }}>
-                        <h4 className="font-bold text-lg mb-3 flex items-center gap-2" style={{ color: 'hsl(0 100% 40%)' }}>
-                          <Users className="w-5 h-5 animate-pulse" style={{ color: 'hsl(0 100% 50%)' }} />
-                          🚨 {t('doshaResults.pitra.name')}
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Users className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.pitra.name')}
                         </h4>
-                        <div className="p-3 rounded-md space-y-2 break-words bg-white/80">
-                          <p className="text-sm italic font-medium" style={{ color: 'hsl(0 84.2% 30%)' }}>{t('doshaResults.pitra.description')}</p>
-                          <p className="text-sm font-semibold" style={{ color: 'hsl(0 100% 35%)' }}>{t('doshaResults.pitra.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.impact')}</p>
                         </div>
                       </div>
                     </div>
@@ -287,15 +287,15 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                   {/* Shani Sade Sati Box */}
                   {isDoshaPresent(summary.shaniSadeSati) && (
-                    <div className="rounded-lg overflow-hidden animate-ambulance-blink relative">
-                      <div className="p-4 relative z-10" style={{ backgroundColor: 'hsl(var(--danger-bg))' }}>
-                        <h4 className="font-bold text-lg mb-3 flex items-center gap-2" style={{ color: 'hsl(0 100% 40%)' }}>
-                          <Moon className="w-5 h-5 animate-pulse" style={{ color: 'hsl(0 100% 50%)' }} />
-                          🚨 {t('doshaResults.sadeSati.name')}
+                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
+                      <div className="p-3">
+                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                          <Moon className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
+                          {t('doshaResults.sadeSati.name')}
                         </h4>
-                        <div className="p-3 rounded-md space-y-2 break-words bg-white/80">
-                          <p className="text-sm italic font-medium" style={{ color: 'hsl(0 84.2% 30%)' }}>{t('doshaResults.sadeSati.description')}</p>
-                          <p className="text-sm font-semibold" style={{ color: 'hsl(0 100% 35%)' }}>{t('doshaResults.sadeSati.impact')}</p>
+                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.description')}</p>
+                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.impact')}</p>
                         </div>
                       </div>
                     </div>

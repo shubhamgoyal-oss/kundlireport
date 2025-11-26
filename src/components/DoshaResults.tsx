@@ -48,7 +48,7 @@ interface DoshaResultsProps {
   calculationId?: string | null;
 }
 
-const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) => {
+export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
@@ -913,5 +913,3 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
     </div>
   );
 };
-
-export default DoshaResults;

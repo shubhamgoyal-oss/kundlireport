@@ -5,16 +5,23 @@ import type { DoshaResult } from "./seer-doshas.ts";
 export function getMangalExplanationSeer(mangal: DoshaResult): string {
   if (mangal.status === "absent") {
     if (mangal.cancellations.length > 0) {
-      return "Mangal Dosha was initially detected but has been canceled by protective planetary configurations. These protective factors significantly reduce or eliminate negative effects.";
+      const placementInfo = mangal.placements.length > 0 ? ` ${mangal.placements.join(". ")}.` : "";
+      const cancellationInfo = mangal.cancellations.length > 0 ? ` Cancellations: ${mangal.cancellations.join(", ")}.` : "";
+      return `Mangal Dosha was initially detected but has been canceled by protective planetary configurations.${placementInfo}${cancellationInfo} These protective factors significantly reduce or eliminate negative effects.`;
     }
-    return "No Mangal Dosha detected in your chart. Mars is well-placed and does not occupy houses 1, 4, 7, or 8 from your Ascendant (Lagna), which are the traditional dosha-causing positions.";
+    const placementInfo = mangal.placements.length > 0 ? ` ${mangal.placements.join(". ")}.` : "";
+    return `No Mangal Dosha detected in your chart.${placementInfo} Mars is well-placed and does not occupy trigger houses (1, 2, 4, 7, 8, 12) from your Ascendant (Lagna), Moon, or Venus.`;
   }
   
   if (mangal.status === "partial") {
-    return "Mangal Dosha is partial in your chart. Only secondary indicators are present without the primary Lagna trigger. This has limited impact and may only manifest as minor impatience or assertiveness.";
+    const placementInfo = mangal.placements.length > 0 ? ` ${mangal.placements.join(". ")}.` : "";
+    return `Mangal Dosha is partial in your chart.${placementInfo} Only secondary indicators are present without the primary Lagna trigger. This has limited impact and may only manifest as minor impatience or assertiveness.`;
   }
   
-  let exp = `Mangal Dosha is present in your chart with ${mangal.severity} intensity. Mars occupies one of the sensitive houses from the Ascendant, which can create challenges in marital harmony and partnerships. `;
+  const placementInfo = mangal.placements.length > 0 ? ` Planetary positions: ${mangal.placements.join("; ")}.` : "";
+  const triggerInfo = mangal.triggeredBy.length > 0 ? ` Triggers: ${mangal.triggeredBy.join(", ")}.` : "";
+  
+  let exp = `Mangal Dosha is present in your chart with ${mangal.severity} intensity.${placementInfo}${triggerInfo} Mars occupies one of the sensitive houses from the Ascendant, Moon, or Venus, which can create challenges in marital harmony and partnerships. `;
   
   if (mangal.severity === "strong") {
     exp += "The strong placement of Mars in this position indicates intense will, determination, and assertiveness. While these are positive qualities, they require conscious awareness and balance, especially in close relationships where compromise is essential. ";
@@ -25,7 +32,7 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
   }
   
   if (mangal.mitigations.length > 0) {
-    exp += "Fortunately, mitigating factors are present in your chart. These positive planetary influences help soften and balance Mars's energy. ";
+    exp += `Mitigating factors: ${mangal.mitigations.join(", ")}. These positive planetary influences help soften and balance Mars's energy. `;
   }
   
   return exp;
@@ -41,14 +48,18 @@ export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
 
 export function getPitraExplanationSeer(pitra: DoshaResult): string {
   if (pitra.status === "absent") {
-    return "No Pitra Dosha indicators detected in your chart. The 9th house and Sun are well-placed without affliction from Rahu or Ketu.";
+    const placementInfo = pitra.placements.length > 0 ? ` Planetary positions: ${pitra.placements.join("; ")}.` : "";
+    return `No Pitra Dosha indicators detected in your chart.${placementInfo} The 9th house and Sun are well-placed without affliction from Rahu or Ketu.`;
   }
   
   if (pitra.status === "partial") {
-    return "Pitra Dosha shows partial indicators. The 9th house or Sun has some affliction from Rahu or Ketu, though not at full strength.";
+    const placementInfo = pitra.placements.length > 0 ? ` Planetary positions: ${pitra.placements.join("; ")}.` : "";
+    return `Pitra Dosha shows partial indicators.${placementInfo} The 9th house or Sun has some affliction from Rahu or Ketu, though not at full strength.`;
   }
   
-  return "Pitra Dosha is present in your chart. The affliction involves the 9th house (ancestors) or Sun (paternal lineage) being influenced by Rahu or Ketu.";
+  const placementInfo = pitra.placements.length > 0 ? ` Planetary positions: ${pitra.placements.join("; ")}.` : "";
+  const triggerInfo = pitra.triggeredBy.length > 0 ? ` Triggers: ${pitra.triggeredBy.join(", ")}.` : "";
+  return `Pitra Dosha is present in your chart.${placementInfo}${triggerInfo} The affliction involves the 9th house (ancestors) or Sun (paternal lineage) being influenced by Rahu or Ketu.`;
 }
 
 export function getPitraRemediesSeer(pitra: DoshaResult): string[] {
@@ -61,14 +72,19 @@ export function getPitraRemediesSeer(pitra: DoshaResult): string[] {
 
 export function getShaniExplanationSeer(shani: DoshaResult): string {
   if (shani.status === "absent") {
-    return "Sade Sati (Shani Dosha) is not currently active in your chart. Saturn is not transiting the signs immediately before, on, or after your natal Moon sign. Your Moon is free from Saturn's testing influence at this time.";
+    const placementInfo = shani.placements.length > 0 ? ` Planetary positions: ${shani.placements.join("; ")}.` : "";
+    return `Sade Sati (Shani Dosha) is not currently active in your chart.${placementInfo} Saturn is not transiting the signs immediately before, on, or after your natal Moon sign. Your Moon is free from Saturn's testing influence at this time.`;
   }
   
   if (shani.status === "partial") {
-    return "Sade Sati shows partial indicators in your chart. While not in full force, this period still calls for patience and discipline in your endeavors.";
+    const placementInfo = shani.placements.length > 0 ? ` Planetary positions: ${shani.placements.join("; ")}.` : "";
+    return `Sade Sati shows partial indicators in your chart.${placementInfo} While not in full force, this period still calls for patience and discipline in your endeavors.`;
   }
   
-  let exp = "Sade Sati is currently active in your chart. Saturn is transiting through or near your natal Moon sign, creating a 7.5-year period of testing and transformation. ";
+  const placementInfo = shani.placements.length > 0 ? ` Planetary positions: ${shani.placements.join("; ")}.` : "";
+  const triggerInfo = shani.triggeredBy.length > 0 ? ` Current phase: ${shani.triggeredBy.join(", ")}.` : "";
+  
+  let exp = `Sade Sati is currently active in your chart.${placementInfo}${triggerInfo} Saturn is transiting through or near your natal Moon sign, creating a 7.5-year period of testing and transformation. `;
   
   if (shani.severity === "strong") {
     exp += "This is the peak phase (Saturn directly on your Moon), which brings maximum intensity. You may experience significant challenges related to discipline, responsibilities, delays, and karmic lessons. This is a time for deep introspection, patience, and building strong foundations through persistent effort. ";
@@ -79,7 +95,7 @@ export function getShaniExplanationSeer(shani: DoshaResult): string {
   }
   
   if (shani.mitigations.length > 0) {
-    exp += "Fortunately, positive planetary factors are present that help reduce the intensity. These beneficial influences provide support during this challenging period. ";
+    exp += `Mitigating factors: ${shani.mitigations.join(", ")}. These beneficial influences provide support during this challenging period. `;
   }
   
   exp += "Remember that Sade Sati ultimately brings maturity, wisdom, and lasting rewards for those who face its challenges with patience and integrity.";
@@ -97,10 +113,13 @@ export function getShaniRemediesSeer(shani: DoshaResult): string[] {
 
 export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   if (kaalSarp.status === "absent") {
-    return "No Kaal Sarp Dosha detected in your chart. Your planets are well-distributed on both sides of the Rahu-Ketu axis, allowing their energies to flow freely without being trapped between the lunar nodes.";
+    const placementInfo = kaalSarp.placements.length > 0 ? ` Planetary distribution: ${kaalSarp.placements.join("; ")}.` : "";
+    return `No Kaal Sarp Dosha detected in your chart.${placementInfo} Your planets are well-distributed on both sides of the Rahu-Ketu axis, allowing their energies to flow freely without being trapped between the lunar nodes.`;
   }
   
-  let exp = "Kaal Sarp Dosha is present in your birth chart. All seven classical planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between Rahu (North Node) and Ketu (South Node), creating a specific karmic pattern. ";
+  const placementInfo = kaalSarp.placements.length > 0 ? ` Planetary positions: ${kaalSarp.placements.join("; ")}.` : "";
+  
+  let exp = `Kaal Sarp Dosha is present in your birth chart.${placementInfo} All seven classical planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between Rahu (North Node) and Ketu (South Node), creating a specific karmic pattern. `;
   
   // Extract type from placements
   const typeLine = kaalSarp.placements.find(p => p.includes("Type:"));

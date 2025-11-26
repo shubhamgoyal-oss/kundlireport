@@ -473,7 +473,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                 {(() => {
                   // Define major doshas in priority order
                   const majorDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani'; label: string }> = [];
-                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha'; label: string }> = [];
+                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'; label: string }> = [];
                   
                   // Check major doshas first (exclude nullified)
                   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
@@ -489,9 +489,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                     majorDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
                   }
                   
-                  // Check other doshas
+                  // Check other doshas in priority order
                   if (summary.grahan && isDoshaPresent(summary.grahan)) {
-                    otherDoshas.push({ type: 'rahu', label: isHindi ? 'राहु दोष' : 'Rahu Dosha' });
+                    otherDoshas.push({ type: 'rahu', label: isHindi ? 'ग्रहण दोष' : 'Grahan Dosha' });
                   }
                   if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
                     otherDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
@@ -499,26 +499,30 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
                     otherDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
                   }
-                  
-                  // Check remaining doshas for Navagraha Shanti Puja
-                  const remainingDoshasPresent = [
-                    isDoshaPresent(summary.vishDaridra),
-                    isDoshaPresent(summary.punarphoo),
-                    isDoshaPresent(summary.kemadruma),
-                    isDoshaPresent(summary.gandmool),
-                    isDoshaPresent(summary.kalathra),
-                    isDoshaPresent(summary.ketuNaga)
-                  ].some(present => present);
-                  
-                  if (remainingDoshasPresent) {
-                    otherDoshas.push({ type: 'navagraha', label: isHindi ? 'अन्य दोष' : 'Other Doshas' });
+                  if (isDoshaPresent(summary.vishDaridra)) {
+                    otherDoshas.push({ type: 'vishDaridra', label: isHindi ? 'विष/दारिद्र्य योग' : 'Vish/Daridra Yoga' });
+                  }
+                  if (isDoshaPresent(summary.punarphoo)) {
+                    otherDoshas.push({ type: 'punarphoo', label: isHindi ? 'पुनर्फू दोष' : 'Punarphoo Dosha' });
+                  }
+                  if (isDoshaPresent(summary.kemadruma)) {
+                    otherDoshas.push({ type: 'kemadruma', label: isHindi ? 'केमद्रुम योग' : 'Kemadruma Yoga' });
+                  }
+                  if (isDoshaPresent(summary.gandmool)) {
+                    otherDoshas.push({ type: 'gandmool', label: isHindi ? 'गंडमूल दोष' : 'Gandmool Dosha' });
+                  }
+                  if (isDoshaPresent(summary.kalathra)) {
+                    otherDoshas.push({ type: 'kalathra', label: isHindi ? 'कलत्र दोष' : 'Kalathra Dosha' });
+                  }
+                  if (isDoshaPresent(summary.ketuNaga)) {
+                    otherDoshas.push({ type: 'ketuNaga', label: isHindi ? 'केतु नाग दोष' : 'Ketu Naga Dosha' });
                   }
 
-                  // Combine in priority order
+                  // Combine in priority order - major doshas first, then other doshas
                   const allActiveDoshas = [...majorDoshas, ...otherDoshas];
                   
-                  // Limit to top 4 doshas only
-                  const top4Doshas = allActiveDoshas.slice(0, 4);
+                  // Show at least 4 cards if 4+ doshas are present, otherwise show all
+                  const top4Doshas = allActiveDoshas.length >= 4 ? allActiveDoshas.slice(0, 4) : allActiveDoshas;
                   
                   if (top4Doshas.length === 0) return null;
 
@@ -570,6 +574,14 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                               pitra: ['pitru', 'pitra', 'पितृ'],
                               shani: ['shani sade sati', 'शनि साढ़े साती'],
                               'guru-chandal': ['guru chandal', 'गुरु चांडाल'],
+                              rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
+                              shrapit: ['shrapit', 'श्रापित'],
+                              vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य'],
+                              punarphoo: ['punarphoo', 'पुनर्फू'],
+                              kemadruma: ['kemadruma', 'केमद्रुम'],
+                              gandmool: ['gandmool', 'गंडमूल'],
+                              kalathra: ['kalathra', 'कलत्र'],
+                              ketuNaga: ['ketu', 'naga', 'केतु', 'नाग'],
                               navagraha: ['navagraha', 'नवग्रह']
                             };
                             
@@ -577,8 +589,13 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                               pujaToShow = getPrioritizedPuja(filtered, 'pitra');
                             } else if (dosha.type === 'shani') {
                               pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                            } else if (dosha.type === 'guru-chandal' || dosha.type === 'navagraha') {
+                            } else if (dosha.type === 'guru-chandal') {
                               pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                            } else if (dosha.type === 'vishDaridra' || dosha.type === 'punarphoo' || 
+                                       dosha.type === 'kemadruma' || dosha.type === 'gandmool' || 
+                                       dosha.type === 'kalathra' || dosha.type === 'ketuNaga') {
+                              // For specific other doshas, try Navagraha Shanti Puja
+                              pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
                             } else {
                               // Use getUpcomingPujas with priority keywords for other doshas
                               const keywords = priorityKeywordsMap[dosha.type] || [];

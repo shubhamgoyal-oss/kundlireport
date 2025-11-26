@@ -265,7 +265,7 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
  */
 export function filterPujasByDosha(
   pujas: SriMandirPuja[], 
-  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha'
+  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'
 ): SriMandirPuja[] {
   const keywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
@@ -274,10 +274,16 @@ export function filterPujasByDosha(
     mangal: ['mangal', 'kuja', 'मंगल'],
     sadeSati: ['shani', 'saturn', 'शनि'],
     shani: ['shani', 'saturn', 'शनि'],
-    rahu: ['rahu', 'राहु'],
+    rahu: ['rahu', 'राहु', 'grahan', 'ग्रहण'],
     shrapit: ['shrapit', 'श्रापित'],
     'guru-chandal': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
+    vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य', 'navagraha', 'नवग्रह'],
+    punarphoo: ['punarphoo', 'पुनर्फू', 'navagraha', 'नवग्रह'],
+    kemadruma: ['kemadruma', 'केमद्रुम', 'navagraha', 'नवग्रह'],
+    gandmool: ['gandmool', 'गंडमूल', 'navagraha', 'नवग्रह'],
+    kalathra: ['kalathra', 'कलत्र', 'navagraha', 'नवग्रह'],
+    ketuNaga: ['ketu', 'naga', 'केतु', 'नाग', 'navagraha', 'नवग्रह'],
   };
 
   const searchTerms = keywords[doshaType];

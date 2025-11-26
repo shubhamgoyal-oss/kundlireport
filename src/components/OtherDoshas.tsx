@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
@@ -128,6 +129,37 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t, i18n } = useTranslation();
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+  const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const translateExplanations = async () => {
+      if (!isHindi) return;
+
+      const translations: Record<string, string> = {};
+      const doshaKeys = Object.keys(doshaFlags) as Array<keyof typeof doshaFlags>;
+      
+      for (const key of doshaKeys) {
+        const flag = doshaFlags[key];
+        if (flag?.explanation) {
+          try {
+            const { data, error } = await supabase.functions.invoke('translate-dosha', {
+              body: { text: flag.explanation }
+            });
+            
+            if (error) throw error;
+            translations[key] = data.translatedText;
+          } catch (error) {
+            console.error(`Translation error for ${key}:`, error);
+            translations[key] = flag.explanation;
+          }
+        }
+      }
+      
+      setTranslatedExplanations(translations);
+    };
+
+    translateExplanations();
+  }, [isHindi, doshaFlags]);
 
   const translatePlacement = (line: string) => {
     if (!isHindi) return line;
@@ -258,7 +290,9 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                 <Info className="w-4 h-4" />
                 {t('doshaResults.explanation')}
               </h5>
-              <p className="text-sm text-muted-foreground leading-relaxed">{isHindi ? translatedDosha.impact : statusFlag.explanation}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {isHindi ? (translatedExplanations[key] || statusFlag.explanation) : statusFlag.explanation}
+              </p>
             </div>
           )}
 

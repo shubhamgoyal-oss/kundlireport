@@ -325,7 +325,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
       <Card className="spiritual-glow border-2 border-primary/20">
-        <CardHeader className="border-b border-border">
+        <CardHeader>
           <CardTitle 
             ref={statusMessageRef}
             className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? 'text-primary' : 'gradient-spiritual bg-clip-text text-transparent'}`}
@@ -337,7 +337,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
           </CardTitle>
         </CardHeader>
         
-        <CardContent className={`space-y-4 ${hasAnyDosha ? 'pt-6' : ''}`}>
+        <CardContent className={`space-y-2 ${hasAnyDosha ? 'pt-2' : ''}`}>
           {/* Check if any doshas are present */}
           {(() => {
             
@@ -499,9 +499,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   const isOtherDosha = (type: string) => ['vishDaridra', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'ketuNaga'].includes(type);
 
                   return (
-                    <div className="space-y-3 mt-3">
+                    <div className="space-y-2 mt-2">
                       {/* Simple Ribbon Cards - Max 3 with just dosha names */}
-                      <div className="grid grid-cols-1 gap-2">
+                      <div className="grid grid-cols-1 gap-1.5">
                         {allActiveDoshas.map((dosha, index) => (
                           <div 
                             key={dosha.type} 
@@ -516,7 +516,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
                       {/* Puja Remedies Section - Separate from dosha ribbons */}
                       {!isLoadingPujas && (
-                        <div className="mt-4 space-y-4">
+                        <div className="mt-3 space-y-3">
                           <div className="text-center space-y-3">
                             <h3 className="text-xl font-semibold">
                               {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}

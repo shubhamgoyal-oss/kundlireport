@@ -336,19 +336,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
             }
           </CardTitle>
           {hasAnyDosha && (
-            <div className="mt-4 space-y-2 text-center">
+            <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
                 {isHindi 
                   ? 'विस्तृत विवरण और पूजा उपाय नीचे दिए गए हैं'
                   : 'Detailed explanation along with puja remedies below'}
               </p>
-              <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
-                <p className="text-sm font-medium">
-                  {isHindi 
-                    ? '🪔 वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
-                    : '🪔 Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
-                </p>
-              </div>
             </div>
           )}
         </CardHeader>
@@ -533,10 +526,17 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {/* Puja Remedies Section - Separate from dosha ribbons */}
                       {!isLoadingPujas && (
                         <div className="mt-4 space-y-4">
-                          <div className="text-center">
-                            <h3 className="text-xl font-semibold mb-2">
+                          <div className="text-center space-y-3">
+                            <h3 className="text-xl font-semibold">
                               {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
                             </h3>
+                            <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
+                              <p className="text-sm font-medium">
+                                {isHindi 
+                                  ? '🪔 वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
+                                  : '🪔 Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
+                              </p>
+                            </div>
                             <p className="text-sm text-muted-foreground">
                               {isHindi ? 'आपके दोषों के लिए अनुशंसित पूजा' : 'Recommended pujas for your doshas'}
                             </p>

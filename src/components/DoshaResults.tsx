@@ -554,7 +554,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                               <CardHeader className="bg-accent/5">
                                 <div>
                                   <CardTitle className="text-lg">{dosha.label}</CardTitle>
-                                  <CardDescription className="text-xs mt-1">{dosha.description}</CardDescription>
+                                  <CardDescription className="text-sm mt-1">{dosha.description}</CardDescription>
                                 </div>
                               </CardHeader>
                               <CardContent className="pt-4 space-y-4">

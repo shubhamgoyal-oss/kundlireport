@@ -64,14 +64,14 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
           
           {/* Temple Name */}
           {puja.temple_name && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               {displayTempleName}
             </p>
           )}
 
           {/* Date */}
           {puja.schedule_date_ist && (
-            <p className="text-xs font-medium text-foreground">
+            <p className="text-sm font-medium text-foreground">
               {formattedDate}
             </p>
           )}

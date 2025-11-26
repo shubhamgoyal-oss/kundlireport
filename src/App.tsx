@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
+import ExperimentAdmin from "./pages/ExperimentAdmin";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
 
@@ -26,6 +27,9 @@ const App = () => (
             <Route index element={<Index />} />
             <Route path="category/:category" element={<CategoryPujas />} />
           </Route>
+          
+          {/* Admin routes */}
+          <Route path="/admin/experiments" element={<ExperimentAdmin />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

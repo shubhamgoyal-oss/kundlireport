@@ -345,8 +345,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
               <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
                 <p className="text-sm font-medium">
                   {isHindi 
-                    ? '🪔 पूजा क्यों? : वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
-                    : '🪔 Why Pujas? : Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
+                    ? '🪔 वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
+                    : '🪔 Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
                 </p>
               </div>
             </div>

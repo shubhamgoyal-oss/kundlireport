@@ -285,7 +285,11 @@ export function filterPujasByDosha(
   
   return pujas.filter(puja => {
     const title = puja.pooja_title.toLowerCase();
-    return searchTerms.some(term => title.includes(term.toLowerCase()));
+    const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+    return searchTerms.some(term => {
+      const lowerTerm = term.toLowerCase();
+      return title.includes(lowerTerm) || englishTitle.includes(lowerTerm);
+    });
   });
 }
 

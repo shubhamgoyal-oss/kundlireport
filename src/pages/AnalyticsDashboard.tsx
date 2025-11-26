@@ -18,6 +18,19 @@ interface HourlyFunnelData {
   puja_conversion_pct: number;
 }
 
+interface VariantFunnelData {
+  variant: string;
+  page_views: number;
+  form_interactions: number;
+  calculate_clicked: number;
+  calculations_completed: number;
+  puja_clicks: number;
+  form_conversion_pct: number;
+  click_conversion_pct: number;
+  calc_completion_pct: number;
+  puja_conversion_pct: number;
+}
+
 interface ISTHourlyData {
   hour: number;
   unique_visitors: number;
@@ -39,12 +52,14 @@ const AnalyticsDashboard = () => {
   const [data, setData] = useState<HourlyFunnelData[]>([]);
   const [istData, setIstData] = useState<ISTHourlyData[]>([]);
   const [dailyData, setDailyData] = useState<DailySummaryRow[]>([]);
+  const [variantData, setVariantData] = useState<VariantFunnelData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
 
   useEffect(() => {
     loadFunnelData();
     loadTodayISTData();
+    loadVariantData();
   }, [timeRange]);
 
   const loadFunnelData = async () => {
@@ -289,6 +304,112 @@ const AnalyticsDashboard = () => {
     });
 
     return rows.sort((a, b) => b.unique_visitors - a.unique_visitors);
+  };
+
+  const loadVariantData = async () => {
+    try {
+      const daysBack = timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : 30;
+      const startDate = new Date(Date.now() - daysBack * 86400000).toISOString();
+
+      // Fetch analytics events with variant assignments for puja_carousel_test
+      const { data: analyticsData, error } = await supabase
+        .from('analytics_events')
+        .select(`
+          *,
+          visitor_id
+        `)
+        .gte('created_at', startDate);
+
+      if (error) {
+        console.error('Error loading variant data:', error);
+        return;
+      }
+
+      // Fetch variant assignments for puja_carousel_test experiment
+      const { data: assignments, error: assignmentError } = await supabase
+        .from('variant_assignments')
+        .select('visitor_id, variant_name, experiment_id')
+        .gte('assigned_at', startDate);
+
+      if (assignmentError) {
+        console.error('Error loading variant assignments:', assignmentError);
+        return;
+      }
+
+      // Get experiment ID for puja_carousel_test
+      const { data: experiments, error: expError } = await supabase
+        .from('experiments')
+        .select('id, name')
+        .eq('name', 'puja_carousel_test')
+        .single();
+
+      if (expError || !experiments) {
+        console.log('No puja_carousel_test experiment found');
+        return;
+      }
+
+      // Create a map of visitor_id to variant
+      const visitorVariantMap = new Map<string, string>();
+      assignments
+        ?.filter(a => a.experiment_id === experiments.id)
+        .forEach(assignment => {
+          visitorVariantMap.set(assignment.visitor_id, assignment.variant_name);
+        });
+
+      // Process data by variant
+      const variantMap = new Map<string, {
+        visitors: Set<string>;
+        page_views: Set<string>;
+        form_interactions: Set<string>;
+        calculate_clicked: Set<string>;
+        calculations_completed: Set<string>;
+        puja_clicks: Set<string>;
+      }>();
+
+      analyticsData?.forEach((event) => {
+        const variant = visitorVariantMap.get(event.visitor_id) || 'unassigned';
+        
+        if (!variantMap.has(variant)) {
+          variantMap.set(variant, {
+            visitors: new Set(),
+            page_views: new Set(),
+            form_interactions: new Set(),
+            calculate_clicked: new Set(),
+            calculations_completed: new Set(),
+            puja_clicks: new Set(),
+          });
+        }
+
+        const varData = variantMap.get(variant)!;
+        varData.visitors.add(event.visitor_id);
+
+        if (event.event_name === 'page_view') varData.page_views.add(event.visitor_id);
+        if (event.event_name === 'form_field_filled') varData.form_interactions.add(event.visitor_id);
+        if (event.event_name === 'calculate_dosha_clicked') varData.calculate_clicked.add(event.visitor_id);
+        if (event.event_name === 'dosha_calculate') varData.calculations_completed.add(event.visitor_id);
+        if (event.event_name === 'srimandir_puja_click') varData.puja_clicks.add(event.visitor_id);
+      });
+
+      const processed: VariantFunnelData[] = Array.from(variantMap.entries())
+        .filter(([variant]) => variant !== 'unassigned')
+        .map(([variant, data]) => ({
+          variant,
+          page_views: data.page_views.size,
+          form_interactions: data.form_interactions.size,
+          calculate_clicked: data.calculate_clicked.size,
+          calculations_completed: data.calculations_completed.size,
+          puja_clicks: data.puja_clicks.size,
+          form_conversion_pct: data.page_views.size > 0 ? (data.form_interactions.size / data.page_views.size * 100) : 0,
+          click_conversion_pct: data.form_interactions.size > 0 ? (data.calculate_clicked.size / data.form_interactions.size * 100) : 0,
+          calc_completion_pct: data.calculate_clicked.size > 0 ? (data.calculations_completed.size / data.calculate_clicked.size * 100) : 0,
+          puja_conversion_pct: data.calculations_completed.size > 0 ? (data.puja_clicks.size / data.calculations_completed.size * 100) : 0,
+        }))
+        .sort((a, b) => a.variant.localeCompare(b.variant));
+
+      setVariantData(processed);
+    } catch (err) {
+      console.error('Error loading variant funnel data:', err);
+    }
   };
 
   if (loading) {
@@ -599,6 +720,72 @@ const AnalyticsDashboard = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* A/B Test Variant Performance */}
+        {variantData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>A/B Test: Puja Display Variants</CardTitle>
+              <CardDescription>
+                Comparing Control (Static Cards) vs Carousel performance for the selected time period
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium">Variant</th>
+                      <th className="text-right py-3 px-4 font-medium">Page Views</th>
+                      <th className="text-right py-3 px-4 font-medium">Form Interactions</th>
+                      <th className="text-right py-3 px-4 font-medium">Calculate Clicked</th>
+                      <th className="text-right py-3 px-4 font-medium">Calculations Done</th>
+                      <th className="text-right py-3 px-4 font-medium">Puja Clicks</th>
+                      <th className="text-right py-3 px-4 font-medium">Puja CTR</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variantData.map((row) => (
+                      <tr key={row.variant} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-4 font-bold">
+                          {row.variant === 'control' ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-blue-500"></span>
+                              Control (Static Cards)
+                            </span>
+                          ) : row.variant === 'carousel' ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                              Carousel (Auto-Flip)
+                            </span>
+                          ) : (
+                            row.variant
+                          )}
+                        </td>
+                        <td className="text-right py-3 px-4">{row.page_views}</td>
+                        <td className="text-right py-3 px-4">{row.form_interactions}</td>
+                        <td className="text-right py-3 px-4">{row.calculate_clicked}</td>
+                        <td className="text-right py-3 px-4">{row.calculations_completed}</td>
+                        <td className="text-right py-3 px-4 font-bold text-primary">
+                          {row.puja_clicks}
+                        </td>
+                        <td className="text-right py-3 px-4 font-bold text-primary">
+                          {row.puja_conversion_pct.toFixed(2)}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 p-4 bg-accent/10 rounded-md border border-accent/30">
+                <p className="text-sm font-medium">
+                  💡 <strong>Puja CTR</strong> is the key metric: percentage of users who clicked a puja after seeing their dosha results.
+                  Higher CTR indicates better engagement with puja recommendations.
+                </p>
               </div>
             </CardContent>
           </Card>

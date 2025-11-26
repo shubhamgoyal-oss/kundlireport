@@ -89,11 +89,7 @@ const App = () => {
               />
               <Route
                 path="/admin/analytics"
-                element={
-                  <ProtectedRoute>
-                    <AnalyticsDashboard />
-                  </ProtectedRoute>
-                }
+                element={<AnalyticsDashboard />}
               />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

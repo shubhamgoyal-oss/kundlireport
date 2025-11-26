@@ -515,79 +515,94 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   const isOtherDosha = (type: string) => ['vishDaridra', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'ketuNaga'].includes(type);
 
                   return (
-                    <div className="space-y-6 mt-6">
-                      {isLoadingPujas ? (
-                        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                    <div className="space-y-4 mt-6">
+                      {/* Simple Ribbon Cards - Max 3 with just dosha names */}
+                      <div className="grid grid-cols-1 gap-3">
+                        {allActiveDoshas.map((dosha, index) => (
+                          <div 
+                            key={dosha.type} 
+                            className="bg-gradient-to-r from-primary/10 to-accent/10 border-l-4 border-primary px-4 py-3 rounded-md"
+                          >
+                            <p className="font-bold text-base text-foreground">
+                              {dosha.label}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Puja Remedies Section - Separate from dosha ribbons */}
+                      {!isLoadingPujas && (
+                        <div className="mt-8 space-y-4">
+                          <div className="text-center">
+                            <h3 className="text-xl font-semibold mb-2">
+                              {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {isHindi ? 'आपके दोषों के लिए अनुशंसित पूजा' : 'Recommended pujas for your doshas'}
+                            </p>
+                          </div>
+                          
+                          {allActiveDoshas.map((dosha) => {
+                            const filtered = filterPujasByDosha(pujas, dosha.type);
+                            
+                            // Get prioritized puja
+                            let pujaToShow: SriMandirPuja | null = null;
+                            
+                            if (dosha.type === 'pitra') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'pitra');
+                            } else if (dosha.type === 'shani') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'shani');
+                            } else if (dosha.type === 'guru-chandal') {
+                              pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                            } else if (isOtherDosha(dosha.type)) {
+                              pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
+                            } else {
+                              const priorityKeywordsMap: Record<string, string[]> = {
+                                mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
+                                'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
+                                rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
+                                shrapit: ['shrapit', 'श्रापित'],
+                              };
+                              const keywords = priorityKeywordsMap[dosha.type] || [];
+                              pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
+                            }
+                            
+                            if (!pujaToShow) return null;
+                            
+                            return (
+                              <div key={dosha.type} className="space-y-3">
+                                <h4 className="font-semibold text-base text-foreground">
+                                  {isHindi ? 'इसके लिए:' : 'For:'} {dosha.label}
+                                </h4>
+                                {isOtherDosha(dosha.type) && (
+                                  <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
+                                    <p className="text-xs text-muted-foreground italic">
+                                      {isHindi 
+                                        ? 'इस दोष के लिए अभी हमारे पास विशिष्ट पूजा उपलब्ध नहीं है, लेकिन समग्र कल्याण के लिए नवग्रह शांति पूजा करवाएं।'
+                                        : 'We don\'t have specific pujas for this dosha yet, but you can perform Navagraha Shanti Puja for overall well-being.'}
+                                    </p>
+                                  </div>
+                                )}
+                                <SriMandirPujaVerticalCard 
+                                  puja={pujaToShow} 
+                                  doshaType={dosha.type}
+                                  onBookClick={async () => {
+                                    await trackBookPujaClick(dosha.type);
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {isLoadingPujas && (
+                        <div className="flex flex-col items-center justify-center py-12 space-y-3 mt-8">
                           <Loader2 className="w-8 h-8 animate-spin text-primary" />
                           <p className="text-sm text-muted-foreground">
                             {isHindi ? 'उपाय लोड हो रहे हैं...' : 'Loading remedies...'}
                           </p>
                         </div>
-                      ) : (
-                        allActiveDoshas.map((dosha, index) => {
-                          const filtered = filterPujasByDosha(pujas, dosha.type);
-                          
-                          // Get prioritized puja
-                          let pujaToShow: SriMandirPuja | null = null;
-                          
-                          if (dosha.type === 'pitra') {
-                            pujaToShow = getPrioritizedPuja(filtered, 'pitra');
-                          } else if (dosha.type === 'shani') {
-                            pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                          } else if (dosha.type === 'guru-chandal') {
-                            pujaToShow = getPrioritizedPuja(filtered, dosha.type);
-                          } else if (isOtherDosha(dosha.type)) {
-                            pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
-                          } else {
-                            const priorityKeywordsMap: Record<string, string[]> = {
-                              mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
-                              'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                              rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
-                              shrapit: ['shrapit', 'श्रापित'],
-                            };
-                            const keywords = priorityKeywordsMap[dosha.type] || [];
-                            pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
-                          }
-                          
-                          return (
-                            <Card key={dosha.type} className="overflow-hidden">
-                              <CardHeader className="bg-accent/5">
-                                <div>
-                                  <CardTitle className="text-lg">{dosha.label}</CardTitle>
-                                  <CardDescription className="text-sm mt-1">{dosha.description}</CardDescription>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="pt-4 space-y-4">
-                                <div className="p-3 bg-muted/50 rounded-md">
-                                  <p className="text-sm font-medium text-foreground">{dosha.impact}</p>
-                                </div>
-                                
-                                {pujaToShow ? (
-                                  <>
-                                    {isOtherDosha(dosha.type) && (
-                                      <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
-                                        <p className="text-xs text-muted-foreground italic">
-                                          {isHindi 
-                                            ? 'इस दोष के लिए अभी हमारे पास विशिष्ट पूजा उपलब्ध नहीं है, लेकिन समग्र कल्याण के लिए नवग्रह शांति पूजा करवाएं।'
-                                            : 'We don\'t have specific pujas for this dosha yet, but you can perform Navagraha Shanti Puja for overall well-being.'}
-                                        </p>
-                                      </div>
-                                    )}
-                                    <div className="-mx-6">
-                                      <SriMandirPujaVerticalCard 
-                                        puja={pujaToShow} 
-                                        doshaType={dosha.type}
-                                        onBookClick={async () => {
-                                          await trackBookPujaClick(dosha.type);
-                                        }}
-                                      />
-                                    </div>
-                                  </>
-                                ) : null}
-                              </CardContent>
-                            </Card>
-                          );
-                        })
                       )}
                     </div>
                   );

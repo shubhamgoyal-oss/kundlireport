@@ -573,13 +573,15 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                         </p>
                                       </div>
                                     )}
-                                    <SriMandirPujaVerticalCard 
-                                      puja={pujaToShow} 
-                                      doshaType={dosha.type}
-                                      onBookClick={async () => {
-                                        await trackBookPujaClick(dosha.type);
-                                      }}
-                                    />
+                                    <div className="-mx-6">
+                                      <SriMandirPujaVerticalCard 
+                                        puja={pujaToShow} 
+                                        doshaType={dosha.type}
+                                        onBookClick={async () => {
+                                          await trackBookPujaClick(dosha.type);
+                                        }}
+                                      />
+                                    </div>
                                   </>
                                 ) : null}
                               </CardContent>

@@ -169,12 +169,12 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
       <AccordionItem value={key} className="border rounded-lg px-4" key={key}>
         <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3 flex-1">
-            <div className="flex items-center gap-2 flex-1">
-              <h3 className="font-semibold text-lg text-left">{translatedDosha.name}</h3>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <h3 className="font-semibold text-sm sm:text-base text-left leading-tight break-words">{translatedDosha.name}</h3>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    <Info className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground cursor-help flex-shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs text-sm">{translatedDosha.whatItIs}</p>
@@ -183,12 +183,12 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
               </TooltipProvider>
             </div>
             {isPresent ? (
-              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
+              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 flex-shrink-0 text-xs">
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 {t('doshaResults.statusValues.present')}
               </Badge>
             ) : (
-              <Badge variant="outline" className="bg-success/10 text-success border-success/20">
+              <Badge variant="outline" className="bg-success/10 text-success border-success/20 flex-shrink-0 text-xs">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {t('doshaResults.statusValues.absent')}
               </Badge>
@@ -198,17 +198,17 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         <AccordionContent className="pt-4 space-y-4">
           {/* What it is */}
           <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-            <p className="text-sm text-muted-foreground italic">{translatedDosha.whatItIs}</p>
-            <p className="text-sm text-muted-foreground font-medium mt-2">{translatedDosha.impact}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground italic leading-relaxed">{translatedDosha.whatItIs}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
           </div>
 
           {/* Traditional Remedies - Only show if present */}
           {isPresent && (
             <div>
-              <h5 className="font-medium mb-2 flex items-center gap-2">
+              <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
                 {t('doshaResults.traditionalRemedies')}
               </h5>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+              <ul className="list-disc list-inside text-xs sm:text-sm text-muted-foreground space-y-1 leading-relaxed">
                 {translatedDosha.remedies.map((remedy, i) => (
                   <li key={i}>{remedy}</li>
                 ))}
@@ -226,15 +226,15 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         className="cursor-pointer hover:bg-accent/5 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center justify-between">
-          <div className="text-left">
-            <h3 className="font-semibold text-lg">{t('doshaResults.otherDoshas.title')}</h3>
-            <p className="text-sm text-muted-foreground">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-left flex-1 min-w-0">
+            <h3 className="font-semibold text-base sm:text-lg">{t('doshaResults.otherDoshas.title')}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {t('doshaResults.status')}: {statusText}
             </p>
           </div>
           <ChevronDown 
-            className={`h-6 w-6 transition-transform duration-200 ${
+            className={`h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0 transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''
             }`}
           />

@@ -324,24 +324,33 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   return (
     <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
-      <Card className={hasAnyDosha ? "animate-urgent-blink border-2" : "spiritual-glow"} style={hasAnyDosha ? { 
-        backgroundColor: 'hsl(var(--danger-bg))', 
-        borderColor: 'hsl(var(--danger-border))' 
-      } : undefined}>
-        <CardHeader className={hasAnyDosha ? "border-b-2" : ""} style={hasAnyDosha ? { 
-          borderBottomColor: 'hsl(var(--danger-border))',
-          backgroundColor: 'hsl(0 84.2% 92%)'
-        } : undefined}>
+      <Card className="spiritual-glow border-2 border-primary/20">
+        <CardHeader className="border-b border-border">
           <CardTitle 
             ref={statusMessageRef}
-            className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? '' : 'gradient-spiritual bg-clip-text text-transparent'}`}
-            style={hasAnyDosha ? { color: 'hsl(var(--danger-text))' } : undefined}
+            className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? 'text-primary' : 'gradient-spiritual bg-clip-text text-transparent'}`}
           >
             {hasAnyDosha 
-              ? (isHindi ? '🚨 आपके कुछ दोष पाए गए हैं 🚨' : '🚨 Some Doshas Have Been Detected 🚨')
+              ? (isHindi ? 'कुछ दोष पाए गए हैं' : 'Some Doshas Have Been Detected')
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')
             }
           </CardTitle>
+          {hasAnyDosha && (
+            <div className="mt-4 space-y-2 text-center">
+              <p className="text-sm text-muted-foreground">
+                {isHindi 
+                  ? 'विस्तृत विवरण और पूजा उपाय नीचे दिए गए हैं'
+                  : 'Detailed explanation along with puja remedies below'}
+              </p>
+              <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
+                <p className="text-sm font-medium">
+                  {isHindi 
+                    ? '🪔 पूजा क्यों? : वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
+                    : '🪔 Why Pujas? : Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
+                </p>
+              </div>
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className={`space-y-4 ${hasAnyDosha ? 'pt-6' : ''}`}>
@@ -368,359 +377,220 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
             return (
               <>
 
-                {/* Individual Dosha Boxes for Major Doshas */}
-                <div className="space-y-4 mb-6">
-                  {/* Mangal Dosha Box */}
-                  {(isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <Flame className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.mangal.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Kaal Sarp Dosha Box */}
-                  {isDoshaPresent(summary.kaalSarp) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <Waves className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.kaalSarp.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pitra Dosha Box */}
-                  {isDoshaPresent(summary.pitra) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <Users className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.pitra.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Shani Sade Sati Box */}
-                  {isDoshaPresent(summary.shaniSadeSati) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <Moon className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.sadeSati.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Other Doshas - Individual Boxes */}
-                  {isDoshaPresent(summary.vishDaridra) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.vishDaridra.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.vishDaridra.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.vishDaridra.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.grahan) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.rahuKetu.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.rahuKetu.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.rahuKetu.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.shrapit) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.shrapit.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.shrapit.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.shrapit.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.guruChandal) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.guruChandal.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.guruChandal.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.guruChandal.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.punarphoo) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.punarphoo.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.punarphoo.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.punarphoo.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.kemadruma) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.kemadruma.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kemadruma.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kemadruma.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.gandmool) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.gandmool.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.gandmool.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.gandmool.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.kalathra) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.kalathra.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kalathra.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.kalathra.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {isDoshaPresent(summary.ketuNaga) && (
-                    <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
-                      <div className="p-3">
-                        <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
-                          <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
-                          {t('doshaResults.otherDoshas.ketuNaga.name')}
-                        </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.ketuNaga.whatItIs')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.otherDoshas.ketuNaga.impact')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-
-                {/* Remedies For You - Organized by Dosha */}
+                {/* Dosha Cards with Integrated Puja Remedies - Max 3 */}
                 {(() => {
                   // Define major doshas in priority order
-                  const majorDoshas: Array<{ type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani'; label: string }> = [];
-                  const otherDoshas: Array<{ type: 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'; label: string }> = [];
+                  const majorDoshas: Array<{ 
+                    type: 'mangal' | 'kaal-sarp' | 'pitra' | 'shani'; 
+                    label: string;
+                    icon: typeof Flame;
+                    description: string;
+                    impact: string;
+                  }> = [];
+                  const otherDoshas: Array<{ 
+                    type: 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'; 
+                    label: string;
+                    description: string;
+                    impact: string;
+                  }> = [];
                   
                   // Check major doshas first (exclude nullified)
                   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
-                    majorDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
+                    majorDoshas.push({ 
+                      type: 'mangal', 
+                      label: t('doshaResults.mangal.name'),
+                      icon: Flame,
+                      description: t('doshaResults.mangal.description'),
+                      impact: t('doshaResults.mangal.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.kaalSarp)) {
-                    majorDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
+                    majorDoshas.push({ 
+                      type: 'kaal-sarp', 
+                      label: t('doshaResults.kaalSarp.name'),
+                      icon: Waves,
+                      description: t('doshaResults.kaalSarp.description'),
+                      impact: t('doshaResults.kaalSarp.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.pitra)) {
-                    majorDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
+                    majorDoshas.push({ 
+                      type: 'pitra', 
+                      label: t('doshaResults.pitra.name'),
+                      icon: Users,
+                      description: t('doshaResults.pitra.description'),
+                      impact: t('doshaResults.pitra.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.shaniSadeSati)) {
-                    majorDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
+                    majorDoshas.push({ 
+                      type: 'shani', 
+                      label: t('doshaResults.sadeSati.name'),
+                      icon: Moon,
+                      description: t('doshaResults.sadeSati.description'),
+                      impact: t('doshaResults.sadeSati.impact')
+                    });
                   }
                   
                   // Check other doshas in priority order
+                  if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
+                    otherDoshas.push({ 
+                      type: 'guru-chandal', 
+                      label: t('doshaResults.otherDoshas.guruChandal.name'),
+                      description: t('doshaResults.otherDoshas.guruChandal.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.guruChandal.impact')
+                    });
+                  }
                   if (summary.grahan && isDoshaPresent(summary.grahan)) {
-                    otherDoshas.push({ type: 'rahu', label: isHindi ? 'ग्रहण दोष' : 'Grahan Dosha' });
+                    otherDoshas.push({ 
+                      type: 'rahu', 
+                      label: t('doshaResults.otherDoshas.rahuKetu.name'),
+                      description: t('doshaResults.otherDoshas.rahuKetu.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.rahuKetu.impact')
+                    });
                   }
                   if (summary.shrapit && isDoshaPresent(summary.shrapit)) {
-                    otherDoshas.push({ type: 'shrapit', label: isHindi ? 'श्रापित दोष' : 'Shrapit Dosha' });
-                  }
-                  if (summary.guruChandal && isDoshaPresent(summary.guruChandal)) {
-                    otherDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+                    otherDoshas.push({ 
+                      type: 'shrapit', 
+                      label: t('doshaResults.otherDoshas.shrapit.name'),
+                      description: t('doshaResults.otherDoshas.shrapit.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.shrapit.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.vishDaridra)) {
-                    otherDoshas.push({ type: 'vishDaridra', label: isHindi ? 'विष/दारिद्र्य योग' : 'Vish/Daridra Yoga' });
+                    otherDoshas.push({ 
+                      type: 'vishDaridra', 
+                      label: t('doshaResults.otherDoshas.vishDaridra.name'),
+                      description: t('doshaResults.otherDoshas.vishDaridra.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.vishDaridra.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.punarphoo)) {
-                    otherDoshas.push({ type: 'punarphoo', label: isHindi ? 'पुनर्फू दोष' : 'Punarphoo Dosha' });
+                    otherDoshas.push({ 
+                      type: 'punarphoo', 
+                      label: t('doshaResults.otherDoshas.punarphoo.name'),
+                      description: t('doshaResults.otherDoshas.punarphoo.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.punarphoo.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.kemadruma)) {
-                    otherDoshas.push({ type: 'kemadruma', label: isHindi ? 'केमद्रुम योग' : 'Kemadruma Yoga' });
+                    otherDoshas.push({ 
+                      type: 'kemadruma', 
+                      label: t('doshaResults.otherDoshas.kemadruma.name'),
+                      description: t('doshaResults.otherDoshas.kemadruma.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.kemadruma.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.gandmool)) {
-                    otherDoshas.push({ type: 'gandmool', label: isHindi ? 'गंडमूल दोष' : 'Gandmool Dosha' });
+                    otherDoshas.push({ 
+                      type: 'gandmool', 
+                      label: t('doshaResults.otherDoshas.gandmool.name'),
+                      description: t('doshaResults.otherDoshas.gandmool.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.gandmool.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.kalathra)) {
-                    otherDoshas.push({ type: 'kalathra', label: isHindi ? 'कलत्र दोष' : 'Kalathra Dosha' });
+                    otherDoshas.push({ 
+                      type: 'kalathra', 
+                      label: t('doshaResults.otherDoshas.kalathra.name'),
+                      description: t('doshaResults.otherDoshas.kalathra.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.kalathra.impact')
+                    });
                   }
                   if (isDoshaPresent(summary.ketuNaga)) {
-                    otherDoshas.push({ type: 'ketuNaga', label: isHindi ? 'केतु नाग दोष' : 'Ketu Naga Dosha' });
+                    otherDoshas.push({ 
+                      type: 'ketuNaga', 
+                      label: t('doshaResults.otherDoshas.ketuNaga.name'),
+                      description: t('doshaResults.otherDoshas.ketuNaga.whatItIs'),
+                      impact: t('doshaResults.otherDoshas.ketuNaga.impact')
+                    });
                   }
 
-                  // Combine in priority order - major doshas first, then other doshas
-                  const allActiveDoshas = [...majorDoshas, ...otherDoshas];
+                  // Combine in priority order and take max 3
+                  const allActiveDoshas = [...majorDoshas, ...otherDoshas].slice(0, 3);
                   
-                  // Show at least 4 cards if 4+ doshas are present, otherwise show all
-                  const top4Doshas = allActiveDoshas.length >= 4 ? allActiveDoshas.slice(0, 4) : allActiveDoshas;
+                  if (allActiveDoshas.length === 0) return null;
                   
-                  if (top4Doshas.length === 0) return null;
+                  // Helper to determine if dosha has specific puja or needs Navagraha
+                  const isOtherDosha = (type: string) => ['vishDaridra', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'ketuNaga'].includes(type);
 
                   return (
-                    <div className="mt-6 space-y-6">
-                      <div className="text-center space-y-3">
-                        <h3 className="text-2xl font-bold">
-                          {isHindi ? '🪔 आपके लिए उपाय' : '🪔 Remedies For You'}
-                        </h3>
-                        
-                        <div className="max-w-2xl mx-auto">
-                          {isHindi ? (
-                            <p className="text-sm text-foreground leading-relaxed mb-2">
-                              वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।
-                            </p>
-                          ) : (
-                            <p className="text-sm text-foreground leading-relaxed mb-2">
-                              Vedic online puja offers a powerful way to reduce the negative effects of these doshas.
-                            </p>
-                          )}
-                        </div>
-
-                        <p className="text-base font-medium text-foreground pt-2">
-                          {isHindi ? '📿 यह पूजा आपके दोष निवारण के लिए सबसे उपयुक्त है।' : '📿 Here are the pujas best suited for your dosha relief.'}
-                        </p>
-                      </div>
-                      
+                    <div className="space-y-6 mt-6">
                       {isLoadingPujas ? (
                         <div className="flex flex-col items-center justify-center py-12 space-y-3">
                           <Loader2 className="w-8 h-8 animate-spin text-primary" />
                           <p className="text-sm text-muted-foreground">
-                            {isHindi ? 'उपाय लोड हो रहे हैं...' : 'Loading...'}
+                            {isHindi ? 'उपाय लोड हो रहे हैं...' : 'Loading remedies...'}
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-8">
-                          {/* Top 4 Doshas with 1 Puja Each */}
-                          {top4Doshas.map(dosha => {
-                            const filtered = filterPujasByDosha(pujas, dosha.type);
-                            
-                            // Get prioritized single puja with dosha name preference
-                            let pujaToShow: SriMandirPuja | null = null;
-                            
-                            // Define priority keywords for each dosha type
+                        allActiveDoshas.map((dosha, index) => {
+                          const filtered = filterPujasByDosha(pujas, dosha.type);
+                          
+                          // Get prioritized puja
+                          let pujaToShow: SriMandirPuja | null = null;
+                          
+                          if (dosha.type === 'pitra') {
+                            pujaToShow = getPrioritizedPuja(filtered, 'pitra');
+                          } else if (dosha.type === 'shani') {
+                            pujaToShow = getPrioritizedPuja(filtered, 'shani');
+                          } else if (dosha.type === 'guru-chandal') {
+                            pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                          } else if (isOtherDosha(dosha.type)) {
+                            pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
+                          } else {
                             const priorityKeywordsMap: Record<string, string[]> = {
                               mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
                               'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                              kaalSarp: ['kaal sarp dosha', 'काल सर्प दोष'],
-                              pitra: ['pitru', 'pitra', 'पितृ'],
-                              shani: ['shani sade sati', 'शनि साढ़े साती'],
-                              'guru-chandal': ['guru chandal', 'गुरु चांडाल'],
                               rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
                               shrapit: ['shrapit', 'श्रापित'],
-                              vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य'],
-                              punarphoo: ['punarphoo', 'पुनर्फू'],
-                              kemadruma: ['kemadruma', 'केमद्रुम'],
-                              gandmool: ['gandmool', 'गंडमूल'],
-                              kalathra: ['kalathra', 'कलत्र'],
-                              ketuNaga: ['ketu', 'naga', 'केतु', 'नाग'],
-                              navagraha: ['navagraha', 'नवग्रह']
                             };
-                            
-                            if (dosha.type === 'pitra') {
-                              pujaToShow = getPrioritizedPuja(filtered, 'pitra');
-                            } else if (dosha.type === 'shani') {
-                              pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                            } else if (dosha.type === 'guru-chandal') {
-                              pujaToShow = getPrioritizedPuja(filtered, dosha.type);
-                            } else if (dosha.type === 'vishDaridra' || dosha.type === 'punarphoo' || 
-                                       dosha.type === 'kemadruma' || dosha.type === 'gandmool' || 
-                                       dosha.type === 'kalathra' || dosha.type === 'ketuNaga') {
-                              // For specific other doshas, try Navagraha Shanti Puja
-                              pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
-                            } else {
-                              // Use getUpcomingPujas with priority keywords for other doshas
-                              const keywords = priorityKeywordsMap[dosha.type] || [];
-                              pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
-                            }
-                            
-                            if (!pujaToShow) return null;
-                            
-                            return (
-                              <div key={dosha.type} className="space-y-4">
-                                <SriMandirPujaVerticalCard 
-                                  key={pujaToShow.store_id}
-                                  puja={pujaToShow} 
-                                  doshaType={dosha.type}
-                                  onBookClick={async () => {
-                                    await trackBookPujaClick(dosha.type);
-                                  }}
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
+                            const keywords = priorityKeywordsMap[dosha.type] || [];
+                            pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
+                          }
+                          
+                          const Icon = 'icon' in dosha ? dosha.icon : AlertTriangle;
+                          
+                          return (
+                            <Card key={dosha.type} className="border-l-4 border-primary/40 overflow-hidden">
+                              <CardHeader className="bg-accent/5 border-b border-border">
+                                <div className="flex items-center gap-3">
+                                  <Icon className="w-6 h-6 text-primary" />
+                                  <div>
+                                    <CardTitle className="text-lg">{dosha.label}</CardTitle>
+                                    <CardDescription className="text-xs mt-1">{dosha.description}</CardDescription>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-4 space-y-4">
+                                <div className="p-3 bg-muted/50 rounded-md border border-border">
+                                  <p className="text-sm font-medium text-foreground">{dosha.impact}</p>
+                                </div>
+                                
+                                {pujaToShow ? (
+                                  <>
+                                    {isOtherDosha(dosha.type) && (
+                                      <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
+                                        <p className="text-xs text-muted-foreground italic">
+                                          {isHindi 
+                                            ? 'इस दोष के लिए अभी हमारे पास विशिष्ट पूजा उपलब्ध नहीं है, लेकिन समग्र कल्याण के लिए नवग्रह शांति पूजा करवाएं।'
+                                            : 'We don\'t have specific pujas for this dosha yet, but you can perform Navagraha Shanti Puja for overall well-being.'}
+                                        </p>
+                                      </div>
+                                    )}
+                                    <SriMandirPujaVerticalCard 
+                                      puja={pujaToShow} 
+                                      doshaType={dosha.type}
+                                      onBookClick={async () => {
+                                        await trackBookPujaClick(dosha.type);
+                                      }}
+                                    />
+                                  </>
+                                ) : null}
+                              </CardContent>
+                            </Card>
+                          );
+                        })
                       )}
                     </div>
                   );

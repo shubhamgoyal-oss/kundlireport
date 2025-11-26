@@ -559,8 +559,20 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           {top4Doshas.map(dosha => {
                             const filtered = filterPujasByDosha(pujas, dosha.type);
                             
-                            // Get prioritized single puja
+                            // Get prioritized single puja with dosha name preference
                             let pujaToShow: SriMandirPuja | null = null;
+                            
+                            // Define priority keywords for each dosha type
+                            const priorityKeywordsMap: Record<string, string[]> = {
+                              mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
+                              'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
+                              kaalSarp: ['kaal sarp dosha', 'काल सर्प दोष'],
+                              pitra: ['pitru', 'pitra', 'पितृ'],
+                              shani: ['shani sade sati', 'शनि साढ़े साती'],
+                              'guru-chandal': ['guru chandal', 'गुरु चांडाल'],
+                              navagraha: ['navagraha', 'नवग्रह']
+                            };
+                            
                             if (dosha.type === 'pitra') {
                               pujaToShow = getPrioritizedPuja(filtered, 'pitra');
                             } else if (dosha.type === 'shani') {
@@ -568,7 +580,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                             } else if (dosha.type === 'guru-chandal' || dosha.type === 'navagraha') {
                               pujaToShow = getPrioritizedPuja(filtered, dosha.type);
                             } else {
-                              pujaToShow = getUpcomingPujas(filtered, 1)[0] || null;
+                              // Use getUpcomingPujas with priority keywords for other doshas
+                              const keywords = priorityKeywordsMap[dosha.type] || [];
+                              pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
                             }
                             
                             if (!pujaToShow) return null;

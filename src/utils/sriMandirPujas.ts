@@ -307,17 +307,35 @@ function parseIndianDate(dateStr: string): Date | null {
 
 /**
  * Sort pujas by date ascending and return next 1 upcoming entry (or maxCount if specified)
+ * Prioritizes pujas whose names start with dosha-specific keywords
  */
-export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 1): SriMandirPuja[] {
+export function getUpcomingPujas(
+  pujas: SriMandirPuja[], 
+  maxCount = 1,
+  priorityKeywords?: string[]
+): SriMandirPuja[] {
   const now = new Date();
   
   const sorted = pujas
     .map(puja => ({
       puja,
       date: parseIndianDate(puja.schedule_date_ist),
+      // Check if title starts with any priority keyword
+      startsWithKeyword: priorityKeywords ? priorityKeywords.some(keyword => {
+        const title = puja.pooja_title.toLowerCase();
+        const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+        const lowerKeyword = keyword.toLowerCase();
+        return title.startsWith(lowerKeyword) || englishTitle.startsWith(lowerKeyword);
+      }) : false
     }))
     .filter(item => item.date !== null && item.date >= now)
-    .sort((a, b) => a.date!.getTime() - b.date!.getTime())
+    .sort((a, b) => {
+      // First prioritize pujas that start with keyword
+      if (a.startsWithKeyword && !b.startsWithKeyword) return -1;
+      if (!a.startsWithKeyword && b.startsWithKeyword) return 1;
+      // Then sort by date
+      return a.date!.getTime() - b.date!.getTime();
+    })
     .slice(0, maxCount);
 
   return sorted.map(item => item.puja);
@@ -325,38 +343,24 @@ export function getUpcomingPujas(pujas: SriMandirPuja[], maxCount = 1): SriMandi
 
 /**
  * Get single prioritized puja for specific dosha types
+ * Prefers pujas that start with the dosha name
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
   doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha'
 ): SriMandirPuja | null {
   const priorityKeywords: Record<string, string[]> = {
-    pitra: ['pishach mochan', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
+    pitra: ['pitru', 'pitra', 'pishach mochan', 'पितृ', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
     shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
-    'guru-chandal': ['brihaspati-rahu yuti', 'brihaspati rahu', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
-    navagraha: ['navagraha shanti', 'navagrah shanti', 'नवग्रह शांति']
+    'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
+    navagraha: ['navagraha', 'navagrah', 'नवग्रह']
   };
 
   const keywords = priorityKeywords[doshaType];
   if (!keywords) return getUpcomingPujas(pujas, 1)[0] || null;
 
-  // First try to find the prioritized puja
-  for (const keyword of keywords) {
-    const found = pujas.find(p => 
-      p.pooja_title.toLowerCase().includes(keyword.toLowerCase()) ||
-      (p.pooja_title_english?.toLowerCase().includes(keyword.toLowerCase()))
-    );
-    if (found) {
-      // Check if it's upcoming
-      const date = parseIndianDate(found.schedule_date_ist);
-      if (date && date >= new Date()) {
-        return found;
-      }
-    }
-  }
-
-  // Fallback to next upcoming puja
-  return getUpcomingPujas(pujas, 1)[0] || null;
+  // Use the updated getUpcomingPujas with priority keywords
+  return getUpcomingPujas(pujas, 1, keywords)[0] || null;
 }
 
 /**

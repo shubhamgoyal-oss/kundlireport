@@ -15,6 +15,11 @@ const phoneSchema = z.string()
   .max(15, "Phone number must be less than 15 digits")
   .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number");
 
+const nameSchema = z.string()
+  .min(2, "Name must be at least 2 characters")
+  .max(100, "Name must be less than 100 characters")
+  .regex(/^[a-zA-Z\s]+$/, "Please enter a valid name (letters only)");
+
 interface CallbackFloaterProps {
   calculationId?: string | null;
 }
@@ -23,9 +28,10 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
   const { t, i18n } = useTranslation();
   const isHindi = i18n.language === 'hi';
   const [isOpen, setIsOpen] = useState(false);
+  const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({ name: '', phone: '' });
 
   const handleOpenDialog = () => {
     setIsOpen(true);
@@ -36,12 +42,19 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setErrors({ name: '', phone: '' });
+
+    // Validate name
+    const nameValidation = nameSchema.safeParse(name);
+    if (!nameValidation.success) {
+      setErrors(prev => ({ ...prev, name: nameValidation.error.errors[0].message }));
+      return;
+    }
 
     // Validate phone number
-    const validation = phoneSchema.safeParse(phoneNumber);
-    if (!validation.success) {
-      setError(validation.error.errors[0].message);
+    const phoneValidation = phoneSchema.safeParse(phoneNumber);
+    if (!phoneValidation.success) {
+      setErrors(prev => ({ ...prev, phone: phoneValidation.error.errors[0].message }));
       return;
     }
 
@@ -62,6 +75,7 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
         .insert({
           visitor_id: visitorId,
           session_id: sessionId,
+          name: name.trim(),
           phone_number: phoneNumber,
           calculation_id: calculationId,
           language: i18n.language,
@@ -78,7 +92,8 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
       trackEvent('callback_form_submitted', {
         metadata: {
           calculation_id: calculationId,
-          phone_length: phoneNumber.length
+          phone_length: phoneNumber.length,
+          has_name: true
         }
       });
 
@@ -89,6 +104,7 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
       );
 
       setIsOpen(false);
+      setName('');
       setPhoneNumber('');
     } catch (error) {
       console.error('Error submitting callback request:', error);
@@ -142,6 +158,29 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
 
           <form onSubmit={handleSubmit} className="space-y-4 mt-4">
             <div className="space-y-2">
+              <Label htmlFor="name" className="text-base font-medium">
+                {isHindi ? 'नाम' : 'Name'}
+                <span className="text-destructive ml-1">*</span>
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder={isHindi ? 'अपना नाम दर्ज करें' : 'Enter your name'}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setErrors(prev => ({ ...prev, name: '' }));
+                }}
+                className="text-lg h-12"
+                disabled={isSubmitting}
+                required
+              />
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="phone" className="text-base font-medium">
                 {isHindi ? 'फ़ोन नंबर' : 'Phone Number'}
                 <span className="text-destructive ml-1">*</span>
@@ -153,14 +192,14 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
                 value={phoneNumber}
                 onChange={(e) => {
                   setPhoneNumber(e.target.value);
-                  setError('');
+                  setErrors(prev => ({ ...prev, phone: '' }));
                 }}
                 className="text-lg h-12"
                 disabled={isSubmitting}
                 required
               />
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
+              {errors.phone && (
+                <p className="text-sm text-destructive">{errors.phone}</p>
               )}
             </div>
 
@@ -176,7 +215,7 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !phoneNumber}
+                disabled={isSubmitting || !phoneNumber || !name}
                 className="flex-1"
               >
                 {isSubmitting ? (

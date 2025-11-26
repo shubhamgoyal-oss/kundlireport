@@ -12,45 +12,74 @@ serve(async (req) => {
 
   try {
     const { text } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
+    if (!text) {
+      return new Response(
+        JSON.stringify({ error: 'Text is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    console.log('[TRANSLATE] Translating text to Hindi');
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { 
-            role: "system", 
-            content: "You are a professional translator specializing in Vedic astrology terminology. Translate the given English text to Hindi. Maintain the astrological accuracy and formal tone. Return ONLY the Hindi translation, no explanations." 
+          {
+            role: "system",
+            content: "You are a professional translator specializing in Vedic astrology terminology. Translate the given English text to Hindi while preserving all astrological terms, planet names, house numbers, and technical details. Maintain the same tone and meaning. Only return the translated text, nothing else."
           },
-          { role: "user", content: text }
+          {
+            role: "user",
+            content: `Translate this astrological explanation to Hindi:\n\n${text}`
+          }
         ],
       }),
     });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limits exceeded, please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Payment required, please add funds to your Lovable AI workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      return new Response(
+        JSON.stringify({ error: "Translation failed" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
-    const translatedText = data.choices[0].message.content;
+    const translatedText = data.choices?.[0]?.message?.content || text;
+
+    console.log('[TRANSLATE] Translation complete');
 
     return new Response(
       JSON.stringify({ translatedText }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error("Translation error:", error);
+    console.error('[TRANSLATE] Error:', error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -54,9 +54,61 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
+  const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
+
+  // Translate explanations when language changes to Hindi
+  useEffect(() => {
+    if (!isHindi || isTranslating) return;
+
+    const explanationsToTranslate: { key: string; text: string }[] = [];
+    
+    if (details.mangal?.explanation) {
+      explanationsToTranslate.push({ key: 'mangal', text: details.mangal.explanation });
+    }
+    if (details.kaalSarp?.explanation) {
+      explanationsToTranslate.push({ key: 'kaalSarp', text: details.kaalSarp.explanation });
+    }
+    if (details.pitra?.explanation) {
+      explanationsToTranslate.push({ key: 'pitra', text: details.pitra.explanation });
+    }
+    if (details.sadeSati?.explanation) {
+      explanationsToTranslate.push({ key: 'sadeSati', text: details.sadeSati.explanation });
+    }
+
+    if (explanationsToTranslate.length === 0) return;
+
+    const translateAll = async () => {
+      setIsTranslating(true);
+      const translations: Record<string, string> = {};
+
+      for (const { key, text } of explanationsToTranslate) {
+        try {
+          const { data, error } = await supabase.functions.invoke('translate-dosha', {
+            body: { text }
+          });
+
+          if (error) {
+            console.error(`Failed to translate ${key}:`, error);
+            translations[key] = text; // Fallback to English
+          } else {
+            translations[key] = data.translatedText;
+          }
+        } catch (err) {
+          console.error(`Error translating ${key}:`, err);
+          translations[key] = text; // Fallback to English
+        }
+      }
+
+      setTranslatedExplanations(translations);
+      setIsTranslating(false);
+    };
+
+    translateAll();
+  }, [isHindi, details]);
 
   useEffect(() => {
     // Scroll to status message when component mounts
@@ -594,9 +646,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {isHindi ? t('doshaResults.mangal.hindiExplanation') : details.mangal.explanation}
-                    </p>
+                    {isTranslating ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>अनुवाद हो रहा है...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {isHindi ? (translatedExplanations.mangal || details.mangal.explanation) : details.mangal.explanation}
+                      </p>
+                    )}
                   </div>
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
@@ -679,9 +738,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {isHindi ? t('doshaResults.kaalSarp.hindiExplanation') : details.kaalSarp.explanation}
-                    </p>
+                    {isTranslating ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>अनुवाद हो रहा है...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {isHindi ? (translatedExplanations.kaalSarp || details.kaalSarp.explanation) : details.kaalSarp.explanation}
+                      </p>
+                    )}
                   </div>
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
@@ -755,9 +821,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {isHindi ? t('doshaResults.pitra.hindiExplanation') : details.pitra.explanation}
-                    </p>
+                    {isTranslating ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>अनुवाद हो रहा है...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {isHindi ? (translatedExplanations.pitra || details.pitra.explanation) : details.pitra.explanation}
+                      </p>
+                    )}
                   </div>
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
@@ -832,9 +905,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       <Info className="w-4 h-4" />
                       {t('doshaResults.explanation')}
                     </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {isHindi ? t('doshaResults.sadeSati.hindiExplanation') : details.sadeSati.explanation}
-                    </p>
+                    {isTranslating ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>अनुवाद हो रहा है...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {isHindi ? (translatedExplanations.sadeSati || details.sadeSati.explanation) : details.sadeSati.explanation}
+                      </p>
+                    )}
                   </div>
 
                   {details.sadeSati.placements && details.sadeSati.placements.length > 0 && (

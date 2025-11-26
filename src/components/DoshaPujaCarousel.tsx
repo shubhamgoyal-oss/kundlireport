@@ -198,13 +198,6 @@ export const DoshaPujaCarousel = ({
                           {formatScheduleDate(item.puja.schedule_date_ist, i18n.language)}
                         </p>
                       )}
-                      
-                      {/* Price */}
-                      {item.puja.individual_pack_price_inr > 0 && (
-                        <p className="text-base font-semibold text-primary">
-                          {isHindi ? '₹' : 'Starting from ₹'}{item.puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
-                        </p>
-                      )}
 
                       {/* Book Button */}
                       <Button

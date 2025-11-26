@@ -159,13 +159,6 @@ export const SriMandirPujaCarousel = ({
                         {formatScheduleDate(puja.schedule_date_ist, currentLang)}
                       </p>
                     )}
-                    
-                    {/* Price */}
-                    {puja.individual_pack_price_inr > 0 && (
-                      <p className="text-base font-semibold text-primary">
-                        {isHindi ? '₹' : 'Starting from ₹'}{puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
-                      </p>
-                    )}
 
                     {/* Book Button */}
                     <Button

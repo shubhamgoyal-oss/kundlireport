@@ -205,6 +205,70 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     isDoshaPresent(summary.vishDaridra) ||
     isDoshaPresent(summary.ketuNaga);
 
+  // Track book puja click by calculationId first, then by latest visitor_id row
+  const trackBookPujaClick = async (doshaType: string) => {
+    if (hasTrackedBookPuja) return;
+
+    try {
+      const visitorId = typeof window !== 'undefined'
+        ? localStorage.getItem('analytics_visitor_id') || 'unknown'
+        : 'unknown';
+      const sessionId = typeof window !== 'undefined'
+        ? localStorage.getItem('analytics_session_id') || 'unknown'
+        : 'unknown';
+
+      let updated = false;
+
+      // 1) Try to update by calculationId if we have it
+      if (calculationId) {
+        const { error } = await supabase
+          .from('dosha_calculator2')
+          .update({ book_puja_clicked: true })
+          .eq('id', calculationId);
+
+        if (error) {
+          console.error('Failed to update book_puja_clicked by id:', error);
+        } else {
+          updated = true;
+        }
+      }
+
+      // 2) If that failed or no calculationId, update latest row for this visitor
+      if (!updated && visitorId) {
+        const { error } = await supabase
+          .from('dosha_calculator2')
+          .update({ book_puja_clicked: true })
+          .eq('visitor_id', visitorId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) {
+          console.error('Failed to update book_puja_clicked by visitor_id:', error);
+        } else {
+          updated = true;
+        }
+      }
+
+      if (!updated) {
+        // 3) Fallback: log in analytics_events so we still capture intent
+        await supabase.from('analytics_events').insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          event_name: 'book_puja_clicked',
+          metadata: {
+            calculation_id: calculationId,
+            dosha_type: doshaType,
+          },
+        });
+      } else {
+        setHasTrackedBookPuja(true);
+        console.log('Book puja tracked for calculation/visitor:', calculationId, visitorId);
+      }
+    } catch (err) {
+      console.error('Failed to track book puja:', err);
+    }
+  };
+
   return (
     <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
@@ -459,36 +523,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   puja={pujaToShow} 
                                   doshaType={dosha.type}
                                   onBookClick={async () => {
-                                    if (!hasTrackedBookPuja && calculationId) {
-                                      try {
-                                        const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
-                                        const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
-                                        
-                                        const { error: updateError } = await supabase
-                                          .from('dosha_calculator2')
-                                          .update({ book_puja_clicked: true })
-                                          .eq('id', calculationId);
-                                        
-                                        if (updateError) {
-                                          console.error('Failed to update book_puja_clicked:', updateError);
-                                          // Fallback: track in analytics_events
-                                          await supabase.from('analytics_events').insert({
-                                            visitor_id: visitorId,
-                                            session_id: sessionId,
-                                            event_name: 'book_puja_clicked',
-                                            metadata: {
-                                              calculation_id: calculationId,
-                                              dosha_type: dosha.type
-                                            }
-                                          });
-                                        } else {
-                                          setHasTrackedBookPuja(true);
-                                          console.log('Book puja tracked for calculation:', calculationId);
-                                        }
-                                      } catch (err) {
-                                        console.error('Failed to track book puja:', err);
-                                      }
-                                    }
+                                    await trackBookPujaClick(dosha.type);
                                   }}
                                 />
                               </div>
@@ -516,36 +551,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   puja={pujaToShow} 
                                   doshaType={dosha.type}
                                   onBookClick={async () => {
-                                    if (!hasTrackedBookPuja && calculationId) {
-                                      try {
-                                        const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
-                                        const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
-                                        
-                                        const { error: updateError } = await supabase
-                                          .from('dosha_calculator2')
-                                          .update({ book_puja_clicked: true })
-                                          .eq('id', calculationId);
-                                        
-                                        if (updateError) {
-                                          console.error('Failed to update book_puja_clicked:', updateError);
-                                          // Fallback: track in analytics_events
-                                          await supabase.from('analytics_events').insert({
-                                            visitor_id: visitorId,
-                                            session_id: sessionId,
-                                            event_name: 'book_puja_clicked',
-                                            metadata: {
-                                              calculation_id: calculationId,
-                                              dosha_type: dosha.type
-                                            }
-                                          });
-                                        } else {
-                                          setHasTrackedBookPuja(true);
-                                          console.log('Book puja tracked for calculation:', calculationId);
-                                        }
-                                      } catch (err) {
-                                        console.error('Failed to track book puja:', err);
-                                      }
-                                    }
+                                    await trackBookPujaClick(dosha.type);
                                   }}
                                 />
                               </div>

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { trackEvent as trackAnalyticsEvent } from "@/lib/analytics";
 
 export interface ExperimentVariant {
   name: string;
@@ -134,14 +135,8 @@ export async function trackExperimentEvent(
   eventName: string,
   metadata?: Record<string, any>
 ) {
-  const visitorId = localStorage.getItem('visitorId') || 'unknown';
-  const sessionId = sessionStorage.getItem('sessionId') || 'unknown';
-
   try {
-    await supabase.from('analytics_events').insert({
-      visitor_id: visitorId,
-      session_id: sessionId,
-      event_name: `experiment_${eventName}`,
+    await trackAnalyticsEvent(`experiment_${eventName}`, {
       metadata: {
         experiment_name: experimentName,
         variant_name: variantName,

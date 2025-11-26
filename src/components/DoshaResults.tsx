@@ -335,15 +335,6 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')
             }
           </CardTitle>
-          {hasAnyDosha && (
-            <div className="mt-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                {isHindi 
-                  ? 'विस्तृत विवरण और पूजा उपाय नीचे दिए गए हैं'
-                  : 'Detailed explanation along with puja remedies below'}
-              </p>
-            </div>
-          )}
         </CardHeader>
         
         <CardContent className={`space-y-4 ${hasAnyDosha ? 'pt-6' : ''}`}>

@@ -129,7 +129,7 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
         >
           <Phone className="w-5 h-5 mr-2 animate-pulse" />
           <span className="font-semibold">
-            {isHindi ? 'कॉलबैक' : 'Request Callback'}
+            {isHindi ? 'कॉलबैक का अनुरोध करें' : 'Request Callback'}
           </span>
         </Button>
       </div>

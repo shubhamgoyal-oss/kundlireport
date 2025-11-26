@@ -1047,7 +1047,60 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   summary.kaalSarp === 'present' && 'Kaal Sarp Dosha',
                   summary.pitra === 'present' && 'Pitra Dosha',
                   summary.shaniSadeSati === 'active' && 'Sade Sati'
-                ].filter(Boolean)
+                ].filter(Boolean),
+                recommendedPujas: (() => {
+                  const activeDoshas = [];
+                  const isDoshaPresent = (status: string) => status === 'present' || status?.includes('present');
+                  
+                  if (isDoshaPresent(summary.mangal)) activeDoshas.push({ type: 'mangal', label: isHindi ? 'मंगल दोष' : 'Mangal Dosha' });
+                  if (isDoshaPresent(summary.kaalSarp)) activeDoshas.push({ type: 'kaal-sarp', label: isHindi ? 'काल सर्प दोष' : 'Kaal Sarp Dosha' });
+                  if (isDoshaPresent(summary.pitra)) activeDoshas.push({ type: 'pitra', label: isHindi ? 'पितृ दोष' : 'Pitra Dosha' });
+                  if (isDoshaPresent(summary.shaniSadeSati)) activeDoshas.push({ type: 'shani', label: isHindi ? 'शनि साढ़े साती' : 'Shani Sade Sati' });
+                  if (isDoshaPresent(summary.guruChandal)) activeDoshas.push({ type: 'guru-chandal', label: isHindi ? 'गुरु चांडाल दोष' : 'Guru Chandal Dosha' });
+                  if (isDoshaPresent(summary.vishDaridra)) activeDoshas.push({ type: 'vishDaridra', label: isHindi ? 'विश दरिद्र योग' : 'Vish Daridra Yoga' });
+                  if (isDoshaPresent(summary.punarphoo)) activeDoshas.push({ type: 'punarphoo', label: isHindi ? 'पुनर्फू दोष' : 'Punarphoo Dosha' });
+                  if (isDoshaPresent(summary.kemadruma)) activeDoshas.push({ type: 'kemadruma', label: isHindi ? 'केमद्रुम योग' : 'Kemadruma Yoga' });
+                  if (isDoshaPresent(summary.gandmool)) activeDoshas.push({ type: 'gandmool', label: isHindi ? 'गंडमूल दोष' : 'Gandmool Dosha' });
+                  if (isDoshaPresent(summary.kalathra)) activeDoshas.push({ type: 'kalathra', label: isHindi ? 'कलत्र दोष' : 'Kalathra Dosha' });
+                  if (isDoshaPresent(summary.ketuNaga)) activeDoshas.push({ type: 'ketuNaga', label: isHindi ? 'केतु नाग दोष' : 'Ketu Naga Dosha' });
+                  
+                  // Take max 3 and map to pujas
+                  return activeDoshas.slice(0, 3).map(dosha => {
+                    const filtered = filterPujasByDosha(pujas, dosha.type);
+                    let puja: SriMandirPuja | null = null;
+                    
+                    if (dosha.type === 'pitra') {
+                      puja = getPrioritizedPuja(filtered, 'pitra');
+                    } else if (dosha.type === 'shani') {
+                      puja = getPrioritizedPuja(filtered, 'shani');
+                    } else if (dosha.type === 'guru-chandal') {
+                      puja = getPrioritizedPuja(filtered, 'guru-chandal');
+                    } else if (['vishDaridra', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'ketuNaga'].includes(dosha.type)) {
+                      puja = getPrioritizedPuja(filtered, 'navagraha');
+                    } else {
+                      const priorityKeywordsMap: Record<string, string[]> = {
+                        mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
+                        'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
+                      };
+                      const keywords = priorityKeywordsMap[dosha.type] || [];
+                      puja = getUpcomingPujas(filtered, 1, keywords)[0] || null;
+                    }
+                    
+                    return {
+                      doshaType: dosha.type,
+                      doshaLabel: dosha.label,
+                      puja: puja ? {
+                        title: puja.pooja_title,
+                        titleEnglish: puja.pooja_title_english,
+                        temple: puja.temple_name,
+                        templeEnglish: puja.temple_name_english,
+                        scheduleDate: puja.schedule_date_ist,
+                        link: puja.puja_link,
+                        linkHindi: puja.puja_link_hindi
+                      } : null
+                    };
+                  });
+                })()
               }}
             />
           </div>

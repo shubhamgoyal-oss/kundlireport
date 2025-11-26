@@ -5,16 +5,16 @@ import type { DoshaResult } from "./seer-doshas.ts";
 export function getMangalExplanationSeer(mangal: DoshaResult): string {
   if (mangal.status === "absent") {
     if (mangal.cancellations.length > 0) {
-      return `Mangal Dosha was initially detected but has been canceled due to: ${mangal.cancellations.join(", ")}. These protective factors significantly reduce or eliminate negative effects.`;
+      return "Mangal Dosha was initially detected but has been canceled by protective planetary configurations. These protective factors significantly reduce or eliminate negative effects.";
     }
     return "No Mangal Dosha detected in your chart. Mars is well-placed and does not occupy houses 1, 4, 7, or 8 from your Ascendant (Lagna), which are the traditional dosha-causing positions.";
   }
   
   if (mangal.status === "partial") {
-    return `Mangal Dosha is partial in your chart. Only helper triggers (${mangal.triggeredBy.join(", ")}) are present, without the primary Lagna trigger. This has limited impact and may only manifest as minor impatience or assertiveness.`;
+    return "Mangal Dosha is partial in your chart. Only secondary indicators are present without the primary Lagna trigger. This has limited impact and may only manifest as minor impatience or assertiveness.";
   }
   
-  let exp = `Mangal Dosha is present in your chart with ${mangal.severity} intensity. Mars occupies one of the sensitive houses (${mangal.triggeredBy.join(" and ")}), which can create challenges in marital harmony and partnerships. `;
+  let exp = `Mangal Dosha is present in your chart with ${mangal.severity} intensity. Mars occupies one of the sensitive houses from the Ascendant, which can create challenges in marital harmony and partnerships. `;
   
   if (mangal.severity === "strong") {
     exp += "The strong placement of Mars in this position indicates intense will, determination, and assertiveness. While these are positive qualities, they require conscious awareness and balance, especially in close relationships where compromise is essential. ";
@@ -25,7 +25,7 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
   }
   
   if (mangal.mitigations.length > 0) {
-    exp += `Fortunately, mitigating factors are present: ${mangal.mitigations.join(", ")}. These positive influences help soften and balance Mars's energy. `;
+    exp += "Fortunately, mitigating factors are present in your chart. These positive planetary influences help soften and balance Mars's energy. ";
   }
   
   return exp;
@@ -45,10 +45,10 @@ export function getPitraExplanationSeer(pitra: DoshaResult): string {
   }
   
   if (pitra.status === "partial") {
-    return `Pitra Dosha shows partial indicators: ${pitra.triggeredBy.join(", ")}. This suggests some unresolved ancestral karma patterns that may create subtle obstacles in life. Performing remedial actions to honor and seek blessings from ancestors can help clear these patterns and bring relief.`;
+    return "Pitra Dosha shows partial indicators in your chart. This suggests some unresolved ancestral karma patterns that may create subtle obstacles in life. The 9th house or Sun has some affliction from Rahu or Ketu, though not at full strength. Performing remedial actions to honor and seek blessings from ancestors can help clear these patterns and bring relief.";
   }
   
-  return `Pitra Dosha is present in your chart: ${pitra.triggeredBy.join(", ")}. This indicates unresolved ancestral debts or unfulfilled duties toward forefathers. The dosha emphasizes the importance of honoring ancestral connections, performing Shraddha ceremonies, and seeking their blessings through appropriate rituals. Addressing this dosha can remove obstacles and bring peace to family matters.`;
+  return "Pitra Dosha is present in your chart. This indicates unresolved ancestral debts or unfulfilled duties toward forefathers. The affliction involves the 9th house (representing ancestors) or the Sun (representing paternal lineage) being influenced by Rahu or Ketu. This dosha emphasizes the importance of honoring ancestral connections, performing Shraddha ceremonies, and seeking their blessings through appropriate rituals. Addressing this dosha can remove obstacles related to father, elders, fortune, and bring peace to family matters.";
 }
 
 export function getPitraRemediesSeer(pitra: DoshaResult): string[] {
@@ -65,7 +65,7 @@ export function getShaniExplanationSeer(shani: DoshaResult): string {
   }
   
   if (shani.status === "partial") {
-    return "Sade Sati shows partial indicators. " + shani.notes.join(". ") + " While not in full force, this period still calls for patience and discipline.";
+    return "Sade Sati shows partial indicators in your chart. While not in full force, this period still calls for patience and discipline in your endeavors.";
   }
   
   let exp = "Sade Sati is currently active in your chart. Saturn is transiting through or near your natal Moon sign, creating a 7.5-year period of testing and transformation. ";
@@ -79,7 +79,7 @@ export function getShaniExplanationSeer(shani: DoshaResult): string {
   }
   
   if (shani.mitigations.length > 0) {
-    exp += "Fortunately, positive factors are present that help reduce the intensity: " + shani.mitigations.join(", ") + ". These influences provide support during this challenging period. ";
+    exp += "Fortunately, positive planetary factors are present that help reduce the intensity. These beneficial influences provide support during this challenging period. ";
   }
   
   exp += "Remember that Sade Sati ultimately brings maturity, wisdom, and lasting rewards for those who face its challenges with patience and integrity.";

@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
-import DoshaResults from './DoshaResults';
+import { DoshaResults } from './DoshaResults';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';

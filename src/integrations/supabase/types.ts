@@ -290,6 +290,45 @@ export type Database = {
         }
         Relationships: []
       }
+      experiments: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean
+          name: string
+          start_date: string | null
+          traffic_allocation: number
+          updated_at: string
+          variants: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          start_date?: string | null
+          traffic_allocation?: number
+          updated_at?: string
+          variants?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          start_date?: string | null
+          traffic_allocation?: number
+          updated_at?: string
+          variants?: Json
+        }
+        Relationships: []
+      }
       seer_api_logs: {
         Row: {
           adaptation_warnings: Json | null
@@ -381,6 +420,44 @@ export type Database = {
             columns: ["calculation_id"]
             isOneToOne: false
             referencedRelation: "dosha_calculations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      variant_assignments: {
+        Row: {
+          assigned_at: string
+          experiment_id: string
+          id: string
+          session_id: string
+          user_id: string | null
+          variant_name: string
+          visitor_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          experiment_id: string
+          id?: string
+          session_id: string
+          user_id?: string | null
+          variant_name: string
+          visitor_id: string
+        }
+        Update: {
+          assigned_at?: string
+          experiment_id?: string
+          id?: string
+          session_id?: string
+          user_id?: string | null
+          variant_name?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variant_assignments_experiment_id_fkey"
+            columns: ["experiment_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
             referencedColumns: ["id"]
           },
         ]

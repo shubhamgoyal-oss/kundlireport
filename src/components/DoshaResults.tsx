@@ -218,7 +218,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
           </CardTitle>
         </CardHeader>
         
-        <CardContent className="space-y-4">
+        <CardContent className={`space-y-4 ${hasAnyDosha ? 'pt-6' : ''}`}>
           {/* Check if any doshas are present */}
           {(() => {
             

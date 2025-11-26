@@ -311,6 +311,8 @@ const AnalyticsDashboard = () => {
       const daysBack = timeRange === '24h' ? 1 : timeRange === '7d' ? 7 : 30;
       const startDate = new Date(Date.now() - daysBack * 86400000).toISOString();
 
+      console.log('Loading variant data for puja_carousel_test...', { timeRange, startDate });
+
       // Fetch analytics events with variant assignments for puja_carousel_test
       const { data: analyticsData, error } = await supabase
         .from('analytics_events')
@@ -325,6 +327,8 @@ const AnalyticsDashboard = () => {
         return;
       }
 
+      console.log('Analytics data fetched:', analyticsData?.length);
+
       // Fetch variant assignments for puja_carousel_test experiment
       const { data: assignments, error: assignmentError } = await supabase
         .from('variant_assignments')
@@ -336,6 +340,8 @@ const AnalyticsDashboard = () => {
         return;
       }
 
+      console.log('Variant assignments fetched:', assignments?.length);
+
       // Get experiment ID for puja_carousel_test
       const { data: experiments, error: expError } = await supabase
         .from('experiments')
@@ -344,9 +350,11 @@ const AnalyticsDashboard = () => {
         .single();
 
       if (expError || !experiments) {
-        console.log('No puja_carousel_test experiment found');
+        console.log('No puja_carousel_test experiment found:', expError);
         return;
       }
+
+      console.log('Experiment found:', experiments);
 
       // Create a map of visitor_id to variant
       const visitorVariantMap = new Map<string, string>();
@@ -355,6 +363,8 @@ const AnalyticsDashboard = () => {
         .forEach(assignment => {
           visitorVariantMap.set(assignment.visitor_id, assignment.variant_name);
         });
+
+      console.log('Visitor-variant map size:', visitorVariantMap.size);
 
       // Process data by variant
       const variantMap = new Map<string, {
@@ -406,6 +416,7 @@ const AnalyticsDashboard = () => {
         }))
         .sort((a, b) => a.variant.localeCompare(b.variant));
 
+      console.log('Processed variant data:', processed);
       setVariantData(processed);
     } catch (err) {
       console.error('Error loading variant funnel data:', err);

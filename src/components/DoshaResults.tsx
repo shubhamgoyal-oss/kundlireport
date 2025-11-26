@@ -198,14 +198,21 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
   return (
     <div ref={resultsRef} className="w-full max-w-4xl mx-auto mt-8 space-y-6">
       {/* Status Chips Summary Section */}
-      <Card className="spiritual-glow">
-        <CardHeader>
+      <Card className={hasAnyDosha ? "animate-urgent-blink border-2" : "spiritual-glow"} style={hasAnyDosha ? { 
+        backgroundColor: 'hsl(var(--danger-bg))', 
+        borderColor: 'hsl(var(--danger-border))' 
+      } : undefined}>
+        <CardHeader className={hasAnyDosha ? "border-b-2" : ""} style={hasAnyDosha ? { 
+          borderBottomColor: 'hsl(var(--danger-border))',
+          backgroundColor: 'hsl(0 84.2% 92%)'
+        } : undefined}>
           <CardTitle 
             ref={statusMessageRef}
-            className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? 'text-red-800' : 'gradient-spiritual bg-clip-text text-transparent'}`}
+            className={`text-2xl sm:text-3xl font-bold break-words ${hasAnyDosha ? '' : 'gradient-spiritual bg-clip-text text-transparent'}`}
+            style={hasAnyDosha ? { color: 'hsl(var(--danger-text))' } : undefined}
           >
             {hasAnyDosha 
-              ? (isHindi ? '⚠️ आपके कुछ दोष पाए गए हैं ⚠️' : '⚠️ Some Doshas Have Been Detected ⚠️')
+              ? (isHindi ? '🚨 आपके कुछ दोष पाए गए हैं 🚨' : '🚨 Some Doshas Have Been Detected 🚨')
               : (isHindi ? '✓ कोई प्रमुख दोष नहीं मिला' : '✓ No Major Doshas Found')
             }
           </CardTitle>

@@ -247,18 +247,18 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
         <AccordionContent className="pt-4 space-y-4">
           {/* What it is */}
           <div className="p-3 bg-muted/50 rounded-md border-l-4 border-primary">
-            <p className="text-xs sm:text-sm text-muted-foreground italic leading-relaxed">{translatedDosha.whatItIs}</p>
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
+            <p className="text-sm text-muted-foreground italic leading-relaxed">{translatedDosha.whatItIs}</p>
+            <p className="text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
           </div>
 
-          {/* Explanation from planetary positions - Only show for English */}
-          {!isHindi && statusFlag?.explanation && (
+          {/* Explanation from planetary positions */}
+          {statusFlag?.explanation && (
             <div>
               <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
                 <Info className="w-4 h-4" />
                 {t('doshaResults.explanation')}
               </h5>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{statusFlag.explanation}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{isHindi ? translatedDosha.impact : statusFlag.explanation}</p>
             </div>
           )}
 
@@ -269,7 +269,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                 <Info className="w-4 h-4" />
                 {t('doshaResults.planetaryPositions')}
               </h5>
-              <ul className="list-disc list-inside text-xs sm:text-sm text-muted-foreground space-y-2 leading-relaxed">
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2 leading-relaxed">
                 {statusFlag.placements.map((p, i) => (
                   <li key={i}>{translatePlacement(p)}</li>
                 ))}
@@ -283,7 +283,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
               <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
                 {t('doshaResults.traditionalRemedies')}
               </h5>
-              <ul className="list-disc list-inside text-xs sm:text-sm text-muted-foreground space-y-1 leading-relaxed">
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 leading-relaxed">
                 {translatedDosha.remedies.map((remedy, i) => (
                   <li key={i}>{remedy}</li>
                 ))}

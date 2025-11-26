@@ -539,19 +539,22 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
               
               {details.mangal && (
                 <>
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4" />
-                      {t('doshaResults.explanation')}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.mangal.explanation}</p>
-                  </div>
+                  {/* Explanation - Only show for English */}
+                  {!isHindi && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {t('doshaResults.explanation')}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{details.mangal.explanation}</p>
+                    </div>
+                  )}
 
                   {details.mangal.placements && details.mangal.placements.length > 0 && (
                     <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                        {t('doshaResults.planetaryPositions')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.mangal.placements.map((p, i) => (
@@ -622,19 +625,22 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
               
               {details.kaalSarp && (
                 <>
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4" />
-                      {t('doshaResults.explanation')}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.kaalSarp.explanation}</p>
-                  </div>
+                  {/* Explanation - Only show for English */}
+                  {!isHindi && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {t('doshaResults.explanation')}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{details.kaalSarp.explanation}</p>
+                    </div>
+                  )}
 
                   {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
                     <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                        {t('doshaResults.planetaryPositions')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.kaalSarp.placements.map((p, i) => (
@@ -696,19 +702,22 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
               
               {details.pitra && (
                 <>
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4" />
-                      {t('doshaResults.explanation')}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.pitra.explanation}</p>
-                  </div>
+                  {/* Explanation - Only show for English */}
+                  {!isHindi && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {t('doshaResults.explanation')}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{details.pitra.explanation}</p>
+                    </div>
+                  )}
 
                   {details.pitra.placements && details.pitra.placements.length > 0 && (
                     <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
                       <h4 className="font-medium mb-3 flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        {isHindi ? 'ग्रहों की स्थिति' : 'Planetary Positions'}
+                        {t('doshaResults.planetaryPositions')}
                       </h4>
                       <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
                         {details.pitra.placements.map((p, i) => (
@@ -771,13 +780,16 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
               
               {details.sadeSati && (
                 <>
-                  <div>
-                    <h4 className="font-medium mb-2 flex items-center gap-2">
-                      <Info className="w-4 h-4" />
-                      {t('doshaResults.explanation')}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">{isHindi ? t('dosha.howImpactAnswer') : details.sadeSati.explanation}</p>
-                  </div>
+                  {/* Explanation - Only show for English */}
+                  {!isHindi && (
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {t('doshaResults.explanation')}
+                      </h4>
+                      <p className="text-sm text-muted-foreground">{details.sadeSati.explanation}</p>
+                    </div>
+                  )}
 
                   {details.sadeSati.notes && details.sadeSati.notes.length > 0 && (
                     <div className="p-3 bg-accent/20 rounded-md">

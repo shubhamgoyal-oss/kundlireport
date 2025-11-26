@@ -126,7 +126,57 @@ const otherDoshasData = {
 
 export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+
+  const translatePlacement = (line: string) => {
+    if (!isHindi) return line;
+    let s = line;
+
+    const planetMap: Record<string, string> = {
+      Sun: 'सूर्य',
+      Moon: 'चंद्र',
+      Mars: 'मंगल',
+      Mercury: 'बुध',
+      Jupiter: 'गुरु',
+      Venus: 'शुक्र',
+      Saturn: 'शनि',
+      Rahu: 'राहु',
+      Ketu: 'केतु',
+    };
+    const signMap: Record<string, string> = {
+      Aries: 'मेष',
+      Taurus: 'वृषभ',
+      Gemini: 'मिथुन',
+      Cancer: 'कर्क',
+      Leo: 'सिंह',
+      Virgo: 'कन्या',
+      Libra: 'तुला',
+      Scorpio: 'वृश्चिक',
+      Sagittarius: 'धनु',
+      Capricorn: 'मकर',
+      Aquarius: 'कुंभ',
+      Pisces: 'मीन',
+    };
+
+    Object.entries(planetMap).forEach(([en, hi]) => {
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+    });
+    Object.entries(signMap).forEach(([en, hi]) => {
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+    });
+
+    s = s
+      .replace(/\bin\b/gi, 'में')
+      .replace(/\bhouse\b/gi, 'भाव')
+      .replace(/from\s+Lagna/gi, 'लग्न से')
+      .replace(/with empty neighboring signs/gi, 'पड़ोसी राशियों के बिना')
+      .replace(/isolated/gi, 'अकेला');
+
+    s = s.replace(/(\d+)(st|nd|rd|th)?\s*भाव/gi, (_m, num) => `${num}वें भाव`);
+
+    return s;
+  };
 
   const isDoshaPresent = (status?: string) => {
     if (!status) return false;
@@ -201,8 +251,8 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-2 leading-relaxed">{translatedDosha.impact}</p>
           </div>
 
-          {/* Explanation from planetary positions */}
-          {statusFlag?.explanation && (
+          {/* Explanation from planetary positions - Only show for English */}
+          {!isHindi && statusFlag?.explanation && (
             <div>
               <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
                 <Info className="w-4 h-4" />
@@ -217,11 +267,11 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
             <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
               <h5 className="font-medium mb-2 flex items-center gap-2 text-sm">
                 <Info className="w-4 h-4" />
-                {t('doshaResults.placements') || 'Planetary Positions'}
+                {t('doshaResults.planetaryPositions')}
               </h5>
               <ul className="list-disc list-inside text-xs sm:text-sm text-muted-foreground space-y-2 leading-relaxed">
                 {statusFlag.placements.map((p, i) => (
-                  <li key={i}>{p}</li>
+                  <li key={i}>{translatePlacement(p)}</li>
                 ))}
               </ul>
             </div>

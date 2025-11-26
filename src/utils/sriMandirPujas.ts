@@ -276,7 +276,7 @@ export function filterPujasByDosha(
     shani: ['shani', 'saturn', 'शनि'],
     rahu: ['rahu', 'राहु'],
     shrapit: ['shrapit', 'श्रापित'],
-    'guru-chandal': ['brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
+    'guru-chandal': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
   };
 
@@ -329,7 +329,7 @@ export function getPrioritizedPuja(
   const priorityKeywords: Record<string, string[]> = {
     pitra: ['pishach mochan', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
     shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
-    'guru-chandal': ['brihaspati rahu', 'बृहस्पति राहु'],
+    'guru-chandal': ['brihaspati-rahu yuti', 'brihaspati rahu', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
     navagraha: ['navagraha shanti', 'navagrah shanti', 'नवग्रह शांति']
   };
 

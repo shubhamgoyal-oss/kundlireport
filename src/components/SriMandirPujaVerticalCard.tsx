@@ -31,8 +31,13 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
       },
     });
     
+    // Ensure onBookClick completes before navigation
     if (onBookClick) {
-      await onBookClick();
+      try {
+        await onBookClick();
+      } catch (err) {
+        console.error('Error in onBookClick:', err);
+      }
     }
   };
 
@@ -73,14 +78,16 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
 
           {/* Book Button */}
           <Button
-            asChild
             className="w-full text-sm h-9"
-            onClick={handleBookClick}
+            onClick={async (e) => {
+              e.preventDefault();
+              await handleBookClick();
+              // Navigate after tracking completes
+              window.open(pujaLink, '_blank', 'noopener,noreferrer');
+            }}
           >
-            <a href={pujaLink} target="_blank" rel="noopener noreferrer">
-              {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
-              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-            </a>
+            {isHindi ? 'पूजा बुक करें' : 'Book Puja'}
+            <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
           </Button>
           
           <p className="text-[10px] text-center text-muted-foreground">

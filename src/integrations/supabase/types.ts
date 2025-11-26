@@ -71,6 +71,71 @@ export type Database = {
         }
         Relationships: []
       }
+      callback_requests: {
+        Row: {
+          calculation_id: string | null
+          called_at: string | null
+          created_at: string
+          id: string
+          language: string
+          notes: string | null
+          phone_number: string
+          session_id: string
+          status: string
+          updated_at: string
+          user_city: string | null
+          user_country: string | null
+          user_id: string | null
+          user_latitude: number | null
+          user_longitude: number | null
+          visitor_id: string
+        }
+        Insert: {
+          calculation_id?: string | null
+          called_at?: string | null
+          created_at?: string
+          id?: string
+          language?: string
+          notes?: string | null
+          phone_number: string
+          session_id: string
+          status?: string
+          updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
+          user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
+          visitor_id: string
+        }
+        Update: {
+          calculation_id?: string | null
+          called_at?: string | null
+          created_at?: string
+          id?: string
+          language?: string
+          notes?: string | null
+          phone_number?: string
+          session_id?: string
+          status?: string
+          updated_at?: string
+          user_city?: string | null
+          user_country?: string | null
+          user_id?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "callback_requests_calculation_id_fkey"
+            columns: ["calculation_id"]
+            isOneToOne: false
+            referencedRelation: "dosha_calculator2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dosha_calculations: {
         Row: {
           book_puja_clicked: boolean

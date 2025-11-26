@@ -51,18 +51,28 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
       const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
       const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
 
-      // Store callback request in analytics_events
-      await supabase.from('analytics_events').insert({
-        visitor_id: visitorId,
-        session_id: sessionId,
-        event_name: 'callback_requested',
-        metadata: {
+      // Get user location
+      const location = await fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .catch(() => ({ country_name: null, city: null, latitude: null, longitude: null }));
+
+      // Store callback request in dedicated table
+      const { error: insertError } = await supabase
+        .from('callback_requests')
+        .insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
           phone_number: phoneNumber,
           calculation_id: calculationId,
           language: i18n.language,
-          timestamp: new Date().toISOString()
-        }
-      });
+          status: 'pending',
+          user_country: location.country_name,
+          user_city: location.city,
+          user_latitude: location.latitude,
+          user_longitude: location.longitude
+        });
+
+      if (insertError) throw insertError;
 
       // Track event for analytics
       trackEvent('callback_form_submitted', {

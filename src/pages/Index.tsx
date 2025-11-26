@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SolutionFinder from '@/components/SolutionFinder';
 import DoshaCalculator from '@/components/DoshaCalculator';
+import LanguageToggle from '@/components/LanguageToggle';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, CircleDot, ChevronDown } from 'lucide-react';
@@ -31,6 +32,13 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+
+      {/* Language Toggle at Top */}
+      <div className="container mx-auto px-4 sm:px-6 pt-4 max-w-7xl">
+        <div className="flex justify-end">
+          <LanguageToggle />
+        </div>
+      </div>
 
       {/* Hero Section - Mobile-first optimized */}
       <main className="flex-1">

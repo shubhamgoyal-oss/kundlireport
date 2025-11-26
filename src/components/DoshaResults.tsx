@@ -595,7 +595,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.mangal.description')} {t('doshaResults.mangal.impact')}
+                      {isHindi ? t('doshaResults.mangal.hindiExplanation') : details.mangal.explanation}
                     </p>
                   </div>
 
@@ -680,7 +680,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.kaalSarp.description')} {t('doshaResults.kaalSarp.impact')}
+                      {isHindi ? t('doshaResults.kaalSarp.hindiExplanation') : details.kaalSarp.explanation}
                     </p>
                   </div>
 
@@ -756,7 +756,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.pitra.description')} {t('doshaResults.pitra.impact')}
+                      {isHindi ? t('doshaResults.pitra.hindiExplanation') : details.pitra.explanation}
                     </p>
                   </div>
 
@@ -833,9 +833,28 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.sadeSati.description')} {t('doshaResults.sadeSati.impact')}
+                      {isHindi ? t('doshaResults.sadeSati.hindiExplanation') : details.sadeSati.explanation}
                     </p>
                   </div>
+
+                  {details.sadeSati.placements && details.sadeSati.placements.length > 0 && (
+                    <div className="p-3 bg-accent/10 rounded-md border border-accent/20">
+                      <h4 className="font-medium mb-3 flex items-center gap-2">
+                        <Info className="w-4 h-4" />
+                        {t('doshaResults.planetaryPositions')}
+                      </h4>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                        {details.sadeSati.placements.map((p, i) => (
+                          <li key={i} className="leading-relaxed">{translatePlacement(p)}</li>
+                        ))}
+                      </ul>
+                      <p className="text-xs text-muted-foreground mt-3 italic">
+                        {isHindi 
+                          ? 'शनि का चंद्रमा की राशि से संबंध साढ़े साती का संकेत देता है।'
+                          : 'Saturn\'s transit relative to Moon sign indicates Sade Sati phase.'}
+                      </p>
+                    </div>
+                  )}
 
                   {details.sadeSati.notes && details.sadeSati.notes.length > 0 && (
                     <div className="p-3 bg-accent/20 rounded-md">

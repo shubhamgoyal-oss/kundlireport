@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, FlaskConical, Users, TrendingUp } from 'lucide-react';
+import { Loader2, FlaskConical, Users, TrendingUp, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Experiment {
@@ -28,9 +30,16 @@ interface ExperimentStats {
 }
 
 export default function ExperimentAdmin() {
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
   const [experiments, setExperiments] = useState<Experiment[]>([]);
   const [stats, setStats] = useState<ExperimentStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/admin/login');
+  };
 
   useEffect(() => {
     loadExperiments();
@@ -119,13 +128,22 @@ export default function ExperimentAdmin() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-          <FlaskConical className="w-8 h-8" />
-          A/B Testing Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Manage and monitor your experiments
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+              <FlaskConical className="w-8 h-8" />
+              A/B Testing Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Manage and monitor your experiments
+            </p>
+            {user && <p className="text-sm text-muted-foreground mt-1">Logged in as: {user.email}</p>}
+          </div>
+          <Button onClick={handleSignOut} variant="outline" size="sm">
+            <LogOut className="h-4 w-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6">

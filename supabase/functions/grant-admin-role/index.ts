@@ -1,0 +1,103 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    const { userEmail } = await req.json();
+
+    if (!userEmail) {
+      return new Response(
+        JSON.stringify({ error: 'User email is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Find user by email
+    const { data: { users }, error: findError } = await supabaseAdmin.auth.admin.listUsers();
+    
+    if (findError) {
+      console.error('Error finding user:', findError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to find user' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const user = users?.find(u => u.email === userEmail);
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'User not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user already has admin role
+    const { data: existingRole } = await supabaseAdmin
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (existingRole) {
+      return new Response(
+        JSON.stringify({ message: 'User already has admin role' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Grant admin role
+    const { error: grantError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({
+        user_id: user.id,
+        role: 'admin'
+      });
+
+    if (grantError) {
+      console.error('Error granting admin role:', grantError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to grant admin role' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        message: 'Admin role granted successfully',
+        userId: user.id,
+        userEmail: user.email
+      }),
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+
+  } catch (error) {
+    console.error('Error in grant-admin-role function:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+});

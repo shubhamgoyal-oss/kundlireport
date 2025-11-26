@@ -164,32 +164,77 @@ All colors MUST be HSL and based on traditional Indian spiritual palette
     will-change: transform;
   }
 
-  /* Urgent alert blinking animation for doshas */
-  @keyframes urgent-blink {
-    0%, 100% {
-      opacity: 1;
-      box-shadow: 0 0 10px hsl(0 84.2% 60.2% / 0.5);
+  /* Ambulance blinking lights animation for doshas */
+  @keyframes ambulance-blink {
+    0% {
+      background: linear-gradient(90deg, 
+        hsl(0 100% 50% / 0.3) 0%, 
+        hsl(0 100% 50% / 0.1) 50%, 
+        hsl(0 100% 50% / 0.3) 100%
+      );
+      box-shadow: 
+        0 0 20px hsl(0 100% 50% / 0.6),
+        inset 0 0 20px hsl(0 100% 50% / 0.2);
+    }
+    25% {
+      background: linear-gradient(90deg, 
+        hsl(0 100% 60% / 0.5) 0%, 
+        hsl(0 100% 60% / 0.3) 50%, 
+        hsl(0 100% 60% / 0.5) 100%
+      );
+      box-shadow: 
+        0 0 30px hsl(0 100% 50% / 0.9),
+        0 0 40px hsl(0 100% 50% / 0.6),
+        inset 0 0 30px hsl(0 100% 50% / 0.3);
     }
     50% {
-      opacity: 0.85;
-      box-shadow: 0 0 20px hsl(0 84.2% 60.2% / 0.8), 0 0 30px hsl(0 84.2% 60.2% / 0.4);
+      background: linear-gradient(90deg, 
+        hsl(0 100% 50% / 0.3) 0%, 
+        hsl(0 100% 50% / 0.1) 50%, 
+        hsl(0 100% 50% / 0.3) 100%
+      );
+      box-shadow: 
+        0 0 20px hsl(0 100% 50% / 0.6),
+        inset 0 0 20px hsl(0 100% 50% / 0.2);
+    }
+    75% {
+      background: linear-gradient(90deg, 
+        hsl(0 100% 60% / 0.5) 0%, 
+        hsl(0 100% 60% / 0.3) 50%, 
+        hsl(0 100% 60% / 0.5) 100%
+      );
+      box-shadow: 
+        0 0 30px hsl(0 100% 50% / 0.9),
+        0 0 40px hsl(0 100% 50% / 0.6),
+        inset 0 0 30px hsl(0 100% 50% / 0.3);
+    }
+    100% {
+      background: linear-gradient(90deg, 
+        hsl(0 100% 50% / 0.3) 0%, 
+        hsl(0 100% 50% / 0.1) 50%, 
+        hsl(0 100% 50% / 0.3) 100%
+      );
+      box-shadow: 
+        0 0 20px hsl(0 100% 50% / 0.6),
+        inset 0 0 20px hsl(0 100% 50% / 0.2);
     }
   }
 
-  .animate-urgent-blink {
-    animation: urgent-blink 1.5s ease-in-out infinite;
+  .animate-ambulance-blink {
+    animation: ambulance-blink 1s ease-in-out infinite;
+    border: 2px solid hsl(0 100% 50%);
   }
 
   /* Urgent danger colors */
   :root {
-    --danger-bg: 0 84.2% 97%;
-    --danger-border: 0 84.2% 60.2%;
-    --danger-text: 0 84.2% 40%;
+    --danger-bg: 0 100% 96%;
+    --danger-border: 0 100% 50%;
+    --danger-text: 0 84.2% 30%;
   }
 
   .dark {
     --danger-bg: 0 84.2% 15%;
-    --danger-border: 0 84.2% 50%;
+    --danger-border: 0 100% 50%;
     --danger-text: 0 84.2% 70%;
   }
 }

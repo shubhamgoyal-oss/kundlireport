@@ -549,21 +549,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                             pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
                           }
                           
-                          const Icon = 'icon' in dosha ? dosha.icon : AlertTriangle;
-                          
                           return (
-                            <Card key={dosha.type} className="border-l-4 border-primary/40 overflow-hidden">
-                              <CardHeader className="bg-accent/5 border-b border-border">
-                                <div className="flex items-center gap-3">
-                                  <Icon className="w-6 h-6 text-primary" />
-                                  <div>
-                                    <CardTitle className="text-lg">{dosha.label}</CardTitle>
-                                    <CardDescription className="text-xs mt-1">{dosha.description}</CardDescription>
-                                  </div>
+                            <Card key={dosha.type} className="overflow-hidden">
+                              <CardHeader className="bg-accent/5">
+                                <div>
+                                  <CardTitle className="text-lg">{dosha.label}</CardTitle>
+                                  <CardDescription className="text-xs mt-1">{dosha.description}</CardDescription>
                                 </div>
                               </CardHeader>
                               <CardContent className="pt-4 space-y-4">
-                                <div className="p-3 bg-muted/50 rounded-md border border-border">
+                                <div className="p-3 bg-muted/50 rounded-md">
                                   <p className="text-sm font-medium text-foreground">{dosha.impact}</p>
                                 </div>
                                 

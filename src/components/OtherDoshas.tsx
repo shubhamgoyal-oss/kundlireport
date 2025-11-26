@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -128,6 +129,51 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { t, i18n } = useTranslation();
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+  const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  // Translate explanations to Hindi when language changes
+  React.useEffect(() => {
+    if (!isHindi || !doshaFlags) return;
+
+    const translateExplanations = async () => {
+      setIsTranslating(true);
+      const translations: Record<string, string> = {};
+
+      const doshaKeys = Object.keys(doshaFlags) as Array<keyof typeof doshaFlags>;
+      
+      for (const key of doshaKeys) {
+        const flag = doshaFlags[key];
+        if (flag?.explanation) {
+          try {
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-dosha`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              },
+              body: JSON.stringify({ text: flag.explanation }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              translations[key] = data.translation || flag.explanation;
+            } else {
+              translations[key] = flag.explanation;
+            }
+          } catch (error) {
+            console.error(`Translation failed for ${key}:`, error);
+            translations[key] = flag.explanation;
+          }
+        }
+      }
+
+      setTranslatedExplanations(translations);
+      setIsTranslating(false);
+    };
+
+    translateExplanations();
+  }, [isHindi, doshaFlags]);
 
   const translatePlacement = (line: string) => {
     if (!isHindi) return line;
@@ -272,9 +318,15 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                 <Info className="w-4 h-4" />
                 {isPresent ? t('doshaResults.whyPresent') : t('doshaResults.whyAbsent')}
               </h5>
-              <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
-                {statusFlag.explanation}
-              </p>
+              {isTranslating && isHindi ? (
+                <p className="text-sm text-muted-foreground italic">अनुवाद हो रहा है...</p>
+              ) : (
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {isHindi && translatedExplanations[key] 
+                    ? translatedExplanations[key]
+                    : statusFlag.explanation}
+                </p>
+              )}
             </div>
           )}
 

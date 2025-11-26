@@ -465,7 +465,10 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   // Combine in priority order
                   const allActiveDoshas = [...majorDoshas, ...otherDoshas];
                   
-                  if (allActiveDoshas.length === 0) return null;
+                  // Limit to top 4 doshas only
+                  const top4Doshas = allActiveDoshas.slice(0, 4);
+                  
+                  if (top4Doshas.length === 0) return null;
 
                   return (
                     <div className="mt-6 space-y-6">
@@ -500,8 +503,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                         </div>
                       ) : (
                         <div className="space-y-8">
-                          {/* Major Doshas Section */}
-                          {majorDoshas.map(dosha => {
+                          {/* Top 4 Doshas with 1 Puja Each */}
+                          {top4Doshas.map(dosha => {
                             const filtered = filterPujasByDosha(pujas, dosha.type);
                             
                             // Get prioritized single puja
@@ -510,33 +513,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                               pujaToShow = getPrioritizedPuja(filtered, 'pitra');
                             } else if (dosha.type === 'shani') {
                               pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                            } else {
-                              pujaToShow = getUpcomingPujas(filtered, 1)[0] || null;
-                            }
-                            
-                            if (!pujaToShow) return null;
-                            
-                            return (
-                              <div key={dosha.type} className="space-y-4">
-                                <SriMandirPujaVerticalCard 
-                                  key={pujaToShow.store_id}
-                                  puja={pujaToShow} 
-                                  doshaType={dosha.type}
-                                  onBookClick={async () => {
-                                    await trackBookPujaClick(dosha.type);
-                                  }}
-                                />
-                              </div>
-                            );
-                          })}
-                          
-                          {/* Other Doshas Section */}
-                          {otherDoshas.map(dosha => {
-                            const filtered = filterPujasByDosha(pujas, dosha.type);
-                            
-                            // Get prioritized puja for guru-chandal and navagraha, otherwise get upcoming
-                            let pujaToShow: SriMandirPuja | null = null;
-                            if (dosha.type === 'guru-chandal' || dosha.type === 'navagraha') {
+                            } else if (dosha.type === 'guru-chandal' || dosha.type === 'navagraha') {
                               pujaToShow = getPrioritizedPuja(filtered, dosha.type);
                             } else {
                               pujaToShow = getUpcomingPujas(filtered, 1)[0] || null;

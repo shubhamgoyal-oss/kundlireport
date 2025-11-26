@@ -157,7 +157,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
             if (response.ok) {
               const data = await response.json();
-              translations[key] = data.translation || flag.explanation;
+              translations[key] = data.translatedText || flag.explanation;
             } else {
               translations[key] = flag.explanation;
             }

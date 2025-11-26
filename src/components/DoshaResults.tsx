@@ -252,9 +252,27 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           <Flame className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.mangal.name')}
                         </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.impact')}</p>
+                        <div className="p-2 rounded-md space-y-2 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          {isHindi ? (
+                            <>
+                              <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.description')}</p>
+                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.mangal.impact')}</p>
+                            </>
+                          ) : (
+                            <>
+                              {details.mangal?.placements && details.mangal.placements.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--danger-text))' }}>Placements:</p>
+                                  {details.mangal.placements.map((placement, idx) => (
+                                    <p key={idx} className="text-sm" style={{ color: 'hsl(var(--danger-text))' }}>• {placement}</p>
+                                  ))}
+                                </div>
+                              )}
+                              {details.mangal?.explanation && (
+                                <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{details.mangal.explanation}</p>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -268,9 +286,27 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           <Waves className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.kaalSarp.name')}
                         </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.impact')}</p>
+                        <div className="p-2 rounded-md space-y-2 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          {isHindi ? (
+                            <>
+                              <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.description')}</p>
+                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.kaalSarp.impact')}</p>
+                            </>
+                          ) : (
+                            <>
+                              {details.kaalSarp?.placements && details.kaalSarp.placements.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--danger-text))' }}>Placements:</p>
+                                  {details.kaalSarp.placements.map((placement, idx) => (
+                                    <p key={idx} className="text-sm" style={{ color: 'hsl(var(--danger-text))' }}>• {placement}</p>
+                                  ))}
+                                </div>
+                              )}
+                              {details.kaalSarp?.explanation && (
+                                <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{details.kaalSarp.explanation}</p>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -284,9 +320,27 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           <Users className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.pitra.name')}
                         </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.impact')}</p>
+                        <div className="p-2 rounded-md space-y-2 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          {isHindi ? (
+                            <>
+                              <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.description')}</p>
+                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.pitra.impact')}</p>
+                            </>
+                          ) : (
+                            <>
+                              {details.pitra?.placements && details.pitra.placements.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--danger-text))' }}>Placements:</p>
+                                  {details.pitra.placements.map((placement, idx) => (
+                                    <p key={idx} className="text-sm" style={{ color: 'hsl(var(--danger-text))' }}>• {placement}</p>
+                                  ))}
+                                </div>
+                              )}
+                              {details.pitra?.explanation && (
+                                <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{details.pitra.explanation}</p>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -300,9 +354,27 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                           <Moon className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                           {t('doshaResults.sadeSati.name')}
                         </h4>
-                        <div className="p-2 rounded-md space-y-1 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
-                          <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.description')}</p>
-                          <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.impact')}</p>
+                        <div className="p-2 rounded-md space-y-2 break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                          {isHindi ? (
+                            <>
+                              <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.description')}</p>
+                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>{t('doshaResults.sadeSati.impact')}</p>
+                            </>
+                          ) : (
+                            <>
+                              {details.shaniSadeSati?.placements && details.shaniSadeSati.placements.length > 0 && (
+                                <div className="space-y-1">
+                                  <p className="text-sm font-semibold" style={{ color: 'hsl(var(--danger-text))' }}>Placements:</p>
+                                  {details.shaniSadeSati.placements.map((placement, idx) => (
+                                    <p key={idx} className="text-sm" style={{ color: 'hsl(var(--danger-text))' }}>• {placement}</p>
+                                  ))}
+                                </div>
+                              )}
+                              {details.shaniSadeSati?.explanation && (
+                                <p className="text-sm italic" style={{ color: 'hsl(var(--danger-text))' }}>{details.shaniSadeSati.explanation}</p>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -545,7 +617,10 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.mangal.description')} {t('doshaResults.mangal.impact')}
+                      {isHindi 
+                        ? `${t('doshaResults.mangal.description')} ${t('doshaResults.mangal.impact')}`
+                        : details.mangal.explanation || `${t('doshaResults.mangal.description')} ${t('doshaResults.mangal.impact')}`
+                      }
                     </p>
                   </div>
 
@@ -630,7 +705,10 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.kaalSarp.description')} {t('doshaResults.kaalSarp.impact')}
+                      {isHindi 
+                        ? `${t('doshaResults.kaalSarp.description')} ${t('doshaResults.kaalSarp.impact')}`
+                        : details.kaalSarp.explanation || `${t('doshaResults.kaalSarp.description')} ${t('doshaResults.kaalSarp.impact')}`
+                      }
                     </p>
                   </div>
 
@@ -706,7 +784,10 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.pitra.description')} {t('doshaResults.pitra.impact')}
+                      {isHindi 
+                        ? `${t('doshaResults.pitra.description')} ${t('doshaResults.pitra.impact')}`
+                        : details.pitra.explanation || `${t('doshaResults.pitra.description')} ${t('doshaResults.pitra.impact')}`
+                      }
                     </p>
                   </div>
 
@@ -783,7 +864,10 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                       {t('doshaResults.explanation')}
                     </h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {t('doshaResults.sadeSati.description')} {t('doshaResults.sadeSati.impact')}
+                      {isHindi 
+                        ? `${t('doshaResults.sadeSati.description')} ${t('doshaResults.sadeSati.impact')}`
+                        : (details.sadeSati?.explanation || details.shaniSadeSati?.explanation || `${t('doshaResults.sadeSati.description')} ${t('doshaResults.sadeSati.impact')}`)
+                      }
                     </p>
                   </div>
 

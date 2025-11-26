@@ -259,7 +259,10 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
                 {t('doshaResults.explanation')}
               </h5>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                {translatedDosha.whatItIs} {translatedDosha.impact}
+                {isHindi 
+                  ? `${translatedDosha.whatItIs} ${translatedDosha.impact}`
+                  : statusFlag.explanation
+                }
               </p>
             </div>
           )}

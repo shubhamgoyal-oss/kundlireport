@@ -515,15 +515,15 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   const isOtherDosha = (type: string) => ['vishDaridra', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'ketuNaga'].includes(type);
 
                   return (
-                    <div className="space-y-4 mt-6">
+                    <div className="space-y-3 mt-3">
                       {/* Simple Ribbon Cards - Max 3 with just dosha names */}
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-2">
                         {allActiveDoshas.map((dosha, index) => (
                           <div 
                             key={dosha.type} 
-                            className="bg-gradient-to-r from-primary/10 to-accent/10 border-l-4 border-primary px-4 py-3 rounded-md"
+                            className="bg-gradient-to-r from-primary/10 to-accent/10 border-l-4 border-primary px-3 py-2 rounded-md"
                           >
-                            <p className="font-bold text-base text-foreground">
+                            <p className="font-bold text-sm text-foreground">
                               {dosha.label}
                             </p>
                           </div>
@@ -532,7 +532,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
                       {/* Puja Remedies Section - Separate from dosha ribbons */}
                       {!isLoadingPujas && (
-                        <div className="mt-8 space-y-4">
+                        <div className="mt-4 space-y-4">
                           <div className="text-center">
                             <h3 className="text-xl font-semibold mb-2">
                               {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}

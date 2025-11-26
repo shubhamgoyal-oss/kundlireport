@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
 import ExperimentAdmin from "./pages/ExperimentAdmin";
+import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
 import { trackTrafficSource } from "./utils/trafficTracking";
@@ -72,6 +73,7 @@ const App = () => {
             
             {/* Admin routes */}
             <Route path="/admin/experiments" element={<ExperimentAdmin />} />
+            <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

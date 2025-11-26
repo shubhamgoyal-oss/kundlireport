@@ -323,14 +323,14 @@ const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) =>
 
                     if (otherDoshas.length > 0) {
                       return (
-                        <div className="border-l-4 border-warning rounded-lg overflow-hidden bg-background">
+                        <div className="border-l-4 border-destructive rounded-lg overflow-hidden animate-urgent-blink" style={{ backgroundColor: 'hsl(var(--danger-bg))', borderLeftColor: 'hsl(var(--danger-border))' }}>
                           <div className="p-3">
-                            <h4 className="font-semibold text-base mb-2 flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4 text-warning" />
+                            <h4 className="font-semibold text-base mb-2 flex items-center gap-2" style={{ color: 'hsl(var(--danger-text))' }}>
+                              <AlertTriangle className="w-4 h-4" style={{ color: 'hsl(var(--danger-border))' }} />
                               {isHindi ? 'अन्य दोष' : 'Other Doshas'}
                             </h4>
-                            <div className="p-2 bg-muted/50 rounded-md break-words">
-                              <p className="text-sm text-muted-foreground font-medium">
+                            <div className="p-2 rounded-md break-words" style={{ backgroundColor: 'hsl(0 84.2% 95%)' }}>
+                              <p className="text-sm font-medium" style={{ color: 'hsl(var(--danger-text))' }}>
                                 {otherDoshas.join(', ')}
                               </p>
                             </div>

@@ -21,10 +21,19 @@ interface HourlyFunnelData {
   puja_conversion_pct: number;
 }
 
+interface ISTHourlyData {
+  hour: number;
+  unique_visitors: number;
+  pct_calculate_dosha_clicked: number;
+  pct_book_puja_clicked: number;
+  pct_failed_calculate: number;
+}
+
 const AnalyticsDashboard = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState<HourlyFunnelData[]>([]);
+  const [istData, setIstData] = useState<ISTHourlyData[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
 
@@ -35,6 +44,7 @@ const AnalyticsDashboard = () => {
 
   useEffect(() => {
     loadFunnelData();
+    loadTodayISTData();
   }, [timeRange]);
 
   const loadFunnelData = async () => {
@@ -58,6 +68,82 @@ const AnalyticsDashboard = () => {
       console.error('Error loading funnel data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTodayISTData = async () => {
+    try {
+      // Get today's data
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      
+      const { data: analyticsData, error } = await supabase
+        .from('analytics_events')
+        .select('*')
+        .gte('created_at', startOfDay.toISOString());
+
+      if (error) {
+        console.error('Error loading IST data:', error);
+        return;
+      }
+
+      if (!analyticsData) return;
+
+      // Process data by IST hour
+      const hourlyMap = new Map<number, {
+        visitors: Set<string>;
+        calculateClicked: Set<string>;
+        pujaClicked: Set<string>;
+        failed: Set<string>;
+      }>();
+
+      analyticsData.forEach(event => {
+        // Convert to IST (UTC+5:30)
+        const utcDate = new Date(event.created_at);
+        const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+        const hour = istDate.getHours();
+
+        if (!hourlyMap.has(hour)) {
+          hourlyMap.set(hour, {
+            visitors: new Set(),
+            calculateClicked: new Set(),
+            pujaClicked: new Set(),
+            failed: new Set(),
+          });
+        }
+
+        const hourData = hourlyMap.get(hour)!;
+        hourData.visitors.add(event.visitor_id);
+
+        if (event.event_name === 'calculate_dosha_clicked') {
+          hourData.calculateClicked.add(event.visitor_id);
+        }
+        if (event.event_name === 'srimandir_puja_click') {
+          hourData.pujaClicked.add(event.visitor_id);
+        }
+        if (event.event_name === 'dosha_calculate_unsuccessful') {
+          hourData.failed.add(event.visitor_id);
+        }
+      });
+
+      // Convert to array format
+      const processed = Array.from(hourlyMap.entries()).map(([hour, data]) => ({
+        hour,
+        unique_visitors: data.visitors.size,
+        pct_calculate_dosha_clicked: data.visitors.size > 0 
+          ? Number(((data.calculateClicked.size / data.visitors.size) * 100).toFixed(2))
+          : 0,
+        pct_book_puja_clicked: data.visitors.size > 0
+          ? Number(((data.pujaClicked.size / data.visitors.size) * 100).toFixed(2))
+          : 0,
+        pct_failed_calculate: data.visitors.size > 0
+          ? Number(((data.failed.size / data.visitors.size) * 100).toFixed(2))
+          : 0,
+      })).sort((a, b) => a.hour - b.hour);
+
+      setIstData(processed);
+    } catch (err) {
+      console.error('Error loading IST hourly data:', err);
     }
   };
 
@@ -286,6 +372,73 @@ const AnalyticsDashboard = () => {
                 <Bar dataKey="puja_clicks" fill="hsl(var(--chart-5))" name="Puja Clicks" />
               </BarChart>
             </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Today's Hourly Performance (IST) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Hourly Performance (IST)</CardTitle>
+            <CardDescription>Hourly breakdown of key metrics in Indian Standard Time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {istData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No data available for today</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-4 font-medium">Hour (IST)</th>
+                      <th className="text-right py-3 px-4 font-medium">Unique Visitors</th>
+                      <th className="text-right py-3 px-4 font-medium">% Calculate Clicked</th>
+                      <th className="text-right py-3 px-4 font-medium">% Puja Clicked</th>
+                      <th className="text-right py-3 px-4 font-medium">% Failed Calculate</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {istData.map((row) => (
+                      <tr key={row.hour} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-4 font-medium">
+                          {String(row.hour).padStart(2, '0')}:00
+                        </td>
+                        <td className="text-right py-3 px-4">{row.unique_visitors}</td>
+                        <td className="text-right py-3 px-4">{row.pct_calculate_dosha_clicked}%</td>
+                        <td className="text-right py-3 px-4">{row.pct_book_puja_clicked}%</td>
+                        <td className="text-right py-3 px-4">
+                          <span className={row.pct_failed_calculate > 0 ? 'text-destructive' : ''}>
+                            {row.pct_failed_calculate}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 font-medium">
+                      <td className="py-3 px-4">Total</td>
+                      <td className="text-right py-3 px-4">
+                        {istData.reduce((sum, row) => sum + row.unique_visitors, 0)}
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {istData.length > 0 
+                          ? (istData.reduce((sum, row) => sum + row.pct_calculate_dosha_clicked, 0) / istData.length).toFixed(2) 
+                          : 0}% avg
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {istData.length > 0 
+                          ? (istData.reduce((sum, row) => sum + row.pct_book_puja_clicked, 0) / istData.length).toFixed(2) 
+                          : 0}% avg
+                      </td>
+                      <td className="text-right py-3 px-4">
+                        {istData.length > 0 
+                          ? (istData.reduce((sum, row) => sum + row.pct_failed_calculate, 0) / istData.length).toFixed(2) 
+                          : 0}% avg
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

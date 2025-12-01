@@ -321,6 +321,7 @@ export function getUpcomingPujas(
   priorityKeywords?: string[]
 ): SriMandirPuja[] {
   const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
   const sorted = pujas
     .map(puja => ({
@@ -334,7 +335,7 @@ export function getUpcomingPujas(
         return title.startsWith(lowerKeyword) || englishTitle.startsWith(lowerKeyword);
       }) : false
     }))
-    .filter(item => item.date !== null && item.date >= now)
+    .filter(item => item.date !== null && item.date >= today)
     .sort((a, b) => {
       // First prioritize pujas that start with keyword
       if (a.startsWithKeyword && !b.startsWithKeyword) return -1;

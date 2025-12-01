@@ -10,7 +10,6 @@ import CategoryPujas from "./pages/CategoryPujas";
 import ExperimentAdmin from "./pages/ExperimentAdmin";
 import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import AdminLogin from "./pages/AdminLogin";
-import DataExplorer from "./pages/DataExplorer";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -91,10 +90,6 @@ const App = () => {
               <Route
                 path="/admin/analytics"
                 element={<AnalyticsDashboard />}
-              />
-              <Route
-                path="/admin/data-explorer"
-                element={<DataExplorer />}
               />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

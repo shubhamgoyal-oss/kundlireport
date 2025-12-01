@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Loader2, TrendingUp, Users, MousePointerClick, CheckCircle, ShoppingBag, Database } from 'lucide-react';
+import { Loader2, TrendingUp, Users, MousePointerClick, CheckCircle, ShoppingBag } from 'lucide-react';
 
 interface HourlyFunnelData {
   hour: string;
@@ -437,23 +436,13 @@ const AnalyticsDashboard = () => {
             <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
             <p className="text-muted-foreground mt-2">Hourly funnel metrics and conversion rates</p>
           </div>
-          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-            <Button 
-              variant="outline" 
-              onClick={() => window.location.href = '/admin/data-explorer'}
-              className="flex items-center gap-2"
-            >
-              <Database className="h-4 w-4" />
-              Data Explorer
-            </Button>
-            <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="w-full md:w-auto">
-              <TabsList>
-                <TabsTrigger value="24h">24 Hours</TabsTrigger>
-                <TabsTrigger value="7d">7 Days</TabsTrigger>
-                <TabsTrigger value="30d">30 Days</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="w-full md:w-auto">
+            <TabsList>
+              <TabsTrigger value="24h">24 Hours</TabsTrigger>
+              <TabsTrigger value="7d">7 Days</TabsTrigger>
+              <TabsTrigger value="30d">30 Days</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
 
         {/* Summary Cards */}

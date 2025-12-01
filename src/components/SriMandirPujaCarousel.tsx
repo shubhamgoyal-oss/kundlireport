@@ -164,7 +164,7 @@ export const SriMandirPujaCarousel = ({
                     <Button
                       asChild
                       size="lg"
-                      className="w-full"
+                      className="w-full h-14 text-lg font-bold"
                       onClick={() => handleBookClick(puja)}
                     >
                       <a href={getPujaLink(puja, currentLang)} target="_blank" rel="noopener noreferrer">

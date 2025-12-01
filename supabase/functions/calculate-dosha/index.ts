@@ -345,8 +345,10 @@ serve(async (req) => {
           notes: [],
           explanation: otherDoshas.kemadruma.status === "present"
             ? `Kemadruma Yoga detected: ${otherDoshas.kemadruma.reason.join(', ')}`
+            : otherDoshas.kemadruma.status === "partial"
+            ? `Kemadruma Yoga partially indicated: ${otherDoshas.kemadruma.reason.join(', ')}`
             : "No Kemadruma Yoga detected.",
-          remedies: otherDoshas.kemadruma.status === "present"
+          remedies: otherDoshas.kemadruma.status === "present" || otherDoshas.kemadruma.status === "partial"
             ? ["Community seva; gratitude and consistency rituals"]
             : []
         },

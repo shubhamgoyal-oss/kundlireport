@@ -680,7 +680,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   <h3 className="font-semibold text-lg">{t('doshaResults.mangal.name')}</h3>
                   <p className="text-sm text-muted-foreground">
                     {t('doshaResults.status')}: {translateStatus(summary.mangal)}
-                    {summary.mangalSeverity && ` • ${t('doshaResults.severity')}: ${summary.mangalSeverity}`}
+                    {summary.mangalSeverity && !isDoshaNullified(summary.mangal) && ` • ${t('doshaResults.severity')}: ${summary.mangalSeverity}`}
                   </p>
                 </div>
               </div>

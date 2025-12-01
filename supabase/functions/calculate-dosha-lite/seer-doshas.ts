@@ -135,7 +135,6 @@ export function calculateMangalDosha(kundli: SeerKundli): DoshaResult {
   if (primaryTriggered && nullificationReasons.length > 0) {
     return {
       status: "present (nullified)",
-      severity: "mild",
       triggeredBy,
       cancellations: nullificationReasons,
       mitigations: [],

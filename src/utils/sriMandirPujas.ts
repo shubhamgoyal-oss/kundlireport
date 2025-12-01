@@ -271,7 +271,7 @@ export function filterPujasByDosha(
     pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
     kaalSarp: ['kaal sarp', 'काल सर्प'],
     'kaal-sarp': ['kaal sarp', 'काल सर्प'],
-    mangal: ['mangal', 'kuja', 'मंगल'],
+    mangal: ['mangal', 'kuja', 'मंगल', '30 day', '30-day', '30 din'],
     sadeSati: ['shani', 'saturn', 'शनि'],
     shani: ['shani', 'saturn', 'शनि'],
     rahu: ['rahu', 'राहु', 'grahan', 'ग्रहण'],

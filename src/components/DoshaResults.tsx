@@ -535,11 +535,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   pujaToShow = getPrioritizedPuja(filtered, 'shani');
                                 } else if (dosha.type === 'guru-chandal') {
                                   pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                                } else if (dosha.type === 'mangal') {
+                                  pujaToShow = getPrioritizedPuja(filtered, 'mangal');
                                 } else if (isOtherDosha(dosha.type)) {
                                   pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
                                 } else {
                                   const priorityKeywordsMap: Record<string, string[]> = {
-                                    mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
                                     'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
                                     rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
                                     shrapit: ['shrapit', 'श्रापित'],
@@ -592,11 +593,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   pujaToShow = getPrioritizedPuja(filtered, 'shani');
                                 } else if (dosha.type === 'guru-chandal') {
                                   pujaToShow = getPrioritizedPuja(filtered, dosha.type);
+                                } else if (dosha.type === 'mangal') {
+                                  pujaToShow = getPrioritizedPuja(filtered, 'mangal');
                                 } else if (isOtherDosha(dosha.type)) {
                                   pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
                                 } else {
                                   const priorityKeywordsMap: Record<string, string[]> = {
-                                    mangal: ['manglik', 'mangal dosha', 'मंगलिक', 'मंगल दोष'],
                                     'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
                                     rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
                                     shrapit: ['shrapit', 'श्रापित'],

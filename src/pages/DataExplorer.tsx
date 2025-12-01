@@ -5,9 +5,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Download, Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { Download, Search, RefreshCw, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { format } from "date-fns";
 
 type TableName = 'dosha_calculator2' | 'analytics_events' | 'callback_requests' | 'traffic_sources';
@@ -39,7 +40,69 @@ export default function DataExplorer() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'filters' | 'templates'>('filters');
   const pageSize = 50;
+
+  const analyticalQueries = [
+    {
+      name: "Daily Dosha Breakdown",
+      description: "Count of each dosha type by date",
+      query: async () => {
+        const { data, error } = await supabase
+          .from('dosha_calculator2')
+          .select('date, mangal_dosha, kaal_sarp_dosha, pitra_dosha, sade_sati');
+        if (error) throw error;
+        return data;
+      }
+    },
+    {
+      name: "Top UTM Sources",
+      description: "Traffic sources ranked by visitor count",
+      query: async () => {
+        const { data, error } = await supabase
+          .from('traffic_sources')
+          .select('utm_source, utm_campaign, country_code');
+        if (error) throw error;
+        return data;
+      }
+    },
+    {
+      name: "Conversion Funnel",
+      description: "Funnel metrics from page view to puja click",
+      query: async () => {
+        const { data, error } = await supabase
+          .from('analytics_events')
+          .select('event_name, visitor_id, created_at')
+          .in('event_name', ['page_view', 'calculate_dosha_clicked', 'dosha_calculate', 'srimandir_puja_click']);
+        if (error) throw error;
+        return data;
+      }
+    },
+    {
+      name: "Callback Requests by Country",
+      description: "Callback requests grouped by country",
+      query: async () => {
+        const { data, error } = await supabase
+          .from('callback_requests')
+          .select('user_country, phone_number, created_at, status');
+        if (error) throw error;
+        return data;
+      }
+    },
+    {
+      name: "Recent Calculations",
+      description: "Last 100 dosha calculations with user location",
+      query: async () => {
+        const { data, error } = await supabase
+          .from('dosha_calculator2')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        return data;
+      }
+    }
+  ];
 
   const fetchData = async () => {
     setLoading(true);
@@ -164,6 +227,22 @@ export default function DataExplorer() {
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  const runQueryTemplate = async (queryFn: () => Promise<any>) => {
+    setLoading(true);
+    try {
+      const result = await queryFn();
+      setData(result || []);
+      setTotalCount(result?.length || 0);
+      setPage(1);
+      toast.success('Query executed successfully');
+    } catch (error) {
+      console.error('Error running query:', error);
+      toast.error('Failed to execute query');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 space-y-6">
       <div className="flex justify-between items-center">
@@ -175,6 +254,14 @@ export default function DataExplorer() {
           Back to Analytics
         </Button>
       </div>
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+        <TabsList>
+          <TabsTrigger value="filters">Custom Filters</TabsTrigger>
+          <TabsTrigger value="templates">Query Templates</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="filters" className="space-y-6 mt-6">
 
       <Card>
         <CardHeader>
@@ -374,6 +461,76 @@ export default function DataExplorer() {
           )}
         </CardContent>
       </Card>
+      </TabsContent>
+
+      <TabsContent value="templates" className="space-y-6 mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Analytical Query Templates</CardTitle>
+            <CardDescription>Pre-built queries for common analytical tasks</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {analyticalQueries.map((template, idx) => (
+                <Card key={idx} className="border-2">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{template.name}</CardTitle>
+                    <CardDescription>{template.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      onClick={() => runQueryTemplate(template.query)} 
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Run Query
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Results ({totalCount} records)</CardTitle>
+            <CardDescription>Query results will appear here</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {renderTableColumns()}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={100} className="text-center">Loading...</TableCell>
+                    </TableRow>
+                  ) : data.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={100} className="text-center">No data - run a query template above</TableCell>
+                    </TableRow>
+                  ) : (
+                    renderTableRows()
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+            {data.length > 0 && (
+              <Button onClick={exportToCSV} variant="outline" className="mt-4">
+                <Download className="h-4 w-4 mr-2" />
+                Export Results to CSV
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

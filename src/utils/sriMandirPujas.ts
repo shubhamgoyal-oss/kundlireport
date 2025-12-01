@@ -353,13 +353,14 @@ export function getUpcomingPujas(
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
-  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha'
+  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha' | 'mangal'
 ): SriMandirPuja | null {
   const priorityKeywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'pishach mochan', 'पितृ', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
     shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
     'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
-    navagraha: ['navagraha', 'navagrah', 'नवग्रह']
+    navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
+    mangal: ['30 day', '30 din', '30-day', 'mangal dosha', 'मंगल दोष', 'manglik', 'मंगलिक']
   };
 
   const keywords = priorityKeywords[doshaType];

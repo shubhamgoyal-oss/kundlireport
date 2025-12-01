@@ -122,7 +122,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
       setTimeout(() => {
         statusMessageRef.current?.scrollIntoView({
           behavior: 'smooth',
-          block: 'center',
+          block: 'start',
         });
       }, 150);
     }

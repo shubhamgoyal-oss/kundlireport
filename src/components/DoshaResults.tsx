@@ -143,7 +143,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
   const isDoshaPresent = (status?: string) => {
     const s = (status || '').toLowerCase();
-    return s === 'present' || s === 'active';
+    return s === 'present' || s === 'active' || s === 'partial';
   };
 
   const isDoshaNullified = (status?: string) => {
@@ -170,7 +170,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
       return <CheckCircle className="w-4 h-4 mr-1 text-success" />;
     }
     const s = status.toLowerCase();
-    if (s === 'present' || s.includes('active')) {
+    if (s === 'present' || s === 'partial' || s.includes('active')) {
       return <AlertTriangle className="w-4 h-4 mr-1" />;
     }
     return <CheckCircle className="w-4 h-4 mr-1 text-success" />;

@@ -246,21 +246,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     return s;
   };
 
-  // Check if any doshas are present (including other doshas)
+  // Check if any of the 4 MAIN doshas are present (excluding other doshas)
   const hasAnyDosha = 
     (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
     isDoshaPresent(summary.kaalSarp) ||
     isDoshaPresent(summary.pitra) ||
-    isDoshaPresent(summary.shaniSadeSati) ||
-    isDoshaPresent(summary.grahan) ||
-    isDoshaPresent(summary.shrapit) ||
-    isDoshaPresent(summary.guruChandal) ||
-    isDoshaPresent(summary.punarphoo) ||
-    isDoshaPresent(summary.kemadruma) ||
-    isDoshaPresent(summary.gandmool) ||
-    isDoshaPresent(summary.kalathra) ||
-    isDoshaPresent(summary.vishDaridra) ||
-    isDoshaPresent(summary.ketuNaga);
+    isDoshaPresent(summary.shaniSadeSati);
 
   // Track book puja click by calculationId first, then by latest visitor_id row
   const trackBookPujaClick = async (doshaType: string) => {
@@ -495,8 +486,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                     });
                   }
 
-                  // Combine in priority order and take max 3
-                  const allActiveDoshas = [...majorDoshas, ...otherDoshas].slice(0, 3);
+                  // Only show major doshas in the first section (max 3)
+                  // Other doshas will only appear in the detailed analysis section below
+                  const allActiveDoshas = majorDoshas.slice(0, 3);
                   
                   if (allActiveDoshas.length === 0) return null;
                   
@@ -533,17 +525,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   pujaToShow = getPrioritizedPuja(filtered, 'pitra');
                                 } else if (dosha.type === 'shani') {
                                   pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                                } else if (dosha.type === 'guru-chandal') {
-                                  pujaToShow = getPrioritizedPuja(filtered, dosha.type);
                                 } else if (dosha.type === 'mangal') {
                                   pujaToShow = getPrioritizedPuja(filtered, 'mangal');
-                                } else if (isOtherDosha(dosha.type)) {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
                                 } else {
+                                  // For kaal-sarp
                                   const priorityKeywordsMap: Record<string, string[]> = {
                                     'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                                    rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
-                                    shrapit: ['shrapit', 'श्रापित'],
                                   };
                                   const keywords = priorityKeywordsMap[dosha.type] || [];
                                   pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
@@ -555,7 +542,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                     label: dosha.label,
                                   },
                                   puja: pujaToShow!,
-                                  isOtherDosha: isOtherDosha(dosha.type),
+                                  isOtherDosha: false,
                                 };
                               }).filter(item => item.puja !== null)}
                               onBookPujaClick={async (doshaType: string) => {
@@ -591,17 +578,12 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                   pujaToShow = getPrioritizedPuja(filtered, 'pitra');
                                 } else if (dosha.type === 'shani') {
                                   pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                                } else if (dosha.type === 'guru-chandal') {
-                                  pujaToShow = getPrioritizedPuja(filtered, dosha.type);
                                 } else if (dosha.type === 'mangal') {
                                   pujaToShow = getPrioritizedPuja(filtered, 'mangal');
-                                } else if (isOtherDosha(dosha.type)) {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'navagraha');
                                 } else {
+                                  // For kaal-sarp
                                   const priorityKeywordsMap: Record<string, string[]> = {
                                     'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                                    rahu: ['grahan', 'rahu', 'ग्रहण', 'राहु'],
-                                    shrapit: ['shrapit', 'श्रापित'],
                                   };
                                   const keywords = priorityKeywordsMap[dosha.type] || [];
                                   pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
@@ -614,15 +596,6 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                                     <h4 className="font-semibold text-base text-foreground">
                                       {isHindi ? 'इसके लिए:' : 'For:'} {dosha.label}
                                     </h4>
-                                    {isOtherDosha(dosha.type) && (
-                                      <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
-                                        <p className="text-xs text-muted-foreground italic">
-                                          {isHindi 
-                                            ? 'इस दोष के लिए अभी हमारे पास विशिष्ट पूजा उपलब्ध नहीं है, लेकिन समग्र कल्याण के लिए नवग्रह शांति पूजा करवाएं।'
-                                            : 'We don\'t have specific pujas for this dosha yet, but you can perform Navagraha Shanti Puja for overall well-being.'}
-                                        </p>
-                                      </div>
-                                    )}
                                     <SriMandirPujaVerticalCard 
                                       puja={pujaToShow} 
                                       doshaType={dosha.type}

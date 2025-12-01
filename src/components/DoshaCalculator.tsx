@@ -16,9 +16,11 @@ import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 
-// Form validation schema - no name or gender fields
+// Form validation schema - name and gender optional
 const birthInputSchema = z
   .object({
+    name: z.string().optional(),
+    gender: z.string().optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),
@@ -282,6 +284,36 @@ const DoshaCalculator = () => {
             || t('dosha.formError', 'Please correct the highlighted fields');
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
+
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm sm:text-base">
+              {t('dosha.name', 'Name')}
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              {...register('name')}
+              placeholder={t('dosha.enterName', 'Enter your name')}
+              className="bg-input min-h-[44px] text-base"
+            />
+          </div>
+
+          {/* Gender */}
+          <div className="space-y-2">
+            <Label htmlFor="gender" className="text-sm sm:text-base">
+              {t('dosha.gender', 'Gender')}
+            </Label>
+            <select
+              id="gender"
+              {...register('gender')}
+              className="flex h-11 w-full rounded-md border border-input bg-input px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <option value="">{t('dosha.selectGender', 'Select gender')}</option>
+              <option value="male">{t('dosha.male', 'Male')}</option>
+              <option value="female">{t('dosha.female', 'Female')}</option>
+            </select>
+          </div>
 
           {/* Date of Birth */}
           <div className="space-y-2">

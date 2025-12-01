@@ -446,7 +446,7 @@ serve(async (req) => {
     const isActive = (status: unknown): boolean => {
       if (typeof status === "boolean") return status;
       const s = String(status ?? "").toLowerCase();
-      return s === "present" || s === "active" || s === "suggested";
+      return s === "present" || s === "active" || s === "suggested" || s === "partial";
     };
 
     let calculationId: string | null = null;

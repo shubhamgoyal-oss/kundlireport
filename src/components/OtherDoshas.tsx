@@ -227,7 +227,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const isDoshaPresent = (status?: string) => {
     if (!status) return false;
     const s = status.toLowerCase();
-    return s === 'present' || s.includes('active') || s === 'suggested';
+    return s === 'present' || s === 'partial' || s.includes('active') || s === 'suggested';
   };
 
   // Check if any dosha is present

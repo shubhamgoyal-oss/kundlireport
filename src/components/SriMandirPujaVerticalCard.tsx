@@ -79,7 +79,7 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
           {/* Book Button */}
           <Button
             size="lg"
-            className="w-full"
+            className="w-full h-14 text-lg font-bold"
             onClick={async (e) => {
               e.preventDefault();
               await handleBookClick();

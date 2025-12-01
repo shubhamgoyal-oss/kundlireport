@@ -203,7 +203,7 @@ export const DoshaPujaCarousel = ({
                       <Button
                         asChild
                         size="lg"
-                        className="w-full"
+                        className="w-full h-14 text-lg font-bold"
                         onClick={() => handleBookClick(item)}
                       >
                         <a href={getPujaLink(item.puja, i18n.language)} target="_blank" rel="noopener noreferrer">

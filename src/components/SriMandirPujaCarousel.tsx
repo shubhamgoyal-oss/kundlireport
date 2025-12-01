@@ -163,6 +163,7 @@ export const SriMandirPujaCarousel = ({
                     {/* Book Button */}
                     <Button
                       asChild
+                      size="lg"
                       className="w-full"
                       onClick={() => handleBookClick(puja)}
                     >

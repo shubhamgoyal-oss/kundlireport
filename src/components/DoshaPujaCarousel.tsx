@@ -202,6 +202,7 @@ export const DoshaPujaCarousel = ({
                       {/* Book Button */}
                       <Button
                         asChild
+                        size="lg"
                         className="w-full"
                         onClick={() => handleBookClick(item)}
                       >

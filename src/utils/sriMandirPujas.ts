@@ -350,6 +350,7 @@ export function getUpcomingPujas(
 /**
  * Get single prioritized puja for specific dosha types
  * Prefers pujas that start with the dosha name
+ * Falls back to any puja if no upcoming ones found
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
@@ -364,10 +365,29 @@ export function getPrioritizedPuja(
   };
 
   const keywords = priorityKeywords[doshaType];
-  if (!keywords) return getUpcomingPujas(pujas, 1)[0] || null;
+  if (!keywords) {
+    // Fallback: return first available puja if no upcoming ones
+    return getUpcomingPujas(pujas, 1)[0] || pujas[0] || null;
+  }
 
-  // Use the updated getUpcomingPujas with priority keywords
-  return getUpcomingPujas(pujas, 1, keywords)[0] || null;
+  // Try to get upcoming puja with priority keywords
+  const upcomingPuja = getUpcomingPujas(pujas, 1, keywords)[0];
+  
+  // If no upcoming puja, return the first puja that matches priority keywords
+  if (!upcomingPuja && pujas.length > 0) {
+    for (const keyword of keywords) {
+      const match = pujas.find(puja => {
+        const title = puja.pooja_title.toLowerCase();
+        const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+        return title.includes(keyword.toLowerCase()) || englishTitle.includes(keyword.toLowerCase());
+      });
+      if (match) return match;
+    }
+    // Last fallback: just return first available puja
+    return pujas[0];
+  }
+  
+  return upcomingPuja || null;
 }
 
 /**

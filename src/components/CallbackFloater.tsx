@@ -10,83 +10,90 @@ import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 import expertImage from '@/assets/expert-callback.png';
-
-const phoneSchema = z.string()
-  .min(10, "Phone number must be at least 10 digits")
-  .max(15, "Phone number must be less than 15 digits")
-  .regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number");
-
-const nameSchema = z.string()
-  .min(2, "Name must be at least 2 characters")
-  .max(100, "Name must be less than 100 characters")
-  .regex(/^[a-zA-Z\s]+$/, "Please enter a valid name (letters only)");
-
+const phoneSchema = z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number must be less than 15 digits").regex(/^[0-9+\-\s()]+$/, "Please enter a valid phone number");
+const nameSchema = z.string().min(2, "Name must be at least 2 characters").max(100, "Name must be less than 100 characters").regex(/^[a-zA-Z\s]+$/, "Please enter a valid name (letters only)");
 interface CallbackFloaterProps {
   calculationId?: string | null;
 }
-
-export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
-  const { t, i18n } = useTranslation();
+export function CallbackFloater({
+  calculationId
+}: CallbackFloaterProps) {
+  const {
+    t,
+    i18n
+  } = useTranslation();
   const isHindi = i18n.language === 'hi';
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState({ name: '', phone: '' });
-
+  const [errors, setErrors] = useState({
+    name: '',
+    phone: ''
+  });
   const handleOpenDialog = () => {
     setIsOpen(true);
     trackEvent('callback_floater_clicked', {
-      metadata: { calculation_id: calculationId }
+      metadata: {
+        calculation_id: calculationId
+      }
     });
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrors({ name: '', phone: '' });
+    setErrors({
+      name: '',
+      phone: ''
+    });
 
     // Validate name
     const nameValidation = nameSchema.safeParse(name);
     if (!nameValidation.success) {
-      setErrors(prev => ({ ...prev, name: nameValidation.error.errors[0].message }));
+      setErrors(prev => ({
+        ...prev,
+        name: nameValidation.error.errors[0].message
+      }));
       return;
     }
 
     // Validate phone number
     const phoneValidation = phoneSchema.safeParse(phoneNumber);
     if (!phoneValidation.success) {
-      setErrors(prev => ({ ...prev, phone: phoneValidation.error.errors[0].message }));
+      setErrors(prev => ({
+        ...prev,
+        phone: phoneValidation.error.errors[0].message
+      }));
       return;
     }
-
     setIsSubmitting(true);
-
     try {
       const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
       const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
 
       // Get user location
-      const location = await fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .catch(() => ({ country_name: null, city: null, latitude: null, longitude: null }));
+      const location = await fetch('https://ipapi.co/json/').then(res => res.json()).catch(() => ({
+        country_name: null,
+        city: null,
+        latitude: null,
+        longitude: null
+      }));
 
       // Store callback request in dedicated table
-      const { error: insertError } = await supabase
-        .from('callback_requests')
-        .insert({
-          visitor_id: visitorId,
-          session_id: sessionId,
-          name: name.trim(),
-          phone_number: phoneNumber,
-          calculation_id: calculationId,
-          language: i18n.language,
-          status: 'pending',
-          user_country: location.country_name,
-          user_city: location.city,
-          user_latitude: location.latitude,
-          user_longitude: location.longitude
-        });
-
+      const {
+        error: insertError
+      } = await supabase.from('callback_requests').insert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        name: name.trim(),
+        phone_number: phoneNumber,
+        calculation_id: calculationId,
+        language: i18n.language,
+        status: 'pending',
+        user_country: location.country_name,
+        user_city: location.city,
+        user_latitude: location.latitude,
+        user_longitude: location.longitude
+      });
       if (insertError) throw insertError;
 
       // Track event for analytics
@@ -97,42 +104,22 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
           has_name: true
         }
       });
-
-      toast.success(
-        isHindi
-          ? '✅ धन्यवाद! हम 6 घंटे के भीतर आपको कॉल करेंगे'
-          : '✅ Thank you! We will call you back within 6 hours'
-      );
-
+      toast.success(isHindi ? '✅ धन्यवाद! हम 6 घंटे के भीतर आपको कॉल करेंगे' : '✅ Thank you! We will call you back within 6 hours');
       setIsOpen(false);
       setName('');
       setPhoneNumber('');
     } catch (error) {
       console.error('Error submitting callback request:', error);
-      toast.error(
-        isHindi
-          ? 'कुछ गलत हो गया। कृपया पुनः प्रयास करें'
-          : 'Something went wrong. Please try again'
-      );
+      toast.error(isHindi ? 'कुछ गलत हो गया। कृपया पुनः प्रयास करें' : 'Something went wrong. Please try again');
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  return (
-    <>
+  return <>
       {/* Floater Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={handleOpenDialog}
-          className="h-16 px-4 shadow-lg hover:shadow-xl transition-all duration-300 rounded-full flex items-center gap-3"
-          size="lg"
-        >
-          <img 
-            src={expertImage} 
-            alt="Expert" 
-            className="w-12 h-12 rounded-full object-cover"
-          />
+        <Button onClick={handleOpenDialog} size="lg" className="h-16 px-4 shadow-lg hover:shadow-xl transition-all duration-300 rounded-full flex items-center gap-3 bg-accent text-muted-foreground">
+          <img src={expertImage} alt="Expert" className="w-12 h-12 rounded-full object-cover" />
           <span className="font-semibold text-sm">
             {t('dosha.requestExpertCallback')}
           </span>
@@ -149,14 +136,10 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
             </DialogTitle>
             <DialogDescription className="text-center space-y-3 pt-2">
               <p className="text-base font-medium text-foreground">
-                {isHindi
-                  ? '🌟 एक विशेषज्ञ अब आपको कॉल करेंगे और मुफ्त में विस्तृत मार्गदर्शन देंगे'
-                  : '🌟 An expert will call you and provide detailed guidance free of cost'}
+                {isHindi ? '🌟 एक विशेषज्ञ अब आपको कॉल करेंगे और मुफ्त में विस्तृत मार्गदर्शन देंगे' : '🌟 An expert will call you and provide detailed guidance free of cost'}
               </p>
               <p className="text-sm text-muted-foreground">
-                {isHindi
-                  ? 'कॉलबैक प्राप्त करने के लिए अपना फ़ोन नंबर दर्ज करें। हम अगले 6 घंटों के भीतर आपको कॉल करेंगे।'
-                  : 'Enter your phone number to receive a callback. We will call you back within the next 6 hours.'}
+                {isHindi ? 'कॉलबैक प्राप्त करने के लिए अपना फ़ोन नंबर दर्ज करें। हम अगले 6 घंटों के भीतर आपको कॉल करेंगे।' : 'Enter your phone number to receive a callback. We will call you back within the next 6 hours.'}
               </p>
             </DialogDescription>
           </DialogHeader>
@@ -167,22 +150,14 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
                 {isHindi ? 'नाम' : 'Name'}
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder={isHindi ? 'अपना नाम दर्ज करें' : 'Enter your name'}
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setErrors(prev => ({ ...prev, name: '' }));
-                }}
-                className="text-lg h-12"
-                disabled={isSubmitting}
-                required
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name}</p>
-              )}
+              <Input id="name" type="text" placeholder={isHindi ? 'अपना नाम दर्ज करें' : 'Enter your name'} value={name} onChange={e => {
+              setName(e.target.value);
+              setErrors(prev => ({
+                ...prev,
+                name: ''
+              }));
+            }} className="text-lg h-12" disabled={isSubmitting} required />
+              {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -190,63 +165,38 @@ export function CallbackFloater({ calculationId }: CallbackFloaterProps) {
                 {isHindi ? 'फ़ोन नंबर' : 'Phone Number'}
                 <span className="text-destructive ml-1">*</span>
               </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder={isHindi ? '+91 XXXXX XXXXX' : '+91 XXXXX XXXXX'}
-                value={phoneNumber}
-                onChange={(e) => {
-                  setPhoneNumber(e.target.value);
-                  setErrors(prev => ({ ...prev, phone: '' }));
-                }}
-                className="text-lg h-12"
-                disabled={isSubmitting}
-                required
-              />
-              {errors.phone && (
-                <p className="text-sm text-destructive">{errors.phone}</p>
-              )}
+              <Input id="phone" type="tel" placeholder={isHindi ? '+91 XXXXX XXXXX' : '+91 XXXXX XXXXX'} value={phoneNumber} onChange={e => {
+              setPhoneNumber(e.target.value);
+              setErrors(prev => ({
+                ...prev,
+                phone: ''
+              }));
+            }} className="text-lg h-12" disabled={isSubmitting} required />
+              {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                disabled={isSubmitting}
-                className="flex-1"
-              >
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting} className="flex-1">
                 {isHindi ? 'रद्द करें' : 'Cancel'}
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting || !phoneNumber || !name}
-                className="flex-1"
-              >
-                {isSubmitting ? (
-                  <>
+              <Button type="submit" disabled={isSubmitting || !phoneNumber || !name} className="flex-1">
+                {isSubmitting ? <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {isHindi ? 'भेजा जा रहा है...' : 'Submitting...'}
-                  </>
-                ) : (
-                  <>
+                  </> : <>
                     <Phone className="w-4 h-4 mr-2" />
                     {isHindi ? 'कॉलबैक का अनुरोध करें' : 'Request Callback'}
-                  </>
-                )}
+                  </>}
               </Button>
             </div>
           </form>
 
           <div className="mt-4 p-3 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground text-center">
-              {isHindi
-                ? '💬 हमारे विशेषज्ञ सुबह 9 बजे से रात 9 बजे तक उपलब्ध हैं'
-                : '💬 Our experts are available from 9 AM to 9 PM'}
+              {isHindi ? '💬 हमारे विशेषज्ञ सुबह 9 बजे से रात 9 बजे तक उपलब्ध हैं' : '💬 Our experts are available from 9 AM to 9 PM'}
             </p>
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 }

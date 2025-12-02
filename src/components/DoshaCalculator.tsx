@@ -181,6 +181,12 @@ const DoshaCalculator = () => {
       gender: 'male',
     };
     
+    // Start tracking scroll events after calculation starts
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('track_post_calculation_scroll', 'true');
+      sessionStorage.setItem('calculation_start_time', Date.now().toString());
+    }
+    
     trackEvent('calculate_dosha_clicked', {
       metadata: {
         hasTime: !submissionData.unknownTime,

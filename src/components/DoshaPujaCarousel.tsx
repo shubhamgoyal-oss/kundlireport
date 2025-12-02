@@ -27,8 +27,23 @@ export const DoshaPujaCarousel = ({
   onBookPujaClick
 }: DoshaPujaCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [hasTrackedDisplay, setHasTrackedDisplay] = useState(false);
   const { t, i18n } = useTranslation();
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+
+  // Track when puja remedies are displayed
+  useEffect(() => {
+    if (items.length > 0 && !hasTrackedDisplay) {
+      trackEvent('puja_remedies_displayed', {
+        metadata: {
+          count: items.length,
+          doshas: items.map(item => item.dosha.type),
+          puja_titles: items.map(item => item.puja.pooja_title)
+        }
+      });
+      setHasTrackedDisplay(true);
+    }
+  }, [items, hasTrackedDisplay]);
 
   useEffect(() => {
     if (items.length <= 1) return;

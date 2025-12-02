@@ -263,18 +263,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
     return (
       <AccordionItem value={key} className="border rounded-lg px-4" key={key}>
-        <AccordionTrigger 
-          className="hover:no-underline"
-          onClick={() => {
-            trackEvent('accordion_expanded', {
-              metadata: {
-                accordion_name: translatedDosha.name,
-                dosha_key: key,
-                is_present: isPresent
-              }
-            });
-          }}
-        >
+        <AccordionTrigger className="hover:no-underline">
           <div className="flex items-center gap-3 flex-1">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <h3 className="font-semibold text-sm sm:text-base text-left leading-tight break-words">{translatedDosha.name}</h3>
@@ -394,7 +383,32 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
       
       {isExpanded && (
         <CardContent>
-          <Accordion type="single" collapsible className="w-full space-y-4">
+          <Accordion 
+            type="single" 
+            collapsible 
+            className="w-full space-y-4"
+            onValueChange={(value) => {
+              if (value) {
+                // Track which accordion was expanded
+                const doshaKey = value as keyof typeof otherDoshasData;
+                const dosha = otherDoshasData[doshaKey];
+                const statusFlag = doshaFlags[doshaKey as keyof typeof doshaFlags];
+                const isPresent = isDoshaPresent(statusFlag?.status);
+                
+                const translatedDosha = t(`doshaResults.otherDoshas.${doshaKey}`, { returnObjects: true }) as {
+                  name: string;
+                };
+                
+                trackEvent('accordion_expanded', {
+                  metadata: {
+                    accordion_name: translatedDosha.name,
+                    dosha_key: value,
+                    is_present: isPresent
+                  }
+                });
+              }
+            }}
+          >
             {renderDoshaPanel('rahuKetu', doshaFlags.rahuKetu)}
             {renderDoshaPanel('shrapit', doshaFlags.shrapit)}
             {renderDoshaPanel('guruChandal', doshaFlags.guruChandal)}

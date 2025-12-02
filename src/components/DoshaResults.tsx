@@ -14,6 +14,7 @@ import { trackEvent } from '@/lib/analytics';
 import AstrologyChatbot from '@/components/AstrologyChatbot';
 import { supabase } from '@/integrations/supabase/client';
 import { CallbackFloater } from '@/components/CallbackFloater';
+import { useScrollTracking } from '@/hooks/useScrollTracking';
 
 interface DoshaResultsProps {
   summary: {
@@ -60,6 +61,9 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
+  
+  // Track scroll events after calculation
+  useScrollTracking();
   
   // Always use carousel format
   const pujaDisplayVariant = 'carousel';

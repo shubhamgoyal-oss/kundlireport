@@ -199,6 +199,13 @@ export const DoshaPujaCarousel = ({
                         </p>
                       )}
 
+                      {/* Price */}
+                      {item.puja.individual_pack_price_inr > 0 && (
+                        <p className="text-sm font-semibold text-primary">
+                          {isHindi ? '₹' : 'Starting from ₹'}{item.puja.individual_pack_price_inr}{isHindi ? ' से शुरू' : ''}
+                        </p>
+                      )}
+
                       {/* Book Button */}
                       <Button
                         asChild

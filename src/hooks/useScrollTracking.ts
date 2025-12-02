@@ -17,8 +17,8 @@ export const useScrollTracking = () => {
       // Only track significant scrolls (more than 100px)
       if (scrollDelta > 100) {
         scrollCount++;
-        lastScrollY = currentScrollY;
-
+        const scrollDirection = currentScrollY > lastScrollY ? 'down' : 'up';
+        
         const calculationStartTime = sessionStorage.getItem('calculation_start_time');
         const timeSinceCalculation = calculationStartTime 
           ? Date.now() - parseInt(calculationStartTime)
@@ -31,9 +31,12 @@ export const useScrollTracking = () => {
             page_height: document.documentElement.scrollHeight,
             viewport_height: window.innerHeight,
             time_since_calculation_ms: timeSinceCalculation,
-            scroll_direction: currentScrollY > (lastScrollY || 0) ? 'down' : 'up'
+            scroll_direction: scrollDirection
           }
         });
+
+        // Update lastScrollY AFTER using it for direction
+        lastScrollY = currentScrollY;
       }
     };
 

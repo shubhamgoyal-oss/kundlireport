@@ -14,7 +14,6 @@ import { trackEvent } from '@/lib/analytics';
 import AstrologyChatbot from '@/components/AstrologyChatbot';
 import { supabase } from '@/integrations/supabase/client';
 import { CallbackFloater } from '@/components/CallbackFloater';
-import { useExperiment } from '@/hooks/useExperiment';
 
 interface DoshaResultsProps {
   summary: {
@@ -62,8 +61,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
   
-  // A/B test for puja carousel vs static cards
-  const { variant: pujaDisplayVariant, isLoading: isExperimentLoading } = useExperiment('puja_carousel_test');
+  // Always use carousel format
+  const pujaDisplayVariant = 'carousel';
 
   // Translate explanations when language changes to Hindi
   useEffect(() => {
@@ -497,118 +496,65 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
                   return (
                     <div className="space-y-2 mt-2">
-                      {/* Simple Ribbon Cards - Max 3 with just dosha names */}
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {allActiveDoshas.map((dosha, index) => (
-                          <div 
-                            key={dosha.type} 
-                            className="bg-gradient-to-r from-primary/10 to-accent/10 border-l-4 border-primary px-3 py-2 rounded-md"
-                          >
-                            <p className="font-bold text-sm text-foreground">
-                              {dosha.label}
-                            </p>
-                          </div>
-                        ))}
+                      {/* Status Pills - Max 3 showing dosha name + status */}
+                      <div className="flex flex-wrap gap-2">
+                        {allActiveDoshas.map((dosha, index) => {
+                          const status = translateStatus(
+                            dosha.type === 'mangal' ? summary.mangal :
+                            dosha.type === 'kaal-sarp' ? summary.kaalSarp :
+                            dosha.type === 'pitra' ? summary.pitra :
+                            dosha.type === 'shani' ? summary.shaniSadeSati :
+                            'present'
+                          );
+                          return (
+                            <div 
+                              key={dosha.type} 
+                              className="inline-flex items-center gap-2 bg-accent/20 border border-accent/30 px-4 py-2 rounded-full"
+                            >
+                              <AlertTriangle className="w-4 h-4 text-primary" />
+                              <span className="font-medium text-sm text-foreground">
+                                {dosha.label}: {status}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
 
-                      {/* Puja Remedies Section - Separate from dosha ribbons */}
+                      {/* Puja Remedies Section - Carousel format */}
                       {!isLoadingPujas && (
-                        <>
-                          {pujaDisplayVariant === 'carousel' ? (
-                            // CAROUSEL VARIANT - Auto-rotating carousel of dosha + puja pairs
-                            <DoshaPujaCarousel
-                              items={allActiveDoshas.map((dosha) => {
-                                const filtered = filterPujasByDosha(pujas, dosha.type);
-                                let pujaToShow: SriMandirPuja | null = null;
-                                
-                                if (dosha.type === 'pitra') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'pitra');
-                                } else if (dosha.type === 'shani') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                                } else if (dosha.type === 'mangal') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'mangal');
-                                } else {
-                                  // For kaal-sarp
-                                  const priorityKeywordsMap: Record<string, string[]> = {
-                                    'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                                  };
-                                  const keywords = priorityKeywordsMap[dosha.type] || [];
-                                  pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
-                                }
-                                
-                                return {
-                                  dosha: {
-                                    type: dosha.type,
-                                    label: dosha.label,
-                                  },
-                                  puja: pujaToShow!,
-                                  isOtherDosha: false,
-                                };
-                              }).filter(item => item.puja !== null)}
-                              onBookPujaClick={async (doshaType: string) => {
-                                await trackBookPujaClick(doshaType);
-                              }}
-                            />
-                          ) : (
-                            // CONTROL VARIANT - Static vertical cards
-                            <div className="mt-3 space-y-3">
-                              <div className="text-center space-y-3">
-                                <h3 className="text-xl font-semibold">
-                                  {isHindi ? 'आपके लिए उपाय' : 'Remedies For You'}
-                                </h3>
-                                <div className="p-3 bg-accent/10 rounded-md border border-accent/30">
-                                  <p className="text-sm font-medium">
-                                    {isHindi 
-                                      ? '🪔 वैदिक ऑनलाइन पूजा इन दोषों के नकारात्मक प्रभावों को कम करने का एक शक्तिशाली तरीका है।'
-                                      : '🪔 Vedic online puja offers a powerful way to reduce the negative effects of these doshas.'}
-                                  </p>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {isHindi ? 'आपके दोषों के लिए अनुशंसित पूजा' : 'Recommended pujas for your doshas'}
-                                </p>
-                              </div>
-                              
-                              {allActiveDoshas.map((dosha) => {
-                                const filtered = filterPujasByDosha(pujas, dosha.type);
-                                
-                                // Get prioritized puja
-                                let pujaToShow: SriMandirPuja | null = null;
-                                
-                                if (dosha.type === 'pitra') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'pitra');
-                                } else if (dosha.type === 'shani') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'shani');
-                                } else if (dosha.type === 'mangal') {
-                                  pujaToShow = getPrioritizedPuja(filtered, 'mangal');
-                                } else {
-                                  // For kaal-sarp
-                                  const priorityKeywordsMap: Record<string, string[]> = {
-                                    'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-                                  };
-                                  const keywords = priorityKeywordsMap[dosha.type] || [];
-                                  pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
-                                }
-                                
-                                if (!pujaToShow) return null;
-                                
-                                return (
-                                  <div key={dosha.type} className="space-y-3">
-                                    <h4 className="font-semibold text-base text-foreground">
-                                      {isHindi ? 'इसके लिए:' : 'For:'} {dosha.label}
-                                    </h4>
-                                    <SriMandirPujaVerticalCard 
-                                      puja={pujaToShow} 
-                                      doshaType={dosha.type}
-                                      onBookClick={async () => {
-                                        await trackBookPujaClick(dosha.type);
-                                      }}
-                                    />
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </>
+                        <DoshaPujaCarousel
+                          items={allActiveDoshas.map((dosha) => {
+                            const filtered = filterPujasByDosha(pujas, dosha.type);
+                            let pujaToShow: SriMandirPuja | null = null;
+                            
+                            if (dosha.type === 'pitra') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'pitra');
+                            } else if (dosha.type === 'shani') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'shani');
+                            } else if (dosha.type === 'mangal') {
+                              pujaToShow = getPrioritizedPuja(filtered, 'mangal');
+                            } else {
+                              // For kaal-sarp
+                              const priorityKeywordsMap: Record<string, string[]> = {
+                                'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
+                              };
+                              const keywords = priorityKeywordsMap[dosha.type] || [];
+                              pujaToShow = getUpcomingPujas(filtered, 1, keywords)[0] || null;
+                            }
+                            
+                            return {
+                              dosha: {
+                                type: dosha.type,
+                                label: dosha.label,
+                              },
+                              puja: pujaToShow!,
+                              isOtherDosha: false,
+                            };
+                          }).filter(item => item.puja !== null)}
+                          onBookPujaClick={async (doshaType: string) => {
+                            await trackBookPujaClick(doshaType);
+                          }}
+                        />
                       )}
 
                       {isLoadingPujas && (

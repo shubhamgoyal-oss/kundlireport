@@ -77,6 +77,16 @@ export type TrackEventPayload = {
   user_longitude?: number | null;
 };
 
+// Extended payload type for accordion tracking
+export type AccordionEventPayload = TrackEventPayload & {
+  metadata?: {
+    accordion_name?: string;
+    dosha_key?: string;
+    is_present?: boolean;
+    [key: string]: any;
+  };
+};
+
 export async function trackEvent(event_name: string, payload: TrackEventPayload = {}) {
   try {
     const session_id = getSessionId();

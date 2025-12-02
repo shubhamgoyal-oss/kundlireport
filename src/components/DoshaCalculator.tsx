@@ -285,36 +285,6 @@ const DoshaCalculator = () => {
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
 
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm sm:text-base">
-              {t('dosha.name', 'Name')}
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              {...register('name')}
-              placeholder={t('dosha.enterName', 'Enter your name')}
-              className="bg-input min-h-[44px] text-base"
-            />
-          </div>
-
-          {/* Gender */}
-          <div className="space-y-2">
-            <Label htmlFor="gender" className="text-sm sm:text-base">
-              {t('dosha.gender', 'Gender')}
-            </Label>
-            <select
-              id="gender"
-              {...register('gender')}
-              className="flex h-11 w-full rounded-md border border-input bg-input px-3 py-2 text-base ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              <option value="">{t('dosha.selectGender', 'Select gender')}</option>
-              <option value="male">{t('dosha.male', 'Male')}</option>
-              <option value="female">{t('dosha.female', 'Female')}</option>
-            </select>
-          </div>
-
           {/* Date of Birth */}
           <div className="space-y-2">
             <Label htmlFor="date" className="flex items-center gap-2 text-sm sm:text-base">

@@ -8,6 +8,7 @@ import { ChevronDown, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPuja, filterPujasByDosha, getUpcomingPujas } from '@/utils/sriMandirPujas';
+import { trackEvent } from '@/lib/analytics';
 
 interface OtherDoshasProps {
   pujas: SriMandirPuja[];
@@ -262,7 +263,18 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
     return (
       <AccordionItem value={key} className="border rounded-lg px-4" key={key}>
-        <AccordionTrigger className="hover:no-underline">
+        <AccordionTrigger 
+          className="hover:no-underline"
+          onClick={() => {
+            trackEvent('accordion_expanded', {
+              metadata: {
+                accordion_name: translatedDosha.name,
+                dosha_key: key,
+                is_present: isPresent
+              }
+            });
+          }}
+        >
           <div className="flex items-center gap-3 flex-1">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <h3 className="font-semibold text-sm sm:text-base text-left leading-tight break-words">{translatedDosha.name}</h3>

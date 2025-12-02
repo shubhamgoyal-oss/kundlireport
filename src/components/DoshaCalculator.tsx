@@ -329,6 +329,14 @@ const DoshaCalculator = () => {
               </Label>
             </div>
 
+            {unknownTime && (
+              <div className="p-3 bg-accent/30 border border-primary/40 rounded-md mb-2">
+                <p className="text-sm text-foreground">
+                  {t('dosha.unknownTimeWarning')}
+                </p>
+              </div>
+            )}
+
             <Input
               id="time"
               type="time"

@@ -312,16 +312,15 @@ function parseIndianDate(dateStr: string): Date | null {
 }
 
 /**
- * Sort pujas by date ascending and return next 1 upcoming entry (or maxCount if specified)
+ * Sort pujas and return pujas (maxCount if specified)
  * Prioritizes pujas whose names start with dosha-specific keywords
+ * NO DATE FILTERING - shows all pujas from sheet
  */
 export function getUpcomingPujas(
   pujas: SriMandirPuja[], 
   maxCount = 1,
   priorityKeywords?: string[]
 ): SriMandirPuja[] {
-  const now = new Date();
-  
   const sorted = pujas
     .map(puja => ({
       puja,
@@ -334,13 +333,15 @@ export function getUpcomingPujas(
         return title.startsWith(lowerKeyword) || englishTitle.startsWith(lowerKeyword);
       }) : false
     }))
-    .filter(item => item.date !== null && item.date >= now)
     .sort((a, b) => {
       // First prioritize pujas that start with keyword
       if (a.startsWithKeyword && !b.startsWithKeyword) return -1;
       if (!a.startsWithKeyword && b.startsWithKeyword) return 1;
-      // Then sort by date
-      return a.date!.getTime() - b.date!.getTime();
+      // Then sort by date (if available)
+      if (a.date && b.date) {
+        return a.date.getTime() - b.date.getTime();
+      }
+      return 0;
     })
     .slice(0, maxCount);
 

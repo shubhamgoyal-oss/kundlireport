@@ -230,6 +230,22 @@ const DoshaCalculator = () => {
       setIsFormCollapsed(true);
       toast.success(t('dosha.calculationSuccess'));
       
+      // Track successful calculation
+      trackEvent('dosha_calculate', {
+        metadata: {
+          calculation_id: (normalized as any).calculationId,
+          place: submissionData.place,
+          date: submissionData.date,
+          hasTime: !submissionData.unknownTime,
+          doshas_found: {
+            mangal: normalized.summary?.mangal,
+            kaalSarp: normalized.summary?.kaalSarp,
+            pitra: normalized.summary?.pitra,
+            shaniSadeSati: normalized.summary?.shaniSadeSati
+          }
+        }
+      });
+      
       if ((normalized as any).calculationId) {
         setCalculationId((normalized as any).calculationId);
       }

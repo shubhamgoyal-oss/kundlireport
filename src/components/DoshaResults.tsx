@@ -119,6 +119,18 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   }, [isHindi, details]);
 
   useEffect(() => {
+    // Track when dosha results are viewed
+    trackEvent('dosha_results_viewed', {
+      metadata: {
+        calculation_id: calculationId,
+        has_any_dosha: hasAnyDosha,
+        mangal: summary.mangal,
+        kaal_sarp: summary.kaalSarp,
+        pitra: summary.pitra,
+        shani_sade_sati: summary.shaniSadeSati
+      }
+    });
+    
     // Scroll to status message when component mounts
     if (statusMessageRef.current) {
       // Use scrollIntoView with slight delay so the heading is clearly visible

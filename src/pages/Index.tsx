@@ -48,15 +48,15 @@ const Index = () => {
             {/* Content */}
             <div className="space-y-6 sm:space-y-8 w-full">
               <div className="text-center">
-                <div className="mb-6 sm:mb-8 space-y-1.5">
+              <div className="mb-6 sm:mb-8 space-y-1.5">
                   <img 
                     src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
                     alt="Sri Mandir" 
-                    className="h-16 sm:h-20 w-auto mx-auto"
+                    className="h-12 sm:h-16 w-auto mx-auto"
                   />
-                  <div className="text-xs sm:text-sm text-muted-foreground font-medium space-y-0.5">
+                  <div className="text-[10px] sm:text-xs text-muted-foreground font-medium space-y-0.5">
                     <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-primary text-[10px]">✦</span>
+                      <span className="text-primary text-[8px]">✦</span>
                       <span>{t('trustBadge.tagline')}</span>
                     </div>
                     <div className="font-semibold text-foreground">{t('trustBadge.downloads')}</div>

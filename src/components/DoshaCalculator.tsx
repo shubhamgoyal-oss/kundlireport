@@ -337,17 +337,20 @@ const DoshaCalculator = () => {
               </div>
             )}
 
-            <Input
-              id="time"
-              type="time"
-              {...register('time')}
-              disabled={unknownTime}
-              className="bg-input min-h-[44px] text-base"
-              required={!unknownTime}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t('dosha.timeFormat')}
-            </p>
+            {!unknownTime && (
+              <>
+                <Input
+                  id="time"
+                  type="time"
+                  {...register('time')}
+                  className="bg-input min-h-[44px] text-base"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  {t('dosha.timeFormat')}
+                </p>
+              </>
+            )}
             {errors.time && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />

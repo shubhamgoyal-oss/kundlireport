@@ -144,6 +144,9 @@ const DoshaCalculator = () => {
     setSelectedPlaceIndex(-1);
     
     toast.success(t('dosha.locationSelected'));
+    
+    // Track form field filled for place
+    trackEvent('form_field_filled', { metadata: { field: 'place' } });
   };
 
   const handlePlaceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -319,6 +322,11 @@ const DoshaCalculator = () => {
               {...register('date')}
               className="bg-input min-h-[44px] text-base"
               required
+              onBlur={(e) => {
+                if (e.target.value) {
+                  trackEvent('form_field_filled', { metadata: { field: 'date' } });
+                }
+              }}
             />
             {errors.date && (
               <p className="text-sm text-destructive flex items-center gap-1">
@@ -367,6 +375,11 @@ const DoshaCalculator = () => {
                   {...register('time')}
                   className="bg-input min-h-[44px] text-base"
                   required
+                  onBlur={(e) => {
+                    if (e.target.value) {
+                      trackEvent('form_field_filled', { metadata: { field: 'time' } });
+                    }
+                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   {t('dosha.timeFormat')}

@@ -70,52 +70,79 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
   // Translate explanations when language changes to Hindi
   useEffect(() => {
-    if (!isHindi || isTranslating) return;
+    if (!isHindi) return;
 
-    const explanationsToTranslate: { key: string; text: string }[] = [];
+    const translations: Record<string, string> = {};
     
+    // Helper function to translate common phrases inline
+    const translateInline = (text: string): string => {
+      if (!text) return text;
+      let translated = text;
+      
+      // Planet names
+      translated = translated
+        .replace(/\bMars\b/g, 'मंगल')
+        .replace(/\bMoon\b/g, 'चंद्र')
+        .replace(/\bSun\b/g, 'सूर्य')
+        .replace(/\bSaturn\b/g, 'शनि')
+        .replace(/\bJupiter\b/g, 'गुरु')
+        .replace(/\bVenus\b/g, 'शुक्र')
+        .replace(/\bMercury\b/g, 'बुध')
+        .replace(/\bRahu\b/g, 'राहु')
+        .replace(/\bKetu\b/g, 'केतु')
+        .replace(/\bAscendant\b/g, 'लग्न')
+        .replace(/\bLagna\b/g, 'लग्न');
+      
+      // Signs
+      translated = translated
+        .replace(/\bAries\b/g, 'मेष')
+        .replace(/\bTaurus\b/g, 'वृषभ')
+        .replace(/\bGemini\b/g, 'मिथुन')
+        .replace(/\bCancer\b/g, 'कर्क')
+        .replace(/\bLeo\b/g, 'सिंह')
+        .replace(/\bVirgo\b/g, 'कन्या')
+        .replace(/\bLibra\b/g, 'तुला')
+        .replace(/\bScorpio\b/g, 'वृश्चिक')
+        .replace(/\bSagittarius\b/g, 'धनु')
+        .replace(/\bCapricorn\b/g, 'मकर')
+        .replace(/\bAquarius\b/g, 'कुम्भ')
+        .replace(/\bPisces\b/g, 'मीन');
+      
+      // Common terms
+      translated = translated
+        .replace(/\bhouse\b/gi, 'भाव')
+        .replace(/\bpresent\b/gi, 'मौजूद')
+        .replace(/\babsent\b/gi, 'अनुपस्थित')
+        .replace(/\bnullified\b/gi, 'निष्प्रभावित')
+        .replace(/\bconjunction\b/gi, 'युति')
+        .replace(/\baspect\b/gi, 'दृष्टि')
+        .replace(/\bin\b/g, 'में')
+        .replace(/\bfrom\b/g, 'से')
+        .replace(/\bActive\b/g, 'सक्रिय')
+        .replace(/\bInactive\b/g, 'निष्क्रिय')
+        .replace(/\bPhase\b/gi, 'चरण')
+        .replace(/\bRising\b/g, 'उदय')
+        .replace(/\bPeak\b/g, 'शिखर')
+        .replace(/\bSetting\b/g, 'अस्त');
+      
+      return translated;
+    };
+    
+    // Translate major dosha explanations
     if (details.mangal?.explanation) {
-      explanationsToTranslate.push({ key: 'mangal', text: details.mangal.explanation });
+      translations['mangal'] = translateInline(details.mangal.explanation);
     }
     if (details.kaalSarp?.explanation) {
-      explanationsToTranslate.push({ key: 'kaalSarp', text: details.kaalSarp.explanation });
+      translations['kaalSarp'] = translateInline(details.kaalSarp.explanation);
     }
     if (details.pitra?.explanation) {
-      explanationsToTranslate.push({ key: 'pitra', text: details.pitra.explanation });
+      translations['pitra'] = translateInline(details.pitra.explanation);
     }
     if (details.sadeSati?.explanation) {
-      explanationsToTranslate.push({ key: 'sadeSati', text: details.sadeSati.explanation });
+      translations['sadeSati'] = translateInline(details.sadeSati.explanation);
     }
 
-    if (explanationsToTranslate.length === 0) return;
-
-    const translateAll = async () => {
-      setIsTranslating(true);
-      const translations: Record<string, string> = {};
-
-      for (const { key, text } of explanationsToTranslate) {
-        try {
-          const { data, error } = await supabase.functions.invoke('translate-dosha', {
-            body: { text }
-          });
-
-          if (error) {
-            console.error(`Failed to translate ${key}:`, error);
-            translations[key] = text; // Fallback to English
-          } else {
-            translations[key] = data.translatedText;
-          }
-        } catch (err) {
-          console.error(`Error translating ${key}:`, err);
-          translations[key] = text; // Fallback to English
-        }
-      }
-
-      setTranslatedExplanations(translations);
-      setIsTranslating(false);
-    };
-
-    translateAll();
+    setTranslatedExplanations(translations);
   }, [isHindi, details]);
 
   useEffect(() => {

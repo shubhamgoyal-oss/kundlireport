@@ -133,47 +133,60 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
   const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // Translate explanations to Hindi when language changes
+  // Static Hindi translations for common dosha detection phrases
+  const staticHindiTranslations: Record<string, string> = {
+    // Common "No X detected" phrases
+    'No Grahan Dosha detected.': 'कोई ग्रहण दोष नहीं पाया गया।',
+    'No Shrapit Dosha detected.': 'कोई श्रापित दोष नहीं पाया गया।',
+    'No Guru Chandal Dosha detected.': 'कोई गुरु चांडाल दोष नहीं पाया गया।',
+    'No Punarphoo Dosha detected.': 'कोई पुनर्फू दोष नहीं पाया गया।',
+    'No Kemadruma Yoga detected.': 'कोई केमद्रुम योग नहीं पाया गया।',
+    'No Gandmool Dosha detected.': 'कोई गण्डमूल दोष नहीं पाया गया।',
+    'No Kalathra Dosha detected.': 'कोई कलात्र दोष नहीं पाया गया।',
+    'No Vish Daridra Yoga detected.': 'कोई विष दरिद्र योग नहीं पाया गया।',
+    'No Ketu Naga Dosha detected.': 'कोई केतु नाग दोष नहीं पाया गया।',
+  };
+
+  // Translate explanations to Hindi using static translations first
   React.useEffect(() => {
     if (!isHindi || !doshaFlags) return;
 
-    const translateExplanations = async () => {
-      setIsTranslating(true);
-      const translations: Record<string, string> = {};
-
-      const doshaKeys = Object.keys(doshaFlags) as Array<keyof typeof doshaFlags>;
-      
-      for (const key of doshaKeys) {
-        const flag = doshaFlags[key];
-        if (flag?.explanation) {
-          try {
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/translate-dosha`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-              },
-              body: JSON.stringify({ text: flag.explanation }),
-            });
-
-            if (response.ok) {
-              const data = await response.json();
-              translations[key] = data.translatedText || flag.explanation;
-            } else {
-              translations[key] = flag.explanation;
-            }
-          } catch (error) {
-            console.error(`Translation failed for ${key}:`, error);
-            translations[key] = flag.explanation;
+    const translations: Record<string, string> = {};
+    const doshaKeys = Object.keys(doshaFlags) as Array<keyof typeof doshaFlags>;
+    
+    for (const key of doshaKeys) {
+      const flag = doshaFlags[key];
+      if (flag?.explanation) {
+        // Check for static translation first
+        const staticTranslation = staticHindiTranslations[flag.explanation];
+        if (staticTranslation) {
+          translations[key] = staticTranslation;
+        } else {
+          // For dynamic content with specific values, translate key parts inline
+          let translated = flag.explanation;
+          
+          // Handle common detection patterns
+          if (translated.includes('detected:')) {
+            translated = translated
+              .replace(/Guru Chandal Dosha detected:/g, 'गुरु चांडाल दोष पाया गया:')
+              .replace(/Punarphoo Dosha detected:/g, 'पुनर्फू दोष पाया गया:')
+              .replace(/Gandmool Dosha detected:/g, 'गण्डमूल दोष पाया गया:')
+              .replace(/Grahan Dosha detected:/g, 'ग्रहण दोष पाया गया:')
+              .replace(/Shrapit Dosha detected:/g, 'श्रापित दोष पाया गया:')
+              .replace(/Kemadruma Yoga detected:/g, 'केमद्रुम योग पाया गया:')
+              .replace(/Jupiter-Ketu conjunction/g, 'गुरु-केतु युति')
+              .replace(/Jupiter-Rahu conjunction/g, 'गुरु-राहु युति')
+              .replace(/Saturn-Moon conjunction/g, 'शनि-चंद्र युति')
+              .replace(/Moon in/g, 'चंद्र')
+              .replace(/nakshatra/g, 'नक्षत्र में');
           }
+          
+          translations[key] = translated;
         }
       }
+    }
 
-      setTranslatedExplanations(translations);
-      setIsTranslating(false);
-    };
-
-    translateExplanations();
+    setTranslatedExplanations(translations);
   }, [isHindi, doshaFlags]);
 
   const translatePlacement = (line: string) => {

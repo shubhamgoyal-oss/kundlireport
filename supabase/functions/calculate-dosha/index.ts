@@ -38,7 +38,7 @@ const corsHeaders = {
 
 const birthInputSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
-  gender: z.enum(["male", "female"]).optional(),
+  gender: z.enum(["M", "F"]).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").or(z.literal("")).optional(),
   tz: z.string().min(1).max(50, "Timezone string too long"),
@@ -59,9 +59,9 @@ serve(async (req) => {
     const raw = await req.json();
     console.log("[CALC] Body parsed");
 
-    // Normalize null gender
+    // Normalize null gender to M (male)
     if (raw && raw.gender == null) {
-      raw.gender = "male";
+      raw.gender = "M";
     }
     if (!raw || !raw.name) {
       raw.name = "Default User";
@@ -99,7 +99,7 @@ serve(async (req) => {
     };
     const tzone = tzOffsetMap[input.tz] || 5.5;
 
-    const genderCode = input.gender === "female" ? "F" : "M";
+    const genderCode = input.gender || "M";
 
     const seerRequest: SeerKundliRequest = {
       day,

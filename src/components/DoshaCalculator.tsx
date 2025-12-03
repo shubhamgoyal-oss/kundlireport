@@ -245,6 +245,10 @@ const DoshaCalculator = () => {
       
       setDoshaResults(normalized);
       setIsFormCollapsed(true);
+      
+      // Mark calculation as done for floating language toggle
+      sessionStorage.setItem('dosha_calculated', 'true');
+      
       toast.success(t('dosha.calculationSuccess'));
       
       // Track successful calculation

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit } from 'lucide-react';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
@@ -16,10 +16,10 @@ import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 
-// Form validation schema - name and gender optional
+// Form validation schema - name is mandatory
 const birthInputSchema = z
   .object({
-    name: z.string().optional(),
+    name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
     gender: z.string().optional(),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
@@ -191,10 +191,10 @@ const DoshaCalculator = () => {
   };
 
   const onSubmit = async (data: BirthInput) => {
-    // Always send default name and gender
+    // Use actual name from form, default gender
     const submissionData = {
       ...data,
-      name: 'Default User',
+      name: data.name.trim(),
       gender: 'male',
     };
     
@@ -316,6 +316,7 @@ const DoshaCalculator = () => {
         <CollapsibleContent>
           <CardContent className="p-4 sm:p-6">
         <form onSubmit={handleSubmit(onSubmit, (errs) => {
+          console.log('[Form] Validation errors:', errs);
           const msg = (errs.place?.message as string)
             || (errs.time?.message as string)
             || (errs.date?.message as string)
@@ -323,6 +324,35 @@ const DoshaCalculator = () => {
             || t('dosha.formError', 'Please correct the highlighted fields');
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
+
+          {/* Name */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="flex items-center gap-2 text-sm sm:text-base">
+              <User className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.name')} <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              {...register('name', {
+                onChange: (e) => {
+                  if (e.target.value) {
+                    trackFieldFilled('name');
+                  }
+                }
+              })}
+              placeholder={t('dosha.enterName')}
+              className="bg-input min-h-[44px] text-base"
+              required
+              maxLength={100}
+            />
+            {errors.name && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.name.message}
+              </p>
+            )}
+          </div>
 
           {/* Date of Birth */}
           <div className="space-y-2">

@@ -69,6 +69,20 @@ const DoshaCalculator = () => {
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Track which fields have been tracked this session to avoid duplicates
+  const [trackedFields, setTrackedFields] = useState<Set<string>>(new Set());
+
+  const trackFieldFilled = (field: string) => {
+    if (!trackedFields.has(field)) {
+      console.log(`[Analytics] Tracking form_field_filled: ${field}`);
+      trackEvent('form_field_filled', { 
+        page: 'home',
+        metadata: { field } 
+      });
+      setTrackedFields(prev => new Set(prev).add(field));
+    }
+  };
 
   const {
     register,
@@ -146,7 +160,7 @@ const DoshaCalculator = () => {
     toast.success(t('dosha.locationSelected'));
     
     // Track form field filled for place
-    trackEvent('form_field_filled', { metadata: { field: 'place' } });
+    trackFieldFilled('place');
   };
 
   const handlePlaceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -319,14 +333,15 @@ const DoshaCalculator = () => {
             <Input
               id="date"
               type="date"
-              {...register('date')}
+              {...register('date', {
+                onChange: (e) => {
+                  if (e.target.value) {
+                    trackFieldFilled('date');
+                  }
+                }
+              })}
               className="bg-input min-h-[44px] text-base"
               required
-              onBlur={(e) => {
-                if (e.target.value) {
-                  trackEvent('form_field_filled', { metadata: { field: 'date' } });
-                }
-              }}
             />
             {errors.date && (
               <p className="text-sm text-destructive flex items-center gap-1">
@@ -372,14 +387,15 @@ const DoshaCalculator = () => {
                 <Input
                   id="time"
                   type="time"
-                  {...register('time')}
+                  {...register('time', {
+                    onChange: (e) => {
+                      if (e.target.value) {
+                        trackFieldFilled('time');
+                      }
+                    }
+                  })}
                   className="bg-input min-h-[44px] text-base"
                   required
-                  onBlur={(e) => {
-                    if (e.target.value) {
-                      trackEvent('form_field_filled', { metadata: { field: 'time' } });
-                    }
-                  }}
                 />
                 <p className="text-xs text-muted-foreground">
                   {t('dosha.timeFormat')}

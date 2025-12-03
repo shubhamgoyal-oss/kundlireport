@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 const birthInputSchema = z
   .object({
     name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-    gender: z.string().optional(),
+    gender: z.enum(["M", "F"], { required_error: "Gender is required" }),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
     time: z.string().optional().nullable(),
     unknownTime: z.boolean().default(false),
@@ -191,11 +191,10 @@ const DoshaCalculator = () => {
   };
 
   const onSubmit = async (data: BirthInput) => {
-    // Use actual name from form, default gender
     const submissionData = {
       ...data,
       name: data.name.trim(),
-      gender: 'male',
+      gender: data.gender,
     };
     
     // Start tracking scroll events after calculation starts
@@ -350,6 +349,40 @@ const DoshaCalculator = () => {
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />
                 {errors.name.message}
+              </p>
+            )}
+          </div>
+
+          {/* Gender */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 text-sm sm:text-base">
+              <User className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.gender', 'Gender')} <span className="text-destructive">*</span>
+            </Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="M"
+                  {...register('gender')}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-sm">{t('dosha.male', 'Male')}</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="F"
+                  {...register('gender')}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-sm">{t('dosha.female', 'Female')}</span>
+              </label>
+            </div>
+            {errors.gender && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.gender.message}
               </p>
             )}
           </div>

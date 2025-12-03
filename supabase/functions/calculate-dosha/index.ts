@@ -445,6 +445,42 @@ serve(async (req) => {
     const userCountry = req.headers.get("cf-ipcountry") || req.headers.get("x-vercel-ip-country") || null;
     console.log("[CALC] User country from headers:", userCountry);
 
+    // Save Seer API logs
+    console.log("[CALC] Saving Seer API logs...");
+    try {
+      const { error: seerLogError } = await supabaseAdmin
+        .from("seer_api_logs")
+        .insert({
+          visitor_id: visitorId,
+          session_id: sessionId,
+          birth_date: input.date,
+          birth_time: input.time || "12:00",
+          birth_place: input.place || `${input.lat},${input.lon}`,
+          latitude: input.lat,
+          longitude: input.lon,
+          timezone: tzone,
+          request_payload: seerRequest,
+          response_data: seerData,
+          response_status: seerStatus,
+          response_time_ms: responseTimeMs,
+          adapted_planets: kundli.planets,
+          adaptation_warnings: kundli.notes || [],
+          mangal_dosha: mangal.status === "present",
+          pitra_dosha: pitra.status === "present",
+          shani_dosha: shani.status === "present",
+          kaal_sarp_dosha: kaalSarp.status === "present",
+          user_country: userCountry,
+        });
+      
+      if (seerLogError) {
+        console.error("[CALC] Failed to save Seer API log:", seerLogError);
+      } else {
+        console.log("[CALC] Seer API log saved successfully");
+      }
+    } catch (seerLogErr) {
+      console.error("[CALC] Seer API log error:", seerLogErr);
+    }
+
     const isActive = (status: unknown): boolean => {
       if (typeof status === "boolean") return status;
       const s = String(status ?? "").toLowerCase();

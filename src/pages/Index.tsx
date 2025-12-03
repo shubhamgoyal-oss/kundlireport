@@ -33,12 +33,8 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
 
-      {/* Language Toggle at Top */}
-      <div className="container mx-auto px-4 sm:px-6 pt-4 max-w-7xl">
-        <div className="flex justify-end">
-          <LanguageToggle />
-        </div>
-      </div>
+      {/* Language Toggle - renders as floating or static based on calculation state */}
+      <LanguageToggle />
 
       {/* Hero Section - Mobile-first optimized */}
       <main className="flex-1">

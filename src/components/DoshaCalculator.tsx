@@ -12,6 +12,7 @@ import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User } 
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
+import { DateOfBirthPicker } from './DateOfBirthPicker';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
@@ -388,31 +389,14 @@ const DoshaCalculator = () => {
           </div>
 
           {/* Date of Birth */}
-          <div className="space-y-2">
-            <Label htmlFor="date" className="flex items-center gap-2 text-sm sm:text-base">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              {t('dosha.dateOfBirth')} *
-            </Label>
-            <Input
-              id="date"
-              type="date"
-              {...register('date', {
-                onChange: (e) => {
-                  if (e.target.value) {
-                    trackFieldFilled('date');
-                  }
-                }
-              })}
-              className="bg-input min-h-[44px] text-base"
-              required
-            />
-            {errors.date && (
-              <p className="text-sm text-destructive flex items-center gap-1">
-                <AlertCircle className="w-4 h-4" />
-                {errors.date.message}
-              </p>
-            )}
-          </div>
+          <DateOfBirthPicker
+            value={watch('date')}
+            onChange={(date) => {
+              setValue('date', date);
+              trackFieldFilled('date');
+            }}
+            error={errors.date?.message}
+          />
 
           {/* Birth Time */}
           <div className="space-y-2">

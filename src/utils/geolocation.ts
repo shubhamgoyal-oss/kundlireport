@@ -21,26 +21,8 @@ export async function getUserLocation(): Promise<UserLocation> {
     return cachedLocation;
   }
 
+  // Only use IP-based geolocation to avoid permission prompts
   try {
-    // Try to get browser geolocation first (most accurate)
-    const browserLocation = await getBrowserGeolocation();
-    if (browserLocation.latitude != null && browserLocation.longitude != null) {
-      // Get country/city from coordinates using reverse geocoding
-      const details = await reverseGeocode(browserLocation.latitude, browserLocation.longitude);
-      cachedLocation = {
-        latitude: browserLocation.latitude,
-        longitude: browserLocation.longitude,
-        country: details.country,
-        city: details.city,
-      };
-      return cachedLocation;
-    }
-  } catch (error) {
-    console.warn('Browser geolocation failed, falling back to IP-based location:', error);
-  }
-
-  try {
-    // Fallback to IP-based geolocation
     const ipLocation = await getIPBasedLocation();
     cachedLocation = ipLocation;
     return ipLocation;

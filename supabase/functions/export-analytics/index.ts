@@ -13,17 +13,20 @@ serve(async (req) => {
   }
 
   try {
-    // Verify API key
+    // Verify API key - accepts either env secret or hardcoded key for Apps Script
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('ANALYTICS_API_KEY');
+    const hardcodedKey = 'gsheetsconnector';
     
-    if (!apiKey || apiKey !== expectedKey) {
+    if (!apiKey || (apiKey !== expectedKey && apiKey !== hardcodedKey)) {
       console.error('Invalid or missing API key');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    
+    console.log('API key validated successfully');
 
     // Parse query params
     const url = new URL(req.url);

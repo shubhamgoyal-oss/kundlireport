@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
@@ -69,6 +70,26 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
       if (!text) return text;
       let translated = text;
       
+      // Full sentence/phrase translations first (before word-by-word)
+      translated = translated
+        .replace(/Sade Sati is currently active/gi, 'साढ़े साती वर्तमान में सक्रिय है')
+        .replace(/Sade Sati is not active/gi, 'साढ़े साती सक्रिय नहीं है')
+        .replace(/rising phase/gi, 'उदय चरण')
+        .replace(/peak phase/gi, 'शिखर चरण')
+        .replace(/setting phase/gi, 'अस्त चरण')
+        .replace(/is currently in/gi, 'वर्तमान में है')
+        .replace(/Mangal Dosha is present/gi, 'मंगल दोष उपस्थित है')
+        .replace(/Mangal Dosha is absent/gi, 'मंगल दोष अनुपस्थित है')
+        .replace(/Kaal Sarp Dosha is present/gi, 'काल सर्प दोष उपस्थित है')
+        .replace(/Kaal Sarp Dosha is absent/gi, 'काल सर्प दोष अनुपस्थित है')
+        .replace(/Pitra Dosha is present/gi, 'पितृ दोष उपस्थित है')
+        .replace(/Pitra Dosha is absent/gi, 'पितृ दोष अनुपस्थित है')
+        .replace(/All planets are hemmed/gi, 'सभी ग्रह फंसे हुए हैं')
+        .replace(/between Rahu and Ketu/gi, 'राहु और केतु के बीच')
+        .replace(/is placed in/gi, 'स्थित है')
+        .replace(/from the/gi, 'से');
+      
+      // Planet names
       translated = translated
         .replace(/\bMars\b/g, 'मंगल')
         .replace(/\bMoon\b/g, 'चंद्र')
@@ -82,6 +103,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         .replace(/\bAscendant\b/g, 'लग्न')
         .replace(/\bLagna\b/g, 'लग्न');
       
+      // Signs
       translated = translated
         .replace(/\bAries\b/g, 'मेष')
         .replace(/\bTaurus\b/g, 'वृषभ')
@@ -96,6 +118,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         .replace(/\bAquarius\b/g, 'कुम्भ')
         .replace(/\bPisces\b/g, 'मीन');
       
+      // Common terms
       translated = translated
         .replace(/\bhouse\b/gi, 'भाव')
         .replace(/\bpresent\b/gi, 'मौजूद')
@@ -104,7 +127,6 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         .replace(/\bconjunction\b/gi, 'युति')
         .replace(/\baspect\b/gi, 'दृष्टि')
         .replace(/\bin\b/g, 'में')
-        .replace(/\bfrom\b/g, 'से')
         .replace(/\bActive\b/g, 'सक्रिय')
         .replace(/\bInactive\b/g, 'निष्क्रिय')
         .replace(/\bPhase\b/gi, 'चरण')
@@ -551,8 +573,211 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         );
       })}
 
+      {/* Detailed Analysis Section - All 4 Major Doshas */}
+      <Card className="spiritual-glow">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center gradient-spiritual bg-clip-text text-transparent">
+            {t('doshaResults.detailedAnalysis')}
+          </CardTitle>
+          <CardDescription className="text-center">
+            {t('doshaResults.basedOnChart')}
+          </CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-4">
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            {/* Mangal Dosha */}
+            <AccordionItem value="mangal" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Flame className="w-5 h-5 text-destructive" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.mangal.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.mangal)}
+                      {summary.mangalSeverity && !isDoshaNullified(summary.mangal) && ` • ${t('doshaResults.severity')}: ${summary.mangalSeverity}`}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.mangal.description')}</p>
+                {details.mangal && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.mangal || details.mangal.explanation) : details.mangal.explanation}
+                      </p>
+                    </div>
+                    {details.mangal.placements && details.mangal.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.mangal.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.mangal.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Kaal Sarp Dosha */}
+            <AccordionItem value="kaalSarp" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Waves className="w-5 h-5 text-primary" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.kaalSarp.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.kaalSarp)}
+                      {summary.kaalSarpType && ` • ${t('doshaResults.type')}: ${summary.kaalSarpType}`}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.kaalSarp.description')}</p>
+                {details.kaalSarp && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.kaalSarp || details.kaalSarp.explanation) : details.kaalSarp.explanation}
+                      </p>
+                    </div>
+                    {details.kaalSarp.placements && details.kaalSarp.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.kaalSarp.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.kaalSarp.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Pitra Dosha */}
+            <AccordionItem value="pitra" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-secondary" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.pitra.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.pitra)}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.pitra.description')}</p>
+                {details.pitra && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.pitra || details.pitra.explanation) : details.pitra.explanation}
+                      </p>
+                    </div>
+                    {details.pitra.placements && details.pitra.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.pitra.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.pitra.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Shani Sade Sati */}
+            <AccordionItem value="sadeSati" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Moon className="w-5 h-5 text-warning" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.sadeSati.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.shaniSadeSati)}
+                      {summary.shaniPhase && ` • ${isHindi ? 'चरण' : 'Phase'}: ${summary.shaniPhase}`}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.sadeSati.description')}</p>
+                {details.sadeSati && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.sadeSati || details.sadeSati.explanation) : details.sadeSati.explanation}
+                      </p>
+                    </div>
+                    {details.sadeSati.placements && details.sadeSati.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.sadeSati.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.sadeSati.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </CardContent>
+      </Card>
+
       {/* Other Doshas Section */}
-      <OtherDoshas 
+      <OtherDoshas
         pujas={pujas}
         doshaFlags={{
           rahuKetu: summary.grahan ? { 

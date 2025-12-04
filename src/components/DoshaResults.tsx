@@ -299,12 +299,28 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     icon: typeof Flame;
     status: string;
     severity?: string;
+    phase?: number;
     explanation: string;
     placements?: string[];
     impact: string;
     remedies: string[];
     pujaType: string;
   }> = [];
+
+  // Helper to get phase explanation
+  const getPhaseExplanation = (phase?: number) => {
+    if (!phase) return '';
+    if (isHindi) {
+      if (phase === 1) return 'उदय चरण (Rising Phase): शनि आपकी चंद्र राशि से पहले की राशि में है। यह साढ़े साती की शुरुआत है।';
+      if (phase === 2) return 'शिखर चरण (Peak Phase): शनि आपकी चंद्र राशि में है। यह साढ़े साती का सबसे प्रभावशाली समय है।';
+      if (phase === 3) return 'अस्त चरण (Setting Phase): शनि आपकी चंद्र राशि के बाद की राशि में है। साढ़े साती समाप्त होने वाली है।';
+    } else {
+      if (phase === 1) return 'Rising Phase: Saturn is in the sign before your Moon sign. This marks the beginning of Sade Sati.';
+      if (phase === 2) return 'Peak Phase: Saturn is in your Moon sign. This is the most intense period of Sade Sati.';
+      if (phase === 3) return 'Setting Phase: Saturn is in the sign after your Moon sign. Sade Sati is nearing its end.';
+    }
+    return '';
+  };
 
   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
     activeDoshas.push({
@@ -356,6 +372,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
       label: t('doshaResults.sadeSati.name'),
       icon: Moon,
       status: summary.shaniSadeSati,
+      phase: summary.shaniPhase,
       explanation: isHindi ? (translatedExplanations.sadeSati || details.sadeSati?.explanation || '') : (details.sadeSati?.explanation || ''),
       placements: details.sadeSati?.placements,
       impact: t('doshaResults.sadeSati.impact'),
@@ -432,6 +449,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
       {activeDoshas.map((dosha, index) => {
         const puja = getPujaForDosha(dosha.pujaType);
         const DoshaIcon = dosha.icon;
+        const phaseExplanation = dosha.type === 'shani' && dosha.phase ? getPhaseExplanation(dosha.phase) : '';
         
         return (
           <Card key={dosha.type} className="spiritual-glow border border-primary/10">
@@ -443,6 +461,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
               <CardDescription>
                 {t('doshaResults.status')}: {translateStatus(dosha.status)}
                 {dosha.severity && ` • ${t('doshaResults.severity')}: ${dosha.severity}`}
+                {dosha.phase && ` • ${isHindi ? 'चरण' : 'Phase'}: ${dosha.phase}`}
               </CardDescription>
             </CardHeader>
             
@@ -456,6 +475,18 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {dosha.explanation || (isHindi ? 'ग्रहों की स्थिति के आधार पर' : 'Based on planetary positions')}
                 </p>
+                
+                {/* Phase Explanation for Sade Sati */}
+                {phaseExplanation && (
+                  <div className="mt-3 p-3 bg-warning/10 rounded-md border border-warning/20">
+                    <h5 className="font-medium text-sm mb-2">
+                      {isHindi ? 'वर्तमान चरण का अर्थ:' : 'Current Phase Meaning:'}
+                    </h5>
+                    <p className="text-sm text-muted-foreground">
+                      {phaseExplanation}
+                    </p>
+                  </div>
+                )}
                 
                 {/* Planetary Placements */}
                 {dosha.placements && dosha.placements.length > 0 && (

@@ -156,7 +156,7 @@ const resources = {
         mangal: {
           name: 'Mangal Dosha (Manglik)',
           description: 'Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.',
-          impact: 'Impact if present: Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships.',
+          impact: 'Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships.',
           remedies: [
             'Recite Hanuman Chalisa',
             'Fast on Tuesdays',
@@ -167,7 +167,7 @@ const resources = {
         kaalSarp: {
           name: 'Kaal Sarp Dosha',
           description: 'Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.',
-          impact: 'Impact if present: A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence.',
+          impact: 'A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence.',
           remedies: [
             'Visit Trimbakeshwar temple',
             'Recite Maha Mrityunjaya Mantra',
@@ -178,7 +178,7 @@ const resources = {
         pitra: {
           name: 'Pitra Dosha',
           description: 'Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.',
-          impact: 'Impact if present: Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution.',
+          impact: 'Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution.',
           remedies: [
             'Perform Shraddha ceremony',
             'Feed brahmins on amavasya',
@@ -189,7 +189,7 @@ const resources = {
         sadeSati: {
           name: 'Shani Sade Sati',
           description: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7.5-year cycle emphasizing discipline and patience.",
-          impact: 'Impact if active: Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed.',
+          impact: 'Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed.',
           remedies: [
             'Recite Shani mantra',
             'Light mustard oil lamp on Saturdays',
@@ -450,7 +450,7 @@ const resources = {
         mangal: {
           name: 'मंगल दोष (मांगलिक)',
           description: 'मंगल (मांगलिक/कुजा) दोष — कुछ घरों में मंगल से जुड़ा; पारंपरिक रूप से रिश्तों में घर्षण और निर्णायकता से जुड़ा है।',
-          impact: 'यदि उपस्थित हो तो प्रभाव: करीबी रिश्तों में घर्षण की अधिक संभावना, अधीरता/क्रोध के झटके, या विवाह या साझेदारी में देरी और रुक-रुक कर शुरुआत।',
+          impact: 'करीबी रिश्तों में घर्षण की अधिक संभावना, अधीरता/क्रोध के झटके, या विवाह या साझेदारी में देरी और रुक-रुक कर शुरुआत।',
           remedies: [
             'हनुमान चालीसा का पाठ करें',
             'मंगलवार को व्रत रखें',
@@ -461,7 +461,7 @@ const resources = {
         kaalSarp: {
           name: 'काल सर्प दोष',
           description: 'काल सर्प दोष — सभी ग्रह राहु और केतु के बीच फंसे; अक्सर आंतरिक तनाव और परिवर्तन के पैटर्न के रूप में तैयार किया जाता है।',
-          impact: 'यदि उपस्थित हो तो प्रभाव: आंतरिक बेचैनी और आवधिक असफलताओं का एक पैटर्न; प्रयास के बावजूद योजनाएं अवरुद्ध या विलंबित हो सकती हैं, अतिरिक्त दृढ़ता की आवश्यकता है।',
+          impact: 'आंतरिक बेचैनी और आवधिक असफलताओं का एक पैटर्न; प्रयास के बावजूद योजनाएं अवरुद्ध या विलंबित हो सकती हैं, अतिरिक्त दृढ़ता की आवश्यकता है।',
           remedies: [
             'त्रिम्बकेश्वर मंदिर जाएं',
             'महा मृत्युंजय मंत्र का जाप करें',
@@ -472,7 +472,7 @@ const resources = {
         pitra: {
           name: 'पितृ दोष',
           description: 'पितृ (पितृ) दोष — 9वें घर और सूर्य-नोड लिंक के आसपास पारंपरिक संकेतक; कर्तव्यों, वंश और मार्गदर्शन से जुड़े।',
-          impact: 'यदि उपस्थित हो तो प्रभाव: परिवार या बड़ों के प्रति बार-बार कर्तव्य/दायित्व; अपराधबोध, विवाद, या विरासत के मुद्दे सामने आ सकते हैं और समाधान की मांग कर सकते हैं।',
+          impact: 'परिवार या बड़ों के प्रति बार-बार कर्तव्य/दायित्व; अपराधबोध, विवाद, या विरासत के मुद्दे सामने आ सकते हैं और समाधान की मांग कर सकते हैं।',
           remedies: [
             'श्राद्ध समारोह करें',
             'अमावस्या को ब्राह्मणों को भोजन कराएं',
@@ -483,7 +483,7 @@ const resources = {
         sadeSati: {
           name: 'शनि साढ़े साती',
           description: 'शनि साढ़े साती — जन्म चंद्रमा के पड़ोस में शनि का संक्रमण; अनुशासन और धैर्य पर जोर देने वाला 7.5 साल का चक्र।',
-          impact: 'यदि सक्रिय हो तो प्रभाव: भारी जिम्मेदारियां, धीमी प्रगति, और धैर्य की परीक्षा; गति के बजाय लगातार अनुशासन के साथ परिणाम आते हैं।',
+          impact: 'भारी जिम्मेदारियां, धीमी प्रगति, और धैर्य की परीक्षा; गति के बजाय लगातार अनुशासन के साथ परिणाम आते हैं।',
           remedies: [
             'शनि मंत्र का जाप करें',
             'शनिवार को सरसों के तेल का दीपक जलाएं',

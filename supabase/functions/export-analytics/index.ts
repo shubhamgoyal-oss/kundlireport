@@ -60,8 +60,8 @@ serve(async (req) => {
       });
     }
 
-    // Build query
-    let query = supabase.from(table).select('*');
+    // Build query - use count to get total rows
+    let query = supabase.from(table).select('*', { count: 'exact' });
     
     // Apply date filters if provided
     if (startDate) {
@@ -71,10 +71,12 @@ serve(async (req) => {
       query = query.lte('created_at', endDate);
     }
     
-    // Apply pagination
-    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    // Apply pagination with explicit limit (Supabase default is 1000)
+    // Max allowed is 50000 to prevent timeouts
+    const effectiveLimit = Math.min(limit, 50000);
+    query = query.order('created_at', { ascending: false }).range(offset, offset + effectiveLimit - 1);
 
-    const { data, error } = await query;
+    const { data, error, count: totalCount } = await query;
 
     if (error) {
       console.error('Database error:', error);
@@ -84,12 +86,15 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Fetched ${data?.length || 0} rows from ${table}`);
+    console.log(`Fetched ${data?.length || 0} rows from ${table} (total: ${totalCount})`);
 
     // Return data in a format easy for Google Sheets
     return new Response(JSON.stringify({
       table,
       count: data?.length || 0,
+      total_count: totalCount,
+      offset,
+      limit: effectiveLimit,
       data: data || [],
       // Include column headers for first row in sheets
       headers: data && data.length > 0 ? Object.keys(data[0]) : []

@@ -149,7 +149,13 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
 
   // Translate explanations to Hindi using static translations first
   React.useEffect(() => {
-    if (!isHindi || !doshaFlags) return;
+    // Clear translations when switching to English
+    if (!isHindi) {
+      setTranslatedExplanations({});
+      return;
+    }
+    
+    if (!doshaFlags) return;
 
     const translations: Record<string, string> = {};
     const doshaKeys = Object.keys(doshaFlags) as Array<keyof typeof doshaFlags>;
@@ -165,21 +171,50 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
           // For dynamic content with specific values, translate key parts inline
           let translated = flag.explanation;
           
-          // Handle common detection patterns
-          if (translated.includes('detected:')) {
-            translated = translated
-              .replace(/Guru Chandal Dosha detected:/g, 'गुरु चांडाल दोष पाया गया:')
-              .replace(/Punarphoo Dosha detected:/g, 'पुनर्फू दोष पाया गया:')
-              .replace(/Gandmool Dosha detected:/g, 'गण्डमूल दोष पाया गया:')
-              .replace(/Grahan Dosha detected:/g, 'ग्रहण दोष पाया गया:')
-              .replace(/Shrapit Dosha detected:/g, 'श्रापित दोष पाया गया:')
-              .replace(/Kemadruma Yoga detected:/g, 'केमद्रुम योग पाया गया:')
-              .replace(/Jupiter-Ketu conjunction/g, 'गुरु-केतु युति')
-              .replace(/Jupiter-Rahu conjunction/g, 'गुरु-राहु युति')
-              .replace(/Saturn-Moon conjunction/g, 'शनि-चंद्र युति')
-              .replace(/Moon in/g, 'चंद्र')
-              .replace(/nakshatra/g, 'नक्षत्र में');
-          }
+          // Translate common phrases
+          translated = translated
+            // Dosha detection phrases
+            .replace(/Guru Chandal Dosha detected:/gi, 'गुरु चांडाल दोष पाया गया:')
+            .replace(/Punarphoo Dosha detected:/gi, 'पुनर्फू दोष पाया गया:')
+            .replace(/Gandmool Dosha detected:/gi, 'गण्डमूल दोष पाया गया:')
+            .replace(/Grahan Dosha detected:/gi, 'ग्रहण दोष पाया गया:')
+            .replace(/Shrapit Dosha detected:/gi, 'श्रापित दोष पाया गया:')
+            .replace(/Kemadruma Yoga detected:/gi, 'केमद्रुम योग पाया गया:')
+            .replace(/Kemadruma Yoga partially indicated:/gi, 'केमद्रुम योग आंशिक रूप से पाया गया:')
+            .replace(/Kalathra Dosha detected:/gi, 'कलात्र दोष पाया गया:')
+            .replace(/Vish Daridra Yoga detected:/gi, 'विष दरिद्र योग पाया गया:')
+            .replace(/Ketu Naga Dosha detected:/gi, 'केतु नाग दोष पाया गया:')
+            // Conjunction patterns
+            .replace(/Jupiter-Ketu conjunction/gi, 'गुरु-केतु युति')
+            .replace(/Jupiter-Rahu conjunction/gi, 'गुरु-राहु युति')
+            .replace(/Saturn-Moon conjunction/gi, 'शनि-चंद्र युति')
+            .replace(/Saturn-Rahu conjunction/gi, 'शनि-राहु युति')
+            // Common astrological terms
+            .replace(/Adjacent signs empty but kendra has planets/gi, 'पड़ोसी राशियां खाली हैं लेकिन केंद्र में ग्रह हैं')
+            .replace(/in kendra from Moon/gi, 'चंद्र से केंद्र में')
+            .replace(/Moon in/gi, 'चंद्र')
+            .replace(/nakshatra/gi, 'नक्षत्र में');
+          
+          // Translate planet names
+          const planetMap: Record<string, string> = {
+            Sun: 'सूर्य', Moon: 'चंद्र', Mars: 'मंगल', Mercury: 'बुध',
+            Jupiter: 'गुरु', Venus: 'शुक्र', Saturn: 'शनि', Rahu: 'राहु', Ketu: 'केतु'
+          };
+          const signMap: Record<string, string> = {
+            Aries: 'मेष', Taurus: 'वृषभ', Gemini: 'मिथुन', Cancer: 'कर्क',
+            Leo: 'सिंह', Virgo: 'कन्या', Libra: 'तुला', Scorpio: 'वृश्चिक',
+            Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन'
+          };
+          
+          Object.entries(planetMap).forEach(([en, hi]) => {
+            translated = translated.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+          });
+          Object.entries(signMap).forEach(([en, hi]) => {
+            translated = translated.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+          });
+          
+          // Translate house references
+          translated = translated.replace(/\(H(\d+),/g, '(भाव $1,');
           
           translations[key] = translated;
         }

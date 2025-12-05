@@ -604,8 +604,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
 
               {/* How this Puja will help */}
               {puja && (
-                <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
-                  <h4 className="font-semibold text-sm mb-2 text-success">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-base flex items-center gap-2">
                     {isHindi ? 'यह पूजा कैसे मदद करेगी' : 'How this Puja will help'}
                   </h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">

@@ -258,11 +258,6 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
           </Button>
         </div>
 
-        <p className="text-xs text-muted-foreground text-center">
-          {isHindi 
-            ? 'AI द्वारा संचालित। गंभीर मामलों के लिए कृपया पेशेवर ज्योतिषी से परामर्श लें।'
-            : 'AI-powered. Please consult a professional astrologer for serious matters.'}
-        </p>
       </CardContent>
     </Card>
   );

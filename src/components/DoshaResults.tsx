@@ -361,6 +361,70 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     });
   }
 
+  // Get puja benefits by dosha type
+  const getPujaBenefits = (pujaType: string, hindi: boolean): string[] => {
+    const benefits: Record<string, { en: string[]; hi: string[] }> = {
+      mangal: {
+        en: [
+          'Calms aggressive Mars energy causing conflict and instability.',
+          'Reduces hurdles through fire offerings to pacify Mangal.',
+          'Strengthens harmony in relationships and domestic life.',
+          'Protects from impulsive decisions and heated confrontations.'
+        ],
+        hi: [
+          'संघर्ष और अस्थिरता पैदा करने वाली आक्रामक मंगल ऊर्जा को शांत करता है।',
+          'मंगल को शांत करने के लिए हवन से बाधाओं को कम करता है।',
+          'रिश्तों और पारिवारिक जीवन में सामंजस्य को मजबूत करता है।',
+          'आवेगपूर्ण निर्णयों और गरमागरम टकराव से बचाता है।'
+        ]
+      },
+      pitra: {
+        en: [
+          'Brings peace to ancestors through Tarpan offerings.',
+          'Removes unseen family obstacles blocking progress.',
+          'Restores blessings lost due to ancestral imbalance.',
+          'Improves health, stability, and family harmony.'
+        ],
+        hi: [
+          'तर्पण के माध्यम से पूर्वजों को शांति प्रदान करता है।',
+          'प्रगति में बाधा डालने वाली अदृश्य पारिवारिक बाधाओं को दूर करता है।',
+          'पैतृक असंतुलन के कारण खोए हुए आशीर्वाद को पुनर्स्थापित करता है।',
+          'स्वास्थ्य, स्थिरता और पारिवारिक सद्भाव में सुधार करता है।'
+        ]
+      },
+      'kaal-sarp': {
+        en: [
+          'Balances Rahu-Ketu energies causing sudden setbacks.',
+          'Rituals reduce fear, confusion, and unexpected losses.',
+          'Strengthens protection against karmic disturbances.',
+          'Restores direction and stability in major life areas.'
+        ],
+        hi: [
+          'अचानक झटके देने वाली राहु-केतु ऊर्जाओं को संतुलित करता है।',
+          'अनुष्ठान भय, भ्रम और अप्रत्याशित नुकसान को कम करते हैं।',
+          'कर्म संबंधी गड़बड़ियों से सुरक्षा को मजबूत करता है।',
+          'जीवन के प्रमुख क्षेत्रों में दिशा और स्थिरता बहाल करता है।'
+        ]
+      },
+      shani: {
+        en: [
+          'Pacifies Saturn\'s pressure through Shani Abhishek rituals.',
+          'Reduces delays, financial strain, and mental burden.',
+          'Increases resilience during Saturn\'s testing phase.',
+          'Brings steady progress and long-term protection.'
+        ],
+        hi: [
+          'शनि अभिषेक अनुष्ठानों से शनि के दबाव को शांत करता है।',
+          'देरी, वित्तीय तनाव और मानसिक बोझ को कम करता है।',
+          'शनि की परीक्षा अवधि में लचीलापन बढ़ाता है।',
+          'स्थिर प्रगति और दीर्घकालिक सुरक्षा लाता है।'
+        ]
+      }
+    };
+    
+    return benefits[pujaType]?.[hindi ? 'hi' : 'en'] || [];
+  };
+
   // Get puja for a dosha type
   const getPujaForDosha = (pujaType: string): SriMandirPuja | null => {
     const filtered = filterPujasByDosha(pujas, pujaType as any);
@@ -522,17 +586,19 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                 )}
               </div>
 
-              {/* Home Remedies Box */}
-              <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
-                <h4 className="font-semibold text-sm mb-2 text-success">
-                  {isHindi ? 'घरेलू उपाय (यदि पूजा नहीं कर सकते)' : 'Home Remedies (if unable to do puja)'}
-                </h4>
-                <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                  {dosha.remedies.map((remedy, i) => (
-                    <li key={i}>{remedy}</li>
-                  ))}
-                </ul>
-              </div>
+              {/* How this Puja will help */}
+              {puja && (
+                <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+                  <h4 className="font-semibold text-sm mb-2 text-success">
+                    {isHindi ? 'यह पूजा कैसे मदद करेगी' : 'How this Puja will help'}
+                  </h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {getPujaBenefits(dosha.pujaType, isHindi).map((benefit, i) => (
+                      <li key={i}>{benefit}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </CardContent>
           </Card>
         );

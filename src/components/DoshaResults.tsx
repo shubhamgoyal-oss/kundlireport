@@ -1,11 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2, Volume2, VolumeX } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { useTextToSpeech } from '@/hooks/useTextToSpeech';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
-import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, getPrioritizedPuja, SriMandirPuja } from '@/utils/sriMandirPujas';
+import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, getPrioritizedPuja, getPujaTitle, SriMandirPuja } from '@/utils/sriMandirPujas';
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
@@ -58,6 +60,7 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
+  const { speak, stop, isSpeaking, currentSpeakingId } = useTextToSpeech();
   
   useScrollTracking();
 
@@ -431,13 +434,51 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         const DoshaIcon = dosha.icon;
         const phaseExplanation = dosha.type === 'shani' && dosha.phase ? getPhaseExplanation(dosha.phase) : '';
         
+        // Build speech text for this dosha
+        const buildSpeechText = () => {
+          const pujaName = puja ? getPujaTitle(puja, i18n.language || 'en') : (isHindi ? 'विशेष पूजा' : 'specific puja');
+          const lines = [
+            dosha.label,
+            dosha.explanation || (isHindi ? 'ग्रहों की स्थिति के आधार पर यह दोष पाया गया' : 'This dosha has been detected based on planetary positions'),
+            isHindi ? 'प्रभाव:' : 'Impact:',
+            dosha.impact,
+            isHindi ? 'पूजा उपाय:' : 'Puja Recommendation:',
+            pujaName,
+          ];
+          return lines.join('. ');
+        };
+        
+        const speakingId = `dosha-${dosha.type}`;
+        const isCurrentlySpeaking = isSpeaking && currentSpeakingId === speakingId;
+        
         return (
           <Card key={dosha.type} className="spiritual-glow border border-primary/10">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-3 text-xl">
-                <DoshaIcon className="w-6 h-6 text-primary" />
-                {dosha.label}
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <DoshaIcon className="w-6 h-6 text-primary" />
+                  {dosha.label}
+                </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    if (isCurrentlySpeaking) {
+                      stop();
+                    } else {
+                      speak(buildSpeechText(), speakingId, isHindi ? 'hi' : 'en');
+                    }
+                  }}
+                  className="h-9 w-9 rounded-full"
+                  title={isHindi ? 'सुनें' : 'Listen'}
+                >
+                  {isCurrentlySpeaking ? (
+                    <VolumeX className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Volume2 className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </Button>
+              </div>
               <CardDescription>
                 {t('doshaResults.status')}: {translateStatus(dosha.status)}
                 {dosha.severity && ` • ${t('doshaResults.severity')}: ${dosha.severity}`}

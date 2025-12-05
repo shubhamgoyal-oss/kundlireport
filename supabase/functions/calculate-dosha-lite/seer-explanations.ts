@@ -32,19 +32,16 @@ export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
 
 export function getPitraExplanationSeer(pitra: DoshaResult): string {
   if (pitra.status === "absent") {
-    const placement = pitra.placements.length > 0 ? pitra.placements[0] : "Sun and the 9th house";
-    return `In your chart, ${placement} are not afflicted by Rahu or Ketu. Your ancestral karma indicators are positive with no Pitra Dosha present.`;
+    return `In your chart, the 9th house and Sun are free from Rahu-Ketu affliction. This indicates positive ancestral karma with no Pitra Dosha present.`;
   }
   
   if (pitra.status === "partial") {
-    const trigger = pitra.triggeredBy[0] || "Rahu/Ketu influence on Sun or 9th house";
-    return `In your chart, ${trigger} creates a partial Pitra Dosha. The affliction is present but not at full intensity.`;
+    const placement = pitra.placements[0] || "the 9th house";
+    return `In your chart, there is a minor Rahu-Ketu influence on ${placement}. This creates a mild Pitra Dosha that may occasionally manifest.`;
   }
   
-  const trigger = pitra.triggeredBy[0] || "Rahu/Ketu affliction to Sun or 9th house";
-  const placement = pitra.placements[0] || "";
-  const placementText = placement ? ` ${placement}.` : "";
-  return `In your chart, ${trigger} indicates Pitra Dosha.${placementText} This suggests ancestral karmic patterns that may need attention.`;
+  const placement = pitra.placements[0] || "the 9th house";
+  return `In your chart, Rahu-Ketu afflicts ${placement}, activating Pitra Dosha. This indicates unresolved ancestral karma that may affect family harmony and spiritual progress.`;
 }
 
 export function getPitraRemediesSeer(pitra: DoshaResult): string[] {

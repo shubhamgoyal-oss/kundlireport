@@ -181,8 +181,8 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
                 <img src={expertImage} alt="Expert" className="w-16 h-16 mx-auto mb-3 rounded-full object-cover opacity-70" />
                 <p className="text-sm">
                   {isHindi 
-                    ? 'हमारे AI सहायक के माध्यम से अपने दोष का विस्तार से विश्लेषण करें'
-                    : 'Analyse your dosha in detail through our AI powered assistant'}
+                    ? 'हमारे विशेषज्ञ के माध्यम से अपने दोष का विश्लेषण करें'
+                    : 'Analyze your Dosha details through our expert'}
                 </p>
               </div>
             )}

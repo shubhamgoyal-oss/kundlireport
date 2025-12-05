@@ -158,10 +158,10 @@ const resources = {
           description: 'Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.',
           impact: 'Greater likelihood of friction in close relationships, impatience/anger spikes, or delays and stops/starts in marriage or partnerships.',
           remedies: [
-            'Recite Hanuman Chalisa',
+            'Recite Hanuman Chalisa daily',
             'Fast on Tuesdays',
-            'Donate red items',
-            'Do a Mangal Dosha Nivaran Puja.'
+            'Donate red items like lentils or cloth',
+            'Wear a coral gemstone after consultation'
           ]
         },
         kaalSarp: {
@@ -169,10 +169,10 @@ const resources = {
           description: 'Kaal Sarp Dosha — All planets hemmed between Rahu and Ketu; often framed as a pattern indicating inner tension and transformation.',
           impact: 'A pattern of inner restlessness and periodic setbacks; plans may feel blocked or get delayed despite effort, requiring extra persistence.',
           remedies: [
-            'Visit Trimbakeshwar temple',
-            'Recite Maha Mrityunjaya Mantra',
-            'Feed stray dogs',
-            'Do a Kaal Sarp Dosha Nivaran Puja.'
+            'Recite Maha Mrityunjaya Mantra 108 times daily',
+            'Feed stray dogs regularly',
+            'Donate to snake welfare or Naga temples',
+            'Keep a silver snake idol at home'
           ]
         },
         pitra: {
@@ -180,10 +180,10 @@ const resources = {
           description: 'Pitra (Pitru) Dosha — Traditional indicators around the 9th house and Sun–node links; associated with duties, lineage, and guidance.',
           impact: 'Recurring duties/obligations toward family or elders; guilt, disputes, or legacy issues can surface and demand resolution.',
           remedies: [
-            'Perform Shraddha ceremony',
-            'Feed brahmins on amavasya',
-            'Recite Pitra Gayatri',
-            'Do a Pitra Dosha Nivaran Puja.'
+            'Perform Shraddha ceremony on tithis',
+            'Feed brahmins or the needy on Amavasya',
+            'Recite Pitra Gayatri mantra',
+            'Offer water to ancestors every morning'
           ]
         },
         sadeSati: {
@@ -191,10 +191,10 @@ const resources = {
           description: "Shani Sade Sati — Saturn's transit across the natal Moon's neighborhood; a 7.5-year cycle emphasizing discipline and patience.",
           impact: 'Heavier responsibilities, slower progress, and tests of patience; results tend to come with consistent discipline rather than speed.',
           remedies: [
-            'Recite Shani mantra',
+            'Recite Shani mantra on Saturdays',
             'Light mustard oil lamp on Saturdays',
-            'Donate black items',
-            'Do a Sade Sati Nivaran Puja.'
+            'Donate black items like sesame, blankets',
+            'Feed crows and help the disabled'
           ]
         },
         otherDoshas: {
@@ -204,9 +204,9 @@ const resources = {
             whatItIs: 'Sun or Moon closely aligned with Rahu/Ketu (eclipse pattern); often called Grahan Dosha.',
             impact: 'Mood swings, detours, and anxiety; plans can feel eclipsed or delayed despite effort.',
             remedies: [
-              'Mindfulness, stable routines, breath practices.',
-              'Charity on eclipse-related days; light devotional worship.',
-              'Do a Rahu–Ketu / Grahan Dosha Nivaran Puja.'
+              'Practice mindfulness and stable daily routines',
+              'Do pranayama and breath practices',
+              'Donate on eclipse days'
             ]
           },
           shrapit: {
@@ -214,9 +214,9 @@ const resources = {
             whatItIs: 'Saturn and Rahu together or in a strong mutual aspect.',
             impact: 'Recurring obstacles, karmic delays, heavier duties; progress comes slowly.',
             remedies: [
-              'Saturday discipline; service and humility.',
-              'Rudrabhishek / Shani-focused prayers.',
-              'Do a Shrapit Dosha Nivaran Puja.'
+              'Maintain Saturday discipline and fasting',
+              'Practice service and humility',
+              'Recite Shani Chalisa'
             ]
           },
           guruChandal: {
@@ -224,9 +224,9 @@ const resources = {
             whatItIs: 'Jupiter with Rahu or Ketu.',
             impact: 'Judgment/mentor issues; promises vs. outcomes may misalign.',
             remedies: [
-              'Study with grounded mentors; donation of knowledge/education items.',
-              'Guru-focused prayers.',
-              'Do a Guru Chandal Dosha Nivaran Puja.'
+              'Study with grounded mentors',
+              'Donate books or education items',
+              'Recite Guru Beej mantra'
             ]
           },
           punarphoo: {
@@ -234,9 +234,9 @@ const resources = {
             whatItIs: 'Moon with Saturn or under tight Saturn influence.',
             impact: 'On–off outcomes, emotional heaviness; delays that demand patience.',
             remedies: [
-              'Monday calm practices; moon-soothing disciplines.',
-              'Chandra–Shani pacification prayers.',
-              'Do a Punarphoo Dosha Nivaran Puja.'
+              'Practice calm meditation on Mondays',
+              'Offer water to Shivling',
+              'Wear a pearl after consultation'
             ]
           },
           kemadruma: {
@@ -244,9 +244,9 @@ const resources = {
             whatItIs: 'Moon without planetary neighbors on either side (classical isolation).',
             impact: 'Feelings of isolation; fluctuating support or finances.',
             remedies: [
-              'Community seva; gratitude and consistency rituals.',
-              'Chandra pacification; Navagraha Shanti.',
-              'Do a Kemadruma Yoga Nivaran Puja.'
+              'Do community seva regularly',
+              'Practice gratitude rituals',
+              'Keep a silver bowl with water at bedside'
             ]
           },
           gandmool: {
@@ -254,8 +254,8 @@ const resources = {
             whatItIs: 'Moon in Ashwini, Ashlesha, Magha, Jyeshtha, Moola, or Revati.',
             impact: 'Sensitive beginnings; requires mindful rites and guidance.',
             remedies: [
-              'Gandmool Shanti with family blessings.',
-              'Do a Gandmool Dosha Nivaran Puja.'
+              'Seek family blessings and elder guidance',
+              'Recite Chandra mantra on Mondays'
             ]
           },
           kalathra: {
@@ -263,9 +263,9 @@ const resources = {
             whatItIs: 'Strong malefic influence on the 7th house, its lord, or Venus.',
             impact: 'Relationship friction, delays, or breaks; partnership lessons.',
             remedies: [
-              'Friday harmony practices; counseling/mediation mindset.',
-              'Venus pacification where appropriate.',
-              'Do a Kalathra Dosha Nivaran Puja.'
+              'Practice harmony rituals on Fridays',
+              'Wear diamond or white sapphire after consultation',
+              'Donate white items'
             ]
           },
           vishDaridra: {
@@ -273,9 +273,9 @@ const resources = {
             whatItIs: 'Tight Mars–Saturn conjunction/aspect in key houses.',
             impact: 'Stop–go outcomes; conflict between drive and restraint.',
             remedies: [
-              'Structured effort; conflict-avoidance sadhana.',
-              'Hanuman devotion; Navagraha Shanti.',
-              'Do a Vish/Daridra Yoga Nivaran Puja.'
+              'Practice structured and patient effort',
+              'Recite Hanuman Chalisa',
+              'Avoid conflict and practice forgiveness'
             ]
           },
           ketuNaga: {
@@ -283,8 +283,9 @@ const resources = {
             whatItIs: 'Ketu in key houses or afflicting Moon/Venus without full Kaal Sarp pattern.',
             impact: 'Detachment themes; relationship coolness vs. spiritual pull.',
             remedies: [
-              'Naga devotion where traditional; steady devotional routines.',
-              'Do a Ketu/Naga Dosha Nivaran Puja.'
+              'Visit Naga temples where traditional',
+              'Maintain steady devotional routines',
+              'Feed ants and birds'
             ]
           },
           navagraha: {
@@ -292,8 +293,9 @@ const resources = {
             whatItIs: 'General graha stress when multiple minor flags appear together.',
             impact: 'Diffuse obstacles across areas of life; benefits from balanced pacification.',
             remedies: [
-              'Balanced discipline; regular simple worship.',
-              'Do a Navagraha Shanti Puja.'
+              'Maintain balanced discipline',
+              'Do regular simple worship at home',
+              'Visit Navagraha temples'
             ]
           }
         }
@@ -452,10 +454,10 @@ const resources = {
           description: 'मंगल (मांगलिक/कुजा) दोष — कुछ घरों में मंगल से जुड़ा; पारंपरिक रूप से रिश्तों में घर्षण और निर्णायकता से जुड़ा है।',
           impact: 'करीबी रिश्तों में घर्षण की अधिक संभावना, अधीरता/क्रोध के झटके, या विवाह या साझेदारी में देरी और रुक-रुक कर शुरुआत।',
           remedies: [
-            'हनुमान चालीसा का पाठ करें',
+            'प्रतिदिन हनुमान चालीसा का पाठ करें',
             'मंगलवार को व्रत रखें',
-            'लाल वस्तुओं का दान करें',
-            'मंगल दोष निवारण पूजा करें।'
+            'लाल दाल या कपड़े का दान करें',
+            'परामर्श के बाद मूंगा रत्न पहनें'
           ]
         },
         kaalSarp: {
@@ -463,10 +465,10 @@ const resources = {
           description: 'काल सर्प दोष — सभी ग्रह राहु और केतु के बीच फंसे; अक्सर आंतरिक तनाव और परिवर्तन के पैटर्न के रूप में तैयार किया जाता है।',
           impact: 'आंतरिक बेचैनी और आवधिक असफलताओं का एक पैटर्न; प्रयास के बावजूद योजनाएं अवरुद्ध या विलंबित हो सकती हैं, अतिरिक्त दृढ़ता की आवश्यकता है।',
           remedies: [
-            'त्रिम्बकेश्वर मंदिर जाएं',
-            'महा मृत्युंजय मंत्र का जाप करें',
-            'आवारा कुत्तों को खाना खिलाएं',
-            'काल सर्प दोष निवारण पूजा करें।'
+            'प्रतिदिन 108 बार महा मृत्युंजय मंत्र का जाप करें',
+            'नियमित रूप से आवारा कुत्तों को खाना खिलाएं',
+            'सांप कल्याण या नाग मंदिरों में दान करें',
+            'घर में चांदी का नाग रखें'
           ]
         },
         pitra: {
@@ -474,10 +476,10 @@ const resources = {
           description: 'पितृ (पितृ) दोष — 9वें घर और सूर्य-नोड लिंक के आसपास पारंपरिक संकेतक; कर्तव्यों, वंश और मार्गदर्शन से जुड़े।',
           impact: 'परिवार या बड़ों के प्रति बार-बार कर्तव्य/दायित्व; अपराधबोध, विवाद, या विरासत के मुद्दे सामने आ सकते हैं और समाधान की मांग कर सकते हैं।',
           remedies: [
-            'श्राद्ध समारोह करें',
-            'अमावस्या को ब्राह्मणों को भोजन कराएं',
-            'पितृ गायत्री का पाठ करें',
-            'पितृ दोष निवारण पूजा करें।'
+            'तिथियों पर श्राद्ध समारोह करें',
+            'अमावस्या को जरूरतमंदों को भोजन कराएं',
+            'पितृ गायत्री मंत्र का पाठ करें',
+            'प्रतिदिन सुबह पूर्वजों को जल अर्पित करें'
           ]
         },
         sadeSati: {
@@ -485,10 +487,10 @@ const resources = {
           description: 'शनि साढ़े साती — जन्म चंद्रमा के पड़ोस में शनि का संक्रमण; अनुशासन और धैर्य पर जोर देने वाला 7.5 साल का चक्र।',
           impact: 'भारी जिम्मेदारियां, धीमी प्रगति, और धैर्य की परीक्षा; गति के बजाय लगातार अनुशासन के साथ परिणाम आते हैं।',
           remedies: [
-            'शनि मंत्र का जाप करें',
+            'शनिवार को शनि मंत्र का जाप करें',
             'शनिवार को सरसों के तेल का दीपक जलाएं',
-            'काली वस्तुओं का दान करें',
-            'साढ़े साती निवारण पूजा करें।'
+            'तिल, कंबल जैसी काली वस्तुओं का दान करें',
+            'कौवों को खिलाएं और विकलांगों की सेवा करें'
           ]
         },
         otherDoshas: {
@@ -498,9 +500,9 @@ const resources = {
             whatItIs: 'सूर्य या चंद्रमा राहु/केतु के साथ निकट संरेखित (ग्रहण पैटर्न); अक्सर ग्रहण दोष कहा जाता है।',
             impact: 'मिजाज में बदलाव, विचलन, और चिंता; प्रयास के बावजूद योजनाएं ग्रहण या विलंबित महसूस हो सकती हैं।',
             remedies: [
-              'माइंडफुलनेस, स्थिर दिनचर्या, श्वास अभ्यास।',
-              'ग्रहण संबंधी दिनों में दान; हल्की भक्ति पूजा।',
-              'राहु–केतु / ग्रहण दोष निवारण पूजा करें।'
+              'माइंडफुलनेस और स्थिर दिनचर्या अपनाएं',
+              'प्राणायाम और श्वास अभ्यास करें',
+              'ग्रहण के दिनों में दान करें'
             ]
           },
           shrapit: {
@@ -508,9 +510,9 @@ const resources = {
             whatItIs: 'शनि और राहु एक साथ या मजबूत पारस्परिक दृष्टि में।',
             impact: 'बार-बार बाधाएं, कर्म विलंब, भारी कर्तव्य; प्रगति धीरे-धीरे आती है।',
             remedies: [
-              'शनिवार अनुशासन; सेवा और विनम्रता।',
-              'रुद्राभिषेक / शनि-केंद्रित प्रार्थना।',
-              'श्रापित दोष निवारण पूजा करें।'
+              'शनिवार को अनुशासन और व्रत रखें',
+              'सेवा और विनम्रता का अभ्यास करें',
+              'शनि चालीसा का पाठ करें'
             ]
           },
           guruChandal: {
@@ -518,9 +520,9 @@ const resources = {
             whatItIs: 'बृहस्पति राहु या केतु के साथ।',
             impact: 'निर्णय/गुरु मुद्दे; वादे बनाम परिणाम गलत संरेखित हो सकते हैं।',
             remedies: [
-              'आधारित गुरुओं के साथ अध्ययन; ज्ञान/शिक्षा वस्तुओं का दान।',
-              'गुरु-केंद्रित प्रार्थनाएं।',
-              'गुरु चांडाल दोष निवारण पूजा करें।'
+              'अच्छे गुरुओं के साथ अध्ययन करें',
+              'किताबें या शिक्षा वस्तुओं का दान करें',
+              'गुरु बीज मंत्र का जाप करें'
             ]
           },
           punarphoo: {
@@ -528,9 +530,9 @@ const resources = {
             whatItIs: 'चंद्रमा शनि के साथ या तंग शनि प्रभाव के तहत।',
             impact: 'चालू-बंद परिणाम, भावनात्मक भारीपन; धैर्य की मांग करने वाली देरी।',
             remedies: [
-              'सोमवार शांत अभ्यास; चंद्र-शांत करने वाले अनुशासन।',
-              'चंद्र–शनि शांति प्रार्थनाएं।',
-              'पुनर्फू दोष निवारण पूजा करें।'
+              'सोमवार को शांत ध्यान करें',
+              'शिवलिंग पर जल चढ़ाएं',
+              'परामर्श के बाद मोती पहनें'
             ]
           },
           kemadruma: {
@@ -538,9 +540,9 @@ const resources = {
             whatItIs: 'चंद्रमा बिना दोनों तरफ ग्रह पड़ोसियों के (शास्त्रीय अलगाव)।',
             impact: 'अलगाव की भावनाएं; उतार-चढ़ाव समर्थन या वित्त।',
             remedies: [
-              'सामुदायिक सेवा; कृतज्ञता और निरंतरता अनुष्ठान।',
-              'चंद्र शांति; नवग्रह शांति।',
-              'केमद्रुम योग निवारण पूजा करें।'
+              'नियमित रूप से सामुदायिक सेवा करें',
+              'कृतज्ञता अनुष्ठान करें',
+              'बिस्तर के पास पानी से भरा चांदी का कटोरा रखें'
             ]
           },
           gandmool: {
@@ -548,8 +550,8 @@ const resources = {
             whatItIs: 'अश्विनी, अश्लेषा, मघा, ज्येष्ठा, मूल, या रेवती में चंद्रमा।',
             impact: 'संवेदनशील शुरुआत; सचेत संस्कारों और मार्गदर्शन की आवश्यकता है।',
             remedies: [
-              'परिवार के आशीर्वाद के साथ गण्डमूल शांति।',
-              'गण्डमूल दोष निवारण पूजा करें।'
+              'परिवार के आशीर्वाद और बड़ों का मार्गदर्शन लें',
+              'सोमवार को चंद्र मंत्र का पाठ करें'
             ]
           },
           kalathra: {
@@ -557,9 +559,9 @@ const resources = {
             whatItIs: '7वें घर, इसके स्वामी, या शुक्र पर मजबूत अशुभ प्रभाव।',
             impact: 'रिश्ते में घर्षण, देरी, या ब्रेक; साझेदारी सबक।',
             remedies: [
-              'शुक्रवार सद्भाव अभ्यास; परामर्श/मध्यस्थता मानसिकता।',
-              'जहां उपयुक्त हो शुक्र शांति।',
-              'कलात्र दोष निवारण पूजा करें।'
+              'शुक्रवार को सद्भाव अनुष्ठान करें',
+              'परामर्श के बाद हीरा या सफेद नीलम पहनें',
+              'सफेद वस्तुओं का दान करें'
             ]
           },
           vishDaridra: {
@@ -567,9 +569,9 @@ const resources = {
             whatItIs: 'मुख्य घरों में तंग मंगल–शनि संयोजन/दृष्टि।',
             impact: 'रुक-रुक कर परिणाम; ड्राइव और संयम के बीच संघर्ष।',
             remedies: [
-              'संरचित प्रयास; संघर्ष-परिहार साधना।',
-              'हनुमान भक्ति; नवग्रह शांति।',
-              'विष/दरिद्र योग निवारण पूजा करें।'
+              'संरचित और धैर्यवान प्रयास करें',
+              'हनुमान चालीसा का पाठ करें',
+              'संघर्ष से बचें और क्षमा का अभ्यास करें'
             ]
           },
           ketuNaga: {
@@ -577,8 +579,9 @@ const resources = {
             whatItIs: 'मुख्य घरों में केतु या पूर्ण काल सर्प पैटर्न के बिना चंद्र/शुक्र को पीड़ित करना।',
             impact: 'अलगाव विषय; रिश्ते में ठंडापन बनाम आध्यात्मिक खिंचाव।',
             remedies: [
-              'जहां पारंपरिक हो नाग भक्ति; स्थिर भक्ति दिनचर्या।',
-              'केतु/नाग दोष निवारण पूजा करें।'
+              'जहां पारंपरिक हो नाग मंदिर जाएं',
+              'स्थिर भक्ति दिनचर्या बनाए रखें',
+              'चींटियों और पक्षियों को खिलाएं'
             ]
           },
           navagraha: {
@@ -586,8 +589,9 @@ const resources = {
             whatItIs: 'सामान्य ग्रह तनाव जब कई छोटे झंडे एक साथ दिखाई देते हैं।',
             impact: 'जीवन के क्षेत्रों में फैली बाधाएं; संतुलित शांति से लाभ।',
             remedies: [
-              'संतुलित अनुशासन; नियमित सरल पूजा।',
-              'नवग्रह शांति पूजा करें।'
+              'संतुलित अनुशासन बनाए रखें',
+              'घर पर नियमित सरल पूजा करें',
+              'नवग्रह मंदिर जाएं'
             ]
           }
         }

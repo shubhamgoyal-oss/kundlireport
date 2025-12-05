@@ -5,18 +5,21 @@ import type { DoshaResult } from "./seer-doshas.ts";
 export function getMangalExplanationSeer(mangal: DoshaResult): string {
   if (mangal.status === "absent") {
     if (mangal.cancellations.length > 0) {
-      return `Mars triggers are canceled by ${mangal.cancellations.join(", ")}.`;
+      const placement = mangal.placements[0] || "Mars placement";
+      return `In your chart, ${placement}. However, this is canceled by ${mangal.cancellations.join(" and ")}, protecting you from Mangal Dosha effects.`;
     }
-    return `Mars is not in trigger houses (1,2,4,7,8,12) from Lagna, Moon, or Venus.`;
+    return `Mars in your chart is not positioned in any of the sensitive houses (1st, 2nd, 4th, 7th, 8th, or 12th) from your Lagna, Moon, or Venus. Your chart is free from Mangal Dosha.`;
   }
   
   if (mangal.status === "partial") {
-    return `Mars triggers from Moon/Venus only, not from Lagna - limited impact.`;
+    const placement = mangal.placements[0] || "Mars is in a secondary position";
+    return `In your chart, ${placement}. This triggers Mangal Dosha from Moon/Venus but not from Lagna, resulting in mild effects.`;
   }
   
-  const triggers = mangal.triggeredBy.join(", ");
+  const placement = mangal.placements[0] || "Mars is in a trigger house";
+  const triggers = mangal.triggeredBy.join(", ") || "Lagna";
   const severity = mangal.severity || "moderate";
-  return `Mars in trigger house from ${triggers} - ${severity} intensity.`;
+  return `In your chart, ${placement}. This creates ${severity} Mangal Dosha as Mars occupies a sensitive house from ${triggers}.`;
 }
 
 export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
@@ -29,15 +32,19 @@ export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
 
 export function getPitraExplanationSeer(pitra: DoshaResult): string {
   if (pitra.status === "absent") {
-    return `Sun and 9th house are free from Rahu/Ketu affliction.`;
+    const placement = pitra.placements.length > 0 ? pitra.placements[0] : "Sun and the 9th house";
+    return `In your chart, ${placement} are not afflicted by Rahu or Ketu. Your ancestral karma indicators are positive with no Pitra Dosha present.`;
   }
   
   if (pitra.status === "partial") {
-    return `Minor affliction to 9th house or Sun from Rahu/Ketu.`;
+    const trigger = pitra.triggeredBy[0] || "Rahu/Ketu influence on Sun or 9th house";
+    return `In your chart, ${trigger} creates a partial Pitra Dosha. The affliction is present but not at full intensity.`;
   }
   
-  const triggers = pitra.triggeredBy.join(", ");
-  return `${triggers} - indicates ancestral karmic patterns.`;
+  const trigger = pitra.triggeredBy[0] || "Rahu/Ketu affliction to Sun or 9th house";
+  const placement = pitra.placements[0] || "";
+  const placementText = placement ? ` ${placement}.` : "";
+  return `In your chart, ${trigger} indicates Pitra Dosha.${placementText} This suggests ancestral karmic patterns that may need attention.`;
 }
 
 export function getPitraRemediesSeer(pitra: DoshaResult): string[] {
@@ -50,28 +57,35 @@ export function getPitraRemediesSeer(pitra: DoshaResult): string[] {
 
 export function getShaniExplanationSeer(shani: DoshaResult): string {
   if (shani.status === "absent") {
-    return `Saturn is not transiting your Moon sign or adjacent signs.`;
+    const moonPlacement = shani.placements.find(p => p.toLowerCase().includes("moon")) || "";
+    const saturnPlacement = shani.placements.find(p => p.toLowerCase().includes("saturn")) || "";
+    if (moonPlacement && saturnPlacement) {
+      return `In your chart, ${moonPlacement} and ${saturnPlacement}. Saturn is not transiting near your Moon sign, so Sade Sati is not active.`;
+    }
+    return `Saturn is currently not transiting through the sign before, on, or after your natal Moon sign. Sade Sati is not active for you at this time.`;
   }
   
   if (shani.status === "partial") {
-    return `Saturn approaching your Moon sign - Sade Sati beginning soon.`;
+    return `Saturn is approaching your Moon sign area. Sade Sati effects are beginning to manifest gradually in your life.`;
   }
   
-  const phase = shani.triggeredBy.find(t => t.includes("phase")) || "";
-  const moonSign = shani.placements.find(p => p.includes("Moon"))?.match(/Moon in (\w+)/)?.[1] || "";
-  const saturnSign = shani.placements.find(p => p.includes("Saturn"))?.match(/Saturn in (\w+)/)?.[1] || "";
+  const moonPlacement = shani.placements.find(p => p.toLowerCase().includes("moon")) || "";
+  const saturnPlacement = shani.placements.find(p => p.toLowerCase().includes("saturn")) || "";
+  const phase = shani.triggeredBy.find(t => t.toLowerCase().includes("phase")) || "";
   
-  if (phase.includes("Rising") || phase.includes("1")) {
-    return `Saturn in ${saturnSign}, Moon in ${moonSign} (Rising Phase - beginning of Sade Sati).`;
-  }
-  if (phase.includes("Peak") || phase.includes("2")) {
-    return `Saturn in ${saturnSign}, Moon in ${moonSign} (Peak Phase - most intense period).`;
-  }
-  if (phase.includes("Setting") || phase.includes("3")) {
-    return `Saturn in ${saturnSign}, Moon in ${moonSign} (Setting Phase - Sade Sati ending).`;
+  let phaseMeaning = "";
+  if (phase.includes("1") || phase.toLowerCase().includes("rising")) {
+    phaseMeaning = "This is the Rising Phase (Udaya Charan), marking the beginning of your Sade Sati period.";
+  } else if (phase.includes("2") || phase.toLowerCase().includes("peak")) {
+    phaseMeaning = "This is the Peak Phase (Shikhar Charan), the most intense period of Sade Sati.";
+  } else if (phase.includes("3") || phase.toLowerCase().includes("setting")) {
+    phaseMeaning = "This is the Setting Phase (Ast Charan), indicating Sade Sati is nearing its end.";
   }
   
-  return `Saturn transiting near Moon sign - Sade Sati active.`;
+  if (moonPlacement && saturnPlacement) {
+    return `In your chart, ${moonPlacement} and ${saturnPlacement}. ${phaseMeaning}`;
+  }
+  return `Saturn is transiting near your natal Moon sign, activating Sade Sati. ${phaseMeaning}`;
 }
 
 export function getShaniRemediesSeer(shani: DoshaResult): string[] {
@@ -84,17 +98,24 @@ export function getShaniRemediesSeer(shani: DoshaResult): string[] {
 
 export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   if (kaalSarp.status === "absent") {
-    return `Planets distributed on both sides of Rahu-Ketu axis.`;
+    return `In your chart, planets are distributed on both sides of the Rahu-Ketu axis. This means you do not have Kaal Sarp Dosha.`;
   }
   
   const typeLine = kaalSarp.placements.find(p => p.includes("Type:"));
-  const type = typeLine ? typeLine.replace("Type:", "").trim() : "Kaal Sarp";
+  const type = typeLine ? typeLine.replace("Type:", "").trim() : "Kaal Sarp Dosha";
+  
+  const rahuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("rahu")) || "";
+  const ketuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("ketu")) || "";
   
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {
-    return `All planets between Rahu-Ketu (${type}) - partial, reduced intensity.`;
+    return `In your chart, all planets are positioned between ${rahuPlacement || "Rahu"} and ${ketuPlacement || "Ketu"}, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
   }
   
-  return `All planets between Rahu-Ketu axis (${type}).`;
+  if (rahuPlacement && ketuPlacement) {
+    return `In your chart, ${rahuPlacement} and ${ketuPlacement}, with all other planets hemmed between them. This forms ${type}.`;
+  }
+  
+  return `All seven classical planets in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
 }
 
 export function getKaalSarpRemediesSeer(): string[] {

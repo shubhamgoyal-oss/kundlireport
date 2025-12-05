@@ -7,6 +7,7 @@ import { Send, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import expertImage from '@/assets/expert-callback.png';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -63,6 +64,27 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
     }
   }, [messages]);
 
+  // Save chat to database
+  const saveChatLog = async (userMsg: string, assistantMsg: string) => {
+    try {
+      const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
+      const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
+      const deviceId = getDeviceId();
+
+      await supabase.from('expert_chat_logs').insert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        device_id: deviceId,
+        user_message: userMsg,
+        assistant_message: assistantMsg,
+        dosha_context: doshaContext || null,
+        language: isHindi ? 'hi' : 'en',
+      });
+    } catch (err) {
+      console.error('Failed to save chat log:', err);
+    }
+  };
+
   const streamChat = async (userMessage: string) => {
     // Check if limit reached
     if (checkMessageLimit()) {
@@ -78,6 +100,8 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
     setMessages(newMessages);
     setInput('');
     setIsLoading(true);
+
+    let finalAssistantMessage = '';
 
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/astrology-chat`;
@@ -108,7 +132,6 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      let assistantMessage = '';
 
       if (reader) {
         let buffer = '';
@@ -134,14 +157,19 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
               const content = parsed.choices?.[0]?.delta?.content;
               
               if (content) {
-                assistantMessage += content;
-                setMessages([...newMessages, { role: 'assistant', content: assistantMessage }]);
+                finalAssistantMessage += content;
+                setMessages([...newMessages, { role: 'assistant', content: finalAssistantMessage }]);
               }
             } catch {
               // Ignore parse errors
             }
           }
         }
+      }
+
+      // Save chat log after streaming completes
+      if (finalAssistantMessage) {
+        await saveChatLog(userMessage, finalAssistantMessage);
       }
     } catch (error) {
       console.error('Chat error:', error);

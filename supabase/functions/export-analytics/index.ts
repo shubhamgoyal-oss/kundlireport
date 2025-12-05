@@ -50,7 +50,8 @@ serve(async (req) => {
       'dosha_calculator2',
       'callback_requests',
       'traffic_sources',
-      'seer_api_logs'
+      'seer_api_logs',
+      'expert_chat_logs'
     ];
 
     if (!allowedTables.includes(table)) {

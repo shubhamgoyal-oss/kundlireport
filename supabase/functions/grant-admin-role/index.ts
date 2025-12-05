@@ -13,6 +13,15 @@ serve(async (req) => {
   }
 
   try {
+    // Extract the authorization header to verify caller's identity
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Authorization header required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -24,6 +33,57 @@ serve(async (req) => {
       }
     );
 
+    // Create a client with the user's token to verify their identity
+    const supabaseUser = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Get the calling user's identity
+    const { data: { user: callingUser }, error: userError } = await supabaseUser.auth.getUser();
+    
+    if (userError || !callingUser) {
+      console.error('Failed to authenticate caller:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if the calling user has admin role using service role client
+    const { data: callerRole, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', callingUser.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (roleError) {
+      console.error('Error checking caller admin status:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify admin status' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!callerRole) {
+      console.warn(`Non-admin user ${callingUser.id} (${callingUser.email}) attempted to grant admin role`);
+      return new Response(
+        JSON.stringify({ error: 'Access denied. Only admins can grant admin roles.' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Caller is verified as admin, proceed with granting role
     const { userEmail } = await req.json();
 
     if (!userEmail) {
@@ -84,11 +144,14 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Admin ${callingUser.email} granted admin role to ${user.email}`);
+
     return new Response(
       JSON.stringify({ 
         message: 'Admin role granted successfully',
         userId: user.id,
-        userEmail: user.email
+        userEmail: user.email,
+        grantedBy: callingUser.email
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

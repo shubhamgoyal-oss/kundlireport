@@ -495,9 +495,25 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         const DoshaIcon = dosha.icon;
         const phaseExplanation = dosha.type === 'shani' && dosha.phase ? getPhaseExplanation(dosha.phase) : '';
         
+        // Subtle background colors for visual differentiation
+        const sectionColors = [
+          'bg-orange-50/50 dark:bg-orange-950/20 border-l-4 border-l-orange-400',
+          'bg-blue-50/50 dark:bg-blue-950/20 border-l-4 border-l-blue-400',
+          'bg-purple-50/50 dark:bg-purple-950/20 border-l-4 border-l-purple-400',
+          'bg-amber-50/50 dark:bg-amber-950/20 border-l-4 border-l-amber-400',
+        ];
+        const sectionColor = sectionColors[index % sectionColors.length];
+        
         return (
-          <Card key={dosha.type} className="spiritual-glow border border-primary/10">
-            <CardHeader className="pb-3">
+          <Card key={dosha.type} className={`spiritual-glow border border-primary/10 ${sectionColor}`}>
+            {/* Section indicator badge */}
+            <div className="px-4 pt-3">
+              <Badge variant="outline" className="text-xs font-normal text-muted-foreground">
+                {isHindi ? `दोष ${index + 1} का ${activeDoshas.length}` : `Dosha ${index + 1} of ${activeDoshas.length}`}
+              </Badge>
+            </div>
+            
+            <CardHeader className="pb-3 pt-2">
               <CardTitle className="flex items-center gap-3 text-xl">
                 <DoshaIcon className="w-6 h-6 text-primary" />
                 {dosha.label}

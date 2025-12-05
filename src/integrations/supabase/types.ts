@@ -397,6 +397,42 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_chat_logs: {
+        Row: {
+          assistant_message: string | null
+          created_at: string
+          device_id: string | null
+          dosha_context: Json | null
+          id: string
+          language: string | null
+          session_id: string
+          user_message: string
+          visitor_id: string
+        }
+        Insert: {
+          assistant_message?: string | null
+          created_at?: string
+          device_id?: string | null
+          dosha_context?: Json | null
+          id?: string
+          language?: string | null
+          session_id: string
+          user_message: string
+          visitor_id: string
+        }
+        Update: {
+          assistant_message?: string | null
+          created_at?: string
+          device_id?: string | null
+          dosha_context?: Json | null
+          id?: string
+          language?: string | null
+          session_id?: string
+          user_message?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

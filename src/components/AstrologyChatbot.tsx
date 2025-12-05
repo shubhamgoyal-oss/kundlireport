@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Loader2, Sparkles } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
+import expertImage from '@/assets/expert-callback.png';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -166,9 +167,9 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
   return (
     <Card className="spiritual-glow">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl gradient-spiritual bg-clip-text text-transparent">
-          <Sparkles className="w-5 h-5 text-primary" />
-          {isHindi ? 'कोई प्रश्न?' : 'Any Questions?'}
+        <CardTitle className="flex items-center gap-3 text-xl gradient-spiritual bg-clip-text text-transparent">
+          <img src={expertImage} alt="Expert" className="w-10 h-10 rounded-full object-cover" />
+          {isHindi ? 'विशेषज्ञ से पूछें' : 'Ask Our Expert'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -177,7 +178,7 @@ const AstrologyChatbot = ({ doshaContext }: AstrologyChatbotProps) => {
           <div className="space-y-4">
             {messages.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
-                <Sparkles className="w-12 h-12 mx-auto mb-3 text-primary/50" />
+                <img src={expertImage} alt="Expert" className="w-16 h-16 mx-auto mb-3 rounded-full object-cover opacity-70" />
                 <p className="text-sm">
                   {isHindi 
                     ? 'हमारे AI सहायक के माध्यम से अपने दोष का विस्तार से विश्लेषण करें'

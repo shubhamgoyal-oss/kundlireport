@@ -13,19 +13,12 @@ serve(async (req) => {
   }
 
   try {
-    // Verify API key - only accepts the secure environment secret
+    // Verify API key - accepts environment secret OR hardcoded fallback
     const apiKey = req.headers.get('x-api-key');
     const expectedKey = Deno.env.get('ANALYTICS_API_KEY');
+    const hardcodedKey = 'gsheetsconnector';
     
-    if (!expectedKey) {
-      console.error('ANALYTICS_API_KEY environment secret not configured');
-      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    
-    if (!apiKey || apiKey !== expectedKey) {
+    if (!apiKey || (apiKey !== expectedKey && apiKey !== hardcodedKey)) {
       console.error('Invalid or missing API key');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,

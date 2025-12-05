@@ -54,103 +54,61 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
   
   useScrollTracking();
 
-  // Translate explanations when language changes to Hindi
+  // Translate explanations when language changes to Hindi using Lovable AI
   useEffect(() => {
-    if (!isHindi) return;
+    // Clear translations when switching to English
+    if (!isHindi) {
+      setTranslatedExplanations({});
+      setIsTranslating(false);
+      return;
+    }
 
-    const translations: Record<string, string> = {};
-    
-    const translateInline = (text: string): string => {
+    const translateText = async (text: string): Promise<string> => {
       if (!text) return text;
-      let translated = text;
-      
-      // Full sentence/phrase translations first (before word-by-word)
-      translated = translated
-        .replace(/Sade Sati is currently active/gi, 'साढ़े साती वर्तमान में सक्रिय है')
-        .replace(/Sade Sati is not active/gi, 'साढ़े साती सक्रिय नहीं है')
-        .replace(/rising phase/gi, 'उदय चरण')
-        .replace(/peak phase/gi, 'शिखर चरण')
-        .replace(/setting phase/gi, 'अस्त चरण')
-        .replace(/is currently in/gi, 'वर्तमान में है')
-        .replace(/Mangal Dosha is present/gi, 'मंगल दोष उपस्थित है')
-        .replace(/Mangal Dosha is absent/gi, 'मंगल दोष अनुपस्थित है')
-        .replace(/Kaal Sarp Dosha is present/gi, 'काल सर्प दोष उपस्थित है')
-        .replace(/Kaal Sarp Dosha is absent/gi, 'काल सर्प दोष अनुपस्थित है')
-        .replace(/Pitra Dosha is present/gi, 'पितृ दोष उपस्थित है')
-        .replace(/Pitra Dosha is absent/gi, 'पितृ दोष अनुपस्थित है')
-        .replace(/All planets are hemmed/gi, 'सभी ग्रह फंसे हुए हैं')
-        .replace(/between Rahu and Ketu/gi, 'राहु और केतु के बीच')
-        .replace(/is placed in/gi, 'स्थित है')
-        .replace(/from the/gi, 'से');
-      
-      // Planet names
-      translated = translated
-        .replace(/\bMars\b/g, 'मंगल')
-        .replace(/\bMoon\b/g, 'चंद्र')
-        .replace(/\bSun\b/g, 'सूर्य')
-        .replace(/\bSaturn\b/g, 'शनि')
-        .replace(/\bJupiter\b/g, 'गुरु')
-        .replace(/\bVenus\b/g, 'शुक्र')
-        .replace(/\bMercury\b/g, 'बुध')
-        .replace(/\bRahu\b/g, 'राहु')
-        .replace(/\bKetu\b/g, 'केतु')
-        .replace(/\bAscendant\b/g, 'लग्न')
-        .replace(/\bLagna\b/g, 'लग्न');
-      
-      // Signs
-      translated = translated
-        .replace(/\bAries\b/g, 'मेष')
-        .replace(/\bTaurus\b/g, 'वृषभ')
-        .replace(/\bGemini\b/g, 'मिथुन')
-        .replace(/\bCancer\b/g, 'कर्क')
-        .replace(/\bLeo\b/g, 'सिंह')
-        .replace(/\bVirgo\b/g, 'कन्या')
-        .replace(/\bLibra\b/g, 'तुला')
-        .replace(/\bScorpio\b/g, 'वृश्चिक')
-        .replace(/\bSagittarius\b/g, 'धनु')
-        .replace(/\bCapricorn\b/g, 'मकर')
-        .replace(/\bAquarius\b/g, 'कुम्भ')
-        .replace(/\bPisces\b/g, 'मीन');
-      
-      // Common terms
-      translated = translated
-        .replace(/\bhouse\b/gi, 'भाव')
-        .replace(/\bpresent\b/gi, 'मौजूद')
-        .replace(/\babsent\b/gi, 'अनुपस्थित')
-        .replace(/\bnullified\b/gi, 'निष्प्रभावित')
-        .replace(/\bconjunction\b/gi, 'युति')
-        .replace(/\baspect\b/gi, 'दृष्टि')
-        .replace(/\bin\b/g, 'में')
-        .replace(/\bActive\b/g, 'सक्रिय')
-        .replace(/\bInactive\b/g, 'निष्क्रिय')
-        .replace(/\bPhase\b/gi, 'चरण')
-        .replace(/\bRising\b/g, 'उदय')
-        .replace(/\bPeak\b/g, 'शिखर')
-        .replace(/\bSetting\b/g, 'अस्त');
-      
-      return translated;
+      try {
+        const response = await supabase.functions.invoke('translate-dosha', {
+          body: { text }
+        });
+        return response.data?.translatedText || text;
+      } catch (error) {
+        console.error('Translation error:', error);
+        return text;
+      }
     };
-    
-    if (details.mangal?.explanation) {
-      translations['mangal'] = translateInline(details.mangal.explanation);
-    }
-    if (details.kaalSarp?.explanation) {
-      translations['kaalSarp'] = translateInline(details.kaalSarp.explanation);
-    }
-    if (details.pitra?.explanation) {
-      translations['pitra'] = translateInline(details.pitra.explanation);
-    }
-    if (details.sadeSati?.explanation) {
-      translations['sadeSati'] = translateInline(details.sadeSati.explanation);
-    }
 
-    setTranslatedExplanations(translations);
+    const translateAllExplanations = async () => {
+      setIsTranslating(true);
+      const translations: Record<string, string> = {};
+      
+      // Translate all explanations in parallel
+      const promises: Promise<void>[] = [];
+      
+      if (details.mangal?.explanation) {
+        promises.push(translateText(details.mangal.explanation).then(t => { translations['mangal'] = t; }));
+      }
+      if (details.kaalSarp?.explanation) {
+        promises.push(translateText(details.kaalSarp.explanation).then(t => { translations['kaalSarp'] = t; }));
+      }
+      if (details.pitra?.explanation) {
+        promises.push(translateText(details.pitra.explanation).then(t => { translations['pitra'] = t; }));
+      }
+      if (details.sadeSati?.explanation) {
+        promises.push(translateText(details.sadeSati.explanation).then(t => { translations['sadeSati'] = t; }));
+      }
+
+      await Promise.all(promises);
+      setTranslatedExplanations(translations);
+      setIsTranslating(false);
+    };
+
+    translateAllExplanations();
   }, [isHindi, details]);
 
   useEffect(() => {
@@ -494,9 +452,16 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   <Info className="w-4 h-4 text-primary" />
                   {isHindi ? 'यह दोष आपकी कुंडली में क्यों है?' : 'Why is this dosha marked in your kundli?'}
                 </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {dosha.explanation || (isHindi ? 'ग्रहों की स्थिति के आधार पर' : 'Based on planetary positions')}
-                </p>
+                {isHindi && isTranslating ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>अनुवाद हो रहा है...</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {dosha.explanation || (isHindi ? 'ग्रहों की स्थिति के आधार पर' : 'Based on planetary positions')}
+                  </p>
+                )}
                 
                 {/* Phase Explanation for Sade Sati */}
                 {phaseExplanation && (

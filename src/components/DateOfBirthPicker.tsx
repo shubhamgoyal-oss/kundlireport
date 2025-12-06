@@ -17,7 +17,6 @@ interface DateOfBirthPickerProps {
   value?: string; // YYYY-MM-DD format
   onChange: (date: string) => void;
   error?: string;
-  isDemo?: boolean;
 }
 
 const months = [
@@ -43,7 +42,7 @@ const getDaysInMonth = (month: string, year: string): number => {
   return new Date(parseInt(year), parseInt(month), 0).getDate();
 };
 
-export const DateOfBirthPicker = ({ value, onChange, error, isDemo }: DateOfBirthPickerProps) => {
+export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerProps) => {
   const { t, i18n } = useTranslation();
   const isHindi = i18n.language === 'hi';
   
@@ -116,7 +115,7 @@ export const DateOfBirthPicker = ({ value, onChange, error, isDemo }: DateOfBirt
         <DrawerTrigger asChild>
           <Button
             variant="outline"
-            className={`w-full min-h-[44px] justify-start text-left font-normal bg-input ${isDemo ? 'text-muted-foreground' : ''}`}
+            className="w-full min-h-[44px] justify-start text-left font-normal bg-input"
           >
             <Calendar className="mr-2 h-4 w-4" />
             {getDisplayValue()}

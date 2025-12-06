@@ -85,20 +85,6 @@ const DoshaCalculator = () => {
     }
   };
 
-  // Default demo values - user should replace with their actual info
-  const DEMO_VALUES = {
-    name: 'Demo User',
-    gender: 'M' as const,
-    date: '1990-06-15',
-    time: '10:30',
-    place: 'New Delhi, Delhi, India',
-    lat: 28.6139,
-    lon: 77.209,
-    tz: 'Asia/Kolkata',
-  };
-  
-  const [isUsingDemoValues, setIsUsingDemoValues] = useState(true);
-
   const {
     register,
     handleSubmit,
@@ -111,26 +97,11 @@ const DoshaCalculator = () => {
     defaultValues: {
       unknownTime: false,
       chartStyle: "north",
-      name: DEMO_VALUES.name,
-      gender: DEMO_VALUES.gender,
-      date: DEMO_VALUES.date,
-      time: DEMO_VALUES.time,
-      place: DEMO_VALUES.place,
-      lat: DEMO_VALUES.lat,
-      lon: DEMO_VALUES.lon,
-      tz: DEMO_VALUES.tz,
     },
   });
 
   const unknownTime = watch('unknownTime');
   const placeValue = watch('place');
-  
-  // Clear demo status when user modifies any field
-  const clearDemoStatus = () => {
-    if (isUsingDemoValues) {
-      setIsUsingDemoValues(false);
-    }
-  };
 
   const handlePlaceSearch = (searchTerm: string) => {
     if (searchTimer) {
@@ -348,16 +319,6 @@ const DoshaCalculator = () => {
         
         <CollapsibleContent>
           <CardContent className="p-4 sm:p-6">
-          
-          {/* Demo Values Banner */}
-          {isUsingDemoValues && (
-            <div className="mb-4 p-3 bg-muted/50 border border-muted-foreground/20 rounded-lg">
-              <p className="text-sm text-muted-foreground text-center">
-                {t('dosha.demoValuesBanner', 'These are sample values. Enter your actual birth details for accurate results.')}
-              </p>
-            </div>
-          )}
-          
         <form onSubmit={handleSubmit(onSubmit, (errs) => {
           console.log('[Form] Validation errors:', errs);
           const msg = (errs.place?.message as string)
@@ -379,14 +340,13 @@ const DoshaCalculator = () => {
               type="text"
               {...register('name', {
                 onChange: (e) => {
-                  clearDemoStatus();
                   if (e.target.value) {
                     trackFieldFilled('name');
                   }
                 }
               })}
               placeholder={t('dosha.enterName')}
-              className={`bg-input min-h-[44px] text-base ${isUsingDemoValues ? 'text-muted-foreground' : ''}`}
+              className="bg-input min-h-[44px] text-base"
               required
               maxLength={100}
             />
@@ -409,19 +369,19 @@ const DoshaCalculator = () => {
                 <input
                   type="radio"
                   value="M"
-                  {...register('gender', { onChange: () => clearDemoStatus() })}
+                  {...register('gender')}
                   className="w-4 h-4 accent-primary"
                 />
-                <span className={`text-sm ${isUsingDemoValues ? 'text-muted-foreground' : ''}`}>{t('dosha.male', 'Male')}</span>
+                <span className="text-sm">{t('dosha.male', 'Male')}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   value="F"
-                  {...register('gender', { onChange: () => clearDemoStatus() })}
+                  {...register('gender')}
                   className="w-4 h-4 accent-primary"
                 />
-                <span className={`text-sm ${isUsingDemoValues ? 'text-muted-foreground' : ''}`}>{t('dosha.female', 'Female')}</span>
+                <span className="text-sm">{t('dosha.female', 'Female')}</span>
               </label>
             </div>
             {errors.gender && (
@@ -436,12 +396,10 @@ const DoshaCalculator = () => {
           <DateOfBirthPicker
             value={watch('date')}
             onChange={(date) => {
-              clearDemoStatus();
               setValue('date', date);
               trackFieldFilled('date');
             }}
             error={errors.date?.message}
-            isDemo={isUsingDemoValues}
           />
 
           {/* Birth Time */}
@@ -482,13 +440,12 @@ const DoshaCalculator = () => {
                   type="time"
                   {...register('time', {
                     onChange: (e) => {
-                      clearDemoStatus();
                       if (e.target.value) {
                         trackFieldFilled('time');
                       }
                     }
                   })}
-                  className={`bg-input min-h-[44px] text-base ${isUsingDemoValues ? 'text-muted-foreground' : ''}`}
+                  className="bg-input min-h-[44px] text-base"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
@@ -514,11 +471,8 @@ const DoshaCalculator = () => {
               id="place"
               {...register('place')}
               placeholder={t('dosha.enterPlace')}
-              className={`bg-input min-h-[44px] text-base ${isUsingDemoValues ? 'text-muted-foreground' : ''}`}
-              onChange={(e) => {
-                clearDemoStatus();
-                handlePlaceSearch(e.target.value);
-              }}
+              className="bg-input min-h-[44px] text-base"
+              onChange={(e) => handlePlaceSearch(e.target.value)}
               onKeyDown={handlePlaceKeyDown}
               autoComplete="off"
               required

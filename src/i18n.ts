@@ -124,7 +124,6 @@ const resources = {
         enterTimeError: 'Please enter birth time or mark it as unknown',
         calculationSuccess: 'Doshas calculated successfully!',
         calculationError: 'Failed to calculate doshas. Please try again.',
-        demoValuesBanner: 'These are sample values. Enter your actual birth details for accurate results.',
       },
       doshaResults: {
         summary: 'Your Dosha Summary',
@@ -421,7 +420,6 @@ const resources = {
         enterTimeError: 'कृपया जन्म समय दर्ज करें या इसे अज्ञात के रूप में चिह्नित करें',
         calculationSuccess: 'दोष सफलतापूर्वक गणना की गई!',
         calculationError: 'दोष गणना विफल रही। कृपया पुनः प्रयास करें।',
-        demoValuesBanner: 'ये नमूना मान हैं। सटीक परिणामों के लिए अपना वास्तविक जन्म विवरण दर्ज करें।',
       },
       doshaResults: {
         summary: 'आपका दोष सारांश',

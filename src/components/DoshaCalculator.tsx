@@ -298,9 +298,6 @@ const DoshaCalculator = () => {
             <CardTitle className="text-2xl sm:text-3xl font-bold text-center sm:text-left gradient-spiritual bg-clip-text text-transparent">
               {t('dosha.calculatorTitle')}
             </CardTitle>
-            <CardDescription className="text-center sm:text-left text-sm sm:text-base mt-1">
-              {t('dosha.calculatorDesc')}
-            </CardDescription>
           </div>
           {isFormCollapsed && (
             <CollapsibleTrigger asChild>

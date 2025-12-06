@@ -292,6 +292,13 @@ export function filterPujasByDosha(
   return pujas.filter(puja => {
     const title = puja.pooja_title.toLowerCase();
     const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+    
+    // Exclude Rashi pujas from dosha remedies
+    if (title.includes('rashi') || title.includes('राशि') || 
+        englishTitle.includes('rashi')) {
+      return false;
+    }
+    
     return searchTerms.some(term => {
       const lowerTerm = term.toLowerCase();
       return title.includes(lowerTerm) || englishTitle.includes(lowerTerm);

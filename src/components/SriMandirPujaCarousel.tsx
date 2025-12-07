@@ -22,6 +22,22 @@ export const SriMandirPujaCarousel = ({
   onBookPujaClick
 }: SriMandirPujaCarouselProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [hasTrackedDisplay, setHasTrackedDisplay] = useState(false);
+
+  // Track when puja remedies are displayed
+  useEffect(() => {
+    if (pujas.length > 0 && !hasTrackedDisplay) {
+      trackEvent('puja_remedies_displayed', {
+        metadata: {
+          count: pujas.length,
+          dosha_type: doshaType,
+          puja_titles: pujas.map(puja => puja.pooja_title),
+          calculation_id: calculationId
+        }
+      });
+      setHasTrackedDisplay(true);
+    }
+  }, [pujas, hasTrackedDisplay, doshaType, calculationId]);
 
   useEffect(() => {
     if (pujas.length <= 1) return;

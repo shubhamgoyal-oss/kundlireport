@@ -16,10 +16,27 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
     return `In your chart, ${placement}. This triggers Mangal Dosha from Moon/Venus but not from Lagna, resulting in mild effects.`;
   }
   
-  const placement = mangal.placements[0] || "Mars is in a trigger house";
-  const triggers = mangal.triggeredBy.join(", ") || "Lagna";
+  // Build a proper sentence from placements
   const severity = mangal.severity || "moderate";
-  return `In your chart, ${placement}. This creates ${severity} Mangal Dosha as Mars occupies a sensitive house from ${triggers}.`;
+  const placementsList = mangal.placements.filter(p => p.length > 0);
+  
+  if (placementsList.length === 0) {
+    return `In your chart, Mars occupies a sensitive house, creating ${severity} Mangal Dosha.`;
+  }
+  
+  if (placementsList.length === 1) {
+    return `In your chart, ${placementsList[0]}. This creates ${severity} Mangal Dosha.`;
+  }
+  
+  // Multiple placements - format nicely
+  const formattedPlacements = placementsList.map(p => {
+    // Clean up placement text for readability
+    return p.replace(/from Lagna \(([^)]+)\)/, '(Lagna reference)')
+            .replace(/from Moon/, '(Moon reference)')
+            .replace(/from Venus/, '(Venus reference)');
+  });
+  
+  return `In your chart, Mars is positioned in sensitive houses: ${formattedPlacements.join("; ")}. This creates ${severity} Mangal Dosha.`;
 }
 
 export function getMangalRemediesSeer(mangal: DoshaResult): string[] {

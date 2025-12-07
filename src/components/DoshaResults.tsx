@@ -555,8 +555,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
                   </div>
                 )}
                 
-                {/* Planetary Placements */}
-                {dosha.placements && dosha.placements.length > 0 && (
+                {/* Planetary Placements - Skip for Pitra Dosha as explanation covers it */}
+                {dosha.type !== 'pitra' && dosha.placements && dosha.placements.length > 0 && (
                   <div className="mt-3 p-3 bg-accent/10 rounded-md border border-accent/20">
                     <h5 className="font-medium text-sm mb-2">
                       {isHindi ? 'ग्रहों की स्थिति:' : 'Planetary Positions:'}

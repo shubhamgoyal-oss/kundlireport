@@ -72,8 +72,23 @@ async function preloadCityData(): Promise<CityData[]> {
   return cityDataLoading;
 }
 
-// Start preloading immediately when module loads
-preloadCityData();
+// Delay preloading to not block initial render - load after page is interactive
+if (typeof window !== 'undefined') {
+  // Use requestIdleCallback if available, otherwise setTimeout
+  const schedulePreload = () => {
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(() => preloadCityData(), { timeout: 3000 });
+    } else {
+      setTimeout(() => preloadCityData(), 2000);
+    }
+  };
+  
+  if (document.readyState === 'complete') {
+    schedulePreload();
+  } else {
+    window.addEventListener('load', schedulePreload, { once: true });
+  }
+}
 
 /**
  * Nominatim (Primary) - Free OSM geocoder with India filters

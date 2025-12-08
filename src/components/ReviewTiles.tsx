@@ -4,35 +4,35 @@ import { useTranslation } from 'react-i18next';
 const reviews = [
   {
     id: 1,
-    name: "Ramesh Chandra Bhatt",
+    name: "Vikram Sharma",
     location: "Nagpur", 
     stars: 4,
     review: "The Dosha Calculator accurately detected Mangal Dosha in my kundli which my family pandit had also confirmed years ago. I booked the recommended puja and within months my delayed marriage finally happened. Truly life-changing tool."
   },
   {
     id: 2,
-    name: "Aperna Pal",
+    name: "Priya Verma",
     location: "Delhi",
     stars: 5,
     review: "I was skeptical at first but the Dosha Calculator found Shani Sade Sati which explained all my career struggles. The Shani puja they recommended brought such positive changes within weeks. The accuracy of this tool is remarkable and the remedies actually work."
   },
   {
     id: 3,
-    name: "Shivraj Dobhi", 
+    name: "Rajesh Gupta", 
     location: "Lucknow",
     stars: 4,
     review: "Finally found out why I was facing so many obstacles in life - the calculator detected Kaal Sarp Dosha. After doing the recommended puja at Trimbakeshwar, my business started improving. This tool saved me from visiting multiple astrologers."
   },
   {
     id: 4,
-    name: "Anushka Varma",
+    name: "Neha Agarwal",
     location: "Varanasi", 
     stars: 5,
     review: "The Dosha Calculator detected Pitra Dosha in my chart which no one had told me before. The detailed explanation helped me understand why our family was facing health issues. After the Pishach Mochan puja, things have improved significantly. Highly recommend this tool."
   },
   {
     id: 5,
-    name: "Suhas Sharma",
+    name: "Amit Joshi",
     location: "Mumbai",
     stars: 4,
     review: "Such an easy and accurate tool to check doshas in your kundli. It found multiple doshas and suggested specific pujas for each one. The remedies have brought peace and prosperity to my family. Best kundli analysis I have ever used online."

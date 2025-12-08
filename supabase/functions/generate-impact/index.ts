@@ -31,66 +31,93 @@ serve(async (req) => {
 
     const isHindi = language === 'hi';
     
-    // Map dosha types to their characteristics
-    const doshaInfo: Record<string, { planet: string; energy: string; planetHi: string; energyHi: string }> = {
+    // Map dosha types to their characteristics for Vedic astrology
+    const doshaInfo: Record<string, { 
+      planet: string; 
+      energy: string; 
+      planetHi: string; 
+      energyHi: string;
+      vedicContext: string;
+      vedicContextHi: string;
+    }> = {
       'mangal': { 
-        planet: 'Mars', 
-        energy: 'aggressive, impulsive energy',
-        planetHi: 'मंगल',
-        energyHi: 'आक्रामक, आवेगपूर्ण ऊर्जा'
+        planet: 'Mars (Mangal Graha)', 
+        energy: 'aggressive fire energy that creates conflict and impatience',
+        planetHi: 'मंगल ग्रह',
+        energyHi: 'आक्रामक अग्नि ऊर्जा जो संघर्ष और अधीरता उत्पन्न करती है',
+        vedicContext: 'When Mars occupies certain houses (1st, 2nd, 4th, 7th, 8th, or 12th) from Lagna, Moon, or Venus in a birth chart, its fiery and combative nature becomes dominant in life matters.',
+        vedicContextHi: 'जब मंगल लग्न, चंद्र या शुक्र से 1, 2, 4, 7, 8 या 12वें भाव में स्थित होता है, तो इसकी अग्नि और युद्धक प्रकृति जीवन के मामलों में प्रबल हो जाती है।'
       },
       'kaal-sarp': { 
-        planet: 'Rahu-Ketu axis', 
-        energy: 'karmic blockages and sudden obstacles',
-        planetHi: 'राहु-केतु अक्ष',
-        energyHi: 'कर्म संबंधी अवरोध और अचानक बाधाएं'
+        planet: 'Rahu-Ketu axis (shadow planets)', 
+        energy: 'karmic serpent energy that creates cycles of struggle and sudden reversals',
+        planetHi: 'राहु-केतु अक्ष (छाया ग्रह)',
+        energyHi: 'कर्म सर्प ऊर्जा जो संघर्ष और अचानक उलटफेर के चक्र बनाती है',
+        vedicContext: 'When all seven classical planets fall between Rahu and Ketu, the native experiences a serpent-like grip on destiny, causing repeated obstacles despite sincere efforts.',
+        vedicContextHi: 'जब सभी सात शास्त्रीय ग्रह राहु और केतु के बीच आ जाते हैं, तो जातक भाग्य पर सर्प जैसी पकड़ का अनुभव करता है, जिससे ईमानदार प्रयासों के बावजूद बार-बार बाधाएं आती हैं।'
       },
       'pitra': { 
-        planet: 'Sun and ancestral karma', 
-        energy: 'unresolved ancestral patterns',
-        planetHi: 'सूर्य और पितृ कर्म',
-        energyHi: 'अनसुलझे पैतृक पैटर्न'
+        planet: 'Sun afflicted by Rahu/Ketu (ancestral karma)', 
+        energy: 'unresolved ancestral debts that block blessings and progress',
+        planetHi: 'राहु/केतु से पीड़ित सूर्य (पितृ कर्म)',
+        energyHi: 'अनसुलझे पैतृक ऋण जो आशीर्वाद और प्रगति को रोकते हैं',
+        vedicContext: 'When Sun conjuncts or is aspected by Rahu/Ketu in the 9th house of fortune, ancestral souls seek resolution, causing unexplained blockages in prosperity and peace.',
+        vedicContextHi: 'जब सूर्य भाग्य के 9वें भाव में राहु/केतु से युक्त या दृष्ट होता है, तो पितृ आत्माएं समाधान चाहती हैं, जिससे समृद्धि और शांति में अकारण अवरोध आते हैं।'
       },
       'shani': { 
-        planet: 'Saturn', 
-        energy: 'delays, restrictions and karmic lessons',
-        planetHi: 'शनि',
-        energyHi: 'देरी, प्रतिबंध और कर्म संबंधी सबक'
+        planet: 'Saturn (Shani Dev)', 
+        energy: 'slow-moving karmic energy that brings tests, delays, and mandatory life lessons',
+        planetHi: 'शनि देव',
+        energyHi: 'धीमी कर्म ऊर्जा जो परीक्षाएं, देरी और अनिवार्य जीवन सबक लाती है',
+        vedicContext: 'During Sade Sati (7.5 year transit over Moon sign), Saturn tests patience and strips away what is not meant for you, often through hardship and isolation.',
+        vedicContextHi: 'साढ़े साती (चंद्र राशि पर 7.5 वर्ष का गोचर) के दौरान, शनि धैर्य की परीक्षा लेता है और जो आपके लिए नहीं है उसे कठिनाई और अकेलेपन के माध्यम से छीन लेता है।'
       }
     };
 
     const info = doshaInfo[doshaType] || { 
       planet: doshaType, 
-      energy: 'planetary affliction',
+      energy: 'planetary affliction affecting life areas',
       planetHi: doshaType,
-      energyHi: 'ग्रह पीड़ा'
+      energyHi: 'ग्रह पीड़ा जो जीवन क्षेत्रों को प्रभावित करती है',
+      vedicContext: 'This dosha creates specific planetary imbalances in the birth chart.',
+      vedicContextHi: 'यह दोष जन्म कुंडली में विशिष्ट ग्रह असंतुलन बनाता है।'
     };
 
     const systemPrompt = isHindi 
-      ? `आप एक वैदिक ज्योतिष विशेषज्ञ हैं। ${info.planetHi} की ${info.energyHi} का प्रभाव बताएं।
+      ? `आप एक अनुभवी वैदिक ज्योतिषी हैं। आपको ${info.planetHi} दोष का प्रभाव समझाना है।
+
+ज्योतिषीय संदर्भ: ${info.vedicContextHi}
 
 नियम:
-- केवल 2 वाक्य लिखें
-- सीधे मुद्दे पर आएं
+- 3 वाक्य लिखें
+- पहला वाक्य: ग्रह की ऊर्जा (${info.energyHi}) को समस्या से जोड़ें
+- दूसरा वाक्य: इस दोष से उत्पन्न विशिष्ट जीवन बाधाएं बताएं
+- तीसरा वाक्य: बिना उपाय के यह स्थिति कैसे बनी रहती है
+- सरल हिंदी में लिखें, कठिन शब्द न हों
 - "मैं" का प्रयोग न करें
-- सरल भाषा में लिखें`
-      : `You are a Vedic astrology expert. Explain ${info.planet}'s ${info.energy} impact.
+- वैदिक ज्योतिष के अनुसार ही लिखें`
+      : `You are an experienced Vedic astrologer. Explain the impact of ${info.planet} dosha.
+
+Vedic context: ${info.vedicContext}
 
 Rules:
-- Write exactly 2 sentences only
-- Be direct and to the point
+- Write exactly 3 sentences
+- First sentence: Connect the planetary energy (${info.energy}) to the user's problem
+- Second sentence: Describe specific life obstacles this dosha creates
+- Third sentence: Explain how this pattern continues without proper remedies
+- Use simple English, no technical jargon
 - No first person ("I")
-- Simple language, no jargon`;
+- Stay strictly within Vedic astrology principles`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
 उपयोगकर्ता की समस्या: ${problemArea}
 
-समझाएं कि यह दोष इस विशिष्ट समस्या को कैसे प्रभावित करता है।`
+वैदिक ज्योतिष के अनुसार समझाएं कि ${info.planetHi} की ${info.energyHi} इस समस्या को कैसे बढ़ा रही है।`
       : `Dosha: ${doshaType}
 User's problem: ${problemArea}
 
-Explain how this dosha specifically impacts this problem.`;
+According to Vedic astrology, explain how ${info.planet}'s ${info.energy} is intensifying this problem.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

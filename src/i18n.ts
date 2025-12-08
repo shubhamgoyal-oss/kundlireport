@@ -127,6 +127,8 @@ const resources = {
         problemAreaLabel: 'Which is the biggest problem area of your life?',
         problemAreaHint: 'Max 50 characters',
         problemAreaOtherPlaceholder: 'Please describe your problem',
+        selectProblems: 'Select your problems',
+        problemsSelected: '{{count}} problems selected',
       },
       doshaResults: {
         summary: 'Your Dosha Summary',
@@ -426,6 +428,8 @@ const resources = {
         problemAreaLabel: 'आपके जीवन की सबसे बड़ी समस्या क्या है?',
         problemAreaHint: 'अधिकतम 50 अक्षर',
         problemAreaOtherPlaceholder: 'कृपया अपनी समस्या बताएं',
+        selectProblems: 'अपनी समस्याएं चुनें',
+        problemsSelected: '{{count}} समस्याएं चुनी गईं',
       },
       doshaResults: {
         summary: 'आपका दोष सारांश',

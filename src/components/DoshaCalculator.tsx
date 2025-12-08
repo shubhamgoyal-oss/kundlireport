@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User, HelpCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User, HelpCircle, ChevronDown, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
@@ -104,8 +104,22 @@ const DoshaCalculator = () => {
 
   const unknownTime = watch('unknownTime');
   const placeValue = watch('place');
-  const problemAreaValue = watch('problemArea');
+  const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
   const [showOtherInput, setShowOtherInput] = useState(false);
+  const [otherProblemText, setOtherProblemText] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
   
   // Problem area options for MCQ
   const problemOptions = [
@@ -116,6 +130,56 @@ const DoshaCalculator = () => {
     { id: 'business', en: 'I am facing challenges in my business', hi: 'मुझे व्यापार में चुनौतियों का सामना करना पड़ रहा है' },
     { id: 'other', en: 'Other', hi: 'अन्य' },
   ];
+  
+  // Update form value when selections change
+  useEffect(() => {
+    const isHindi = i18n.language?.startsWith('hi');
+    const selectedTexts = selectedProblems
+      .filter(id => id !== 'other')
+      .map(id => {
+        const option = problemOptions.find(o => o.id === id);
+        return option ? (isHindi ? option.hi : option.en) : '';
+      })
+      .filter(Boolean);
+    
+    if (showOtherInput && otherProblemText.trim()) {
+      selectedTexts.push(otherProblemText.trim());
+    }
+    
+    setValue('problemArea', selectedTexts.join('; '));
+    if (selectedTexts.length > 0) {
+      trackFieldFilled('problemArea');
+    }
+  }, [selectedProblems, otherProblemText, showOtherInput]);
+  
+  const toggleProblem = (id: string) => {
+    if (id === 'other') {
+      setShowOtherInput(!showOtherInput);
+      if (!showOtherInput) {
+        setSelectedProblems(prev => [...prev.filter(p => p !== 'other'), 'other']);
+      } else {
+        setSelectedProblems(prev => prev.filter(p => p !== 'other'));
+        setOtherProblemText('');
+      }
+    } else {
+      setSelectedProblems(prev => 
+        prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+      );
+    }
+  };
+  
+  const getSelectedDisplayText = () => {
+    const isHindi = i18n.language?.startsWith('hi');
+    const count = selectedProblems.filter(id => id !== 'other').length + (showOtherInput && otherProblemText ? 1 : 0);
+    if (count === 0 && !showOtherInput) {
+      return t('dosha.selectProblems', 'Select your problems');
+    }
+    if (count === 1 && !showOtherInput) {
+      const option = problemOptions.find(o => o.id === selectedProblems[0]);
+      return option ? (isHindi ? option.hi : option.en) : '';
+    }
+    return t('dosha.problemsSelected', '{{count}} problems selected', { count });
+  };
 
   const handlePlaceSearch = (searchTerm: string) => {
     if (searchTimer) {
@@ -340,64 +404,86 @@ const DoshaCalculator = () => {
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
 
-          {/* Problem Area - MCQ */}
+          {/* Problem Area - Multi-Select Dropdown */}
           <div className="space-y-3">
             <Label className="flex items-center gap-2 text-sm sm:text-base font-medium">
               <HelpCircle className="w-4 h-4 flex-shrink-0" />
               {t('dosha.problemAreaLabel', 'Which is the biggest problem area of your life?')}
             </Label>
-            <div className="space-y-2">
-              {problemOptions.map((option) => (
-                <label
-                  key={option.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    (problemAreaValue === (i18n.language?.startsWith('hi') ? option.hi : option.en) || 
-                     (option.id === 'other' && showOtherInput))
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:bg-accent/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="problemAreaRadio"
-                    value={option.id}
-                    checked={
-                      option.id === 'other' 
-                        ? showOtherInput 
-                        : problemAreaValue === (i18n.language?.startsWith('hi') ? option.hi : option.en)
-                    }
-                    onChange={() => {
-                      if (option.id === 'other') {
-                        setShowOtherInput(true);
-                        setValue('problemArea', '');
-                      } else {
-                        setShowOtherInput(false);
-                        const text = i18n.language?.startsWith('hi') ? option.hi : option.en;
-                        setValue('problemArea', text);
-                        trackFieldFilled('problemArea');
-                      }
-                    }}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <span className="text-sm">
-                    {i18n.language?.startsWith('hi') ? option.hi : option.en}
-                  </span>
-                </label>
-              ))}
+            
+            <div className="relative" ref={dropdownRef}>
+              {/* Dropdown Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full min-h-[44px] px-3 py-2 text-left bg-card border border-input rounded-md flex items-center justify-between hover:bg-accent/50 transition-colors"
+              >
+                <span className={`text-sm ${selectedProblems.length === 0 && !showOtherInput ? 'text-muted-foreground' : ''}`}>
+                  {getSelectedDisplayText()}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-64 overflow-y-auto">
+                  {problemOptions.map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors border-b border-border last:border-0 ${
+                        selectedProblems.includes(option.id) || (option.id === 'other' && showOtherInput)
+                          ? 'bg-primary/5'
+                          : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={option.id === 'other' ? showOtherInput : selectedProblems.includes(option.id)}
+                        onChange={() => toggleProblem(option.id)}
+                        className="w-4 h-4 accent-primary rounded"
+                      />
+                      <span className="text-sm">
+                        {i18n.language?.startsWith('hi') ? option.hi : option.en}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
+            
+            {/* Selected Tags */}
+            {(selectedProblems.length > 0 || showOtherInput) && (
+              <div className="flex flex-wrap gap-2">
+                {selectedProblems.filter(id => id !== 'other').map((id) => {
+                  const option = problemOptions.find(o => o.id === id);
+                  if (!option) return null;
+                  const text = i18n.language?.startsWith('hi') ? option.hi : option.en;
+                  return (
+                    <span
+                      key={id}
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
+                    >
+                      {text.length > 30 ? text.substring(0, 30) + '...' : text}
+                      <button
+                        type="button"
+                        onClick={() => toggleProblem(id)}
+                        className="hover:text-destructive"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             
             {/* Other input field */}
             {showOtherInput && (
-              <div className="pl-7 mt-2">
+              <div className="mt-2">
                 <Input
                   type="text"
-                  {...register('problemArea', {
-                    onChange: (e) => {
-                      if (e.target.value) {
-                        trackFieldFilled('problemArea');
-                      }
-                    }
-                  })}
+                  value={otherProblemText}
+                  onChange={(e) => setOtherProblemText(e.target.value)}
                   placeholder={t('dosha.problemAreaOtherPlaceholder', 'Please describe your problem')}
                   className="bg-input min-h-[44px] text-base"
                   maxLength={50}

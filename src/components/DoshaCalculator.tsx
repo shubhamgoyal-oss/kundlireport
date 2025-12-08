@@ -486,11 +486,11 @@ const DoshaCalculator = () => {
                   onChange={(e) => setOtherProblemText(e.target.value)}
                   placeholder={t('dosha.problemAreaOtherPlaceholder', 'Please describe your problem')}
                   className="bg-input min-h-[44px] text-base"
-                  maxLength={50}
+                  maxLength={100}
                   autoFocus
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('dosha.problemAreaHint', 'Max 50 characters')}
+                  {t('dosha.problemAreaHint', 'Max 100 characters')}
                 </p>
               </div>
             )}

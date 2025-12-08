@@ -67,24 +67,20 @@ serve(async (req) => {
     };
 
     const systemPrompt = isHindi 
-      ? `आप एक वैदिक ज्योतिष विशेषज्ञ हैं। आपको बताना है कि ${info.planetHi} की ${info.energyHi} उपयोगकर्ता की समस्या को कैसे प्रभावित करती है।
+      ? `आप एक वैदिक ज्योतिष विशेषज्ञ हैं। ${info.planetHi} की ${info.energyHi} का प्रभाव बताएं।
 
 नियम:
-- 2-3 वाक्य लिखें, संक्षिप्त रखें
-- वैज्ञानिक और तथ्यात्मक शैली में लिखें
-- "मैं" से शुरू न करें
-- सहानुभूतिपूर्ण न हों, तथ्यात्मक रहें
-- ग्रह ऊर्जा और समस्या के बीच संबंध स्पष्ट करें
-- सरल हिंदी का प्रयोग करें`
-      : `You are a Vedic astrology expert. Explain how ${info.planet}'s ${info.energy} affects the user's stated problem.
+- केवल 2 वाक्य लिखें
+- सीधे मुद्दे पर आएं
+- "मैं" का प्रयोग न करें
+- सरल भाषा में लिखें`
+      : `You are a Vedic astrology expert. Explain ${info.planet}'s ${info.energy} impact.
 
 Rules:
-- Write 2-3 sentences, keep it concise
-- Use scientific and factual tone
-- Do NOT start with "I" or use first person
-- Do NOT be empathetic, be factual
-- Explain the connection between planetary energy and the problem
-- Use simple English`;
+- Write exactly 2 sentences only
+- Be direct and to the point
+- No first person ("I")
+- Simple language, no jargon`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}

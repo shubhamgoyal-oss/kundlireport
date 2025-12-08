@@ -84,40 +84,38 @@ serve(async (req) => {
     };
 
     const systemPrompt = isHindi 
-      ? `आप एक अनुभवी वैदिक ज्योतिषी हैं। आपको ${info.planetHi} दोष का प्रभाव समझाना है।
+      ? `आप एक वैदिक ज्योतिषी हैं। ${info.planetHi} दोष का प्रभाव समझाएं।
 
 ज्योतिषीय संदर्भ: ${info.vedicContextHi}
 
 नियम:
-- 3 वाक्य लिखें
-- पहला वाक्य: ग्रह की ऊर्जा (${info.energyHi}) को समस्या से जोड़ें
-- दूसरा वाक्य: इस दोष से उत्पन्न विशिष्ट जीवन बाधाएं बताएं
-- तीसरा वाक्य: बिना उपाय के यह स्थिति कैसे बनी रहती है
-- सरल हिंदी में लिखें, कठिन शब्द न हों
-- "मैं" का प्रयोग न करें
-- वैदिक ज्योतिष के अनुसार ही लिखें`
-      : `You are an experienced Vedic astrologer. Explain the impact of ${info.planet} dosha.
+- 3 छोटे वाक्य लिखें (हर वाक्य 12-15 शब्द)
+- पहला: ${info.planetHi} की ऊर्जा समस्या को कैसे बढ़ाती है
+- दूसरा: इससे क्या रुकावट आती है
+- तीसरा: उपाय के बिना यह क्यों जारी रहेगा
+- सरल हिंदी, कठिन शब्द नहीं
+- "मैं" मत लिखें`
+      : `You are a Vedic astrologer. Explain ${info.planet} dosha's impact.
 
 Vedic context: ${info.vedicContext}
 
 Rules:
-- Write exactly 3 sentences
-- First sentence: Connect the planetary energy (${info.energy}) to the user's problem
-- Second sentence: Describe specific life obstacles this dosha creates
-- Third sentence: Explain how this pattern continues without proper remedies
-- Use simple English, no technical jargon
-- No first person ("I")
-- Stay strictly within Vedic astrology principles`;
+- Write 3 SHORT sentences (max 15 words each)
+- First: How ${info.planet}'s energy worsens the problem
+- Second: What obstacles this creates
+- Third: Why this continues without remedies
+- Simple words only
+- No "I" or "you"`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
-उपयोगकर्ता की समस्या: ${problemArea}
+समस्या: ${problemArea}
 
-वैदिक ज्योतिष के अनुसार समझाएं कि ${info.planetHi} की ${info.energyHi} इस समस्या को कैसे बढ़ा रही है।`
+छोटे वाक्यों में बताएं कि ${info.planetHi} इस समस्या को कैसे प्रभावित करता है।`
       : `Dosha: ${doshaType}
-User's problem: ${problemArea}
+Problem: ${problemArea}
 
-According to Vedic astrology, explain how ${info.planet}'s ${info.energy} is intensifying this problem.`;
+In short sentences, explain how ${info.planet} affects this problem.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

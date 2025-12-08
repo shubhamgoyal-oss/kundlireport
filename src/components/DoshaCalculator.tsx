@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 // Form validation schema - name is mandatory
 const birthInputSchema = z
   .object({
-    problemArea: z.string().max(50, "Maximum 50 characters allowed").optional(),
+    problemArea: z.string().max(100, "Maximum 100 characters allowed").optional(),
     name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
     gender: z.enum(["M", "F"], { required_error: "Gender is required" }),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),

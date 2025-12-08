@@ -7,35 +7,35 @@ const reviews = [
     name: "Ramesh Chandra Bhatt",
     location: "Nagpur", 
     stars: 4,
-    review: "So many puja options for all the devotees. Great to get the grace of god from our homes. Most authentic and trustworthy puja service compared to others."
+    review: "The Dosha Calculator accurately detected Mangal Dosha in my kundli which my family pandit had also confirmed years ago. I booked the recommended puja and within months my delayed marriage finally happened. Truly life-changing tool."
   },
   {
     id: 2,
     name: "Aperna Pal",
     location: "Delhi",
     stars: 5,
-    review: "I really like the whole process of puja at Sri Mandir. Puja is conducted properly and customer support is available throughout the process. I asked questions to Mamta Maam and she resolved my queries. Most genuine and authentic."
+    review: "I was skeptical at first but the Dosha Calculator found Shani Sade Sati which explained all my career struggles. The Shani puja they recommended brought such positive changes within weeks. The accuracy of this tool is remarkable and the remedies actually work."
   },
   {
     id: 3,
     name: "Shivraj Dobhi", 
     location: "Lucknow",
     stars: 4,
-    review: "Liked the fact that we can book puja online else we have to travel to get everything done. Felt very nice to hear my name and gotra during the puja of Mahadev. Prasad was also received in time."
+    review: "Finally found out why I was facing so many obstacles in life - the calculator detected Kaal Sarp Dosha. After doing the recommended puja at Trimbakeshwar, my business started improving. This tool saved me from visiting multiple astrologers."
   },
   {
     id: 4,
     name: "Anushka Varma",
     location: "Varanasi", 
     stars: 5,
-    review: "Booking puja online made the entire process so convenient. I was able to participate in the rituals from home and even my family members joined in virtually. The updates were timely, and receiving prasad at home felt very special."
+    review: "The Dosha Calculator detected Pitra Dosha in my chart which no one had told me before. The detailed explanation helped me understand why our family was facing health issues. After the Pishach Mochan puja, things have improved significantly. Highly recommend this tool."
   },
   {
     id: 5,
     name: "Suhas Sharma",
     location: "Mumbai",
     stars: 4,
-    review: "Loved how simple and smooth the online puja booking experience was. The priest mentioned my family's details during the puja, which made it feel very personal. We were updated at every step, and the prasad arrived quickly."
+    review: "Such an easy and accurate tool to check doshas in your kundli. It found multiple doshas and suggested specific pujas for each one. The remedies have brought peace and prosperity to my family. Best kundli analysis I have ever used online."
   }
 ];
 

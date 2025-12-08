@@ -39,14 +39,14 @@ interface CityData {
 let cityDataCache: CityData[] | null = null;
 let cityDataLoading: Promise<CityData[]> | null = null;
 
-// Preload city data immediately
-async function preloadCityData(): Promise<CityData[]> {
+// Load city data on-demand (lazy load) - only when user starts searching
+async function loadCityData(): Promise<CityData[]> {
   if (cityDataCache) return cityDataCache;
   if (cityDataLoading) return cityDataLoading;
 
   cityDataLoading = (async () => {
     try {
-      console.log('🚀 Preloading Indian cities database...');
+      console.log('🚀 Loading Indian cities database on-demand...');
       const XLSX = await import('xlsx');
       const response = await fetch('/indian-cities.xlsx');
       
@@ -60,10 +60,10 @@ async function preloadCityData(): Promise<CityData[]> {
       const data = XLSX.utils.sheet_to_json<CityData>(firstSheet);
       
       cityDataCache = data;
-      console.log(`✓ Preloaded ${data.length} cities`);
+      console.log(`✓ Loaded ${data.length} cities`);
       return data;
     } catch (error) {
-      console.error('Failed to preload city data:', error);
+      console.error('Failed to load city data:', error);
       cityDataLoading = null;
       return [];
     }
@@ -72,21 +72,10 @@ async function preloadCityData(): Promise<CityData[]> {
   return cityDataLoading;
 }
 
-// Delay preloading to not block initial render - load after page is interactive
-if (typeof window !== 'undefined') {
-  // Use requestIdleCallback if available, otherwise setTimeout
-  const schedulePreload = () => {
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(() => preloadCityData(), { timeout: 3000 });
-    } else {
-      setTimeout(() => preloadCityData(), 2000);
-    }
-  };
-  
-  if (document.readyState === 'complete') {
-    schedulePreload();
-  } else {
-    window.addEventListener('load', schedulePreload, { once: true });
+// Export function to trigger preload when user focuses on place input
+export function preloadCityDatabase() {
+  if (!cityDataCache && !cityDataLoading) {
+    loadCityData();
   }
 }
 
@@ -281,8 +270,8 @@ async function searchLocalIndianCities(query: string): Promise<Place[]> {
   try {
     console.log('🏙️ Searching local Indian cities database...');
     
-    // Get preloaded data (instant if already loaded)
-    const data = await preloadCityData();
+    // Load data on-demand (lazy load)
+    const data = await loadCityData();
     
     if (data.length === 0) {
       console.warn('City data not available');

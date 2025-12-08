@@ -14,6 +14,9 @@ export default function Footer() {
               src="/lovable-uploads/cbeff861-08ec-47c1-8450-0878f7dbe47c.png" 
               alt="Sri Mandir" 
               className="h-12 sm:h-16 w-auto mb-3 sm:mb-4"
+              width="228"
+              height="84"
+              loading="lazy"
             />
             <p className="text-sm sm:text-base leading-relaxed">
               {t('footer.description')}

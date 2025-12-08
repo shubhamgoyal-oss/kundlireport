@@ -49,6 +49,9 @@ const Index = () => {
                     src="/lovable-uploads/c8bc8544-fa1e-4c93-ac7d-859753199a68.png" 
                     alt="Sri Mandir" 
                     className="h-12 sm:h-16 w-auto mx-auto"
+                    width="277"
+                    height="84"
+                    fetchPriority="high"
                   />
                   <div className="text-[10px] sm:text-xs text-muted-foreground font-medium space-y-0.5">
                     <div className="flex items-center justify-center gap-1.5">

@@ -125,9 +125,8 @@ const resources = {
         calculationSuccess: 'Doshas calculated successfully!',
         calculationError: 'Failed to calculate doshas. Please try again.',
         problemAreaLabel: 'Which is the biggest problem area of your life?',
-        problemAreaPlaceholder: 'e.g. Job, Marriage, Health, Money',
         problemAreaHint: 'Max 50 characters',
-        suggestions: 'Suggestions',
+        problemAreaOtherPlaceholder: 'Please describe your problem',
       },
       doshaResults: {
         summary: 'Your Dosha Summary',
@@ -425,9 +424,8 @@ const resources = {
         calculationSuccess: 'दोष सफलतापूर्वक गणना की गई!',
         calculationError: 'दोष गणना विफल रही। कृपया पुनः प्रयास करें।',
         problemAreaLabel: 'आपके जीवन की सबसे बड़ी समस्या क्या है?',
-        problemAreaPlaceholder: 'जैसे: नौकरी, शादी, स्वास्थ्य, पैसा',
         problemAreaHint: 'अधिकतम 50 अक्षर',
-        suggestions: 'सुझाव',
+        problemAreaOtherPlaceholder: 'कृपया अपनी समस्या बताएं',
       },
       doshaResults: {
         summary: 'आपका दोष सारांश',

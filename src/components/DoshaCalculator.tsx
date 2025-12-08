@@ -105,14 +105,16 @@ const DoshaCalculator = () => {
   const unknownTime = watch('unknownTime');
   const placeValue = watch('place');
   const problemAreaValue = watch('problemArea');
-  const [showProblemSuggestions, setShowProblemSuggestions] = useState(false);
+  const [showOtherInput, setShowOtherInput] = useState(false);
   
-  // Suggested problem options
-  const problemSuggestions = [
-    { en: 'My marriage is delayed', hi: 'मेरी शादी में देरी हो रही है' },
-    { en: 'I am facing financial challenges', hi: 'मुझे आर्थिक समस्याएं हो रही हैं' },
-    { en: 'I am not able to find a job', hi: 'मुझे नौकरी नहीं मिल रही' },
-    { en: 'I am facing health issues', hi: 'मुझे स्वास्थ्य समस्याएं हैं' },
+  // Problem area options for MCQ
+  const problemOptions = [
+    { id: 'marriage', en: 'I am facing delays in marriage', hi: 'मेरी शादी में देरी हो रही है' },
+    { id: 'financial', en: 'I am facing financial hardships', hi: 'मुझे आर्थिक कठिनाइयों का सामना करना पड़ रहा है' },
+    { id: 'career', en: 'I am facing challenges in my career/job', hi: 'मुझे करियर/नौकरी में चुनौतियों का सामना करना पड़ रहा है' },
+    { id: 'health', en: 'I am facing health issues', hi: 'मुझे स्वास्थ्य समस्याएं हैं' },
+    { id: 'business', en: 'I am facing challenges in my business', hi: 'मुझे व्यापार में चुनौतियों का सामना करना पड़ रहा है' },
+    { id: 'other', en: 'Other', hi: 'अन्य' },
   ];
 
   const handlePlaceSearch = (searchTerm: string) => {
@@ -338,65 +340,75 @@ const DoshaCalculator = () => {
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
 
-          {/* Problem Area - First Question */}
-          <div className="space-y-2 relative">
-            <Label htmlFor="problemArea" className="flex items-center gap-2 text-sm sm:text-base">
+          {/* Problem Area - MCQ */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2 text-sm sm:text-base font-medium">
               <HelpCircle className="w-4 h-4 flex-shrink-0" />
               {t('dosha.problemAreaLabel', 'Which is the biggest problem area of your life?')}
             </Label>
-            <Input
-              id="problemArea"
-              type="text"
-              {...register('problemArea', {
-                onChange: (e) => {
-                  if (e.target.value) {
-                    trackFieldFilled('problemArea');
-                    setShowProblemSuggestions(false);
-                  }
-                }
-              })}
-              placeholder={t('dosha.problemAreaPlaceholder', 'e.g. Job, Marriage, Health, Money')}
-              className="bg-input min-h-[44px] text-base"
-              maxLength={50}
-              onFocus={() => {
-                if (!problemAreaValue) {
-                  setShowProblemSuggestions(true);
-                }
-              }}
-              onBlur={() => {
-                // Delay to allow click on suggestion
-                setTimeout(() => setShowProblemSuggestions(false), 200);
-              }}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t('dosha.problemAreaHint', 'Max 50 characters')}
-            </p>
-            
-            {/* Problem Suggestions Dropdown */}
-            {showProblemSuggestions && !problemAreaValue && (
-              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg">
-                <div className="px-3 py-2 border-b border-border">
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {t('dosha.suggestions', 'Suggestions')}
-                  </span>
-                </div>
-                {problemSuggestions.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    className="w-full text-left px-4 py-3 hover:bg-accent transition-colors text-sm"
-                    onClick={() => {
-                      const text = i18n.language?.startsWith('hi') ? suggestion.hi : suggestion.en;
-                      setValue('problemArea', text);
-                      setShowProblemSuggestions(false);
-                      trackFieldFilled('problemArea');
+            <div className="space-y-2">
+              {problemOptions.map((option) => (
+                <label
+                  key={option.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    (problemAreaValue === (i18n.language?.startsWith('hi') ? option.hi : option.en) || 
+                     (option.id === 'other' && showOtherInput))
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:bg-accent/50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="problemAreaRadio"
+                    value={option.id}
+                    checked={
+                      option.id === 'other' 
+                        ? showOtherInput 
+                        : problemAreaValue === (i18n.language?.startsWith('hi') ? option.hi : option.en)
+                    }
+                    onChange={() => {
+                      if (option.id === 'other') {
+                        setShowOtherInput(true);
+                        setValue('problemArea', '');
+                      } else {
+                        setShowOtherInput(false);
+                        const text = i18n.language?.startsWith('hi') ? option.hi : option.en;
+                        setValue('problemArea', text);
+                        trackFieldFilled('problemArea');
+                      }
                     }}
-                  >
-                    {i18n.language?.startsWith('hi') ? suggestion.hi : suggestion.en}
-                  </button>
-                ))}
+                    className="w-4 h-4 accent-primary"
+                  />
+                  <span className="text-sm">
+                    {i18n.language?.startsWith('hi') ? option.hi : option.en}
+                  </span>
+                </label>
+              ))}
+            </div>
+            
+            {/* Other input field */}
+            {showOtherInput && (
+              <div className="pl-7 mt-2">
+                <Input
+                  type="text"
+                  {...register('problemArea', {
+                    onChange: (e) => {
+                      if (e.target.value) {
+                        trackFieldFilled('problemArea');
+                      }
+                    }
+                  })}
+                  placeholder={t('dosha.problemAreaOtherPlaceholder', 'Please describe your problem')}
+                  className="bg-input min-h-[44px] text-base"
+                  maxLength={50}
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('dosha.problemAreaHint', 'Max 50 characters')}
+                </p>
               </div>
             )}
+            
             {errors.problemArea && (
               <p className="text-sm text-destructive flex items-center gap-1">
                 <AlertCircle className="w-4 h-4" />

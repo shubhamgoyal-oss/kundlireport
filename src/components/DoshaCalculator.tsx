@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User, HelpCircle, ChevronDown, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { searchPlaces, type Place } from '@/utils/geocoding';
+import { searchPlaces, preloadCityDatabase, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
 import { DateOfBirthPicker } from './DateOfBirthPicker';
 import { useTranslation } from 'react-i18next';
@@ -648,6 +648,7 @@ const DoshaCalculator = () => {
               className="bg-input min-h-[44px] text-base"
               onChange={(e) => handlePlaceSearch(e.target.value)}
               onKeyDown={handlePlaceKeyDown}
+              onFocus={() => preloadCityDatabase()}
               autoComplete="off"
               required
             />

@@ -416,7 +416,7 @@ const DoshaCalculator = () => {
               <button
                 type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="w-full min-h-[44px] px-3 py-2 text-left bg-card border border-input rounded-md flex items-center justify-between hover:bg-accent/50 transition-colors"
+                className="w-full min-h-[44px] px-3 py-2 text-left bg-input border border-input rounded-md flex items-center justify-between hover:bg-accent/50 transition-colors"
               >
                 <span className={`text-sm ${selectedProblems.length === 0 && !showOtherInput ? 'text-muted-foreground' : ''}`}>
                   {getSelectedDisplayText()}

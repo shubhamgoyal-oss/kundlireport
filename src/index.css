@@ -164,4 +164,54 @@ All colors MUST be HSL and based on traditional Indian spiritual palette
     will-change: transform;
   }
 
+  /* React Day Picker dropdown styling */
+  .rdp-caption_dropdowns {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .rdp-dropdown_month,
+  .rdp-dropdown_year {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .rdp-dropdown_month select,
+  .rdp-dropdown_year select {
+    appearance: none;
+    padding: 0.25rem 1.5rem 0.25rem 0.5rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.375rem;
+    background-color: hsl(var(--background));
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.25rem center;
+    background-repeat: no-repeat;
+    background-size: 1.25rem;
+  }
+
+  .rdp-dropdown_month select:focus,
+  .rdp-dropdown_year select:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: hsl(var(--ring));
+    border-color: hsl(var(--ring));
+  }
+
+  .rdp-vhidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
 }

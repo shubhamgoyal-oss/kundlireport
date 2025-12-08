@@ -370,21 +370,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     return '';
   };
 
-  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
-    activeDoshas.push({
-      type: 'mangal',
-      detailKey: 'mangal',
-      label: t('doshaResults.mangal.name'),
-      icon: Flame,
-      status: summary.mangal,
-      severity: summary.mangalSeverity,
-      explanation: isHindi ? (translatedExplanations.mangal || details.mangal?.explanation || '') : (details.mangal?.explanation || ''),
-      placements: details.mangal?.placements,
-      impact: t('doshaResults.mangal.impact'),
-      remedies: t('doshaResults.mangal.remedies', { returnObjects: true }) as string[],
-      pujaType: 'mangal',
-    });
-  }
+  // Add doshas in order: Kaal Sarp, Pitra, Shani, then Mangal (last)
   if (isDoshaPresent(summary.kaalSarp)) {
     activeDoshas.push({
       type: 'kaal-sarp',
@@ -426,6 +412,22 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       impact: t('doshaResults.sadeSati.impact'),
       remedies: t('doshaResults.sadeSati.remedies', { returnObjects: true }) as string[],
       pujaType: 'shani',
+    });
+  }
+  // Mangal Dosha added last
+  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
+    activeDoshas.push({
+      type: 'mangal',
+      detailKey: 'mangal',
+      label: t('doshaResults.mangal.name'),
+      icon: Flame,
+      status: summary.mangal,
+      severity: summary.mangalSeverity,
+      explanation: isHindi ? (translatedExplanations.mangal || details.mangal?.explanation || '') : (details.mangal?.explanation || ''),
+      placements: details.mangal?.placements,
+      impact: t('doshaResults.mangal.impact'),
+      remedies: t('doshaResults.mangal.remedies', { returnObjects: true }) as string[],
+      pujaType: 'mangal',
     });
   }
 

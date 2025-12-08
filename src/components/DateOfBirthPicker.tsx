@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Drawer,
   DrawerContent,
@@ -11,7 +12,15 @@ import {
   DrawerFooter,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface DateOfBirthPickerProps {
   value?: string; // YYYY-MM-DD format
@@ -45,6 +54,7 @@ const getDaysInMonth = (month: string, year: string): number => {
 export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerProps) => {
   const { t, i18n } = useTranslation();
   const isHindi = i18n.language === 'hi';
+  const isMobile = useIsMobile();
   
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'month-year' | 'day'>('month-year');
@@ -53,6 +63,9 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
   const [selectedMonth, setSelectedMonth] = useState<string>('01');
   const [selectedYear, setSelectedYear] = useState<string>('1990');
   const [selectedDay, setSelectedDay] = useState<string>('01');
+  
+  // For desktop calendar
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   // Parse initial value
   useEffect(() => {
@@ -61,6 +74,7 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
       setSelectedYear(y);
       setSelectedMonth(m);
       setSelectedDay(d);
+      setSelectedDate(new Date(parseInt(y), parseInt(m) - 1, parseInt(d)));
     }
   }, []);
 
@@ -87,6 +101,15 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
     setStep('month-year');
   };
 
+  const handleDesktopDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      onChange(formattedDate);
+      setIsOpen(false);
+    }
+  };
+
   const getDisplayValue = () => {
     if (!value) return isHindi ? 'जन्म तिथि चुनें' : 'Select date of birth';
     const [y, m, d] = value.split('-');
@@ -101,10 +124,55 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
     return `${monthLabel} ${selectedYear}`;
   };
 
+  // Desktop: Use Popover with Calendar
+  if (!isMobile) {
+    return (
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2 text-sm sm:text-base">
+          <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+          {t('dosha.dateOfBirth')} <span className="text-destructive">*</span>
+        </Label>
+        
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full min-h-[44px] justify-start text-left font-normal bg-input"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {getDisplayValue()}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDesktopDateSelect}
+              defaultMonth={selectedDate || new Date(1990, 0, 1)}
+              disabled={(date) =>
+                date > new Date() || date < new Date("1900-01-01")
+              }
+              initialFocus
+              className={cn("p-3 pointer-events-auto")}
+              captionLayout="dropdown-buttons"
+              fromYear={1920}
+              toYear={currentYear}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
+      </div>
+    );
+  }
+
+  // Mobile: Use Drawer with step-by-step selection
   return (
     <div className="space-y-2">
       <Label className="flex items-center gap-2 text-sm sm:text-base">
-        <Calendar className="w-4 h-4 flex-shrink-0" />
+        <CalendarIcon className="w-4 h-4 flex-shrink-0" />
         {t('dosha.dateOfBirth')} <span className="text-destructive">*</span>
       </Label>
       
@@ -117,7 +185,7 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
             variant="outline"
             className="w-full min-h-[44px] justify-start text-left font-normal bg-input"
           >
-            <Calendar className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
             {getDisplayValue()}
           </Button>
         </DrawerTrigger>

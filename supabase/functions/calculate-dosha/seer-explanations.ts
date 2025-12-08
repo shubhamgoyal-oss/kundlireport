@@ -16,7 +16,7 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
     return `In your chart, ${placement}. This triggers Mangal Dosha from Moon/Venus but not from Lagna, resulting in mild effects.`;
   }
   
-  // Build a proper sentence from placements
+  // Build a proper sentence from placements with specific house numbers
   const severity = mangal.severity || "moderate";
   const placementsList = mangal.placements.filter(p => p.length > 0);
   
@@ -24,19 +24,31 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
     return `In your chart, Mars occupies a sensitive house, creating ${severity} Mangal Dosha.`;
   }
   
+  // Extract house number from first placement for clear explanation
+  const firstPlacement = placementsList[0];
+  const houseMatch = firstPlacement.match(/H(\d+)/);
+  const houseNum = houseMatch ? houseMatch[1] : null;
+  const signMatch = firstPlacement.match(/\(([^)]+)\)/);
+  const signInfo = signMatch ? signMatch[1] : '';
+  
   if (placementsList.length === 1) {
+    if (houseNum) {
+      return `In your chart, Mars is placed in the ${houseNum}th house${signInfo ? ` (${signInfo})` : ''}. This is a sensitive house for Mars, creating ${severity} Mangal Dosha.`;
+    }
     return `In your chart, ${placementsList[0]}. This creates ${severity} Mangal Dosha.`;
   }
   
-  // Multiple placements - format nicely
+  // Multiple placements - format with clear house references
   const formattedPlacements = placementsList.map(p => {
-    // Clean up placement text for readability
-    return p.replace(/from Lagna \(([^)]+)\)/, '(Lagna reference)')
-            .replace(/from Moon/, '(Moon reference)')
-            .replace(/from Venus/, '(Venus reference)');
+    // Extract house number and format clearly
+    const match = p.match(/Mars in H(\d+) from (\w+)/);
+    if (match) {
+      return `${match[1]}th house from ${match[2]}`;
+    }
+    return p;
   });
   
-  return `In your chart, Mars is positioned in sensitive houses: ${formattedPlacements.join("; ")}. This creates ${severity} Mangal Dosha.`;
+  return `In your chart, Mars is positioned in sensitive houses: ${formattedPlacements.join(", ")}. This planetary configuration creates ${severity} Mangal Dosha.`;
 }
 
 export function getMangalRemediesSeer(mangal: DoshaResult): string[] {
@@ -83,9 +95,14 @@ export function getShaniExplanationSeer(shani: DoshaResult): string {
     return `Saturn is approaching your Moon sign area. Sade Sati effects are beginning to manifest gradually in your life.`;
   }
   
-  const moonPlacement = shani.placements.find(p => p.toLowerCase().includes("moon")) || "";
+  // Extract specific positions from placements
   const saturnPlacement = shani.placements.find(p => p.toLowerCase().includes("saturn")) || "";
   const phase = shani.triggeredBy.find(t => t.toLowerCase().includes("phase")) || "";
+  
+  // Parse Saturn's house and sign from placement
+  const saturnMatch = saturnPlacement.match(/Saturn in H(\d+) \(([^)]+)\)/);
+  const saturnHouse = saturnMatch ? saturnMatch[1] : null;
+  const saturnSignInfo = saturnMatch ? saturnMatch[2] : null;
   
   let phaseMeaning = "";
   if (phase.includes("1") || phase.toLowerCase().includes("rising")) {
@@ -96,9 +113,14 @@ export function getShaniExplanationSeer(shani: DoshaResult): string {
     phaseMeaning = "This is the Setting Phase (Ast Charan), indicating Sade Sati is nearing its end.";
   }
   
-  if (moonPlacement && saturnPlacement) {
-    return `In your chart, ${moonPlacement} and ${saturnPlacement}. ${phaseMeaning}`;
+  if (saturnHouse && saturnSignInfo) {
+    return `In your chart, Saturn is placed in the ${saturnHouse}th house (${saturnSignInfo}), transiting near your natal Moon. ${phaseMeaning}`;
   }
+  
+  if (saturnPlacement) {
+    return `In your chart, ${saturnPlacement}. Saturn is transiting near your natal Moon, activating Sade Sati. ${phaseMeaning}`;
+  }
+  
   return `Saturn is transiting near your natal Moon sign, activating Sade Sati. ${phaseMeaning}`;
 }
 
@@ -118,15 +140,27 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   const typeLine = kaalSarp.placements.find(p => p.includes("Type:"));
   const type = typeLine ? typeLine.replace("Type:", "").trim() : "Kaal Sarp Dosha";
   
-  const rahuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("rahu")) || "";
-  const ketuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("ketu")) || "";
+  // Extract Rahu and Ketu positions with house and sign info
+  const rahuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("rahu at")) || "";
+  const ketuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("ketu at")) || "";
+  
+  // Parse positions for clearer explanation
+  const rahuMatch = rahuPlacement.match(/Rahu at ([\d.]+)° \((\w+)\)/);
+  const ketuMatch = ketuPlacement.match(/Ketu at ([\d.]+)° \((\w+)\)/);
+  
+  const rahuSign = rahuMatch ? rahuMatch[2] : null;
+  const ketuSign = ketuMatch ? ketuMatch[2] : null;
   
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {
-    return `In your chart, all planets are positioned between ${rahuPlacement || "Rahu"} and ${ketuPlacement || "Ketu"}, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
+    const edgePlanet = kaalSarp.notes.find(n => n.includes("at edge"));
+    if (rahuSign && ketuSign) {
+      return `In your chart, Rahu is in ${rahuSign} and Ketu is in ${ketuSign}, with all other planets between them. ${edgePlanet ? edgePlanet + '. ' : ''}This forms ${type} with reduced intensity due to planetary boundary position.`;
+    }
+    return `In your chart, all planets are positioned between Rahu and Ketu, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
   }
   
-  if (rahuPlacement && ketuPlacement) {
-    return `In your chart, ${rahuPlacement} and ${ketuPlacement}, with all other planets hemmed between them. This forms ${type}.`;
+  if (rahuSign && ketuSign) {
+    return `In your chart, Rahu is positioned in ${rahuSign} and Ketu in ${ketuSign}. All seven classical planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between this axis, forming ${type}.`;
   }
   
   return `All seven classical planets in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;

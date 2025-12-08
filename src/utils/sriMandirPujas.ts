@@ -37,6 +37,20 @@ const HINDI_TO_ENGLISH_TITLES: Record<string, string> = {
   'राहु पूजा': 'Rahu Puja',
   'केतु पूजा': 'Ketu Puja',
   'नवग्रह शांति पूजा, शनि तिल तेल अभिषेक और पाप ग्रह शांति यज्ञ': 'Navagraha Shanti Puja, Shani Til Tel Abhishek and Paap Graha Shanti Yagya',
+  // Additional translations for 30-day Mangal Puja
+  '30 दिन मंगल दोष निवारण पूजा': '30-Day Mangal Dosha Nivaran Puja',
+  '30 दिनों में मंगल दोष निवारण पूजा': '30-Day Mangal Dosha Nivaran Puja',
+  '30 दिन मंगल पूजा': '30-Day Mangal Puja',
+  '30 लाख मंगल जाप': '30 Lakh Mangal Jaap',
+  // Shani related
+  'शनि साढ़ेसाती शांति पूजा': 'Shani Sade Sati Shanti Puja',
+  'शनि महादशा शांति पूजा': 'Shani Mahadasha Shanti Puja',
+  'शनि दोष निवारण पूजा': 'Shani Dosha Nivaran Puja',
+  // Kaal Sarp related
+  'काल सर्प दोष निवारण महापूजा': 'Kaal Sarp Dosha Nivaran Mahapuja',
+  // Pitra related
+  'पिशाच मोचन कुंड पूजा': 'Pishach Mochan Kund Puja',
+  'पितृ तर्पण पूजा': 'Pitru Tarpan Puja',
 };
 
 // Word-level translations for fallback (comprehensive list)

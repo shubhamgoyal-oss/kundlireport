@@ -46,15 +46,18 @@ interface DoshaResultsProps {
     remedies: string[];
   }>;
   calculationId?: string | null;
+  problemArea?: string;
 }
 
-export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsProps) => {
+export const DoshaResults = ({ summary, details, calculationId, problemArea }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
   const [hasTrackedBookPuja, setHasTrackedBookPuja] = useState(false);
   const [translatedExplanations, setTranslatedExplanations] = useState<Record<string, string>>({});
   const [isTranslating, setIsTranslating] = useState(false);
+  const [personalizedImpacts, setPersonalizedImpacts] = useState<Record<string, { title: string; text: string }>>({});
+  const [isLoadingImpacts, setIsLoadingImpacts] = useState(false);
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
@@ -111,6 +114,64 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
     translateAllExplanations();
   }, [isHindi, details]);
 
+  // Generate personalized impacts when problemArea is provided
+  useEffect(() => {
+    if (!problemArea || problemArea.trim().length === 0) {
+      setPersonalizedImpacts({});
+      return;
+    }
+
+    // Helper functions defined inline to avoid hoisting issues
+    const checkDoshaPresent = (status?: string) => {
+      const s = (status || '').toLowerCase();
+      return s === 'present' || s === 'active' || s === 'partial';
+    };
+    const checkDoshaNullified = (status?: string) => {
+      const s = (status || '').toLowerCase();
+      return s.includes('nullified');
+    };
+
+    const generateImpacts = async () => {
+      setIsLoadingImpacts(true);
+      const impacts: Record<string, { title: string; text: string }> = {};
+      
+      const doshaTypes = ['mangal', 'kaal-sarp', 'pitra', 'shani'];
+      const activeTypes = doshaTypes.filter(type => {
+        if (type === 'mangal') return checkDoshaPresent(summary.mangal) && !checkDoshaNullified(summary.mangal);
+        if (type === 'kaal-sarp') return checkDoshaPresent(summary.kaalSarp);
+        if (type === 'pitra') return checkDoshaPresent(summary.pitra);
+        if (type === 'shani') return checkDoshaPresent(summary.shaniSadeSati);
+        return false;
+      });
+
+      const promises = activeTypes.map(async (doshaType) => {
+        try {
+          const response = await supabase.functions.invoke('generate-impact', {
+            body: {
+              doshaType,
+              problemArea,
+              language: isHindi ? 'hi' : 'en'
+            }
+          });
+          if (response.data?.impactText) {
+            impacts[doshaType] = {
+              title: response.data.impactTitle || (isHindi ? 'प्रभाव' : 'Impact if Present'),
+              text: response.data.impactText
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to generate impact for ${doshaType}:`, error);
+        }
+      });
+
+      await Promise.all(promises);
+      setPersonalizedImpacts(impacts);
+      setIsLoadingImpacts(false);
+    };
+
+    generateImpacts();
+  }, [problemArea, isHindi, summary]);
+
   useEffect(() => {
     trackEvent('dosha_results_viewed', {
       metadata: {
@@ -119,7 +180,8 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
         mangal: summary.mangal,
         kaal_sarp: summary.kaalSarp,
         pitra: summary.pitra,
-        shani_sade_sati: summary.shaniSadeSati
+        shani_sade_sati: summary.shaniSadeSati,
+        problem_area: problemArea
       }
     });
     
@@ -573,11 +635,18 @@ export const DoshaResults = ({ summary, details, calculationId }: DoshaResultsPr
               {/* Impact Box */}
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
                 <h4 className="font-semibold text-sm mb-2 text-destructive">
-                  {isHindi ? 'प्रभाव' : 'Impact if Present'}
+                  {personalizedImpacts[dosha.pujaType]?.title || (isHindi ? 'प्रभाव' : 'Impact if Present')}
                 </h4>
-                <p className="text-sm text-muted-foreground">
-                  {dosha.impact}
-                </p>
+                {isLoadingImpacts ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isHindi ? 'प्रभाव विश्लेषण हो रहा है...' : 'Analyzing impact...'}</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {personalizedImpacts[dosha.pujaType]?.text || dosha.impact}
+                  </p>
+                )}
               </div>
 
               {/* Puja Recommendation */}

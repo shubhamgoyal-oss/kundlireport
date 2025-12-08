@@ -11,44 +11,49 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
     return `Mars in your chart is not positioned in any of the sensitive houses (1st, 2nd, 4th, 7th, 8th, or 12th) from your Lagna, Moon, or Venus. Your chart is free from Mangal Dosha.`;
   }
   
+  // Extract specific house placements from reasons
+  const housePlacements: string[] = [];
+  for (const placement of mangal.placements) {
+    const ascMatch = placement.match(/Mars in H(\d+) from Ascendant/);
+    if (ascMatch) {
+      housePlacements.push(`${ascMatch[1]}th house from Lagna`);
+    }
+    const moonMatch = placement.match(/Mars in H(\d+) from Moon/);
+    if (moonMatch) {
+      housePlacements.push(`${moonMatch[1]}th house from Moon`);
+    }
+    const venusMatch = placement.match(/Mars in H(\d+) from Venus/);
+    if (venusMatch) {
+      housePlacements.push(`${venusMatch[1]}th house from Venus`);
+    }
+  }
+  
+  // Get Mars sign from debug info if available
+  const marsSignMatch = mangal.placements.find(p => p.includes("(") && p.includes(")"));
+  const signInfo = marsSignMatch ? marsSignMatch.match(/\(([^)]+)\)/)?.[1] : null;
+  
   if (mangal.status === "partial") {
+    if (housePlacements.length > 0) {
+      return `In your chart, Mars is placed in the ${housePlacements.join(" and ")}${signInfo ? ` in ${signInfo}` : ''}. This triggers Mangal Dosha from Moon/Venus but not from Lagna, resulting in mild effects.`;
+    }
     const placement = mangal.placements[0] || "Mars is in a secondary position";
     return `In your chart, ${placement}. This triggers Mangal Dosha from Moon/Venus but not from Lagna, resulting in mild effects.`;
   }
   
-  // Build a proper sentence from placements with specific house numbers
+  // Full presence - build clear sentence with all house references
   const severity = mangal.severity || "moderate";
-  const placementsList = mangal.placements.filter(p => p.length > 0);
   
+  if (housePlacements.length > 0) {
+    return `In your chart, Mars is placed in the ${housePlacements.join(" and ")}${signInfo ? ` in ${signInfo}` : ''}. These are sensitive positions for Mars, creating ${severity} Mangal Dosha.`;
+  }
+  
+  // Fallback with basic placement info
+  const placementsList = mangal.placements.filter(p => p.length > 0);
   if (placementsList.length === 0) {
     return `In your chart, Mars occupies a sensitive house, creating ${severity} Mangal Dosha.`;
   }
   
-  // Extract house number from first placement for clear explanation
-  const firstPlacement = placementsList[0];
-  const houseMatch = firstPlacement.match(/H(\d+)/);
-  const houseNum = houseMatch ? houseMatch[1] : null;
-  const signMatch = firstPlacement.match(/\(([^)]+)\)/);
-  const signInfo = signMatch ? signMatch[1] : '';
-  
-  if (placementsList.length === 1) {
-    if (houseNum) {
-      return `In your chart, Mars is placed in the ${houseNum}th house${signInfo ? ` (${signInfo})` : ''}. This is a sensitive house for Mars, creating ${severity} Mangal Dosha.`;
-    }
-    return `In your chart, ${placementsList[0]}. This creates ${severity} Mangal Dosha.`;
-  }
-  
-  // Multiple placements - format with clear house references
-  const formattedPlacements = placementsList.map(p => {
-    // Extract house number and format clearly
-    const match = p.match(/Mars in H(\d+) from (\w+)/);
-    if (match) {
-      return `${match[1]}th house from ${match[2]}`;
-    }
-    return p;
-  });
-  
-  return `In your chart, Mars is positioned in sensitive houses: ${formattedPlacements.join(", ")}. This planetary configuration creates ${severity} Mangal Dosha.`;
+  return `In your chart, ${placementsList[0]}. This creates ${severity} Mangal Dosha.`;
 }
 
 export function getMangalRemediesSeer(mangal: DoshaResult): string[] {

@@ -24,9 +24,9 @@ const resources = {
         clickHere: 'Click here',
       },
       trust: {
-        trust1: 'Trusted by 30 million+ people',
-        trust2: "India's largest app for Hindu devotees",
-        trust3: '100% secure',
+        trust1: "Results verified by India's top astrologers",
+        trust2: 'Based on Vedic principles & precise planetary positions',
+        trust3: 'Trusted by 30 Lakh+ users',
       },
       reviews: {
         heading: 'What Our Devotees Say',
@@ -325,9 +325,9 @@ const resources = {
         clickHere: 'यहाँ क्लिक करें',
       },
       trust: {
-        trust1: '3 करोड़+ लोगों का भरोसा',
-        trust2: 'हिन्दू भक्तों के लिए भारत का सबसे बड़ा ऐप',
-        trust3: '100% सुरक्षित',
+        trust1: 'भारत के शीर्ष ज्योतिषियों द्वारा सत्यापित परिणाम',
+        trust2: 'वैदिक सिद्धांतों और सटीक ग्रह स्थितियों पर आधारित',
+        trust3: '30 लाख+ उपयोगकर्ताओं का भरोसा',
       },
       reviews: {
         heading: 'हमारे भक्त क्या कहते हैं',

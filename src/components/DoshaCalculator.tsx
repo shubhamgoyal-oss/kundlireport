@@ -8,18 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User } from 'lucide-react';
+import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { searchPlaces, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
 import { DateOfBirthPicker } from './DateOfBirthPicker';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 
 // Form validation schema - name is mandatory
 const birthInputSchema = z
   .object({
+    problemArea: z.string().max(50, "Maximum 50 characters allowed").optional(),
     name: z.string().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
     gender: z.enum(["M", "F"], { required_error: "Gender is required" }),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)"),
@@ -102,6 +104,16 @@ const DoshaCalculator = () => {
 
   const unknownTime = watch('unknownTime');
   const placeValue = watch('place');
+  const problemAreaValue = watch('problemArea');
+  const [showProblemSuggestions, setShowProblemSuggestions] = useState(false);
+  
+  // Suggested problem options
+  const problemSuggestions = [
+    { en: 'My marriage is delayed', hi: 'मेरी शादी में देरी हो रही है' },
+    { en: 'I am facing financial challenges', hi: 'मुझे आर्थिक समस्याएं हो रही हैं' },
+    { en: 'I am not able to find a job', hi: 'मुझे नौकरी नहीं मिल रही' },
+    { en: 'I am facing health issues', hi: 'मुझे स्वास्थ्य समस्याएं हैं' },
+  ];
 
   const handlePlaceSearch = (searchTerm: string) => {
     if (searchTimer) {
@@ -326,6 +338,73 @@ const DoshaCalculator = () => {
           toast.error(msg);
         })} className="space-y-4 sm:space-y-6">
 
+          {/* Problem Area - First Question */}
+          <div className="space-y-2 relative">
+            <Label htmlFor="problemArea" className="flex items-center gap-2 text-sm sm:text-base">
+              <HelpCircle className="w-4 h-4 flex-shrink-0" />
+              {t('dosha.problemAreaLabel', 'Which is the biggest problem area of your life?')}
+            </Label>
+            <Input
+              id="problemArea"
+              type="text"
+              {...register('problemArea', {
+                onChange: (e) => {
+                  if (e.target.value) {
+                    trackFieldFilled('problemArea');
+                    setShowProblemSuggestions(false);
+                  }
+                }
+              })}
+              placeholder={t('dosha.problemAreaPlaceholder', 'e.g. Job, Marriage, Health, Money')}
+              className="bg-input min-h-[44px] text-base"
+              maxLength={50}
+              onFocus={() => {
+                if (!problemAreaValue) {
+                  setShowProblemSuggestions(true);
+                }
+              }}
+              onBlur={() => {
+                // Delay to allow click on suggestion
+                setTimeout(() => setShowProblemSuggestions(false), 200);
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t('dosha.problemAreaHint', 'Max 50 characters')}
+            </p>
+            
+            {/* Problem Suggestions Dropdown */}
+            {showProblemSuggestions && !problemAreaValue && (
+              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg">
+                <div className="px-3 py-2 border-b border-border">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {t('dosha.suggestions', 'Suggestions')}
+                  </span>
+                </div>
+                {problemSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className="w-full text-left px-4 py-3 hover:bg-accent transition-colors text-sm"
+                    onClick={() => {
+                      const text = i18n.language?.startsWith('hi') ? suggestion.hi : suggestion.en;
+                      setValue('problemArea', text);
+                      setShowProblemSuggestions(false);
+                      trackFieldFilled('problemArea');
+                    }}
+                  >
+                    {i18n.language?.startsWith('hi') ? suggestion.hi : suggestion.en}
+                  </button>
+                ))}
+              </div>
+            )}
+            {errors.problemArea && (
+              <p className="text-sm text-destructive flex items-center gap-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.problemArea.message}
+              </p>
+            )}
+          </div>
+
           {/* Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className="flex items-center gap-2 text-sm sm:text-base">
@@ -531,6 +610,7 @@ const DoshaCalculator = () => {
           summary={doshaResults.summary}
           details={doshaResults.details}
           calculationId={calculationId}
+          problemArea={watch('problemArea')}
         />
       )}
     </>

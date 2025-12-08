@@ -185,14 +185,20 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       }
     });
     
-    if (statusMessageRef.current) {
-      setTimeout(() => {
-        statusMessageRef.current?.scrollIntoView({
+    // Scroll to status message after component renders
+    const scrollToResults = () => {
+      if (statusMessageRef.current) {
+        statusMessageRef.current.scrollIntoView({
           behavior: 'smooth',
           block: 'start',
         });
-      }, 150);
-    }
+      }
+    };
+    
+    // Use multiple attempts to ensure scroll happens after DOM is ready
+    setTimeout(scrollToResults, 100);
+    setTimeout(scrollToResults, 300);
+    setTimeout(scrollToResults, 500);
 
     setIsLoadingPujas(true);
     fetchSriMandirPujas()

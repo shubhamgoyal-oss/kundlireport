@@ -86,37 +86,29 @@ serve(async (req) => {
     const systemPrompt = isHindi 
       ? `आप एक वैदिक ज्योतिषी हैं। ${info.planetHi} दोष का प्रभाव समझाएं।
 
-ज्योतिषीय तथ्य: ${info.vedicContextHi}
-
 नियम:
-- 3 वाक्य लिखें, हर वाक्य 15-20 शब्दों का
-- पहला वाक्य: ${info.planetHi} की ${info.energyHi} इस समस्या से सीधे कैसे जुड़ी है
-- दूसरा वाक्य: कुंडली में इस ग्रह स्थिति से जीवन में कौन सी विशिष्ट बाधाएं आती हैं
-- तीसरा वाक्य: बिना ज्योतिषीय उपाय के यह चक्र क्यों दोहराता रहता है
-- सरल हिंदी में लिखें
-- वैदिक ज्योतिष के सिद्धांतों पर आधारित हो`
-      : `You are a Vedic astrologer. Explain how ${info.planet} dosha impacts the user's life.
-
-Vedic fact: ${info.vedicContext}
+- केवल 2 वाक्य लिखें, हर वाक्य 12-15 शब्दों का
+- पहला वाक्य: ${info.planetHi} की ऊर्जा इस समस्या से कैसे जुड़ी है
+- दूसरा वाक्य: इससे जीवन में क्या रुकावट आती है
+- सरल हिंदी, कोई जटिल शब्द नहीं`
+      : `You are a Vedic astrologer. Explain how ${info.planet} dosha impacts life.
 
 Rules:
-- Write exactly 3 sentences, each 15-20 words
-- Sentence 1: How ${info.planet}'s ${info.energy} directly connects to this specific problem
-- Sentence 2: What specific life blocks this planetary placement creates in the birth chart
-- Sentence 3: Why this karmic cycle repeats without astrological remedies
-- Use clear, simple language but include specific planetary effects
-- Reference houses, aspects, or transits where relevant
-- Make it convincing - the reader should feel this applies to them`;
+- Write exactly 2 sentences only, each 12-15 words max
+- Sentence 1: How ${info.planet}'s energy connects to this problem
+- Sentence 2: What life obstacle this creates
+- Use very simple English, no complex words
+- Be direct and clear, no filler words`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
-व्यक्ति की समस्या: ${problemArea}
+समस्या: ${problemArea}
 
-वैदिक ज्योतिष के अनुसार विस्तार से बताएं कि ${info.planetHi} की ऊर्जा इस समस्या को कैसे बढ़ा रही है। ग्रह प्रभाव और जीवन पर असर स्पष्ट करें।`
+बताएं कि ${info.planetHi} की ऊर्जा इस समस्या को कैसे प्रभावित करती है।`
       : `Dosha: ${doshaType}
-Person's problem: ${problemArea}
+Problem: ${problemArea}
 
-Explain in detail how ${info.planet}'s energy intensifies this problem according to Vedic astrology. Be specific about planetary effects and life impact. Make the person understand why they are facing this.`;
+Explain how ${info.planet}'s energy affects this problem. Keep it short and simple.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

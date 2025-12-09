@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink, getCoverImageUrl } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 
@@ -106,10 +106,10 @@ export const SriMandirPujaCarousel = ({
             >
               <div className="relative">
                 {/* Image */}
-                {puja.cover_media_url && (
+                {getCoverImageUrl(puja, currentLang) && (
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
                     <img
-                      src={puja.cover_media_url}
+                      src={getCoverImageUrl(puja, currentLang)}
                       alt={getPujaTitle(puja, currentLang)}
                       className="w-full h-full object-contain"
                     />

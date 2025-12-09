@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink, getCoverImageUrl } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 
@@ -20,6 +20,7 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
   const displayTempleName = getTempleName(puja, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
   const pujaLink = getPujaLink(puja, currentLang);
+  const coverImageUrl = getCoverImageUrl(puja, currentLang);
 
   const handleBookClick = async () => {
     trackEvent('srimandir_puja_click', {
@@ -45,10 +46,10 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="relative">
         {/* Image */}
-        {puja.cover_media_url && (
+        {coverImageUrl && (
           <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
             <img
-              src={puja.cover_media_url}
+              src={coverImageUrl}
               alt={displayTitle}
               className="w-full h-full object-contain"
             />

@@ -9,6 +9,7 @@ export interface SriMandirPuja {
   pooja_title_english?: string;
   temple_name_english?: string;
   cover_media_url: string;
+  cover_media_url_english?: string;
   puja_link: string;
   puja_link_hindi: string;
   individual_pack_price_inr: number;
@@ -211,6 +212,10 @@ function parseCSV(csvText: string): SriMandirPuja[] {
         'temple name english', 'temple_name_english', 'temple english', 'english temple name'
       ]);
 
+      const coverMediaUrlEn = getFieldInsensitive(puja, [
+        'cover image english', 'cover_image_english', 'cover media url english', 'cover_media_url_english', 'english cover image'
+      ]);
+
       pujas.push({
         store_id: puja.store_id,
         pooja_title: puja.pooja_title,
@@ -218,6 +223,7 @@ function parseCSV(csvText: string): SriMandirPuja[] {
         pooja_title_english: poojaTitleEn,
         temple_name_english: templeNameEn,
         cover_media_url: puja.cover_media_url || '',
+        cover_media_url_english: coverMediaUrlEn || '',
         puja_link: puja.puja_link || puja.pooja_link || '',
         puja_link_hindi:
           puja.puja_link_hindi ||
@@ -537,4 +543,16 @@ export function getPujaLink(puja: SriMandirPuja, language: string): string {
     return puja.puja_link_hindi || puja.puja_link;
   }
   return puja.puja_link || puja.puja_link_hindi;
+}
+
+/**
+ * Get the appropriate cover image URL based on language
+ */
+export function getCoverImageUrl(puja: SriMandirPuja, language: string): string {
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  if (isHindi) {
+    return puja.cover_media_url || puja.cover_media_url_english || '';
+  }
+  // For English, prefer English cover image if available
+  return puja.cover_media_url_english || puja.cover_media_url || '';
 }

@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink } from '@/utils/sriMandirPujas';
+import { SriMandirPuja, getPujaTitle, getTempleName, formatScheduleDate, getPujaLink, getCoverImageUrl } from '@/utils/sriMandirPujas';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
 
@@ -22,6 +22,7 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
   const displayTempleName = getTempleName(puja, currentLang);
   const formattedDate = formatScheduleDate(puja.schedule_date_ist, currentLang);
   const pujaLink = getPujaLink(puja, currentLang);
+  const coverImageUrl = getCoverImageUrl(puja, currentLang);
   
   console.log('Display title after translation:', displayTitle, 'Link used:', pujaLink);
 
@@ -40,10 +41,10 @@ export const SriMandirPujaCard = ({ puja, doshaType }: SriMandirPujaCardProps) =
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       <div className="flex flex-col sm:flex-row">
         {/* Image */}
-        {puja.cover_media_url && (
+        {coverImageUrl && (
           <div className="w-full sm:w-40 h-40 sm:h-auto flex-shrink-0">
             <img
-              src={puja.cover_media_url}
+              src={coverImageUrl}
               alt={displayTitle}
               className="w-full h-full object-cover"
             />

@@ -87,18 +87,20 @@ serve(async (req) => {
       ? `आप एक वैदिक ज्योतिषी हैं। ${info.planetHi} दोष का प्रभाव समझाएं।
 
 नियम:
-- केवल 2 वाक्य लिखें, हर वाक्य 12-15 शब्दों का
+- 3 वाक्य लिखें, हर वाक्य 12-15 शब्दों का
 - पहला वाक्य: ${info.planetHi} की ऊर्जा इस समस्या से कैसे जुड़ी है
 - दूसरा वाक्य: इससे जीवन में क्या रुकावट आती है
-- सरल हिंदी, कोई जटिल शब्द नहीं`
+- तीसरा वाक्य: बिना उपाय के यह क्यों जारी रहता है
+- सरल हिंदी, स्पष्ट और सीधा`
       : `You are a Vedic astrologer. Explain how ${info.planet} dosha impacts life.
 
 Rules:
-- Write exactly 2 sentences only, each 12-15 words max
-- Sentence 1: How ${info.planet}'s energy connects to this problem
-- Sentence 2: What life obstacle this creates
-- Use very simple English, no complex words
-- Be direct and clear, no filler words`;
+- Write exactly 3 sentences, each 12-15 words max
+- Sentence 1: How ${info.planet}'s energy connects to this specific problem
+- Sentence 2: What life obstacle or block this creates
+- Sentence 3: Why this pattern continues without remedies
+- Use simple, clear English - no complex astrological jargon
+- Be specific but concise`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
@@ -108,7 +110,7 @@ Rules:
       : `Dosha: ${doshaType}
 Problem: ${problemArea}
 
-Explain how ${info.planet}'s energy affects this problem. Keep it short and simple.`;
+Explain how ${info.planet}'s energy affects this problem. Be clear and specific but keep it concise.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

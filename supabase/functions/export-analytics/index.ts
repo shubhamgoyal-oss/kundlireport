@@ -51,7 +51,8 @@ serve(async (req) => {
       'callback_requests',
       'traffic_sources',
       'seer_api_logs',
-      'expert_chat_logs'
+      'expert_chat_logs',
+      'problem_area_selections'
     ];
 
     if (!allowedTables.includes(table)) {

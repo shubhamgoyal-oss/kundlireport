@@ -999,12 +999,10 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
         />
       </div>
 
-      {/* Disclaimer */}
-      <div className="p-4 bg-accent/10 border border-accent/30 rounded-md">
-        <p className="text-xs text-muted-foreground">
-          {t('doshaResults.disclaimer')}
-        </p>
-      </div>
+      {/* Subtle Disclaimer */}
+      <p className="text-xs text-muted-foreground/70 text-center mt-6 px-4">
+        {t('doshaResults.disclaimer')}
+      </p>
       
       {/* Callback Floater */}
       <CallbackFloater calculationId={calculationId} />

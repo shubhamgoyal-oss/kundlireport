@@ -957,6 +957,11 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
         }}
       />
 
+      {/* Subtle Disclaimer */}
+      <p className="text-xs text-muted-foreground/70 text-center mt-8 px-4">
+        {t('doshaResults.disclaimer')}
+      </p>
+
       {/* Sri Mandir Other Remedies */}
       {pujas.length > 0 && (
         <div className="mt-8 space-y-4">
@@ -998,11 +1003,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
           }}
         />
       </div>
-
-      {/* Subtle Disclaimer */}
-      <p className="text-xs text-muted-foreground/70 text-center mt-6 px-4">
-        {t('doshaResults.disclaimer')}
-      </p>
       
       {/* Callback Floater */}
       <CallbackFloater calculationId={calculationId} />

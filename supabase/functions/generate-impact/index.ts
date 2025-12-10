@@ -91,7 +91,8 @@ serve(async (req) => {
 - पहला वाक्य: ${info.planetHi} की ऊर्जा इस समस्या से कैसे जुड़ी है
 - दूसरा वाक्य: इससे जीवन में क्या रुकावट आती है
 - तीसरा वाक्य: बिना उपाय के यह क्यों जारी रहता है
-- सरल हिंदी, स्पष्ट और सीधा`
+- सरल हिंदी, स्पष्ट और सीधा
+- आपको केवल हिंदी में जवाब देना है`
       : `You are a Vedic astrologer. Explain how ${info.planet} dosha impacts life.
 
 Rules:
@@ -100,7 +101,8 @@ Rules:
 - Sentence 2: What life obstacle or block this creates
 - Sentence 3: Why this pattern continues without remedies
 - Use simple, clear English - no complex astrological jargon
-- Be specific but concise`;
+- Be specific but concise
+- CRITICAL: You MUST respond in English only, even if the problem description is in Hindi or another language. Always output English text.`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
@@ -110,6 +112,7 @@ Rules:
       : `Dosha: ${doshaType}
 Problem: ${problemArea}
 
+IMPORTANT: The problem above may be written in Hindi or another language. You MUST translate the meaning and respond entirely in English.
 Explain how ${info.planet}'s energy affects this problem. Be clear and specific but keep it concise.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {

@@ -114,10 +114,15 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     translateAllExplanations();
   }, [isHindi, details]);
 
-  // Generate personalized impacts when problemArea is provided
+  // Track current language to force regeneration on language change
+  const currentLanguage = i18n.language;
+
+  // Generate personalized impacts when problemArea is provided or language changes
   useEffect(() => {
+    // Clear impacts when language changes to force regeneration in new language
+    setPersonalizedImpacts({});
+    
     if (!problemArea || problemArea.trim().length === 0) {
-      setPersonalizedImpacts({});
       return;
     }
 
@@ -130,6 +135,9 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       const s = (status || '').toLowerCase();
       return s.includes('nullified');
     };
+
+    // Determine language at generation time to ensure correct value
+    const languageForGeneration = currentLanguage?.toLowerCase().startsWith('hi') ? 'hi' : 'en';
 
     const generateImpacts = async () => {
       setIsLoadingImpacts(true);
@@ -144,18 +152,21 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
         return false;
       });
 
+      console.log('[DoshaResults] Generating impacts for language:', languageForGeneration, 'doshas:', activeTypes);
+
       const promises = activeTypes.map(async (doshaType) => {
         try {
           const response = await supabase.functions.invoke('generate-impact', {
             body: {
               doshaType,
               problemArea,
-              language: isHindi ? 'hi' : 'en'
+              language: languageForGeneration
             }
           });
           if (response.data?.impactText) {
+            const isHindiLang = languageForGeneration === 'hi';
             impacts[doshaType] = {
-              title: response.data.impactTitle || (isHindi ? 'प्रभाव' : 'Impact if Present'),
+              title: response.data.impactTitle || (isHindiLang ? 'प्रभाव' : 'Impact if Present'),
               text: response.data.impactText
             };
           }
@@ -170,7 +181,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     };
 
     generateImpacts();
-  }, [problemArea, isHindi, summary]);
+  }, [problemArea, currentLanguage, summary]);
 
   useEffect(() => {
     trackEvent('dosha_results_viewed', {

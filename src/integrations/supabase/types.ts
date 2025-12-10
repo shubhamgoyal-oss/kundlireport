@@ -433,6 +433,48 @@ export type Database = {
         }
         Relationships: []
       }
+      problem_area_selections: {
+        Row: {
+          calculation_id: string | null
+          created_at: string
+          id: string
+          language: string | null
+          problem_area: string
+          session_id: string
+          user_city: string | null
+          user_country: string | null
+          user_latitude: number | null
+          user_longitude: number | null
+          visitor_id: string
+        }
+        Insert: {
+          calculation_id?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          problem_area: string
+          session_id: string
+          user_city?: string | null
+          user_country?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
+          visitor_id: string
+        }
+        Update: {
+          calculation_id?: string | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          problem_area?: string
+          session_id?: string
+          user_city?: string | null
+          user_country?: string | null
+          user_latitude?: number | null
+          user_longitude?: number | null
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

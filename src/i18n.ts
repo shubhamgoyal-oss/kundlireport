@@ -147,7 +147,7 @@ const resources = {
         traditionalRemedies: 'Traditional Remedies',
         sriMandirRemedies: 'Sri Mandir Offered Remedies',
         upcomingPujas: 'upcoming pujas available',
-        disclaimer: '⚠️ Important: These results depend on birth-time precision and the chosen ayanamsha (Lahiri). This is an educational tool based on classical Jyotish rules; not medical, legal, or financial advice. Consult a qualified Vedic astrologer for personalized guidance.',
+        disclaimer: 'While we follow established astrological rules, dosha interpretation can vary among astrologers. We recommend consulting an astrologer you trust if you wish to explore additional viewpoints.',
         educationalTool: '⚠️ This is an educational tool based on popular Jyotish rules. Interpret with discretion.',
         statusValues: {
           present: 'Present',
@@ -448,7 +448,7 @@ const resources = {
         traditionalRemedies: 'पारंपरिक उपचार',
         sriMandirRemedies: 'श्री मंदिर की पेशकश किए गए उपचार',
         upcomingPujas: 'आगामी पूजाएं उपलब्ध',
-        disclaimer: '⚠️ महत्वपूर्ण: ये परिणाम जन्म-समय की सटीकता और चुने गए अयनांश (लाहिड़ी) पर निर्भर करते हैं। यह शास्त्रीय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है; चिकित्सा, कानूनी या वित्तीय सलाह नहीं। व्यक्तिगत मार्गदर्शन के लिए एक योग्य वैदिक ज्योतिषी से परामर्श करें।',
+        disclaimer: 'हम स्थापित ज्योतिषीय नियमों का पालन करते हैं, परंतु दोष की व्याख्या विभिन्न ज्योतिषियों में भिन्न हो सकती है। यदि आप अन्य दृष्टिकोण जानना चाहें तो किसी विश्वसनीय ज्योतिषी से परामर्श करें।',
         educationalTool: '⚠️ यह लोकप्रिय ज्योतिष नियमों पर आधारित एक शैक्षिक उपकरण है। विवेक के साथ व्याख्या करें।',
         statusValues: {
           present: 'उपस्थित',

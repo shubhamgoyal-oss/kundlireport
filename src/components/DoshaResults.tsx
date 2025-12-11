@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2, Star, Eclipse } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
@@ -937,6 +937,98 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
                   <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
                   <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                     {(t('doshaResults.sadeSati.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Brihaspati Rahu Dosha */}
+            <AccordionItem value="brihaspatiRahu" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Star className="w-5 h-5 text-amber-500" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.brihaspatiRahu.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.brihaspatiRahu)}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.brihaspatiRahu.description')}</p>
+                {details.brihaspatiRahu && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.brihaspatiRahu || details.brihaspatiRahu.explanation) : details.brihaspatiRahu.explanation}
+                      </p>
+                    </div>
+                    {details.brihaspatiRahu.placements && details.brihaspatiRahu.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.brihaspatiRahu.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.brihaspatiRahu.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
+                      <li key={i}>{remedy}</li>
+                    ))}
+                  </ul>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* Rahu Ketu Dosha */}
+            <AccordionItem value="rahuKetu" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Eclipse className="w-5 h-5 text-indigo-500" />
+                  <div className="text-left">
+                    <h3 className="font-semibold text-lg">{t('doshaResults.rahuKetu.name')}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {t('doshaResults.status')}: {translateStatus(summary.rahuKetu)}
+                    </p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-4 space-y-4">
+                <p className="text-sm text-muted-foreground italic">{t('doshaResults.rahuKetu.description')}</p>
+                {details.rahuKetu && (
+                  <>
+                    <div>
+                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {isHindi ? (translatedExplanations.rahuKetu || details.rahuKetu.explanation) : details.rahuKetu.explanation}
+                      </p>
+                    </div>
+                    {details.rahuKetu.placements && details.rahuKetu.placements.length > 0 && (
+                      <div className="p-3 bg-accent/10 rounded-md">
+                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                          {details.rahuKetu.placements.map((p, i) => (
+                            <li key={i}>{translatePlacement(p)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div>
+                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
+                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                    {(t('doshaResults.rahuKetu.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
                       <li key={i}>{remedy}</li>
                     ))}
                   </ul>

@@ -92,6 +92,28 @@ serve(async (req) => {
         affectedAreas: 'delays in success, career obstacles, chronic health issues, bone/joint problems, loneliness, depression, financial hardship, patience tests, karma lessons',
         affectedAreasHi: 'सफलता में देरी, करियर में बाधाएं, दीर्घकालिक स्वास्थ्य समस्याएं, हड्डी/जोड़ों की समस्याएं, अकेलापन, अवसाद, आर्थिक कठिनाई',
         notAffected: 'Saturn affects bones, delays, and karma. NOT eyes (Sun/Moon), NOT blood (Mars), NOT sudden events (Rahu). Focus on slow, grinding challenges.'
+      },
+      'brihaspati-rahu': { 
+        planet: 'Jupiter (Brihaspati) conjunct Rahu', 
+        energy: 'confused wisdom energy where spiritual guidance becomes distorted by illusion and worldly desires',
+        planetHi: 'बृहस्पति और राहु की युति',
+        energyHi: 'भ्रमित ज्ञान ऊर्जा जहां आध्यात्मिक मार्गदर्शन भ्रम और सांसारिक इच्छाओं से विकृत हो जाता है',
+        vedicContext: 'When Jupiter (the planet of wisdom, dharma, and good fortune) conjuncts Rahu (the planet of illusion and worldly desires), the native may struggle with judgment, be misled by false gurus, or make unwise decisions despite good intentions.',
+        vedicContextHi: 'जब बृहस्पति (ज्ञान, धर्म और सौभाग्य का ग्रह) राहु (भ्रम और सांसारिक इच्छाओं का ग्रह) के साथ युति करता है, तो जातक निर्णय में संघर्ष कर सकता है, झूठे गुरुओं द्वारा भ्रमित हो सकता है, या अच्छे इरादों के बावजूद अविवेकी निर्णय ले सकता है।',
+        affectedAreas: 'judgment and decision-making, relationship with mentors/teachers, higher education, dharmic path, children and progeny, financial wisdom, legal matters, ethical choices',
+        affectedAreasHi: 'निर्णय और निर्णय लेना, गुरुओं/शिक्षकों के साथ संबंध, उच्च शिक्षा, धार्मिक मार्ग, संतान, वित्तीय बुद्धि, कानूनी मामले, नैतिक विकल्प',
+        notAffected: 'Brihaspati-Rahu affects wisdom, judgment, and guidance - NOT physical health directly. Focus on confusion in decision-making and misguided advice.'
+      },
+      'rahu-ketu': { 
+        planet: 'Rahu-Ketu eclipse axis (Grahan Yoga)', 
+        energy: 'eclipsed luminaries creating mental fog, anxiety, and sudden unexpected turns in life',
+        planetHi: 'राहु-केतु ग्रहण अक्ष (ग्रहण योग)',
+        energyHi: 'ग्रहित ज्योतियां जो मानसिक धुंध, चिंता और जीवन में अचानक अप्रत्याशित मोड़ पैदा करती हैं',
+        vedicContext: 'When Sun or Moon are closely conjunct with Rahu or Ketu, the luminaries become "eclipsed" creating patterns of mental confusion, fear of the unknown, and sudden changes that feel destabilizing.',
+        vedicContextHi: 'जब सूर्य या चंद्रमा राहु या केतु के साथ निकट युति में होते हैं, तो ज्योतियां "ग्रहित" हो जाती हैं, जिससे मानसिक भ्रम, अज्ञात का भय और अस्थिर करने वाले अचानक परिवर्तनों के पैटर्न बनते हैं।',
+        affectedAreas: 'mental clarity, emotional stability, sudden life changes, fear and anxiety, relationship with father (Sun-Rahu) or mother (Moon-Ketu), career stability, health of eyes and mind',
+        affectedAreasHi: 'मानसिक स्पष्टता, भावनात्मक स्थिरता, अचानक जीवन परिवर्तन, भय और चिंता, पिता (सूर्य-राहु) या माता (चंद्र-केतु) के साथ संबंध, करियर स्थिरता, आंखों और मन का स्वास्थ्य',
+        notAffected: 'Rahu-Ketu Dosha affects mind, clarity, and sudden changes - focus on mental patterns and unexpected life events, not chronic physical ailments.'
       }
     };
 

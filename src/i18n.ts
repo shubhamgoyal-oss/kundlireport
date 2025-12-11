@@ -202,18 +202,30 @@ const resources = {
             'Feed crows and help the disabled'
           ]
         },
+        brihaspatiRahu: {
+          name: 'Brihaspati Rahu Dosha',
+          description: 'Brihaspati Rahu Dosha — Jupiter conjunct with Rahu creates confusion between wisdom and illusion; affects judgment and guidance.',
+          impact: 'Judgment and mentor issues; promises versus outcomes may misalign. Decision-making can be clouded by overconfidence or deception.',
+          remedies: [
+            'Study with grounded mentors',
+            'Donate books or education items',
+            'Recite Guru Beej mantra on Thursdays',
+            'Visit Jupiter temples regularly'
+          ]
+        },
+        rahuKetu: {
+          name: 'Rahu Ketu Dosha',
+          description: 'Rahu Ketu Dosha — Sun or Moon closely aligned with Rahu/Ketu creating eclipse patterns affecting mental clarity and life direction.',
+          impact: 'Mood swings, detours, and anxiety; plans can feel eclipsed or delayed despite sincere effort.',
+          remedies: [
+            'Practice mindfulness and stable daily routines',
+            'Perform pranayama and breath practices',
+            'Donate on eclipse days',
+            'Recite Rahu-Ketu mantras'
+          ]
+        },
         otherDoshas: {
           title: 'Other Doshas',
-          rahuKetu: {
-            name: 'Rahu–Ketu / Grahan Dosha',
-            whatItIs: 'Sun or Moon closely aligned with Rahu/Ketu (eclipse pattern); often called Grahan Dosha.',
-            impact: 'Mood swings, detours, and anxiety; plans can feel eclipsed or delayed despite effort.',
-            remedies: [
-              'Practice mindfulness and stable daily routines',
-              'Do pranayama and breath practices',
-              'Donate on eclipse days'
-            ]
-          },
           shrapit: {
             name: 'Shrapit Dosha (Saturn–Rahu)',
             whatItIs: 'Saturn and Rahu together or in a strong mutual aspect.',
@@ -222,16 +234,6 @@ const resources = {
               'Maintain Saturday discipline and fasting',
               'Practice service and humility',
               'Recite Shani Chalisa'
-            ]
-          },
-          guruChandal: {
-            name: 'Guru Chandal Dosha (Jupiter–Rahu/Ketu)',
-            whatItIs: 'Jupiter with Rahu or Ketu.',
-            impact: 'Judgment/mentor issues; promises vs. outcomes may misalign.',
-            remedies: [
-              'Study with grounded mentors',
-              'Donate books or education items',
-              'Recite Guru Beej mantra'
             ]
           },
           punarphoo: {
@@ -503,18 +505,30 @@ const resources = {
             'कौवों को खिलाएं और विकलांगों की सेवा करें'
           ]
         },
+        brihaspatiRahu: {
+          name: 'बृहस्पति राहु दोष',
+          description: 'बृहस्पति राहु दोष — बृहस्पति और राहु की युति ज्ञान और भ्रम के बीच भ्रांति पैदा करती है; निर्णय और मार्गदर्शन को प्रभावित करती है।',
+          impact: 'निर्णय और गुरु संबंधी समस्याएं; वादे बनाम परिणाम गलत संरेखित हो सकते हैं। अत्यधिक आत्मविश्वास या धोखे से निर्णय लेना कठिन हो सकता है।',
+          remedies: [
+            'अच्छे गुरुओं के साथ अध्ययन करें',
+            'किताबें या शिक्षा वस्तुओं का दान करें',
+            'गुरुवार को गुरु बीज मंत्र का जाप करें',
+            'नियमित रूप से बृहस्पति मंदिरों में जाएं'
+          ]
+        },
+        rahuKetu: {
+          name: 'राहु केतु दोष',
+          description: 'राहु केतु दोष — सूर्य या चंद्रमा राहु/केतु के साथ निकट संरेखित होकर ग्रहण पैटर्न बनाते हैं जो मानसिक स्पष्टता और जीवन की दिशा को प्रभावित करते हैं।',
+          impact: 'मिजाज में बदलाव, विचलन, और चिंता; ईमानदार प्रयास के बावजूद योजनाएं ग्रहण या विलंबित महसूस हो सकती हैं।',
+          remedies: [
+            'माइंडफुलनेस और स्थिर दिनचर्या अपनाएं',
+            'प्राणायाम और श्वास अभ्यास करें',
+            'ग्रहण के दिनों में दान करें',
+            'राहु-केतु मंत्रों का जाप करें'
+          ]
+        },
         otherDoshas: {
           title: 'अन्य दोष',
-          rahuKetu: {
-            name: 'राहु–केतु / ग्रहण दोष',
-            whatItIs: 'सूर्य या चंद्रमा राहु/केतु के साथ निकट संरेखित (ग्रहण पैटर्न); अक्सर ग्रहण दोष कहा जाता है।',
-            impact: 'मिजाज में बदलाव, विचलन, और चिंता; प्रयास के बावजूद योजनाएं ग्रहण या विलंबित महसूस हो सकती हैं।',
-            remedies: [
-              'माइंडफुलनेस और स्थिर दिनचर्या अपनाएं',
-              'प्राणायाम और श्वास अभ्यास करें',
-              'ग्रहण के दिनों में दान करें'
-            ]
-          },
           shrapit: {
             name: 'श्रापित दोष (शनि–राहु)',
             whatItIs: 'शनि और राहु एक साथ या मजबूत पारस्परिक दृष्टि में।',
@@ -523,16 +537,6 @@ const resources = {
               'शनिवार को अनुशासन और व्रत रखें',
               'सेवा और विनम्रता का अभ्यास करें',
               'शनि चालीसा का पाठ करें'
-            ]
-          },
-          guruChandal: {
-            name: 'गुरु चांडाल दोष (बृहस्पति–राहु/केतु)',
-            whatItIs: 'बृहस्पति राहु या केतु के साथ।',
-            impact: 'निर्णय/गुरु मुद्दे; वादे बनाम परिणाम गलत संरेखित हो सकते हैं।',
-            remedies: [
-              'अच्छे गुरुओं के साथ अध्ययन करें',
-              'किताबें या शिक्षा वस्तुओं का दान करें',
-              'गुरु बीज मंत्र का जाप करें'
             ]
           },
           punarphoo: {

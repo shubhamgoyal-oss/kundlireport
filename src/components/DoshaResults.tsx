@@ -24,6 +24,8 @@ interface DoshaResultsProps {
     pitra: string;
     shaniSadeSati: string;
     shaniPhase?: number;
+    brihaspatiRahu?: string;
+    rahuKetu?: string;
     grahan?: string;
     grahanSeverity?: string;
     grahanSubtype?: string;
@@ -143,12 +145,14 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       setIsLoadingImpacts(true);
       const impacts: Record<string, { title: string; text: string }> = {};
       
-      const doshaTypes = ['mangal', 'kaal-sarp', 'pitra', 'shani'];
+      const doshaTypes = ['mangal', 'kaal-sarp', 'pitra', 'shani', 'brihaspati-rahu', 'rahu-ketu'];
       const activeTypes = doshaTypes.filter(type => {
         if (type === 'mangal') return checkDoshaPresent(summary.mangal) && !checkDoshaNullified(summary.mangal);
         if (type === 'kaal-sarp') return checkDoshaPresent(summary.kaalSarp);
         if (type === 'pitra') return checkDoshaPresent(summary.pitra);
         if (type === 'shani') return checkDoshaPresent(summary.shaniSadeSati);
+        if (type === 'brihaspati-rahu') return checkDoshaPresent(summary.brihaspatiRahu || summary.guruChandal);
+        if (type === 'rahu-ketu') return checkDoshaPresent(summary.rahuKetu || summary.grahan);
         return false;
       });
 
@@ -289,7 +293,9 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
     isDoshaPresent(summary.kaalSarp) ||
     isDoshaPresent(summary.pitra) ||
-    isDoshaPresent(summary.shaniSadeSati);
+    isDoshaPresent(summary.shaniSadeSati) ||
+    isDoshaPresent(summary.brihaspatiRahu || summary.guruChandal) ||
+    isDoshaPresent(summary.rahuKetu || summary.grahan);
 
   const trackBookPujaClick = async (doshaType: string) => {
     if (hasTrackedBookPuja) return;
@@ -439,6 +445,36 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       impact: t('doshaResults.mangal.impact'),
       remedies: t('doshaResults.mangal.remedies', { returnObjects: true }) as string[],
       pujaType: 'mangal',
+    });
+  }
+  // Brihaspati Rahu Dosha (formerly Guru Chandal)
+  if (isDoshaPresent(summary.brihaspatiRahu || summary.guruChandal)) {
+    activeDoshas.push({
+      type: 'brihaspati-rahu',
+      detailKey: 'brihaspatiRahu',
+      label: t('doshaResults.brihaspatiRahu.name'),
+      icon: AlertTriangle,
+      status: summary.brihaspatiRahu || summary.guruChandal || 'present',
+      explanation: isHindi ? (translatedExplanations.brihaspatiRahu || details.brihaspatiRahu?.explanation || details.guruChandal?.explanation || '') : (details.brihaspatiRahu?.explanation || details.guruChandal?.explanation || ''),
+      placements: details.brihaspatiRahu?.placements || details.guruChandal?.placements,
+      impact: t('doshaResults.brihaspatiRahu.impact'),
+      remedies: t('doshaResults.brihaspatiRahu.remedies', { returnObjects: true }) as string[],
+      pujaType: 'brihaspati-rahu',
+    });
+  }
+  // Rahu Ketu Dosha (formerly Grahan/Rahu-Ketu)
+  if (isDoshaPresent(summary.rahuKetu || summary.grahan)) {
+    activeDoshas.push({
+      type: 'rahu-ketu',
+      detailKey: 'rahuKetu',
+      label: t('doshaResults.rahuKetu.name'),
+      icon: AlertTriangle,
+      status: summary.rahuKetu || summary.grahan || 'present',
+      explanation: isHindi ? (translatedExplanations.rahuKetu || details.rahuKetu?.explanation || details.grahan?.explanation || '') : (details.rahuKetu?.explanation || details.grahan?.explanation || ''),
+      placements: details.rahuKetu?.placements || details.grahan?.placements,
+      impact: t('doshaResults.rahuKetu.impact'),
+      remedies: t('doshaResults.rahuKetu.remedies', { returnObjects: true }) as string[],
+      pujaType: 'rahu-ketu',
     });
   }
 

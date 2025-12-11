@@ -13,9 +13,7 @@ import { trackEvent } from '@/lib/analytics';
 interface OtherDoshasProps {
   pujas: SriMandirPuja[];
   doshaFlags?: {
-    rahuKetu?: { status: string; explanation?: string; placements?: string[] };
     shrapit?: { status: string; explanation?: string; placements?: string[] };
-    guruChandal?: { status: string; explanation?: string; placements?: string[] };
     punarphoo?: { status: string; explanation?: string; placements?: string[] };
     kemadruma?: { status: string; explanation?: string; placements?: string[] };
     gandmool?: { status: string; explanation?: string; placements?: string[] };
@@ -27,16 +25,6 @@ interface OtherDoshasProps {
 }
 
 const otherDoshasData = {
-  rahuKetu: {
-    name: 'Rahu–Ketu / Grahan Dosha',
-    whatItIs: 'Sun or Moon closely aligned with Rahu/Ketu (eclipse pattern); often called Grahan Dosha.',
-    impact: 'Mood swings, detours, and anxiety; plans can feel eclipsed or delayed despite effort.',
-    remedies: [
-      'Mindfulness, stable routines, breath practices.',
-      'Charity on eclipse-related days; light devotional worship.',
-    ],
-    keywords: ['rahu', 'ketu', 'grahan', 'राहु', 'केतु', 'ग्रहण'],
-  },
   shrapit: {
     name: 'Shrapit Dosha (Saturn–Rahu)',
     whatItIs: 'Saturn and Rahu together or in a strong mutual aspect.',
@@ -46,16 +34,6 @@ const otherDoshasData = {
       'Rudrabhishek / Shani-focused prayers.',
     ],
     keywords: ['shrapit', 'shani rahu', 'शापित', 'शनि राहु'],
-  },
-  guruChandal: {
-    name: 'Guru Chandal Dosha (Jupiter–Rahu/Ketu)',
-    whatItIs: 'Jupiter with Rahu or Ketu.',
-    impact: 'Judgment/mentor issues; promises vs. outcomes may misalign.',
-    remedies: [
-      'Study with grounded mentors; donation of knowledge/education items.',
-      'Guru-focused prayers.',
-    ],
-    keywords: ['guru chandal', 'jupiter rahu', 'jupiter ketu', 'गुरु चांडाल'],
   },
   punarphoo: {
     name: 'Punarphoo Dosha (Saturn–Moon)',

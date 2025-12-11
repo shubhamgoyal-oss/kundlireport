@@ -435,9 +435,7 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
               }
             }}
           >
-            {renderDoshaPanel('rahuKetu', doshaFlags.rahuKetu)}
             {renderDoshaPanel('shrapit', doshaFlags.shrapit)}
-            {renderDoshaPanel('guruChandal', doshaFlags.guruChandal)}
             {renderDoshaPanel('punarphoo', doshaFlags.punarphoo)}
             {renderDoshaPanel('kemadruma', doshaFlags.kemadruma)}
             {renderDoshaPanel('gandmool', doshaFlags.gandmool)}

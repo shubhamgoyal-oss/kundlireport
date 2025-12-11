@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2, Star, Eclipse } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
@@ -24,8 +24,6 @@ interface DoshaResultsProps {
     pitra: string;
     shaniSadeSati: string;
     shaniPhase?: number;
-    brihaspatiRahu?: string;
-    rahuKetu?: string;
     grahan?: string;
     grahanSeverity?: string;
     grahanSubtype?: string;
@@ -145,14 +143,12 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       setIsLoadingImpacts(true);
       const impacts: Record<string, { title: string; text: string }> = {};
       
-      const doshaTypes = ['mangal', 'kaal-sarp', 'pitra', 'shani', 'brihaspati-rahu', 'rahu-ketu'];
+      const doshaTypes = ['mangal', 'kaal-sarp', 'pitra', 'shani'];
       const activeTypes = doshaTypes.filter(type => {
         if (type === 'mangal') return checkDoshaPresent(summary.mangal) && !checkDoshaNullified(summary.mangal);
         if (type === 'kaal-sarp') return checkDoshaPresent(summary.kaalSarp);
         if (type === 'pitra') return checkDoshaPresent(summary.pitra);
         if (type === 'shani') return checkDoshaPresent(summary.shaniSadeSati);
-        if (type === 'brihaspati-rahu') return checkDoshaPresent(summary.brihaspatiRahu || summary.guruChandal);
-        if (type === 'rahu-ketu') return checkDoshaPresent(summary.rahuKetu || summary.grahan);
         return false;
       });
 
@@ -293,9 +289,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) ||
     isDoshaPresent(summary.kaalSarp) ||
     isDoshaPresent(summary.pitra) ||
-    isDoshaPresent(summary.shaniSadeSati) ||
-    isDoshaPresent(summary.brihaspatiRahu || summary.guruChandal) ||
-    isDoshaPresent(summary.rahuKetu || summary.grahan);
+    isDoshaPresent(summary.shaniSadeSati);
 
   const trackBookPujaClick = async (doshaType: string) => {
     if (hasTrackedBookPuja) return;
@@ -447,36 +441,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       pujaType: 'mangal',
     });
   }
-  // Brihaspati Rahu Dosha (formerly Guru Chandal)
-  if (isDoshaPresent(summary.brihaspatiRahu || summary.guruChandal)) {
-    activeDoshas.push({
-      type: 'brihaspati-rahu',
-      detailKey: 'brihaspatiRahu',
-      label: t('doshaResults.brihaspatiRahu.name'),
-      icon: AlertTriangle,
-      status: summary.brihaspatiRahu || summary.guruChandal || 'present',
-      explanation: isHindi ? (translatedExplanations.brihaspatiRahu || details.brihaspatiRahu?.explanation || details.guruChandal?.explanation || '') : (details.brihaspatiRahu?.explanation || details.guruChandal?.explanation || ''),
-      placements: details.brihaspatiRahu?.placements || details.guruChandal?.placements,
-      impact: t('doshaResults.brihaspatiRahu.impact'),
-      remedies: t('doshaResults.brihaspatiRahu.remedies', { returnObjects: true }) as string[],
-      pujaType: 'brihaspati-rahu',
-    });
-  }
-  // Rahu Ketu Dosha (formerly Grahan/Rahu-Ketu)
-  if (isDoshaPresent(summary.rahuKetu || summary.grahan)) {
-    activeDoshas.push({
-      type: 'rahu-ketu',
-      detailKey: 'rahuKetu',
-      label: t('doshaResults.rahuKetu.name'),
-      icon: AlertTriangle,
-      status: summary.rahuKetu || summary.grahan || 'present',
-      explanation: isHindi ? (translatedExplanations.rahuKetu || details.rahuKetu?.explanation || details.grahan?.explanation || '') : (details.rahuKetu?.explanation || details.grahan?.explanation || ''),
-      placements: details.rahuKetu?.placements || details.grahan?.placements,
-      impact: t('doshaResults.rahuKetu.impact'),
-      remedies: t('doshaResults.rahuKetu.remedies', { returnObjects: true }) as string[],
-      pujaType: 'rahu-ketu',
-    });
-  }
 
   // Get puja benefits by dosha type
   const getPujaBenefits = (pujaType: string, hindi: boolean): string[] => {
@@ -536,34 +500,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
           'शनि की परीक्षा अवधि में लचीलापन बढ़ाती है।',
           'स्थिर प्रगति और दीर्घकालिक सुरक्षा लाती है।'
         ]
-      },
-      'brihaspati-rahu': {
-        en: [
-          'Neutralizes Jupiter-Rahu conjunction disrupting wisdom and judgment.',
-          'Restores clarity in decisions affected by confusion and misguidance.',
-          'Removes obstacles in education, spirituality, and righteous pursuits.',
-          'Brings back respect, reputation, and divine blessings.'
-        ],
-        hi: [
-          'ज्ञान और निर्णय को बाधित करने वाली बृहस्पति-राहु युति को निष्प्रभावी करती है।',
-          'भ्रम और भटकाव से प्रभावित निर्णयों में स्पष्टता बहाल करती है।',
-          'शिक्षा, आध्यात्मिकता और धार्मिक कार्यों में बाधाओं को दूर करती है।',
-          'सम्मान, प्रतिष्ठा और दैवीय आशीर्वाद वापस लाती है।'
-        ]
-      },
-      'rahu-ketu': {
-        en: [
-          'Balances lunar nodes causing eclipse-like disruptions in life.',
-          'Reduces sudden obstacles, mental confusion, and karmic debts.',
-          'Protects from hidden enemies and unexplained setbacks.',
-          'Restores stability and direction in career, health, and relationships.'
-        ],
-        hi: [
-          'जीवन में ग्रहण जैसी बाधाएं पैदा करने वाले चंद्र नोड्स को संतुलित करती है।',
-          'अचानक बाधाओं, मानसिक भ्रम और कर्म ऋणों को कम करती है।',
-          'छिपे शत्रुओं और अस्पष्ट झटकों से बचाती है।',
-          'करियर, स्वास्थ्य और रिश्तों में स्थिरता और दिशा बहाल करती है।'
-        ]
       }
     };
     
@@ -578,8 +514,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     if (pujaType === 'mangal') return getPrioritizedPuja(filtered, 'mangal');
     const priorityKeywordsMap: Record<string, string[]> = {
       'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
-      'brihaspati-rahu': ['brihaspati rahu', 'बृहस्पति राहु', 'guru chandal', 'गुरु चांडाल'],
-      'rahu-ketu': ['surya grahan', 'सूर्य ग्रहण', 'chandra grahan', 'चंद्र ग्रहण', 'grahan dosha', 'ग्रहण दोष'],
     };
     const keywords = priorityKeywordsMap[pujaType] || [];
     return getUpcomingPujas(filtered, 1, keywords)[0] || null;
@@ -973,98 +907,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
                 </div>
               </AccordionContent>
             </AccordionItem>
-
-            {/* Brihaspati Rahu Dosha */}
-            <AccordionItem value="brihaspatiRahu" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Star className="w-5 h-5 text-amber-500" />
-                  <div className="text-left">
-                    <h3 className="font-semibold text-lg">{t('doshaResults.brihaspatiRahu.name')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('doshaResults.status')}: {translateStatus(summary.brihaspatiRahu)}
-                    </p>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
-                <p className="text-sm text-muted-foreground italic">{t('doshaResults.brihaspatiRahu.description')}</p>
-                {details.brihaspatiRahu && (
-                  <>
-                    <div>
-                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {isHindi ? (translatedExplanations.brihaspatiRahu || details.brihaspatiRahu.explanation) : details.brihaspatiRahu.explanation}
-                      </p>
-                    </div>
-                    {details.brihaspatiRahu.placements && details.brihaspatiRahu.placements.length > 0 && (
-                      <div className="p-3 bg-accent/10 rounded-md">
-                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                          {details.brihaspatiRahu.placements.map((p, i) => (
-                            <li key={i}>{translatePlacement(p)}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                )}
-                <div>
-                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {(t('doshaResults.brihaspatiRahu.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
-                      <li key={i}>{remedy}</li>
-                    ))}
-                  </ul>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            {/* Rahu Ketu Dosha */}
-            <AccordionItem value="rahuKetu" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Eclipse className="w-5 h-5 text-indigo-500" />
-                  <div className="text-left">
-                    <h3 className="font-semibold text-lg">{t('doshaResults.rahuKetu.name')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {t('doshaResults.status')}: {translateStatus(summary.rahuKetu)}
-                    </p>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pt-4 space-y-4">
-                <p className="text-sm text-muted-foreground italic">{t('doshaResults.rahuKetu.description')}</p>
-                {details.rahuKetu && (
-                  <>
-                    <div>
-                      <h4 className="font-medium mb-2">{t('doshaResults.explanation')}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {isHindi ? (translatedExplanations.rahuKetu || details.rahuKetu.explanation) : details.rahuKetu.explanation}
-                      </p>
-                    </div>
-                    {details.rahuKetu.placements && details.rahuKetu.placements.length > 0 && (
-                      <div className="p-3 bg-accent/10 rounded-md">
-                        <h4 className="font-medium mb-2">{t('doshaResults.planetaryPositions')}</h4>
-                        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                          {details.rahuKetu.placements.map((p, i) => (
-                            <li key={i}>{translatePlacement(p)}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                )}
-                <div>
-                  <h4 className="font-medium mb-2">{t('doshaResults.traditionalRemedies')}</h4>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    {(t('doshaResults.rahuKetu.remedies', { returnObjects: true }) as string[]).map((remedy, i) => (
-                      <li key={i}>{remedy}</li>
-                    ))}
-                  </ul>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
           </Accordion>
         </CardContent>
       </Card>
@@ -1073,10 +915,20 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       <OtherDoshas
         pujas={pujas}
         doshaFlags={{
+          rahuKetu: summary.grahan ? { 
+            status: summary.grahan,
+            explanation: details.grahan?.explanation,
+            placements: details.grahan?.placements
+          } : undefined,
           shrapit: summary.shrapit ? { 
             status: summary.shrapit,
             explanation: details.shrapit?.explanation,
             placements: details.shrapit?.placements
+          } : undefined,
+          guruChandal: summary.guruChandal ? { 
+            status: summary.guruChandal,
+            explanation: details.guruChandal?.explanation,
+            placements: details.guruChandal?.placements
           } : undefined,
           punarphoo: summary.punarphoo ? { 
             status: summary.punarphoo,

@@ -310,7 +310,7 @@ const DoshaCalculator = () => {
 
       const result = response.data;
       
-      const normalized = { ...result, summary: { ...(result?.summary || {}) } } as any;
+      const normalized = { ...result, summary: { ...(result?.summary || {}) }, details: { ...(result?.details || {}) } } as any;
       if (!normalized.summary.shaniSadeSati) {
         if (normalized.summary.sadeSati) {
           normalized.summary.shaniSadeSati = normalized.summary.sadeSati === 'active' ? 'active' : 'inactive';
@@ -319,6 +319,22 @@ const DoshaCalculator = () => {
           const phaseStr = String(normalized.summary.sadeSatiPhase);
           normalized.summary.shaniPhase = phaseStr.includes('RISING') ? 1 : (phaseStr.includes('PEAK') ? 2 : (phaseStr.includes('SETTING') ? 3 : null));
         }
+      }
+      
+      // Map guruChandal to brihaspatiRahu
+      if (!normalized.summary.brihaspatiRahu && normalized.summary.guruChandal) {
+        normalized.summary.brihaspatiRahu = normalized.summary.guruChandal;
+      }
+      if (!normalized.details.brihaspatiRahu && normalized.details.guruChandal) {
+        normalized.details.brihaspatiRahu = normalized.details.guruChandal;
+      }
+      
+      // Map grahan to rahuKetu
+      if (!normalized.summary.rahuKetu && normalized.summary.grahan) {
+        normalized.summary.rahuKetu = normalized.summary.grahan;
+      }
+      if (!normalized.details.rahuKetu && normalized.details.grahan) {
+        normalized.details.rahuKetu = normalized.details.grahan;
       }
       
       setDoshaResults(normalized);

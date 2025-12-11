@@ -536,6 +536,34 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
           'शनि की परीक्षा अवधि में लचीलापन बढ़ाती है।',
           'स्थिर प्रगति और दीर्घकालिक सुरक्षा लाती है।'
         ]
+      },
+      'brihaspati-rahu': {
+        en: [
+          'Neutralizes Jupiter-Rahu conjunction disrupting wisdom and judgment.',
+          'Restores clarity in decisions affected by confusion and misguidance.',
+          'Removes obstacles in education, spirituality, and righteous pursuits.',
+          'Brings back respect, reputation, and divine blessings.'
+        ],
+        hi: [
+          'ज्ञान और निर्णय को बाधित करने वाली बृहस्पति-राहु युति को निष्प्रभावी करती है।',
+          'भ्रम और भटकाव से प्रभावित निर्णयों में स्पष्टता बहाल करती है।',
+          'शिक्षा, आध्यात्मिकता और धार्मिक कार्यों में बाधाओं को दूर करती है।',
+          'सम्मान, प्रतिष्ठा और दैवीय आशीर्वाद वापस लाती है।'
+        ]
+      },
+      'rahu-ketu': {
+        en: [
+          'Balances lunar nodes causing eclipse-like disruptions in life.',
+          'Reduces sudden obstacles, mental confusion, and karmic debts.',
+          'Protects from hidden enemies and unexplained setbacks.',
+          'Restores stability and direction in career, health, and relationships.'
+        ],
+        hi: [
+          'जीवन में ग्रहण जैसी बाधाएं पैदा करने वाले चंद्र नोड्स को संतुलित करती है।',
+          'अचानक बाधाओं, मानसिक भ्रम और कर्म ऋणों को कम करती है।',
+          'छिपे शत्रुओं और अस्पष्ट झटकों से बचाती है।',
+          'करियर, स्वास्थ्य और रिश्तों में स्थिरता और दिशा बहाल करती है।'
+        ]
       }
     };
     
@@ -550,6 +578,8 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     if (pujaType === 'mangal') return getPrioritizedPuja(filtered, 'mangal');
     const priorityKeywordsMap: Record<string, string[]> = {
       'kaal-sarp': ['kaal sarp dosha', 'काल सर्प दोष'],
+      'brihaspati-rahu': ['brihaspati rahu', 'बृहस्पति राहु', 'guru chandal', 'गुरु चांडाल'],
+      'rahu-ketu': ['surya grahan', 'सूर्य ग्रहण', 'chandra grahan', 'चंद्र ग्रहण', 'grahan dosha', 'ग्रहण दोष'],
     };
     const keywords = priorityKeywordsMap[pujaType] || [];
     return getUpcomingPujas(filtered, 1, keywords)[0] || null;

@@ -951,20 +951,10 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       <OtherDoshas
         pujas={pujas}
         doshaFlags={{
-          rahuKetu: summary.grahan ? { 
-            status: summary.grahan,
-            explanation: details.grahan?.explanation,
-            placements: details.grahan?.placements
-          } : undefined,
           shrapit: summary.shrapit ? { 
             status: summary.shrapit,
             explanation: details.shrapit?.explanation,
             placements: details.shrapit?.placements
-          } : undefined,
-          guruChandal: summary.guruChandal ? { 
-            status: summary.guruChandal,
-            explanation: details.guruChandal?.explanation,
-            placements: details.guruChandal?.placements
           } : undefined,
           punarphoo: summary.punarphoo ? { 
             status: summary.punarphoo,

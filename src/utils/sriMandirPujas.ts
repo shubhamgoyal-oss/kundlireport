@@ -285,7 +285,7 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
  */
 export function filterPujasByDosha(
   pujas: SriMandirPuja[], 
-  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'
+  doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'brihaspati-rahu' | 'rahu-ketu' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'
 ): SriMandirPuja[] {
   const keywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
@@ -296,7 +296,8 @@ export function filterPujasByDosha(
     shani: ['shani', 'saturn', 'शनि'],
     rahu: ['rahu', 'राहु', 'grahan', 'ग्रहण'],
     shrapit: ['shrapit', 'श्रापित'],
-    'guru-chandal': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
+    'brihaspati-rahu': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'बृहस्पति-राहु', 'गुरु चांडाल', 'brihaspati rahu yuti'],
+    'rahu-ketu': ['surya grahan', 'chandra grahan', 'rahu chandra', 'सूर्य ग्रहण', 'चंद्र ग्रहण', 'राहु चंद्र', 'grahan dosha', 'ग्रहण दोष'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
     vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य', 'navagraha', 'नवग्रह'],
     punarphoo: ['punarphoo', 'पुनर्फू', 'navagraha', 'नवग्रह'],
@@ -382,12 +383,13 @@ export function getUpcomingPujas(
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
-  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha' | 'mangal'
+  doshaType: 'pitra' | 'shani' | 'brihaspati-rahu' | 'rahu-ketu' | 'navagraha' | 'mangal'
 ): SriMandirPuja | null {
   const priorityKeywords: Record<string, string[]> = {
     pitra: ['pitru', 'pitra', 'pishach mochan', 'पितृ', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
     shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
-    'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
+    'brihaspati-rahu': ['brihaspati-rahu', 'brihaspati rahu', 'बृहस्पति-राहु', 'बृहस्पति राहु', 'brihaspati rahu yuti', 'guru chandal', 'गुरु चांडाल'],
+    'rahu-ketu': ['surya grahan', 'सूर्य ग्रहण', 'chandra grahan', 'चंद्र ग्रहण', 'rahu chandra', 'grahan dosha', 'ग्रहण दोष'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
     mangal: ['30 day', '30 din', '30-day', 'mangal dosha', 'मंगल दोष', 'manglik', 'मंगलिक']
   };

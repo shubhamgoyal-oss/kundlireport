@@ -58,34 +58,53 @@ async function getCountryCode(): Promise<string | undefined> {
  * Should be called once per session on initial page load
  */
 export async function trackTrafficSource(visitorId: string, sessionId: string): Promise<void> {
-  // Check if we've already tracked this session
-  const trackingKey = `traffic_tracked_${sessionId}`;
-  if (localStorage.getItem(trackingKey)) {
-    return; // Already tracked this session
-  }
+  try {
+    // Check if we've already tracked this session
+    const trackingKey = `traffic_tracked_${sessionId}`;
+    if (localStorage.getItem(trackingKey)) {
+      console.log('[TrafficTracking] Session already tracked:', sessionId);
+      return; // Already tracked this session
+    }
 
-  const utmParams = extractUTMParameters();
-  const countryCode = await getCountryCode();
-  
-  const trafficData: TrafficSourceData = {
-    visitor_id: visitorId,
-    session_id: sessionId,
-    ...utmParams,
-    country_code: countryCode,
-    landing_page: window.location.pathname + window.location.search,
-    referrer: document.referrer || undefined,
-  };
+    console.log('[TrafficTracking] Starting tracking for session:', sessionId);
 
-  // Store in database
-  const { error } = await supabase
-    .from('traffic_sources')
-    .insert(trafficData);
+    const utmParams = extractUTMParameters();
+    
+    // Get country code with timeout to prevent blocking
+    let countryCode: string | undefined;
+    try {
+      const countryPromise = getCountryCode();
+      const timeoutPromise = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 3000));
+      countryCode = await Promise.race([countryPromise, timeoutPromise]);
+    } catch (e) {
+      console.warn('[TrafficTracking] Country code fetch failed:', e);
+      countryCode = undefined;
+    }
+    
+    const trafficData: TrafficSourceData = {
+      visitor_id: visitorId,
+      session_id: sessionId,
+      ...utmParams,
+      country_code: countryCode,
+      landing_page: window.location.pathname + window.location.search,
+      referrer: document.referrer || undefined,
+    };
 
-  if (error) {
-    console.error('Failed to track traffic source:', error);
-  } else {
-    // Mark this session as tracked
-    localStorage.setItem(trackingKey, 'true');
-    console.log('Traffic source tracked:', trafficData);
+    console.log('[TrafficTracking] Inserting traffic data:', { session_id: sessionId, utm_source: utmParams.utm_source });
+
+    // Store in database
+    const { error } = await supabase
+      .from('traffic_sources')
+      .insert(trafficData);
+
+    if (error) {
+      console.error('[TrafficTracking] Failed to insert:', error.message, error.code);
+    } else {
+      // Mark this session as tracked
+      localStorage.setItem(trackingKey, 'true');
+      console.log('[TrafficTracking] Success for session:', sessionId);
+    }
+  } catch (e) {
+    console.error('[TrafficTracking] Unexpected error:', e);
   }
 }

@@ -88,20 +88,32 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
     }
   }
 
-  // Determine status
+  // Determine status based on traditional Vedic astrology definitions:
+  // Purna (Full): All 7 planets inside
+  // Ardh/Anshik (Partial): 5-6 planets inside (most astrologers accept this)
+  // Absent: 4 or fewer planets inside
   let status: "present_full" | "present_partial" | "absent";
   let reasons: string[] = [];
+  const outsideCount = 7 - insideCount;
 
   if (insideCount === 7) {
     status = "present_full";
-    reasons.push("All 7 classical planets within Rahu→Ketu arc");
-  } else if (insideCount === 6 && boundaryPlanets.length === 1) {
+    reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp)");
+  } else if (insideCount === 6) {
     status = "present_partial";
-    reasons.push(`6 planets inside, ${boundaryPlanets[0].name} on boundary (${boundaryPlanets[0].minDist.toFixed(1)}° from node)`);
+    const outsidePlanet = placements.find(p => !p.inside);
+    if (boundaryPlanets.length > 0) {
+      reasons.push(`6 planets inside, ${boundaryPlanets[0].name} on boundary (${boundaryPlanets[0].minDist.toFixed(1)}° from node) - Ardh Kaal Sarp`);
+    } else {
+      reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp`);
+    }
+  } else if (insideCount === 5) {
+    status = "present_partial";
+    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
+    reasons.push(`5 planets inside, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp`);
   } else {
     status = "absent";
-    const outsideCount = 7 - insideCount;
-    reasons.push(`${outsideCount} planet(s) outside Rahu→Ketu arc (>2° from nodes)`);
+    reasons.push(`Only ${insideCount} planet(s) within Rahu→Ketu arc (need 5+ for Kaal Sarp)`);
   }
 
   // Variant name by Rahu house

@@ -157,6 +157,8 @@ const DoshaCalculator = () => {
       setShowOtherInput(!showOtherInput);
       if (!showOtherInput) {
         setSelectedProblems(prev => [...prev.filter(p => p !== 'other'), 'other']);
+        // Close dropdown immediately so text input is visible
+        setIsDropdownOpen(false);
       } else {
         setSelectedProblems(prev => prev.filter(p => p !== 'other'));
         setOtherProblemText('');

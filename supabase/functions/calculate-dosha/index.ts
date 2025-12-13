@@ -136,8 +136,7 @@ serve(async (req) => {
     
     const mangal = {
       status: mangalAlgo.status as any,
-      severity: mangalAlgo.status === "absent" ? undefined : 
-                (mangalAlgo.nullified ? 'mild' as const : 'moderate' as const),
+      severity: mangalAlgo.severity,
       triggeredBy: mangalAlgo.reasons,
       cancellations: [],
       mitigations: [],
@@ -146,7 +145,7 @@ serve(async (req) => {
       sources: mangalAlgo.sources,
       nullified: mangalAlgo.nullified
     };
-    console.log("[CALC] Mangal:", mangal.status);
+    console.log("[CALC] Mangal:", mangal.status, "Severity:", mangal.severity);
 
     // Pitra Dosha
     let pitra;
@@ -184,26 +183,26 @@ serve(async (req) => {
     // Sade Sati (Algorithmic)
     const sadeSatiAlgo = calculateSadeSatiAlgorithmic(kundli, seerData);
     console.log("[CALC] Sade Sati (Algorithmic):", sadeSatiAlgo.active ? "active" : "inactive", 
-                sadeSatiAlgo.phase || "no phase", sadeSatiAlgo.reasons);
+                sadeSatiAlgo.phase || "no phase", "Severity:", sadeSatiAlgo.severity, sadeSatiAlgo.reasons);
     
     const sadeSatiActive = sadeSatiAlgo.active;
+    const sadeSatiSeverity = sadeSatiAlgo.severity;
     const sadeSatiPhase = sadeSatiAlgo.phase 
       ? (sadeSatiAlgo.phase === "rising" ? "RISING_START" :
          sadeSatiAlgo.phase === "peak" ? "PEAK_START" : "SETTING_START")
       : null;
-    console.log("[CALC] Sade Sati:", sadeSatiActive ? "active" : "inactive");
+    console.log("[CALC] Sade Sati:", sadeSatiActive ? "active" : "inactive", "Severity:", sadeSatiSeverity);
 
     // Kaal Sarp Dosha (Algorithmic)
     const kaalSarpAlgo = calculateKaalSarpaDoshaAlgorithmic(kundli);
-    console.log("[CALC] Kaal Sarp (Algorithmic):", kaalSarpAlgo.status, kaalSarpAlgo.type, kaalSarpAlgo.reasons);
+    console.log("[CALC] Kaal Sarp (Algorithmic):", kaalSarpAlgo.status, kaalSarpAlgo.type, 
+                "Severity:", kaalSarpAlgo.severity, kaalSarpAlgo.reasons);
     
     const kaalSarp = {
       status: (kaalSarpAlgo.status === "present_full" || kaalSarpAlgo.status === "present_partial") 
         ? 'present' as const 
         : 'absent' as const,
-      severity: kaalSarpAlgo.status === "present_full" 
-        ? 'strong' as const 
-        : (kaalSarpAlgo.status === "present_partial" ? 'moderate' as const : undefined),
+      severity: kaalSarpAlgo.severity,
       triggeredBy: kaalSarpAlgo.reasons,
       cancellations: [],
       mitigations: [],
@@ -214,7 +213,7 @@ serve(async (req) => {
       algorithmicStatus: kaalSarpAlgo.status,
       variant: kaalSarpAlgo.type
     };
-    console.log("[CALC] Kaal Sarp:", kaalSarp.status);
+    console.log("[CALC] Kaal Sarp:", kaalSarp.status, "Severity:", kaalSarp.severity);
 
     // Other doshas
     console.log("[CALC] Calculating other doshas...");
@@ -222,13 +221,16 @@ serve(async (req) => {
     const { otherDoshas, navagrahaUmbrella } = otherDoshasResult;
     console.log("[CALC] Other doshas calculated");
 
-    // Build summary
+    // Build summary with severity
     const summary: any = {
       mangal: mangal.status,
       mangalSeverity: mangal.severity,
       pitra: pitra.status,
+      pitraSeverity: pitra.status === 'present' ? 'moderate' : null,
       shaniDosha: shani.status,
+      shaniDoshaSeverity: shani.status === 'present' ? 'moderate' : null,
       sadeSati: sadeSatiActive ? "active" : "not_active",
+      sadeSatiSeverity: sadeSatiSeverity,
       sadeSatiPhase,
       shaniSadeSati: sadeSatiActive ? "active" : "inactive",
       shaniPhase: sadeSatiPhase
@@ -237,10 +239,14 @@ serve(async (req) => {
             : (sadeSatiPhase.includes('SETTING') ? 3 : null)))
         : null,
       kaalSarp: kaalSarp.status,
+      kaalSarpSeverity: kaalSarp.severity,
       grahan: otherDoshas.grahan.status,
+      grahanSeverity: otherDoshas.grahan.status === 'present' ? 'moderate' : null,
       rahuSurya: otherDoshas.grahan.rahuSurya,
       shrapit: otherDoshas.shrapit.status,
+      shrapitSeverity: otherDoshas.shrapit.status === 'present' ? 'moderate' : null,
       guruChandal: otherDoshas.guruChandal.status,
+      guruChandalSeverity: otherDoshas.guruChandal.status === 'present' ? 'moderate' : null,
       punarphoo: otherDoshas.punarphoo.status,
       kemadruma: otherDoshas.kemadruma.status,
       gandmool: otherDoshas.gandmool.status,
@@ -249,6 +255,42 @@ serve(async (req) => {
       ketuNaga: otherDoshas.ketuNaga.status,
       navagrahaUmbrella: navagrahaUmbrella.status
     };
+
+    // Build ranked doshas list (sorted by severity: severe > moderate > mild)
+    const severityOrder = { severe: 0, moderate: 1, mild: 2, null: 3 };
+    const activeDoshas: Array<{ name: string; severity: string | null; status: string }> = [];
+    
+    if (mangal.status !== 'absent') {
+      activeDoshas.push({ name: 'mangal', severity: mangal.severity, status: mangal.status });
+    }
+    if (kaalSarp.status !== 'absent') {
+      activeDoshas.push({ name: 'kaalSarp', severity: kaalSarp.severity, status: kaalSarp.status });
+    }
+    if (pitra.status === 'present') {
+      activeDoshas.push({ name: 'pitra', severity: 'moderate', status: pitra.status });
+    }
+    if (sadeSatiActive) {
+      activeDoshas.push({ name: 'sadeSati', severity: sadeSatiSeverity, status: 'active' });
+    }
+    if (otherDoshas.grahan.status === 'present') {
+      activeDoshas.push({ name: 'grahan', severity: 'moderate', status: 'present' });
+    }
+    if (otherDoshas.guruChandal.status === 'present') {
+      activeDoshas.push({ name: 'guruChandal', severity: 'moderate', status: 'present' });
+    }
+    if (shani.status === 'present') {
+      activeDoshas.push({ name: 'shaniDosha', severity: 'moderate', status: 'present' });
+    }
+    
+    // Sort by severity
+    activeDoshas.sort((a, b) => {
+      const aOrder = severityOrder[a.severity as keyof typeof severityOrder] ?? 3;
+      const bOrder = severityOrder[b.severity as keyof typeof severityOrder] ?? 3;
+      return aOrder - bOrder;
+    });
+    
+    summary.rankedDoshas = activeDoshas;
+    console.log("[CALC] Ranked doshas:", activeDoshas.map(d => `${d.name}:${d.severity}`).join(', '));
 
     const doshaResults = {
       summary,

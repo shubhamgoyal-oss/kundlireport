@@ -34,6 +34,7 @@ function getPlanet(kundli: SeerKundli, name: string) {
 
 export interface KaalSarpaResult {
   status: "present_full" | "present_partial" | "absent";
+  severity: "severe" | "moderate" | "mild" | null;
   type: string | null;
   orientation: "ascending" | "descending" | null;
   reasons: string[];
@@ -47,6 +48,7 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   if (!rahu || !ketu) {
     return {
       status: "absent",
+      severity: null,
       type: null,
       orientation: null,
       reasons: ["Missing Rahu or Ketu position"],
@@ -88,26 +90,35 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
     }
   }
 
-  // Traditional Kaal Sarpa Dosha Definition:
-  // Purna (Full): ALL 7 planets inside the Rahu→Ketu arc
-  // Partial: 6 planets inside (Ardh Kaal Sarp)
-  // Absent: 5 or fewer planets inside
+  // Traditional Kaal Sarpa Dosha Definition with Severity:
+  // Purna (Full): ALL 7 planets inside = SEVERE
+  // Ardh: 6 planets inside = MODERATE  
+  // Anshik: 5 planets inside = MILD
+  // Absent: 4 or fewer planets inside
   let status: "present_full" | "present_partial" | "absent";
+  let severity: "severe" | "moderate" | "mild" | null = null;
   let reasons: string[] = [];
   const outsideCount = 7 - insideCount;
 
   if (insideCount === 7) {
     status = "present_full";
-    reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp)");
+    severity = "severe";
+    reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp - Severe)");
   } else if (insideCount === 6) {
     status = "present_partial";
+    severity = "moderate";
     const outsidePlanet = placements.find(p => !p.inside);
-    reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp`);
-  } else {
-    // 5 or fewer = NO Kaal Sarpa
-    status = "absent";
+    reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp (Moderate)`);
+  } else if (insideCount === 5) {
+    status = "present_partial";
+    severity = "mild";
     const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
-    reasons.push(`Only ${insideCount} planet(s) inside arc (need 6+ for Kaal Sarp)`);
+    reasons.push(`5 planets inside, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp (Mild)`);
+  } else {
+    status = "absent";
+    severity = null;
+    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
+    reasons.push(`Only ${insideCount} planet(s) inside arc (need 5+ for Kaal Sarp)`);
   }
 
   // Variant name by Rahu house
@@ -119,6 +130,7 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
 
   return {
     status,
+    severity,
     type: variantType,
     orientation: status !== "absent" ? "ascending" : null,
     reasons,
@@ -143,6 +155,7 @@ export interface MangalDoshaResult {
     fromVenus: boolean;
   };
   status: "absent" | "present" | "present (nullified)";
+  severity: "severe" | "moderate" | "mild" | null;
   nullified: boolean;
   reasons: string[];
   debug: any;
@@ -150,6 +163,8 @@ export interface MangalDoshaResult {
 
 export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDoshaResult {
   const mars = getPlanet(kundli, "Mars");
+  const moon = getPlanet(kundli, "Moon");
+  const venus = getPlanet(kundli, "Venus");
   const jupiter = getPlanet(kundli, "Jupiter");
   const asc = kundli.asc;
 
@@ -157,38 +172,58 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
     return {
       sources: { fromAsc: false, fromMoon: false, fromVenus: false },
       status: "absent",
+      severity: null,
       nullified: false,
       reasons: ["Mars position not available"],
       debug: {}
     };
   }
 
-  // Traditional Mangal Dosha: only houses 1, 4, 7, 8 from Lagna (not 2 and 12)
-  const triggerHouses = [1, 4, 7, 8];
+  // Classical Mangal Dosha trigger houses: 1, 2, 4, 7, 8, 12
+  const triggerHouses = [1, 2, 4, 7, 8, 12];
   const reasons: string[] = [];
   const nullifications: string[] = [];
   
-  // Check presence ONLY from Ascendant (as per Lagna)
+  // Check presence from Ascendant, Moon, and Venus
   const sources = {
     fromAsc: false,
     fromMoon: false,
     fromVenus: false
   };
 
-  // House from Ascendant ONLY
+  // House from Ascendant
   if (triggerHouses.includes(mars.house)) {
     sources.fromAsc = true;
     reasons.push(`Mars in H${mars.house} from Ascendant`);
   }
 
-  const isPresent = sources.fromAsc;
+  // House from Moon
+  if (moon) {
+    const marsHouseFromMoon = ((mars.signIdx - moon.signIdx + 12) % 12) + 1;
+    if (triggerHouses.includes(marsHouseFromMoon)) {
+      sources.fromMoon = true;
+      reasons.push(`Mars in H${marsHouseFromMoon} from Moon`);
+    }
+  }
+
+  // House from Venus
+  if (venus) {
+    const marsHouseFromVenus = ((mars.signIdx - venus.signIdx + 12) % 12) + 1;
+    if (triggerHouses.includes(marsHouseFromVenus)) {
+      sources.fromVenus = true;
+      reasons.push(`Mars in H${marsHouseFromVenus} from Venus`);
+    }
+  }
+
+  const isPresent = sources.fromAsc || sources.fromMoon || sources.fromVenus;
   
   if (!isPresent) {
     return {
       sources,
       status: "absent",
+      severity: null,
       nullified: false,
-      reasons: ["Mars not in trigger houses (1,4,7,8) from Ascendant"],
+      reasons: ["Mars not in trigger houses (1,2,4,7,8,12) from Ascendant, Moon, or Venus"],
       debug: { marsHouse: mars.house, marsSign: mars.sign }
     };
   }
@@ -196,7 +231,7 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
   // Check nullification rules
   let nullified = false;
 
-  // Rule 1: Own/Exaltation sign
+  // Rule 1: Own/Exaltation sign (Aries, Scorpio, Capricorn)
   if (["Aries", "Scorpio", "Capricorn"].includes(mars.sign)) {
     nullified = true;
     nullifications.push(`Mars in ${mars.sign} (own/exalted sign)`);
@@ -211,12 +246,12 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
     12: ["Taurus", "Libra"]
   };
 
-  if (sources.fromAsc && exceptions[mars.house]?.includes(mars.sign)) {
+  if (exceptions[mars.house]?.includes(mars.sign)) {
     nullified = true;
     nullifications.push(`H${mars.house} exception: Mars in ${mars.sign}`);
   }
 
-  // Rule 3: Jupiter protection
+  // Rule 3: Jupiter protection - conjunction
   if (jupiter) {
     const marsJupDelta = degDelta(mars.deg, jupiter.deg);
     if (marsJupDelta <= CONJ_ORB) {
@@ -224,7 +259,7 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
       nullifications.push(`Jupiter conjunction (${marsJupDelta.toFixed(1)}° orb)`);
     }
 
-    // Whole-sign aspect (5th, 7th, 9th from Mars)
+    // Jupiter aspect - 5th, 7th, 9th sign from Mars
     const jupHouseFromMars = ((jupiter.signIdx - mars.signIdx + 12) % 12) + 1;
     if ([5, 7, 9].includes(jupHouseFromMars)) {
       nullified = true;
@@ -232,19 +267,42 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
     }
   }
 
-  // Rule 4: Venus softening (removed - only checking from Lagna now)
+  // Rule 4: Venus softening - conjunction
+  if (venus) {
+    const marsVenusDelta = degDelta(mars.deg, venus.deg);
+    if (marsVenusDelta <= CONJ_ORB) {
+      nullified = true;
+      nullifications.push(`Venus conjunction (${marsVenusDelta.toFixed(1)}° orb)`);
+    }
+  }
 
   const status = nullified ? "present (nullified)" : "present";
+  
+  // Severity based on source count and nullification
+  // Multiple sources = severe, single source = moderate, nullified = mild
+  let severity: "severe" | "moderate" | "mild" | null = null;
+  const activeSourceCount = [sources.fromAsc, sources.fromMoon, sources.fromVenus].filter(Boolean).length;
+  
+  if (nullified) {
+    severity = "mild";
+  } else if (activeSourceCount >= 2) {
+    severity = "severe";
+  } else {
+    severity = "moderate";
+  }
 
   return {
     sources,
     status,
+    severity,
     nullified,
     reasons: [...reasons, ...nullifications.map(n => `Nullified: ${n}`)],
     debug: {
       marsHouse: mars.house,
       marsSign: mars.sign,
       marsDeg: mars.deg,
+      moonSign: moon?.sign,
+      venusSign: venus?.sign,
       nullificationRules: nullifications
     }
   };
@@ -257,6 +315,7 @@ export function calculateMangalDoshaAlgorithmic(kundli: SeerKundli): MangalDosha
 export interface SadeSatiResult {
   active: boolean;
   phase: "rising" | "peak" | "setting" | null;
+  severity: "severe" | "moderate" | "mild" | null;
   source: "events" | "current_saturn";
   window: { start: string; end: string } | null;
   reasons: string[];
@@ -273,6 +332,7 @@ export function calculateSadeSatiAlgorithmic(
     return {
       active: false,
       phase: null,
+      severity: null,
       source: "current_saturn",
       window: null,
       reasons: ["Moon position not available"],
@@ -288,6 +348,7 @@ export function calculateSadeSatiAlgorithmic(
     return {
       active: false,
       phase: null,
+      severity: null,
       source: "current_saturn",
       window: null,
       reasons: ["Invalid CURRENT_SATURN_SIGN configuration"],
@@ -304,33 +365,36 @@ export function calculateSadeSatiAlgorithmic(
   console.log(`[SADE_SATI_DEBUG] Moon: ${moon.sign} (idx ${moon.signIdx}), Current Saturn: ${CURRENT_SATURN_SIGN} (idx ${currentSaturnIdx}), Relative: ${saturnRelToMoon}`);
   
   if (saturnRelToMoon === 11) {
-    // Saturn is 1 sign before Moon (12th from Moon = Rising phase)
+    // Saturn is 1 sign before Moon (12th from Moon = Rising phase) - MILD
     return {
       active: true,
       phase: "rising",
+      severity: "mild",
       source: "current_saturn",
       window: null,
-      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Rising phase)`],
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Rising phase - Mild)`],
       debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
     };
   } else if (saturnRelToMoon === 0) {
-    // Saturn same sign as Moon (Peak phase)
+    // Saturn same sign as Moon (Peak phase) - SEVERE
     return {
       active: true,
       phase: "peak",
+      severity: "severe",
       source: "current_saturn",
       window: null,
-      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Peak phase)`],
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Peak phase - Severe)`],
       debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
     };
   } else if (saturnRelToMoon === 1) {
-    // Saturn is 1 sign after Moon (Setting phase)
+    // Saturn is 1 sign after Moon (Setting phase) - MODERATE
     return {
       active: true,
       phase: "setting",
+      severity: "moderate",
       source: "current_saturn",
       window: null,
-      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Setting phase)`],
+      reasons: [`Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign} (Setting phase - Moderate)`],
       debug: { saturnSign: CURRENT_SATURN_SIGN, moonSign: moon.sign, saturnRelToMoon }
     };
   }
@@ -338,6 +402,7 @@ export function calculateSadeSatiAlgorithmic(
   return {
     active: false,
     phase: null,
+    severity: null,
     source: "current_saturn",
     window: null,
     reasons: [`Saturn not in Sade Sati position. Saturn in ${CURRENT_SATURN_SIGN}, Moon in ${moon.sign}`],

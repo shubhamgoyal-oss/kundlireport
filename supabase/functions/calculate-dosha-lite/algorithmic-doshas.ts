@@ -88,10 +88,10 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
     }
   }
 
-  // Determine status based on traditional Vedic astrology definitions:
-  // Purna (Full): All 7 planets inside
-  // Ardh/Anshik (Partial): 5-6 planets inside (most astrologers accept this)
-  // Absent: 4 or fewer planets inside
+  // STRICT Traditional Kaal Sarpa Dosha Definition:
+  // Purna (Full): ALL 7 planets MUST be inside the Rahu→Ketu arc
+  // Absent: Any planet outside means NO Kaal Sarpa Dosha
+  // No partial/Anshik variants - classical definition requires ALL 7 planets
   let status: "present_full" | "present_partial" | "absent";
   let reasons: string[] = [];
   const outsideCount = 7 - insideCount;
@@ -99,21 +99,11 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   if (insideCount === 7) {
     status = "present_full";
     reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp)");
-  } else if (insideCount === 6) {
-    status = "present_partial";
-    const outsidePlanet = placements.find(p => !p.inside);
-    if (boundaryPlanets.length > 0) {
-      reasons.push(`6 planets inside, ${boundaryPlanets[0].name} on boundary (${boundaryPlanets[0].minDist.toFixed(1)}° from node) - Ardh Kaal Sarp`);
-    } else {
-      reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp`);
-    }
-  } else if (insideCount === 5) {
-    status = "present_partial";
-    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
-    reasons.push(`5 planets inside, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp`);
   } else {
+    // STRICT: Any planet outside = NO Kaal Sarpa
     status = "absent";
-    reasons.push(`Only ${insideCount} planet(s) within Rahu→Ketu arc (need 5+ for Kaal Sarp)`);
+    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
+    reasons.push(`${outsideCount} planet(s) outside arc (${outsidePlanets.join(', ')}) - Kaal Sarp requires ALL 7 planets inside`);
   }
 
   // Variant name by Rahu house

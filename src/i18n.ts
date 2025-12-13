@@ -158,6 +158,11 @@ const resources = {
           someDoshasActive: 'Some doshas active',
           noDoshasFound: 'No doshas found'
         },
+        severityValues: {
+          high: 'High',
+          medium: 'Medium',
+          low: 'Low'
+        },
         mangal: {
           name: 'Mangal Dosha (Manglik)',
           description: 'Mangal (Manglik/Kuja) Dosha — Linked with Mars in certain houses; traditionally associated with friction in relationships and decisiveness.',
@@ -458,6 +463,11 @@ const resources = {
           suggested: 'सुझाया गया',
           someDoshasActive: 'कुछ दोष सक्रिय',
           noDoshasFound: 'कोई दोष नहीं मिला'
+        },
+        severityValues: {
+          high: 'उच्च',
+          medium: 'मध्यम',
+          low: 'निम्न'
         },
         mangal: {
           name: 'मंगल दोष (मांगलिक)',

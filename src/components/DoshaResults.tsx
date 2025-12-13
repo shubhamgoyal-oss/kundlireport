@@ -19,17 +19,22 @@ interface DoshaResultsProps {
     mangal: string;
     mangalSeverity?: string;
     kaalSarp: string;
+    kaalSarpSeverity?: string;
     kaalSarpType?: string;
     kaalSarpSubtype?: string;
     pitra: string;
+    pitraSeverity?: string;
     shaniSadeSati: string;
+    sadeSatiSeverity?: string;
     shaniPhase?: number;
     grahan?: string;
     grahanSeverity?: string;
     grahanSubtype?: string;
     rahuSurya?: string;
     shrapit?: string;
+    shrapitSeverity?: string;
     guruChandal?: string;
+    guruChandalSeverity?: string;
     punarphoo?: string;
     kemadruma?: string;
     gandmool?: string;
@@ -381,7 +386,27 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     return '';
   };
 
-  // Add doshas in order: Kaal Sarp, Pitra, Shani, then Mangal (last)
+  // Severity scoring: severe/high=3, moderate/medium=2, mild/low=1
+  const getSeverityScore = (severity?: string): number => {
+    if (!severity) return 2; // Default to medium if not specified
+    const s = severity.toLowerCase();
+    if (s === 'severe' || s === 'high') return 3;
+    if (s === 'moderate' || s === 'medium') return 2;
+    if (s === 'mild' || s === 'low') return 1;
+    return 2;
+  };
+
+  // Map backend severity to display labels (Low/Medium/High)
+  const mapSeverityToLabel = (severity?: string): string => {
+    if (!severity) return isHindi ? 'मध्यम' : 'Medium';
+    const s = severity.toLowerCase();
+    if (s === 'severe' || s === 'high') return isHindi ? 'उच्च' : 'High';
+    if (s === 'moderate' || s === 'medium') return isHindi ? 'मध्यम' : 'Medium';
+    if (s === 'mild' || s === 'low') return isHindi ? 'निम्न' : 'Low';
+    return isHindi ? 'मध्यम' : 'Medium';
+  };
+
+  // Add all doshas with their severity from backend
   if (isDoshaPresent(summary.kaalSarp)) {
     activeDoshas.push({
       type: 'kaal-sarp',
@@ -389,6 +414,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       label: t('doshaResults.kaalSarp.name'),
       icon: Waves,
       status: summary.kaalSarp,
+      severity: summary.kaalSarpSeverity || 'moderate',
       explanation: isHindi ? (translatedExplanations.kaalSarp || details.kaalSarp?.explanation || '') : (details.kaalSarp?.explanation || ''),
       placements: details.kaalSarp?.placements,
       impact: t('doshaResults.kaalSarp.impact'),
@@ -403,6 +429,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       label: t('doshaResults.pitra.name'),
       icon: Users,
       status: summary.pitra,
+      severity: summary.pitraSeverity || 'moderate',
       explanation: isHindi ? (translatedExplanations.pitra || details.pitra?.explanation || '') : (details.pitra?.explanation || ''),
       placements: details.pitra?.placements,
       impact: t('doshaResults.pitra.impact'),
@@ -417,6 +444,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       label: t('doshaResults.sadeSati.name'),
       icon: Moon,
       status: summary.shaniSadeSati,
+      severity: summary.sadeSatiSeverity || 'moderate',
       phase: summary.shaniPhase,
       explanation: isHindi ? (translatedExplanations.sadeSati || details.sadeSati?.explanation || '') : (details.sadeSati?.explanation || ''),
       placements: details.sadeSati?.placements,
@@ -425,7 +453,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       pujaType: 'shani',
     });
   }
-  // Mangal Dosha added last
+  // Mangal Dosha
   if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
     activeDoshas.push({
       type: 'mangal',
@@ -433,7 +461,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       label: t('doshaResults.mangal.name'),
       icon: Flame,
       status: summary.mangal,
-      severity: summary.mangalSeverity,
+      severity: summary.mangalSeverity || 'moderate',
       explanation: isHindi ? (translatedExplanations.mangal || details.mangal?.explanation || '') : (details.mangal?.explanation || ''),
       placements: details.mangal?.placements,
       impact: t('doshaResults.mangal.impact'),
@@ -441,6 +469,13 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       pujaType: 'mangal',
     });
   }
+
+  // Sort doshas by severity (High > Medium > Low)
+  activeDoshas.sort((a, b) => {
+    const scoreA = getSeverityScore(a.severity);
+    const scoreB = getSeverityScore(b.severity);
+    return scoreB - scoreA; // Descending order (high first)
+  });
 
   // Get puja benefits by dosha type
   const getPujaBenefits = (pujaType: string, hindi: boolean): string[] => {
@@ -600,8 +635,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
                 {dosha.label}
               </CardTitle>
               <CardDescription>
-                {t('doshaResults.status')}: {translateStatus(dosha.status)}
-                {dosha.severity && ` • ${t('doshaResults.severity')}: ${dosha.severity}`}
+                {isHindi ? 'गंभीरता' : 'Severity'}: {mapSeverityToLabel(dosha.severity)}
                 {dosha.phase && ` • ${isHindi ? 'चरण' : 'Phase'}: ${dosha.phase}`}
               </CardDescription>
             </CardHeader>

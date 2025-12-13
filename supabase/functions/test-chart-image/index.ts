@@ -13,12 +13,8 @@ serve(async (req) => {
   try {
     // Test the chart image endpoint with D1 as chart_id
     const chartId = "D1";
-    const url = `https://api-sbox.a4b.io/gw2/seer/internal/v1/user/horo_chart_image/${chartId}`;
     
-    console.log("🌐 Testing Seer Chart Image API");
-    console.log("📍 URL:", url);
-    
-    // Try with birth details as query params or body
+    // Birth details for the request
     const birthDetails = {
       day: 15,
       month: 5,
@@ -33,18 +29,43 @@ serve(async (req) => {
       gender: "M"
     };
     
+    // Build URL with query params
+    const params = new URLSearchParams();
+    Object.entries(birthDetails).forEach(([k, v]) => params.append(k, String(v)));
+    
+    const urlWithParams = `https://api-sbox.a4b.io/gw2/seer/internal/v1/user/horo_chart_image/${chartId}?${params.toString()}`;
+    const urlPost = `https://api-sbox.a4b.io/gw2/seer/internal/v1/user/horo_chart_image/${chartId}`;
+    
+    console.log("🌐 Testing Seer Chart Image API");
+    console.log("📍 URL (GET):", urlWithParams);
+    console.log("📍 URL (POST):", urlPost);
     console.log("📤 Request payload:", JSON.stringify(birthDetails, null, 2));
     
-    const response = await fetch(url, {
-      method: "POST",
+    // Try GET first
+    console.log("\n--- Trying GET request ---");
+    let response = await fetch(urlWithParams, {
+      method: "GET",
       headers: {
-        "x-fe-server": "true",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(birthDetails)
+        "x-fe-server": "true"
+      }
     });
     
-    console.log("📊 Response Status:", response.status, response.statusText);
+    console.log("📊 GET Response Status:", response.status, response.statusText);
+    
+    // If GET fails, try POST
+    if (!response.ok) {
+      console.log("\n--- GET failed, trying POST ---");
+      response = await fetch(urlPost, {
+        method: "POST",
+        headers: {
+          "x-fe-server": "true",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(birthDetails)
+      });
+      console.log("📊 POST Response Status:", response.status, response.statusText);
+    }
+    
     console.log("📋 Response Headers:", JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2));
     
     const contentType = response.headers.get("content-type");

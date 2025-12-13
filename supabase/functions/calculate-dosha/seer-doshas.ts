@@ -4,7 +4,7 @@ import { SeerKundli, SeerPlanet, houseFrom, degDelta, insideRahuKetuArc } from "
 
 export interface DoshaResult {
   status: "present" | "partial" | "absent" | "present (nullified)";
-  severity?: "mild" | "moderate" | "strong";
+  severity?: "mild" | "moderate" | "strong" | "severe" | null;
   triggeredBy: string[];
   cancellations: string[];
   mitigations: string[];

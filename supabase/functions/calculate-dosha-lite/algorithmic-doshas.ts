@@ -88,10 +88,10 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
     }
   }
 
-  // STRICT Traditional Kaal Sarpa Dosha Definition:
-  // Purna (Full): ALL 7 planets MUST be inside the Rahu→Ketu arc
-  // Absent: Any planet outside means NO Kaal Sarpa Dosha
-  // No partial/Anshik variants - classical definition requires ALL 7 planets
+  // Traditional Kaal Sarpa Dosha Definition:
+  // Purna (Full): ALL 7 planets inside the Rahu→Ketu arc
+  // Partial: 6 planets inside (Ardh Kaal Sarp)
+  // Absent: 5 or fewer planets inside
   let status: "present_full" | "present_partial" | "absent";
   let reasons: string[] = [];
   const outsideCount = 7 - insideCount;
@@ -99,11 +99,15 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   if (insideCount === 7) {
     status = "present_full";
     reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp)");
+  } else if (insideCount === 6) {
+    status = "present_partial";
+    const outsidePlanet = placements.find(p => !p.inside);
+    reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp`);
   } else {
-    // STRICT: Any planet outside = NO Kaal Sarpa
+    // 5 or fewer = NO Kaal Sarpa
     status = "absent";
     const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
-    reasons.push(`${outsideCount} planet(s) outside arc (${outsidePlanets.join(', ')}) - Kaal Sarp requires ALL 7 planets inside`);
+    reasons.push(`Only ${insideCount} planet(s) inside arc (need 6+ for Kaal Sarp)`);
   }
 
   // Variant name by Rahu house

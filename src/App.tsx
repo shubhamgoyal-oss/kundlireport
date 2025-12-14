@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
 import ExperimentAdmin from "./pages/ExperimentAdmin";
-import AnalyticsDashboard from "./pages/AnalyticsDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import LanguageToggle from "./components/LanguageToggle";
 import { LanguageWrapper } from "./components/LanguageWrapper";
@@ -86,10 +85,6 @@ const App = () => {
                     <ExperimentAdmin />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="/admin/analytics"
-                element={<AnalyticsDashboard />}
               />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

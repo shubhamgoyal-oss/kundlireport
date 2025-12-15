@@ -123,7 +123,40 @@ const DoshaCalculator = () => {
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherProblemText, setOtherProblemText] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [ageValidationError, setAgeValidationError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Calculate age from date string
+  const calculateAge = (dateString: string): number => {
+    if (!dateString) return 0;
+    const birthDate = new Date(dateString);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+  
+  // Validate age vs problem area selection
+  const validateAgeAndProblems = (dateValue: string): boolean => {
+    const age = calculateAge(dateValue);
+    if (age < 18) {
+      // Check if user selected marriage or career
+      const restrictedProblems = ['marriage', 'career'];
+      const hasRestrictedProblem = selectedProblems.some(p => restrictedProblems.includes(p));
+      if (hasRestrictedProblem) {
+        const errorMsg = isHindi 
+          ? 'कृपया अपनी समस्या का सही चयन करें। विवाह और करियर संबंधी समस्याएं 18 वर्ष से अधिक आयु के लिए हैं।'
+          : 'Please select appropriate problem areas. Marriage and career-related issues are applicable for users above 18 years.';
+        setAgeValidationError(errorMsg);
+        return false;
+      }
+    }
+    setAgeValidationError(null);
+    return true;
+  };
   
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -168,6 +201,9 @@ const DoshaCalculator = () => {
   }, [selectedProblems, otherProblemText, showOtherInput]);
   
   const toggleProblem = (id: string) => {
+    // Clear age validation error when changing problems
+    setAgeValidationError(null);
+    
     if (id === 'other') {
       setShowOtherInput(!showOtherInput);
       if (!showOtherInput) {
@@ -272,6 +308,11 @@ const DoshaCalculator = () => {
   };
 
   const onSubmit = async (data: BirthInput) => {
+    // Validate age vs problem area
+    if (!validateAgeAndProblems(data.date)) {
+      return;
+    }
+    
     const submissionData = {
       ...data,
       name: data.name.trim(),
@@ -704,6 +745,16 @@ const DoshaCalculator = () => {
               </p>
             )}
           </div>
+
+          {/* Age validation error */}
+          {ageValidationError && (
+            <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+              <p className="text-sm text-destructive flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                {ageValidationError}
+              </p>
+            </div>
+          )}
 
           <Button
             type="submit"

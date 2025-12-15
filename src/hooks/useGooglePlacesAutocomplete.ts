@@ -32,10 +32,28 @@ function loadGoogleMapsScript(): Promise<void> {
 
   googleMapsPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      const start = Date.now();
+      const check = () => {
+        if (window.google?.maps?.places) {
+          resolve();
+          return;
+        }
+        if (Date.now() - start > 2000) {
+          reject(
+            new Error(
+              'Google Maps loaded but Places library is unavailable. This usually happens due to API key referrer restrictions (RefererNotAllowedMapError).'
+            )
+          );
+          return;
+        }
+        setTimeout(check, 50);
+      };
+      check();
+    };
     script.onerror = () => reject(new Error('Failed to load Google Maps API'));
     document.head.appendChild(script);
   });

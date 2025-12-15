@@ -367,6 +367,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     impact: string;
     remedies: string[];
     pujaType: string;
+    notImpactingNote?: string; // Note when dosha is present but not relevant to user's problem
   }> = [];
 
   // Helper to get phase explanation
@@ -451,22 +452,27 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       pujaType: 'shani',
     });
   }
-  // Mangal Dosha - Only show for marriage/health issues, NOT for career/financial/business
-  const isMangalRelevant = () => {
-    if (!problemArea) return true; // Show by default if no problem area specified
+  
+  // Mangal Dosha - Check if relevant to user's problem area (only affects marriage/health)
+  const getMangalRelevanceNote = (): string | undefined => {
+    if (!problemArea) return undefined; // No note if no problem area specified
     const lowerProblem = problemArea.toLowerCase();
-    // Exclude Mangal for career/financial/business issues
+    // Check for career/financial/business issues
     const excludeKeywords = ['career', 'financial', 'job', 'business', 'करियर', 'आर्थिक', 'नौकरी', 'व्यापार'];
     const hasExcludedProblem = excludeKeywords.some(kw => lowerProblem.includes(kw));
-    // Include Mangal for marriage/health
+    // Check for marriage/health issues
     const includeKeywords = ['marriage', 'health', 'शादी', 'स्वास्थ्य'];
     const hasIncludedProblem = includeKeywords.some(kw => lowerProblem.includes(kw));
-    // If user has excluded problems and no included problems, don't show Mangal
-    if (hasExcludedProblem && !hasIncludedProblem) return false;
-    return true;
+    // If user has career/financial issues but no marriage/health issues, show note
+    if (hasExcludedProblem && !hasIncludedProblem) {
+      return isHindi 
+        ? 'मंगल दोष आपकी कुंडली में मौजूद है, लेकिन यह केवल विवाह और स्वास्थ्य को प्रभावित करता है। आपकी चयनित समस्या क्षेत्र पर इसका प्रभाव नहीं है।'
+        : 'Mangal Dosha is present in your chart, but it primarily affects marriage and health matters. It is not impacting your selected problem area.';
+    }
+    return undefined;
   };
   
-  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal) && isMangalRelevant()) {
+  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
     activeDoshas.push({
       type: 'mangal',
       detailKey: 'mangal',
@@ -479,6 +485,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       impact: t('doshaResults.mangal.impact'),
       remedies: t('doshaResults.mangal.remedies', { returnObjects: true }) as string[],
       pujaType: 'mangal',
+      notImpactingNote: getMangalRelevanceNote(),
     });
   }
 
@@ -697,47 +704,61 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
                 )}
               </div>
 
-              {/* Impact Box */}
-              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                <h4 className="font-semibold text-sm mb-2 text-destructive">
-                  {personalizedImpacts[dosha.pujaType]?.title || (isHindi ? 'प्रभाव' : 'Impact if Present')}
-                </h4>
-                {isLoadingImpacts ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isHindi ? 'प्रभाव विश्लेषण हो रहा है...' : 'Analyzing impact...'}</span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {personalizedImpacts[dosha.pujaType]?.text || dosha.impact}
+              {/* Note for Mangal Dosha when not relevant to problem area */}
+              {dosha.notImpactingNote && (
+                <div className="p-3 bg-muted/50 border border-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground italic flex items-start gap-2">
+                    <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                    {dosha.notImpactingNote}
                   </p>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Puja Recommendation */}
-              <div className="space-y-2">
-                <h4 className="font-semibold text-base">
-                  {isHindi ? 'पूजा उपाय' : 'Puja Recommendation'}
-                </h4>
-                {isLoadingPujas ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : puja ? (
-                  <SriMandirPujaVerticalCard 
-                    puja={puja} 
-                    doshaType={dosha.type}
-                    onBookClick={() => trackBookPujaClick(dosha.type)}
-                  />
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">
-                    {isHindi ? 'इस दोष के लिए कोई विशेष पूजा उपलब्ध नहीं है' : 'No specific puja available for this dosha'}
-                  </p>
-                )}
-              </div>
+              {/* Impact Box - Skip for Mangal if not impacting user's problem area */}
+              {!dosha.notImpactingNote && (
+                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <h4 className="font-semibold text-sm mb-2 text-destructive">
+                    {personalizedImpacts[dosha.pujaType]?.title || (isHindi ? 'प्रभाव' : 'Impact if Present')}
+                  </h4>
+                  {isLoadingImpacts ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{isHindi ? 'प्रभाव विश्लेषण हो रहा है...' : 'Analyzing impact...'}</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {personalizedImpacts[dosha.pujaType]?.text || dosha.impact}
+                    </p>
+                  )}
+                </div>
+              )}
 
-              {/* How this Puja will help */}
-              {puja && (
+              {/* Puja Recommendation - Skip for Mangal if not impacting user's problem area */}
+              {!dosha.notImpactingNote && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-base">
+                    {isHindi ? 'पूजा उपाय' : 'Puja Recommendation'}
+                  </h4>
+                  {isLoadingPujas ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    </div>
+                  ) : puja ? (
+                    <SriMandirPujaVerticalCard 
+                      puja={puja} 
+                      doshaType={dosha.type}
+                      onBookClick={() => trackBookPujaClick(dosha.type)}
+                    />
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      {isHindi ? 'इस दोष के लिए कोई विशेष पूजा उपलब्ध नहीं है' : 'No specific puja available for this dosha'}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* How this Puja will help - Skip for Mangal if not impacting user's problem area */}
+              {puja && !dosha.notImpactingNote && (
                 <div className="space-y-2">
                   <h4 className="font-semibold text-base flex items-center gap-2">
                     {isHindi ? 'यह पूजा कैसे मदद करेगी' : 'How this Puja will help'}

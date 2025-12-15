@@ -88,17 +88,12 @@ serve(async (req) => {
       userAge = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
     }
     
-    // Check for irrelevant problem area
+    // Check for irrelevant problem area - skip impact generation entirely
     const isRelevant = isRelevantProblem(problemArea);
     if (!isRelevant) {
-      const isHindi = language === 'hi';
       return new Response(
         JSON.stringify({ 
-          impactText: isHindi 
-            ? 'आपके दोष आपके जन्म कुंडली में मौजूद हैं और जीवन के विभिन्न पहलुओं को प्रभावित कर सकते हैं। हालांकि, इस विशेष चिंता के लिए, दोष का कोई सीधा ज्योतिषीय संबंध नहीं है।'
-            : 'Your dosha is present in your birth chart and may influence various aspects of life. However, for this specific concern, there is no direct astrological correlation to the dosha.',
-          impactTitle: isHindi ? 'सामान्य प्रभाव' : 'General Impact',
-          isGeneric: true
+          skipImpact: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -109,29 +104,34 @@ serve(async (req) => {
     if (!ageCheck.appropriate) {
       const isHindi = language === 'hi';
       let ageMessage = '';
+      let titleSuffix = '';
       
       if (ageCheck.reason === 'marriage') {
+        titleSuffix = isHindi ? 'विवाह संबंधी प्रभाव' : 'Impact on Marriage';
         ageMessage = isHindi 
-          ? `आपकी आयु ${userAge} वर्ष है, जो विवाह संबंधी चिंताओं के लिए कम है। आपका दोष आपकी कुंडली में मौजूद है, लेकिन विवाह संबंधी प्रभाव 18 वर्ष की आयु के बाद ही प्रासंगिक होते हैं।`
-          : `At ${userAge} years old, marriage-related concerns are not yet applicable. Your dosha is present in your chart, but marriage-related effects become relevant only after age 18.`;
+          ? `आपकी वर्तमान आयु (${userAge} वर्ष) पर, विवाह संबंधी दोष प्रभाव अभी लागू नहीं होते। यह दोष आपकी कुंडली में मौजूद है और उचित आयु में विवाह संबंधित निर्णयों के समय इस पर विचार किया जाना चाहिए।`
+          : `At your current age of ${userAge}, marriage-related dosha effects are not yet applicable. This dosha is present in your chart and should be considered when marriage-related decisions become relevant at the appropriate age.`;
       } else if (ageCheck.reason === 'career') {
+        titleSuffix = isHindi ? 'करियर पर प्रभाव' : 'Impact on Career';
         ageMessage = isHindi
-          ? `आपकी आयु ${userAge} वर्ष है। करियर संबंधी दोष प्रभाव आमतौर पर 18 वर्ष की आयु के बाद प्रासंगिक होते हैं जब आप कार्यबल में प्रवेश करते हैं।`
-          : `At ${userAge} years old, career-related dosha effects typically become relevant after age 18 when you enter the workforce.`;
+          ? `आपकी वर्तमान आयु (${userAge} वर्ष) पर, करियर संबंधी दोष प्रभाव अभी प्रासंगिक नहीं हैं। यह दोष आपकी कुंडली में मौजूद है और जब आप कार्यबल में प्रवेश करेंगे तब इस पर विचार किया जाना चाहिए।`
+          : `At your current age of ${userAge}, career-related dosha effects are not yet relevant. This dosha is present in your chart and should be considered when you enter the workforce.`;
       } else if (ageCheck.reason === 'business') {
+        titleSuffix = isHindi ? 'व्यापार पर प्रभाव' : 'Impact on Business';
         ageMessage = isHindi
-          ? `आपकी आयु ${userAge} वर्ष है। व्यापार संबंधी दोष प्रभाव आमतौर पर वयस्क होने के बाद प्रासंगिक होते हैं।`
-          : `At ${userAge} years old, business-related dosha effects typically become relevant in adulthood.`;
+          ? `आपकी वर्तमान आयु (${userAge} वर्ष) पर, व्यापार संबंधी दोष प्रभाव अभी लागू नहीं होते। यह दोष आपकी कुंडली में मौजूद है और वयस्कता में व्यापारिक निर्णयों के समय इस पर विचार किया जाना चाहिए।`
+          : `At your current age of ${userAge}, business-related dosha effects are not yet applicable. This dosha is present in your chart and should be considered when making business decisions in adulthood.`;
       } else {
+        titleSuffix = isHindi ? 'आर्थिक प्रभाव' : 'Impact on Finances';
         ageMessage = isHindi
-          ? `आपकी आयु ${userAge} वर्ष है। यह चिंता आमतौर पर वयस्कता में अधिक प्रासंगिक होती है।`
-          : `At ${userAge} years old, this concern typically becomes more relevant in adulthood.`;
+          ? `आपकी वर्तमान आयु (${userAge} वर्ष) पर, वित्तीय दोष प्रभाव अभी प्रासंगिक नहीं हैं। यह दोष आपकी कुंडली में मौजूद है और वयस्कता में वित्तीय निर्णयों के समय इस पर विचार किया जाना चाहिए।`
+          : `At your current age of ${userAge}, financial dosha effects are not yet relevant. This dosha is present in your chart and should be considered when making financial decisions in adulthood.`;
       }
       
       return new Response(
         JSON.stringify({ 
           impactText: ageMessage,
-          impactTitle: isHindi ? 'आयु संबंधी नोट' : 'Age-Related Note',
+          impactTitle: titleSuffix,
           isAgeRestricted: true
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -535,14 +535,22 @@ export function formatScheduleDate(dateStr: string, language: string = 'en'): st
 }
 
 /**
- * Get the appropriate puja link based on language
+ * Get the appropriate puja link based on language, with UTM parameters appended
  */
 export function getPujaLink(puja: SriMandirPuja, language: string): string {
+  const { appendUTMToUrl } = require('./trafficTracking');
+  
   const isHindi = language?.toLowerCase().startsWith('hi');
+  let baseLink: string;
+  
   if (isHindi) {
-    return puja.puja_link_hindi || puja.puja_link;
+    baseLink = puja.puja_link_hindi || puja.puja_link;
+  } else {
+    baseLink = puja.puja_link || puja.puja_link_hindi;
   }
-  return puja.puja_link || puja.puja_link_hindi;
+  
+  // Append UTM parameters dynamically from current page URL
+  return appendUTMToUrl(baseLink);
 }
 
 /**

@@ -37,6 +37,45 @@ export function extractUTMParameters(): UTMParameters {
 }
 
 /**
+ * Get current UTM parameters and append them to a URL
+ * @param baseUrl - The base URL to append UTM params to
+ * @returns URL with UTM parameters appended
+ */
+export function appendUTMToUrl(baseUrl: string): string {
+  if (!baseUrl) return baseUrl;
+  
+  const utmParams = extractUTMParameters();
+  const hasAnyUTM = Object.values(utmParams).some(v => v);
+  
+  if (!hasAnyUTM) return baseUrl;
+  
+  try {
+    const url = new URL(baseUrl);
+    
+    // Append each UTM parameter if it exists
+    if (utmParams.utm_source) url.searchParams.set('utm_source', utmParams.utm_source);
+    if (utmParams.utm_campaign) url.searchParams.set('utm_campaign', utmParams.utm_campaign);
+    if (utmParams.utm_medium) url.searchParams.set('utm_medium', utmParams.utm_medium);
+    if (utmParams.utm_term) url.searchParams.set('utm_term', utmParams.utm_term);
+    if (utmParams.utm_content) url.searchParams.set('utm_content', utmParams.utm_content);
+    
+    return url.toString();
+  } catch (e) {
+    // If URL parsing fails, try manual concatenation
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    const params: string[] = [];
+    
+    if (utmParams.utm_source) params.push(`utm_source=${encodeURIComponent(utmParams.utm_source)}`);
+    if (utmParams.utm_campaign) params.push(`utm_campaign=${encodeURIComponent(utmParams.utm_campaign)}`);
+    if (utmParams.utm_medium) params.push(`utm_medium=${encodeURIComponent(utmParams.utm_medium)}`);
+    if (utmParams.utm_term) params.push(`utm_term=${encodeURIComponent(utmParams.utm_term)}`);
+    if (utmParams.utm_content) params.push(`utm_content=${encodeURIComponent(utmParams.utm_content)}`);
+    
+    return params.length > 0 ? `${baseUrl}${separator}${params.join('&')}` : baseUrl;
+  }
+}
+
+/**
  * Get country code from geolocation API
  */
 async function getCountryCode(): Promise<string | undefined> {

@@ -10,13 +10,13 @@ import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Calendar, Clock, MapPin, Loader2, AlertCircle, RotateCcw, Edit, User, HelpCircle, ChevronDown, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { searchPlaces, preloadCityDatabase, type Place } from '@/utils/geocoding';
 import { DoshaResults } from './DoshaResults';
 import { DateOfBirthPicker } from './DateOfBirthPicker';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
-import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
 
 // Form validation schema - name is mandatory
 const birthInputSchema = z
@@ -63,7 +63,8 @@ type BirthInput = z.infer<typeof birthInputSchema>;
 
 const DoshaCalculator = () => {
   const { t } = useTranslation();
-  const { predictions, isSearching: isGoogleSearching, searchPlaces: searchGooglePlaces, getPlaceDetails, clearPredictions } = useGooglePlacesAutocomplete();
+  const [placeSearchResults, setPlaceSearchResults] = useState<Place[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [doshaResults, setDoshaResults] = useState<any>(null);
@@ -188,53 +189,69 @@ const DoshaCalculator = () => {
     }
 
     if (searchTerm.length < 2) {
-      clearPredictions();
+      setPlaceSearchResults([]);
       setShowPlaceResults(false);
       return;
     }
 
+    setIsSearching(true);
+    
     const timer = setTimeout(async () => {
-      await searchGooglePlaces(searchTerm);
-      setShowPlaceResults(true);
-      setSelectedPlaceIndex(-1);
-    }, 300);
+      try {
+        const results = await searchPlaces(searchTerm);
+        
+        if (results.length === 0) {
+          const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+          const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+            city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setPlaceSearchResults(fallback);
+        } else {
+          setPlaceSearchResults(results);
+        }
+        
+        setShowPlaceResults(true);
+        setSelectedPlaceIndex(-1);
+      } catch (error) {
+        console.error('Place search error:', error);
+        const { INDIAN_CITIES_FALLBACK } = await import('@/utils/geocoding');
+        const fallback = INDIAN_CITIES_FALLBACK.filter(city =>
+          city.display_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setPlaceSearchResults(fallback);
+        setShowPlaceResults(true);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 350);
 
     setSearchTimer(timer);
   };
 
-  const handlePlaceSelect = async (placeId: string, displayName: string) => {
-    // Get detailed place info including coordinates
-    const details = await getPlaceDetails(placeId);
-    
-    if (details) {
-      setValue('place', details.display_name);
-      setValue('lat', details.lat);
-      setValue('lon', details.lng);
-      setValue('tz', 'Asia/Kolkata');
-      
-      toast.success(t('dosha.locationSelected'));
-      
-      // Track form field filled for place
-      trackFieldFilled('place');
-    } else {
-      // Fallback if details fetch fails
-      setValue('place', displayName);
-      toast.error(t('dosha.locationError', 'Could not get location coordinates. Please try again.'));
-    }
+  const handlePlaceSelect = async (place: Place) => {
+    setValue('place', place.display_name);
+    setValue('lat', place.lat);
+    setValue('lon', place.lon);
+    setValue('tz', 'Asia/Kolkata');
     
     setShowPlaceResults(false);
-    clearPredictions();
+    setPlaceSearchResults([]);
     setSelectedPlaceIndex(-1);
+    
+    toast.success(t('dosha.locationSelected'));
+    
+    // Track form field filled for place
+    trackFieldFilled('place');
   };
 
   const handlePlaceKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!showPlaceResults || predictions.length === 0) return;
+    if (!showPlaceResults || placeSearchResults.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
         setSelectedPlaceIndex(prev => 
-          prev < predictions.length - 1 ? prev + 1 : prev
+          prev < placeSearchResults.length - 1 ? prev + 1 : prev
         );
         break;
       case 'ArrowUp':
@@ -243,9 +260,8 @@ const DoshaCalculator = () => {
         break;
       case 'Enter':
         e.preventDefault();
-        if (selectedPlaceIndex >= 0 && selectedPlaceIndex < predictions.length) {
-          const selected = predictions[selectedPlaceIndex];
-          handlePlaceSelect(selected.place_id, selected.description);
+        if (selectedPlaceIndex >= 0 && selectedPlaceIndex < placeSearchResults.length) {
+          handlePlaceSelect(placeSearchResults[selectedPlaceIndex]);
         }
         break;
       case 'Escape':
@@ -634,29 +650,29 @@ const DoshaCalculator = () => {
               className="bg-input min-h-[44px] text-base"
               onChange={(e) => handlePlaceSearch(e.target.value)}
               onKeyDown={handlePlaceKeyDown}
+              onFocus={() => preloadCityDatabase()}
               autoComplete="off"
               required
             />
             
-            {showPlaceResults && predictions.length > 0 && (
+            {showPlaceResults && placeSearchResults.length > 0 && (
               <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-auto">
-                {predictions.map((prediction, index) => (
+                {placeSearchResults.map((place, index) => (
                   <button
-                    key={prediction.place_id}
+                    key={index}
                     type="button"
                     className={`w-full text-left px-4 py-3 hover:bg-accent transition-colors ${
                       index === selectedPlaceIndex ? 'bg-accent' : ''
                     }`}
-                    onClick={() => handlePlaceSelect(prediction.place_id, prediction.description)}
+                    onClick={() => handlePlaceSelect(place)}
                   >
-                    <div className="text-sm font-medium">{prediction.structured_formatting.main_text}</div>
-                    <div className="text-xs text-muted-foreground">{prediction.structured_formatting.secondary_text}</div>
+                    <div className="text-sm font-medium">{place.display_name}</div>
                   </button>
                 ))}
               </div>
             )}
             
-            {isGoogleSearching && (
+            {isSearching && (
               <div className="absolute right-3 top-9">
                 <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
               </div>

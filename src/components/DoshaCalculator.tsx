@@ -143,13 +143,14 @@ const DoshaCalculator = () => {
   const validateAgeAndProblems = (dateValue: string): boolean => {
     const age = calculateAge(dateValue);
     if (age < 18) {
-      // Check if user selected marriage or career
-      const restrictedProblems = ['marriage', 'career'];
+      // Users under 18 can only select health or other (non-restricted)
+      // Restricted: marriage, financial, career, business
+      const restrictedProblems = ['marriage', 'financial', 'career', 'business'];
       const hasRestrictedProblem = selectedProblems.some(p => restrictedProblems.includes(p));
       if (hasRestrictedProblem) {
         const errorMsg = isHindi 
-          ? 'कृपया अपनी समस्या का सही चयन करें। विवाह और करियर संबंधी समस्याएं 18 वर्ष से अधिक आयु के लिए हैं।'
-          : 'Please select appropriate problem areas. Marriage and career-related issues are applicable for users above 18 years.';
+          ? 'कृपया उचित समस्या क्षेत्र चुनें। विवाह, वित्तीय, करियर और व्यापार संबंधी समस्याएं 18 वर्ष से अधिक आयु के उपयोगकर्ताओं के लिए हैं।'
+          : 'Please select appropriate problem areas. Marriage, financial, career, and business-related issues are applicable for users above 18 years.';
         setAgeValidationError(errorMsg);
         return false;
       }

@@ -38,6 +38,7 @@ export function extractUTMParameters(): UTMParameters {
 
 /**
  * Get current UTM parameters and append them to a URL
+ * Only appends utm_source, utm_medium, and utm_content - preserves existing utm_campaign
  * @param baseUrl - The base URL to append UTM params to
  * @returns URL with UTM parameters appended
  */
@@ -45,18 +46,17 @@ export function appendUTMToUrl(baseUrl: string): string {
   if (!baseUrl) return baseUrl;
   
   const utmParams = extractUTMParameters();
-  const hasAnyUTM = Object.values(utmParams).some(v => v);
+  // Only check for source, medium, content (not campaign)
+  const hasRelevantUTM = utmParams.utm_source || utmParams.utm_medium || utmParams.utm_content;
   
-  if (!hasAnyUTM) return baseUrl;
+  if (!hasRelevantUTM) return baseUrl;
   
   try {
     const url = new URL(baseUrl);
     
-    // Append each UTM parameter if it exists
+    // Only append source, medium, content - preserve existing campaign
     if (utmParams.utm_source) url.searchParams.set('utm_source', utmParams.utm_source);
-    if (utmParams.utm_campaign) url.searchParams.set('utm_campaign', utmParams.utm_campaign);
     if (utmParams.utm_medium) url.searchParams.set('utm_medium', utmParams.utm_medium);
-    if (utmParams.utm_term) url.searchParams.set('utm_term', utmParams.utm_term);
     if (utmParams.utm_content) url.searchParams.set('utm_content', utmParams.utm_content);
     
     return url.toString();
@@ -66,9 +66,7 @@ export function appendUTMToUrl(baseUrl: string): string {
     const params: string[] = [];
     
     if (utmParams.utm_source) params.push(`utm_source=${encodeURIComponent(utmParams.utm_source)}`);
-    if (utmParams.utm_campaign) params.push(`utm_campaign=${encodeURIComponent(utmParams.utm_campaign)}`);
     if (utmParams.utm_medium) params.push(`utm_medium=${encodeURIComponent(utmParams.utm_medium)}`);
-    if (utmParams.utm_term) params.push(`utm_term=${encodeURIComponent(utmParams.utm_term)}`);
     if (utmParams.utm_content) params.push(`utm_content=${encodeURIComponent(utmParams.utm_content)}`);
     
     return params.length > 0 ? `${baseUrl}${separator}${params.join('&')}` : baseUrl;

@@ -426,30 +426,49 @@ const DoshaCalculator = () => {
                 <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               
-              {/* Dropdown Menu */}
+              {/* Dropdown Menu - Fixed position on mobile */}
               {isDropdownOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-64 overflow-y-auto">
-                  {problemOptions.map((option) => (
-                    <label
-                      key={option.id}
-                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-accent/50 transition-colors border-b border-border last:border-0 ${
-                        selectedProblems.includes(option.id) || (option.id === 'other' && showOtherInput)
-                          ? 'bg-primary/5'
-                          : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={option.id === 'other' ? showOtherInput : selectedProblems.includes(option.id)}
-                        onChange={() => toggleProblem(option.id)}
-                        className="w-4 h-4 accent-primary rounded"
-                      />
-                      <span className="text-sm">
-                        {i18n.language?.startsWith('hi') ? option.hi : option.en}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <>
+                  {/* Backdrop for mobile */}
+                  <div 
+                    className="fixed inset-0 bg-black/30 z-40 sm:hidden"
+                    onClick={() => setIsDropdownOpen(false)}
+                  />
+                  <div className="fixed sm:absolute left-4 right-4 sm:left-0 sm:right-0 bottom-4 sm:bottom-auto sm:mt-1 z-50 bg-card border border-border rounded-lg shadow-xl sm:w-full">
+                    <div className="max-h-[60vh] sm:max-h-64 overflow-y-auto">
+                      {problemOptions.map((option) => (
+                        <label
+                          key={option.id}
+                          className={`flex items-center gap-3 px-4 py-4 sm:py-3 cursor-pointer hover:bg-accent/50 transition-colors border-b border-border last:border-0 ${
+                            selectedProblems.includes(option.id) || (option.id === 'other' && showOtherInput)
+                              ? 'bg-primary/5'
+                              : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={option.id === 'other' ? showOtherInput : selectedProblems.includes(option.id)}
+                            onChange={() => toggleProblem(option.id)}
+                            className="w-5 h-5 sm:w-4 sm:h-4 accent-primary rounded"
+                          />
+                          <span className="text-base sm:text-sm">
+                            {i18n.language?.startsWith('hi') ? option.hi : option.en}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    {/* Done Button */}
+                    <div className="p-3 border-t border-border bg-muted/30">
+                      <button
+                        type="button"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="w-full py-3 sm:py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                      >
+                        {i18n.language?.startsWith('hi') ? 'पूर्ण' : 'Done'}
+                      </button>
+                    </div>
+                  </div>
+                </>
               )}
             </div>
             

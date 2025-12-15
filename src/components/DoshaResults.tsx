@@ -451,8 +451,22 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
       pujaType: 'shani',
     });
   }
-  // Mangal Dosha
-  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
+  // Mangal Dosha - Only show for marriage/health issues, NOT for career/financial/business
+  const isMangalRelevant = () => {
+    if (!problemArea) return true; // Show by default if no problem area specified
+    const lowerProblem = problemArea.toLowerCase();
+    // Exclude Mangal for career/financial/business issues
+    const excludeKeywords = ['career', 'financial', 'job', 'business', 'करियर', 'आर्थिक', 'नौकरी', 'व्यापार'];
+    const hasExcludedProblem = excludeKeywords.some(kw => lowerProblem.includes(kw));
+    // Include Mangal for marriage/health
+    const includeKeywords = ['marriage', 'health', 'शादी', 'स्वास्थ्य'];
+    const hasIncludedProblem = includeKeywords.some(kw => lowerProblem.includes(kw));
+    // If user has excluded problems and no included problems, don't show Mangal
+    if (hasExcludedProblem && !hasIncludedProblem) return false;
+    return true;
+  };
+  
+  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal) && isMangalRelevant()) {
     activeDoshas.push({
       type: 'mangal',
       detailKey: 'mangal',
@@ -742,6 +756,16 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
           </Card>
         );
       })}
+
+      {/* FOMO Footer - Only show if there are puja recommendations */}
+      {activeDoshas.some(d => getPujaForDosha(d.pujaType)) && (
+        <p className="text-xs text-muted-foreground text-center italic px-4">
+          {isHindi 
+            ? 'पूजाएं केवल चुनिंदा तिथियों पर मंदिरों में आयोजित की जाती हैं, और अनुष्ठान की पवित्रता बनाए रखने के लिए स्थान सीमित हैं।'
+            : 'The pujas are conducted only on select dates at the temples, and slots are limited to maintain ritual purity.'
+          }
+        </p>
+      )}
 
       {/* Detailed Analysis Section - All 4 Major Doshas */}
       <Card className="spiritual-glow">

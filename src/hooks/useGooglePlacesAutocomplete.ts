@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyAloADZONRgxV40nf6MoECrHSulOuyJOjs';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCEsEBy-JYuu9SSITQrpYU3tpaq5HQOhi4';
 
 interface PlacePrediction {
   place_id: string;

@@ -1005,21 +1005,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
         {t('doshaResults.disclaimer')}
       </p>
 
-      {/* Sri Mandir Other Remedies */}
-      {pujas.length > 0 && (
-        <div className="mt-8 space-y-4">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
-              {isHindi ? 'श्री मंदिर द्वारा अन्य उपाय' : 'Sri Mandir Offered Other Remedies'}
-            </h2>
-            <p className="text-sm text-muted-foreground mt-2">
-              {getUpcomingPujas(pujas, 10).length} {t('doshaResults.upcomingPujas')}
-            </p>
-          </div>
-          <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
-        </div>
-      )}
-
     </div>
   );
 };

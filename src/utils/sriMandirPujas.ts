@@ -1,6 +1,7 @@
 /**
  * Sri Mandir Puja data fetching and filtering utilities
  */
+import { appendUTMToUrl } from './trafficTracking';
 
 export interface SriMandirPuja {
   store_id: string;
@@ -538,8 +539,6 @@ export function formatScheduleDate(dateStr: string, language: string = 'en'): st
  * Get the appropriate puja link based on language, with UTM parameters appended
  */
 export function getPujaLink(puja: SriMandirPuja, language: string): string {
-  const { appendUTMToUrl } = require('./trafficTracking');
-  
   const isHindi = language?.toLowerCase().startsWith('hi');
   let baseLink: string;
   

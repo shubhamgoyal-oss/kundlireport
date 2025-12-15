@@ -50,9 +50,10 @@ interface DoshaResultsProps {
   }>;
   calculationId?: string | null;
   problemArea?: string;
+  dateOfBirth?: string;
 }
 
-export const DoshaResults = ({ summary, details, calculationId, problemArea }: DoshaResultsProps) => {
+export const DoshaResults = ({ summary, details, calculationId, problemArea, dateOfBirth }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
@@ -163,7 +164,8 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
             body: {
               doshaType,
               problemArea,
-              language: languageForGeneration
+              language: languageForGeneration,
+              dateOfBirth
             }
           });
           if (response.data?.impactText) {
@@ -184,7 +186,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
     };
 
     generateImpacts();
-  }, [problemArea, currentLanguage, summary]);
+  }, [problemArea, currentLanguage, summary, dateOfBirth]);
 
   useEffect(() => {
     trackEvent('dosha_results_viewed', {

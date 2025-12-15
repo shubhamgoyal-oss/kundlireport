@@ -5,18 +5,136 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper: Check if problem area is relevant/meaningful
+const isRelevantProblem = (problemArea: string): boolean => {
+  const irrelevantKeywords = [
+    'coffee', 'tea', 'cooking', 'food', 'recipe', 'weather', 'movie', 'game', 'sport',
+    'music', 'dance', 'pet', 'dog', 'cat', 'bird', 'plant', 'garden', 'hobby',
+    'shopping', 'clothes', 'fashion', 'hair', 'makeup', 'cosmetic', 'color',
+    'phone', 'computer', 'laptop', 'wifi', 'internet', 'app', 'software',
+    'traffic', 'parking', 'driving', 'car', 'bike', 'vehicle',
+    'test', 'exam', 'homework', 'assignment', 'project', 'school', 'college'
+  ];
+  
+  const lowerProblem = problemArea.toLowerCase();
+  
+  // Check for irrelevant keywords
+  if (irrelevantKeywords.some(keyword => lowerProblem.includes(keyword))) {
+    return false;
+  }
+  
+  // Check for very short or generic entries
+  if (problemArea.trim().length < 5) return false;
+  
+  // Check if it's just random characters or numbers
+  if (/^[0-9\s\W]+$/.test(problemArea.trim())) return false;
+  
+  return true;
+};
+
+// Helper: Check if problem is age-appropriate for user under 18
+const isAgeAppropriateProblem = (problemArea: string, age: number): { appropriate: boolean; reason?: string } => {
+  if (age >= 18) return { appropriate: true };
+  
+  const lowerProblem = problemArea.toLowerCase();
+  
+  // Marriage-related problems
+  const marriageKeywords = ['marriage', 'wedding', 'spouse', 'husband', 'wife', 'partner', 'love', 'relationship', 'vivah', 'shaadi', 'पति', 'पत्नी', 'विवाह', 'शादी'];
+  if (marriageKeywords.some(k => lowerProblem.includes(k))) {
+    return { appropriate: false, reason: 'marriage' };
+  }
+  
+  // Career-related problems
+  const careerKeywords = ['career', 'job', 'employment', 'salary', 'promotion', 'work', 'office', 'naukri', 'नौकरी', 'करियर', 'तनख्वाह'];
+  if (careerKeywords.some(k => lowerProblem.includes(k))) {
+    return { appropriate: false, reason: 'career' };
+  }
+  
+  // Business-related problems
+  const businessKeywords = ['business', 'startup', 'entrepreneur', 'company', 'profit', 'loss', 'investment', 'व्यापार', 'कारोबार', 'निवेश'];
+  if (businessKeywords.some(k => lowerProblem.includes(k))) {
+    return { appropriate: false, reason: 'business' };
+  }
+  
+  // Financial problems
+  const financeKeywords = ['financial', 'finance', 'money', 'debt', 'loan', 'income', 'wealth', 'पैसा', 'धन', 'आर्थिक', 'कर्ज'];
+  if (financeKeywords.some(k => lowerProblem.includes(k))) {
+    return { appropriate: false, reason: 'financial' };
+  }
+  
+  return { appropriate: true };
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { doshaType, problemArea, language } = await req.json();
+    const { doshaType, problemArea, language, dateOfBirth } = await req.json();
     
     if (!doshaType || !problemArea) {
       return new Response(
         JSON.stringify({ error: 'doshaType and problemArea are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Calculate age if dateOfBirth provided
+    let userAge = 30; // default assumption
+    if (dateOfBirth) {
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      userAge = Math.floor((today.getTime() - birthDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+    }
+    
+    // Check for irrelevant problem area
+    const isRelevant = isRelevantProblem(problemArea);
+    if (!isRelevant) {
+      const isHindi = language === 'hi';
+      return new Response(
+        JSON.stringify({ 
+          impactText: isHindi 
+            ? 'आपके दोष आपके जन्म कुंडली में मौजूद हैं और जीवन के विभिन्न पहलुओं को प्रभावित कर सकते हैं। हालांकि, इस विशेष चिंता के लिए, दोष का कोई सीधा ज्योतिषीय संबंध नहीं है।'
+            : 'Your dosha is present in your birth chart and may influence various aspects of life. However, for this specific concern, there is no direct astrological correlation to the dosha.',
+          impactTitle: isHindi ? 'सामान्य प्रभाव' : 'General Impact',
+          isGeneric: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Check for age-appropriate problems
+    const ageCheck = isAgeAppropriateProblem(problemArea, userAge);
+    if (!ageCheck.appropriate) {
+      const isHindi = language === 'hi';
+      let ageMessage = '';
+      
+      if (ageCheck.reason === 'marriage') {
+        ageMessage = isHindi 
+          ? `आपकी आयु ${userAge} वर्ष है, जो विवाह संबंधी चिंताओं के लिए कम है। आपका दोष आपकी कुंडली में मौजूद है, लेकिन विवाह संबंधी प्रभाव 18 वर्ष की आयु के बाद ही प्रासंगिक होते हैं।`
+          : `At ${userAge} years old, marriage-related concerns are not yet applicable. Your dosha is present in your chart, but marriage-related effects become relevant only after age 18.`;
+      } else if (ageCheck.reason === 'career') {
+        ageMessage = isHindi
+          ? `आपकी आयु ${userAge} वर्ष है। करियर संबंधी दोष प्रभाव आमतौर पर 18 वर्ष की आयु के बाद प्रासंगिक होते हैं जब आप कार्यबल में प्रवेश करते हैं।`
+          : `At ${userAge} years old, career-related dosha effects typically become relevant after age 18 when you enter the workforce.`;
+      } else if (ageCheck.reason === 'business') {
+        ageMessage = isHindi
+          ? `आपकी आयु ${userAge} वर्ष है। व्यापार संबंधी दोष प्रभाव आमतौर पर वयस्क होने के बाद प्रासंगिक होते हैं।`
+          : `At ${userAge} years old, business-related dosha effects typically become relevant in adulthood.`;
+      } else {
+        ageMessage = isHindi
+          ? `आपकी आयु ${userAge} वर्ष है। यह चिंता आमतौर पर वयस्कता में अधिक प्रासंगिक होती है।`
+          : `At ${userAge} years old, this concern typically becomes more relevant in adulthood.`;
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          impactText: ageMessage,
+          impactTitle: isHindi ? 'आयु संबंधी नोट' : 'Age-Related Note',
+          isAgeRestricted: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

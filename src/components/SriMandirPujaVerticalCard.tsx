@@ -43,8 +43,15 @@ export const SriMandirPujaVerticalCard = ({ puja, doshaType, onBookClick }: SriM
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow relative">
       <div className="relative">
+        {/* Limited Seats Tag - FOMO Element */}
+        <div className="absolute -top-1 -left-1 z-10">
+          <span className="inline-flex items-center px-2 py-1 text-[10px] font-medium bg-destructive/90 text-destructive-foreground rounded-br-md shadow-sm">
+            {isHindi ? 'सीमित सीटें' : 'Limited Seats'}
+          </span>
+        </div>
+        
         {/* Image */}
         {coverImageUrl && (
           <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">

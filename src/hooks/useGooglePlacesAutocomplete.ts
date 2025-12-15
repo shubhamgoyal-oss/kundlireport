@@ -97,8 +97,7 @@ export function useGooglePlacesAutocomplete() {
         autocompleteService.current!.getPlacePredictions(
           {
             input: query,
-            componentRestrictions: { country: ['in', 'us', 'ca', 'gb', 'nz', 'au', 'ae', 'om', 'sa'] }, // India, US, Canada, UK, New Zealand, Australia, UAE, Oman, Saudi
-            types: ['(cities)'], // Only cities
+            types: ['(cities)'], // Only cities, no country restriction (Google limits to 5 countries max)
             sessionToken: sessionToken.current!,
           },
           (predictions, status) => {

@@ -728,9 +728,12 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
                   <h4 className="font-semibold text-base flex items-center gap-2">
                     {isHindi ? 'यह पूजा कैसे मदद करेगी' : 'How this Puja will help'}
                   </h4>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                  <ul className="text-sm text-muted-foreground space-y-3 ml-1">
                     {getPujaBenefits(dosha.pujaType, isHindi).map((benefit, i) => (
-                      <li key={i}>{benefit}</li>
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="text-primary mt-1.5 flex-shrink-0">•</span>
+                        <span>{benefit}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>

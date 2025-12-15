@@ -453,22 +453,8 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, dat
       pujaType: 'shani',
     });
   }
-  // Mangal Dosha - Only show for marriage/health issues, NOT for career/financial/business
-  const isMangalRelevant = () => {
-    if (!problemArea) return true; // Show by default if no problem area specified
-    const lowerProblem = problemArea.toLowerCase();
-    // Exclude Mangal for career/financial/business issues
-    const excludeKeywords = ['career', 'financial', 'job', 'business', 'करियर', 'आर्थिक', 'नौकरी', 'व्यापार'];
-    const hasExcludedProblem = excludeKeywords.some(kw => lowerProblem.includes(kw));
-    // Include Mangal for marriage/health
-    const includeKeywords = ['marriage', 'health', 'शादी', 'स्वास्थ्य'];
-    const hasIncludedProblem = includeKeywords.some(kw => lowerProblem.includes(kw));
-    // If user has excluded problems and no included problems, don't show Mangal
-    if (hasExcludedProblem && !hasIncludedProblem) return false;
-    return true;
-  };
-  
-  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal) && isMangalRelevant()) {
+  // Mangal Dosha - Always show if present, impact text will clarify if it affects the problem area
+  if (isDoshaPresent(summary.mangal) && !isDoshaNullified(summary.mangal)) {
     activeDoshas.push({
       type: 'mangal',
       detailKey: 'mangal',

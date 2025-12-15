@@ -137,6 +137,30 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    // Special handling for Mangal dosha - only affects marriage and health
+    if (doshaType === 'mangal') {
+      const lowerProblem = problemArea.toLowerCase();
+      const marriageKeywords = ['marriage', 'wedding', 'spouse', 'husband', 'wife', 'partner', 'love', 'relationship', 'vivah', 'shaadi', 'पति', 'पत्नी', 'विवाह', 'शादी', 'delay in marriage', 'विवाह में देरी'];
+      const healthKeywords = ['health', 'illness', 'disease', 'body', 'physical', 'medical', 'स्वास्थ्य', 'बीमारी', 'शारीरिक', 'रोग'];
+      
+      const isMarriageRelated = marriageKeywords.some(k => lowerProblem.includes(k));
+      const isHealthRelated = healthKeywords.some(k => lowerProblem.includes(k));
+      
+      if (!isMarriageRelated && !isHealthRelated) {
+        const isHindi = language === 'hi';
+        return new Response(
+          JSON.stringify({ 
+            impactText: isHindi 
+              ? 'मंगल दोष आपकी कुंडली में मौजूद है। वैदिक ज्योतिष के अनुसार, मंगल दोष मुख्य रूप से विवाह जीवन और स्वास्थ्य (रक्त, मांसपेशियों, दुर्घटनाओं) को प्रभावित करता है। आपकी वर्तमान समस्या क्षेत्र (करियर/वित्त/व्यापार) मंगल दोष से सीधे प्रभावित नहीं होता है।'
+              : 'Mangal Dosha is present in your chart. According to Vedic astrology, Mangal Dosha primarily affects marriage life and health matters (blood, muscles, accidents). Your current problem area is not directly impacted by Mangal Dosha.',
+            impactTitle: isHindi ? 'मंगल दोष - सीमित प्रभाव' : 'Mangal Dosha - Limited Impact',
+            isMangalLimited: true
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {

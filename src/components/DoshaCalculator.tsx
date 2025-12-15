@@ -731,7 +731,6 @@ const DoshaCalculator = () => {
           details={doshaResults.details}
           calculationId={calculationId}
           problemArea={watch('problemArea')}
-          dateOfBirth={watch('date')}
         />
       )}
 

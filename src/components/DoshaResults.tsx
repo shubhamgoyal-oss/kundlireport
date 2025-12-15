@@ -9,9 +9,7 @@ import { fetchSriMandirPujas, filterPujasByDosha, getUpcomingPujas, getPrioritiz
 import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
-import AstrologyChatbot from '@/components/AstrologyChatbot';
 import { supabase } from '@/integrations/supabase/client';
-import { CallbackFloater } from '@/components/CallbackFloater';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
 
 interface DoshaResultsProps {
@@ -1022,35 +1020,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
         </div>
       )}
 
-      {/* AI Chatbot Section */}
-      <div className="mt-8">
-        <AstrologyChatbot 
-          doshaContext={{
-            summary,
-            details,
-            activeDoshas: activeDoshas.map(d => d.label),
-            recommendedPujas: activeDoshas.slice(0, 3).map(dosha => {
-              const puja = getPujaForDosha(dosha.pujaType);
-              return {
-                doshaType: dosha.type,
-                doshaLabel: dosha.label,
-                puja: puja ? {
-                  title: puja.pooja_title,
-                  titleEnglish: puja.pooja_title_english,
-                  temple: puja.temple_name,
-                  templeEnglish: puja.temple_name_english,
-                  scheduleDate: puja.schedule_date_ist,
-                  link: puja.puja_link,
-                  linkHindi: puja.puja_link_hindi
-                } : null
-              };
-            })
-          }}
-        />
-      </div>
-      
-      {/* Callback Floater */}
-      <CallbackFloater calculationId={calculationId} />
     </div>
   );
 };

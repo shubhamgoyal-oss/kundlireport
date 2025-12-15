@@ -17,6 +17,8 @@ import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
+import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
+import { fetchSriMandirPujas, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
 
 // Form validation schema - name is mandatory
 const birthInputSchema = z
@@ -71,9 +73,23 @@ const DoshaCalculator = () => {
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
+  const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
+  const [isLoadingPujas, setIsLoadingPujas] = useState(true);
+  const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   
   // Track which fields have been tracked this session to avoid duplicates
   const [trackedFields, setTrackedFields] = useState<Set<string>>(new Set());
+  
+  // Load pujas on mount
+  useEffect(() => {
+    const loadPujas = async () => {
+      setIsLoadingPujas(true);
+      const allPujas = await fetchSriMandirPujas();
+      setPujas(allPujas);
+      setIsLoadingPujas(false);
+    };
+    loadPujas();
+  }, []);
 
   const trackFieldFilled = (field: string) => {
     if (!trackedFields.has(field)) {
@@ -697,6 +713,21 @@ const DoshaCalculator = () => {
           calculationId={calculationId}
           problemArea={watch('problemArea')}
         />
+      )}
+
+      {/* Always visible Sri Mandir Puja Remedies */}
+      {pujas.length > 0 && (
+        <div className="mt-8 space-y-4 w-full max-w-4xl mx-auto">
+          <div className="text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold gradient-spiritual bg-clip-text text-transparent">
+              {isHindi ? 'श्री मंदिर द्वारा पूजा उपाय' : 'Sri Mandir Puja Remedies'}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              {isHindi ? 'अपने दोषों के लिए प्रभावी पूजा उपाय देखें' : 'Explore effective puja remedies for your doshas'}
+            </p>
+          </div>
+          <SriMandirPujaCarousel pujas={getUpcomingPujas(pujas, 10)} doshaType="all" />
+        </div>
       )}
     </>
   );

@@ -156,33 +156,48 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   const rahuSign = rahuMatch ? rahuMatch[2] : null;
   const ketuSign = ketuMatch ? ketuMatch[2] : null;
   
-  // Extract planet count from placements (e.g., "6 planets inside arc, 1 outside")
-  const countLine = kaalSarp.placements.find(p => p.includes("planets inside arc"));
-  const countMatch = countLine?.match(/(\d+) planets inside arc/);
-  const insideCount = countMatch ? parseInt(countMatch[1], 10) : 7;
-  
+  // Extract planet count from placements/reasons.
+  // Different code paths may format this differently (e.g. "6 planets inside arc" vs "6 planets inside").
+  const parseInsideCount = (): number | null => {
+    const sources = [...(kaalSarp.placements ?? []), ...(kaalSarp.triggeredBy ?? []), ...(kaalSarp.notes ?? [])];
+    for (const s of sources) {
+      const m1 = s.match(/(\d+)\s+planets?\s+inside\s+arc/i);
+      if (m1) return parseInt(m1[1], 10);
+      const m2 = s.match(/only\s+(\d+)\s+planet\(s\)\s+inside\s+arc/i);
+      if (m2) return parseInt(m2[1], 10);
+      const m3 = s.match(/(\d+)\s+planets?\s+inside\b/i);
+      if (m3) return parseInt(m3[1], 10);
+    }
+    return null;
+  };
+
+  const insideCount = parseInsideCount();
+
   // Generate planet count text based on actual count
-  const getPlanetCountText = (count: number): string => {
+  const getPlanetCountText = (count: number | null): string => {
     if (count === 7) return "All seven classical planets";
     if (count === 6) return "Six of the seven classical planets";
     if (count === 5) return "Five of the seven classical planets";
-    return `${count} classical planets`;
+    if (typeof count === "number") return `${count} classical planets`;
+    // If we can't reliably parse the count, avoid over-claiming "all seven".
+    return "Classical planets";
   };
-  
+
   const planetCountText = getPlanetCountText(insideCount);
-  
+
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {
     const edgePlanet = kaalSarp.notes.find(n => n.includes("at edge"));
     if (rahuSign && ketuSign) {
-      return `In your chart, Rahu is in ${rahuSign} and Ketu is in ${ketuSign}. ${planetCountText} are positioned between them${edgePlanet ? ', with one planet near the boundary' : ''}. This forms ${type} with reduced intensity.`;
+      return `In your chart, Rahu is in ${rahuSign} and Ketu is in ${ketuSign}. ${planetCountText} are positioned between them${edgePlanet ? ", with one planet near the boundary" : ""}. This forms ${type} with reduced intensity.`;
     }
     return `In your chart, ${planetCountText.toLowerCase()} are positioned between Rahu and Ketu, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
   }
-  
+
   if (rahuSign && ketuSign) {
-    return `In your chart, Rahu is positioned in ${rahuSign} and Ketu in ${ketuSign}. ${planetCountText} (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between this axis, forming ${type}.`;
+    const planetListSuffix = insideCount === 7 ? " (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn)" : "";
+    return `In your chart, Rahu is positioned in ${rahuSign} and Ketu in ${ketuSign}. ${planetCountText}${planetListSuffix} are hemmed between this axis, forming ${type}.`;
   }
-  
+
   return `${planetCountText} in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
 }
 

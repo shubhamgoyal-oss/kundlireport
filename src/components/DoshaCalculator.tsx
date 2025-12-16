@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { fetchSriMandirPujas, getUpcomingPujas, SriMandirPuja } from '@/utils/sriMandirPujas';
+import { BirthDetails } from '@/utils/kundaliChart';
 
 // Form validation schema - name is mandatory
 const birthInputSchema = z
@@ -69,6 +70,7 @@ const DoshaCalculator = () => {
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [doshaResults, setDoshaResults] = useState<any>(null);
+  const [birthDetails, setBirthDetails] = useState<BirthDetails | null>(null);
   const [calculationId, setCalculationId] = useState<string | null>(null);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
@@ -366,6 +368,35 @@ const DoshaCalculator = () => {
       }
       
       setDoshaResults(normalized);
+      
+      // Set birth details for Kundali chart
+      const [year, month, day] = submissionData.date.split('-').map(Number);
+      const [hour, minute] = (submissionData.time || '12:00').split(':').map(Number);
+      
+      // Calculate timezone offset from timezone name (default to IST +5.5)
+      let tzOffset = 5.5; // Default to IST
+      if (submissionData.tz) {
+        try {
+          const now = new Date();
+          const utc = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+          const local = new Date(now.toLocaleString('en-US', { timeZone: submissionData.tz }));
+          tzOffset = (local.getTime() - utc.getTime()) / (1000 * 60 * 60);
+        } catch (e) {
+          console.warn('[DoshaCalculator] Failed to calculate timezone offset:', e);
+        }
+      }
+      
+      setBirthDetails({
+        day,
+        month,
+        year,
+        hour,
+        minute,
+        lat: submissionData.lat || 0,
+        lon: submissionData.lon || 0,
+        tzone: tzOffset
+      });
+      
       setIsFormCollapsed(true);
       
       // Mark calculation as done for floating language toggle
@@ -783,6 +814,7 @@ const DoshaCalculator = () => {
           details={doshaResults.details}
           calculationId={calculationId}
           problemArea={watch('problemArea')}
+          birthDetails={birthDetails || undefined}
         />
       )}
 

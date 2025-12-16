@@ -11,6 +11,8 @@ import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useScrollTracking } from '@/hooks/useScrollTracking';
+import { KundaliCard } from '@/components/KundaliCard';
+import { BirthDetails } from '@/utils/kundaliChart';
 
 interface DoshaResultsProps {
   summary: {
@@ -50,9 +52,10 @@ interface DoshaResultsProps {
   }>;
   calculationId?: string | null;
   problemArea?: string;
+  birthDetails?: BirthDetails;
 }
 
-export const DoshaResults = ({ summary, details, calculationId, problemArea }: DoshaResultsProps) => {
+export const DoshaResults = ({ summary, details, calculationId, problemArea, birthDetails }: DoshaResultsProps) => {
   const { t, i18n } = useTranslation();
   const [pujas, setPujas] = useState<SriMandirPuja[]>([]);
   const [isLoadingPujas, setIsLoadingPujas] = useState(true);
@@ -786,6 +789,11 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea }: D
             : 'The pujas are conducted only on select dates at the temples, and slots are limited to maintain ritual purity.'
           }
         </p>
+      )}
+
+      {/* Kundali Chart */}
+      {birthDetails && (
+        <KundaliCard birthDetails={birthDetails} />
       )}
 
       {/* Detailed Analysis Section - All 4 Major Doshas */}

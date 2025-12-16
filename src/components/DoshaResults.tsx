@@ -1054,6 +1054,19 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
         <KundaliCard birthDetails={birthDetails} />
       )}
 
+      {/* Feedback Section */}
+      <div className="mt-8 p-4 bg-muted/30 rounded-lg border border-border/50 text-center">
+        <p className="text-sm text-foreground/80 font-medium">
+          {isHindi ? 'प्रतिक्रिया या सुझाव के लिए संपर्क करें' : 'For feedback or suggestions, please contact'}
+        </p>
+        <a 
+          href="mailto:shubham.goyal@appsforbharat.com" 
+          className="text-primary hover:underline font-semibold text-base mt-1 inline-block"
+        >
+          shubham.goyal@appsforbharat.com
+        </a>
+      </div>
+
       {/* Subtle Disclaimer */}
       <p className="text-xs text-muted-foreground/70 text-center mt-8 px-4">
         {t('doshaResults.disclaimer')}

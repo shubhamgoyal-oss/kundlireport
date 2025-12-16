@@ -104,15 +104,30 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   const rahuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("rahu")) || "";
   const ketuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("ketu")) || "";
   
+  // Extract planet count from placements (e.g., "6 planets inside arc, 1 outside")
+  const countLine = kaalSarp.placements.find(p => p.includes("planets inside arc"));
+  const countMatch = countLine?.match(/(\d+) planets inside arc/);
+  const insideCount = countMatch ? parseInt(countMatch[1], 10) : 7;
+  
+  // Generate planet count text based on actual count
+  const getPlanetCountText = (count: number): string => {
+    if (count === 7) return "All seven classical planets";
+    if (count === 6) return "Six of the seven classical planets";
+    if (count === 5) return "Five of the seven classical planets";
+    return `${count} classical planets`;
+  };
+  
+  const planetCountText = getPlanetCountText(insideCount);
+  
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {
-    return `In your chart, all planets are positioned between ${rahuPlacement || "Rahu"} and ${ketuPlacement || "Ketu"}, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
+    return `In your chart, ${planetCountText.toLowerCase()} are positioned between ${rahuPlacement || "Rahu"} and ${ketuPlacement || "Ketu"}, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
   }
   
   if (rahuPlacement && ketuPlacement) {
-    return `In your chart, ${rahuPlacement} and ${ketuPlacement}, with all other planets hemmed between them. This forms ${type}.`;
+    return `In your chart, ${rahuPlacement} and ${ketuPlacement}, with ${planetCountText.toLowerCase()} hemmed between them. This forms ${type}.`;
   }
   
-  return `All seven classical planets in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
+  return `${planetCountText} in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
 }
 
 export function getKaalSarpRemediesSeer(): string[] {

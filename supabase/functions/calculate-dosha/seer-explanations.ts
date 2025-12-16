@@ -156,19 +156,34 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   const rahuSign = rahuMatch ? rahuMatch[2] : null;
   const ketuSign = ketuMatch ? ketuMatch[2] : null;
   
+  // Extract planet count from placements (e.g., "6 planets inside arc, 1 outside")
+  const countLine = kaalSarp.placements.find(p => p.includes("planets inside arc"));
+  const countMatch = countLine?.match(/(\d+) planets inside arc/);
+  const insideCount = countMatch ? parseInt(countMatch[1], 10) : 7;
+  
+  // Generate planet count text based on actual count
+  const getPlanetCountText = (count: number): string => {
+    if (count === 7) return "All seven classical planets";
+    if (count === 6) return "Six of the seven classical planets";
+    if (count === 5) return "Five of the seven classical planets";
+    return `${count} classical planets`;
+  };
+  
+  const planetCountText = getPlanetCountText(insideCount);
+  
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {
     const edgePlanet = kaalSarp.notes.find(n => n.includes("at edge"));
     if (rahuSign && ketuSign) {
-      return `In your chart, Rahu is in ${rahuSign} and Ketu is in ${ketuSign}, with all other planets between them. ${edgePlanet ? edgePlanet + '. ' : ''}This forms ${type} with reduced intensity due to planetary boundary position.`;
+      return `In your chart, Rahu is in ${rahuSign} and Ketu is in ${ketuSign}. ${planetCountText} are positioned between them${edgePlanet ? ', with one planet near the boundary' : ''}. This forms ${type} with reduced intensity.`;
     }
-    return `In your chart, all planets are positioned between Rahu and Ketu, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
+    return `In your chart, ${planetCountText.toLowerCase()} are positioned between Rahu and Ketu, forming ${type}. One planet is near the axis boundary, making this a partial dosha with reduced intensity.`;
   }
   
   if (rahuSign && ketuSign) {
-    return `In your chart, Rahu is positioned in ${rahuSign} and Ketu in ${ketuSign}. All seven classical planets (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between this axis, forming ${type}.`;
+    return `In your chart, Rahu is positioned in ${rahuSign} and Ketu in ${ketuSign}. ${planetCountText} (Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn) are hemmed between this axis, forming ${type}.`;
   }
   
-  return `All seven classical planets in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
+  return `${planetCountText} in your chart are positioned between Rahu and Ketu. This creates ${type}, indicating karmic patterns requiring attention.`;
 }
 
 export function getKaalSarpRemediesSeer(): string[] {

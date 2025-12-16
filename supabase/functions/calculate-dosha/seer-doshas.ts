@@ -467,11 +467,18 @@ export function calculateKaalSarpaDosha(kundli: SeerKundli): DoshaResult {
     `${insideCount} planets inside arc, ${outsideCount} outside`
   ];
 
-  // Decision: all inside OR exactly one outside within 2°
-  if (outsideCount === 0) {
-    const type = getKaalSarpType(rahu.house);
+  const type = getKaalSarpType(rahu.house);
+
+  // Decision based on how many planets are inside the arc
+  // 7 inside = Full (High severity)
+  // 6 inside = Partial (Medium severity)
+  // 5 inside = Partial (Low severity)
+  // 4 or fewer = Absent
+  
+  if (insideCount === 7) {
     return {
       status: "present",
+      severity: "strong",
       triggeredBy: ["All 7 classical planets between Rahu and Ketu"],
       cancellations: [],
       mitigations: [],
@@ -480,24 +487,28 @@ export function calculateKaalSarpaDosha(kundli: SeerKundli): DoshaResult {
     };
   }
 
-  if (outsideCount === 1) {
-    const outsidePlanet = planets.find(p => outsidePlanets.includes(p.name))!;
-    const distFromRahu = degDelta(outsidePlanet.deg, rahu.deg);
-    const distFromKetu = degDelta(outsidePlanet.deg, ketu.deg);
-    const minDist = Math.min(distFromRahu, distFromKetu);
-    
-    if (minDist <= 2.0) {
-      const type = getKaalSarpType(rahu.house);
-      return {
-        status: "present",
-        severity: undefined,
-        triggeredBy: [`${outsidePlanet.name} within 2° of Rahu/Ketu (partial)`],
-        cancellations: [],
-        mitigations: [],
-        placements: [...placements, `Type: ${type} Kaal Sarp (partial)`],
-        notes: [`${outsidePlanet.name} at edge (Δ=${minDist.toFixed(1)}°)`]
-      };
-    }
+  if (insideCount === 6) {
+    return {
+      status: "present",
+      severity: "moderate",
+      triggeredBy: [`6 of 7 classical planets between Rahu and Ketu (${outsidePlanets.join(", ")} outside)`],
+      cancellations: [],
+      mitigations: [],
+      placements: [...placements, `Type: ${type} Kaal Sarp (partial)`],
+      notes: [`${outsidePlanets.join(", ")} outside the Rahu-Ketu arc`]
+    };
+  }
+
+  if (insideCount === 5) {
+    return {
+      status: "present",
+      severity: "mild",
+      triggeredBy: [`5 of 7 classical planets between Rahu and Ketu (${outsidePlanets.join(", ")} outside)`],
+      cancellations: [],
+      mitigations: [],
+      placements: [...placements, `Type: ${type} Kaal Sarp (partial)`],
+      notes: [`${outsidePlanets.join(", ")} outside the Rahu-Ketu arc`]
+    };
   }
 
   return {

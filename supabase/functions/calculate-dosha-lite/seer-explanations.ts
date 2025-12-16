@@ -104,11 +104,22 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
   const rahuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("rahu")) || "";
   const ketuPlacement = kaalSarp.placements.find(p => p.toLowerCase().includes("ketu")) || "";
   
-  // Extract planet count from placements (e.g., "6 planets inside arc, 1 outside")
-  const countLine = kaalSarp.placements.find(p => p.includes("planets inside arc"));
-  const countMatch = countLine?.match(/(\d+) planets inside arc/);
-  const insideCount = countMatch ? parseInt(countMatch[1], 10) : 7;
-  
+  // Extract planet count from placements (e.g., "6 planets inside arc, 1 outside" or "6 planets inside")
+  const parseInsideCount = (): number | null => {
+    const sources = [...(kaalSarp.placements ?? []), ...(kaalSarp.triggeredBy ?? []), ...(kaalSarp.notes ?? [])];
+    for (const s of sources) {
+      const m1 = s.match(/(\d+)\s+planets?\s+inside\s+arc/i);
+      if (m1) return parseInt(m1[1], 10);
+      const m2 = s.match(/only\s+(\d+)\s+planet\(s\)\s+inside\s+arc/i);
+      if (m2) return parseInt(m2[1], 10);
+      const m3 = s.match(/(\d+)\s+planets?\s+inside\b/i);
+      if (m3) return parseInt(m3[1], 10);
+    }
+    return null;
+  };
+
+  const insideCount = parseInsideCount() ?? 7;
+
   // Generate planet count text based on actual count
   const getPlanetCountText = (count: number): string => {
     if (count === 7) return "All seven classical planets";
@@ -116,7 +127,7 @@ export function getKaalSarpExplanationSeer(kaalSarp: DoshaResult): string {
     if (count === 5) return "Five of the seven classical planets";
     return `${count} classical planets`;
   };
-  
+
   const planetCountText = getPlanetCountText(insideCount);
   
   if (kaalSarp.notes.some(n => n.includes("edge") || n.includes("partial"))) {

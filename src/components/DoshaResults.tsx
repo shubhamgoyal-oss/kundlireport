@@ -789,11 +789,6 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
         </p>
       )}
 
-      {/* Kundali Chart */}
-      {birthDetails && (
-        <KundaliCard birthDetails={birthDetails} />
-      )}
-
       {/* Detailed Analysis Section - All 4 Major Doshas */}
       <Card className="spiritual-glow">
         <CardHeader>
@@ -1053,6 +1048,11 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
           } : undefined,
         }}
       />
+
+      {/* Kundali Chart - After detailed analysis */}
+      {birthDetails && (
+        <KundaliCard birthDetails={birthDetails} />
+      )}
 
       {/* Subtle Disclaimer */}
       <p className="text-xs text-muted-foreground/70 text-center mt-8 px-4">

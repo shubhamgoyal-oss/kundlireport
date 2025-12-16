@@ -284,22 +284,32 @@ export function calculateGuruChandalDosha(snapshot: Snapshot) {
 
 /**
  * 4. Punarphoo Dosha (Saturn-Moon)
- * Present if conjunction, partial if opposition
+ * Present if Saturn and Moon are conjunct AND in the same house/sign
+ * Partial if opposition (opposite houses)
+ * NOT present if they are in different houses even if degree separation is small
  */
 export function calculatePunarphooDosha(snapshot: Snapshot) {
   const { Saturn, Moon } = snapshot.planets;
   const reason: string[] = [];
 
-  // Check conjunction
+  // Check conjunction - MUST be in same sign/house for Punarphoo Dosha
   const conjDelta = delta(Saturn.deg, Moon.deg);
-  if (conjDelta <= ORB_CONJ) {
-    reason.push(`Saturn-Moon conjunction: Δ=${conjDelta.toFixed(2)}°`);
+  const sameSign = Saturn.signIdx === Moon.signIdx;
+  
+  if (conjDelta <= ORB_CONJ && sameSign) {
+    reason.push(`Saturn-Moon conjunction in ${Moon.sign}: Δ=${conjDelta.toFixed(2)}°`);
     return { status: "present", reason };
   }
 
-  // Check opposition
+  // If degree separation is small but different signs, NOT Punarphoo Dosha
+  if (conjDelta <= ORB_CONJ && !sameSign) {
+    reason.push(`Saturn (${Saturn.sign}) and Moon (${Moon.sign}) close in degrees (Δ=${conjDelta.toFixed(2)}°) but in different signs - not Punarphoo Dosha`);
+    return { status: "absent", reason };
+  }
+
+  // Check opposition (planets in 7th from each other)
   if (isOpposition(Saturn.deg, Moon.deg, ORB_OPP)) {
-    reason.push(`Saturn-Moon opposition: Δ=${conjDelta.toFixed(2)}° (~180°)`);
+    reason.push(`Saturn-Moon opposition: Saturn in ${Saturn.sign}, Moon in ${Moon.sign} (~180° apart)`);
     return { status: "partial", reason };
   }
 

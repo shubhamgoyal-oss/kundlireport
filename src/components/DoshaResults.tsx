@@ -736,32 +736,30 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
                 </div>
               )}
 
-              {/* Puja Recommendation - Skip for Mangal if not impacting user's problem area */}
-              {!dosha.notImpactingNote && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-base">
-                    {isHindi ? 'पूजा उपाय' : 'Puja Recommendation'}
-                  </h4>
-                  {isLoadingPujas ? (
-                    <div className="flex items-center justify-center py-6">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                    </div>
-                  ) : puja ? (
-                    <SriMandirPujaVerticalCard 
-                      puja={puja} 
-                      doshaType={dosha.type}
-                      onBookClick={() => trackBookPujaClick(dosha.type)}
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic">
-                      {isHindi ? 'इस दोष के लिए कोई विशेष पूजा उपलब्ध नहीं है' : 'No specific puja available for this dosha'}
-                    </p>
-                  )}
-                </div>
-              )}
+              {/* Puja Recommendation - Always show for all doshas */}
+              <div className="space-y-2">
+                <h4 className="font-semibold text-base">
+                  {isHindi ? 'पूजा उपाय' : 'Puja Recommendation'}
+                </h4>
+                {isLoadingPujas ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  </div>
+                ) : puja ? (
+                  <SriMandirPujaVerticalCard 
+                    puja={puja} 
+                    doshaType={dosha.type}
+                    onBookClick={() => trackBookPujaClick(dosha.type)}
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">
+                    {isHindi ? 'इस दोष के लिए कोई विशेष पूजा उपलब्ध नहीं है' : 'No specific puja available for this dosha'}
+                  </p>
+                )}
+              </div>
 
-              {/* How this Puja will help - Skip for Mangal if not impacting user's problem area */}
-              {puja && !dosha.notImpactingNote && (
+              {/* How this Puja will help - Always show for all doshas */}
+              {puja && (
                 <div className="space-y-2">
                   <h4 className="font-semibold text-base flex items-center gap-2">
                     {isHindi ? 'यह पूजा कैसे मदद करेगी' : 'How this Puja will help'}

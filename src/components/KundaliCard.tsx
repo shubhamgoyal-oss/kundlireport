@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { fetchKundaliSvg, BirthDetails, ChartType } from '@/utils/kundaliChart';
+import { trackEvent } from '@/lib/analytics';
 
 interface KundaliCardProps {
   birthDetails: BirthDetails;
@@ -17,9 +18,53 @@ export const KundaliCard: React.FC<KundaliCardProps> = ({ birthDetails }) => {
   const [svgString, setSvgString] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const abortControllerRef = useRef<AbortController | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const viewTrackedRef = useRef(false);
   
   const isHindi = (i18n.language || '').toLowerCase().startsWith('hi');
   const language = isHindi ? 'hi' : 'en';
+  
+  // Track kundali view after 3 seconds of visibility
+  useEffect(() => {
+    if (status !== 'success' || viewTrackedRef.current || !cardRef.current) return;
+    
+    let viewTimer: NodeJS.Timeout | null = null;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          // Start 3-second timer when visible
+          viewTimer = setTimeout(() => {
+            if (!viewTrackedRef.current) {
+              viewTrackedRef.current = true;
+              trackEvent('kundali_view', {
+                page: 'home',
+                metadata: {
+                  chart_type: chartType,
+                  view_duration_threshold: '3s'
+                }
+              });
+            }
+          }, 3000);
+        } else {
+          // Cancel timer if scrolled away
+          if (viewTimer) {
+            clearTimeout(viewTimer);
+            viewTimer = null;
+          }
+        }
+      },
+      { threshold: 0.5 } // At least 50% visible
+    );
+    
+    observer.observe(cardRef.current);
+    
+    return () => {
+      observer.disconnect();
+      if (viewTimer) clearTimeout(viewTimer);
+    };
+  }, [status, chartType]);
 
   const fetchChart = useCallback(async (type: ChartType) => {
     // Cancel any in-flight request
@@ -79,7 +124,7 @@ export const KundaliCard: React.FC<KundaliCardProps> = ({ birthDetails }) => {
   };
 
   return (
-    <Card className="spiritual-glow border border-primary/10">
+    <Card ref={cardRef} className="spiritual-glow border border-primary/10">
       <CardHeader className="pb-3">
         <CardTitle className="text-xl font-bold">
           {isHindi ? 'आपकी कुंडली' : 'Your Kundali'}

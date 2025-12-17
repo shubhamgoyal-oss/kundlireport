@@ -793,6 +793,15 @@ const DoshaCalculator = () => {
             type="submit"
             disabled={isCalculating}
             className="w-full min-h-[44px] text-base font-medium"
+            onClick={() => {
+              // Track CTA click at the top (Calculate My Doshas button)
+              trackEvent('calculate_dosha_cta_click', {
+                page: 'home',
+                metadata: {
+                  button_location: 'top_form'
+                }
+              });
+            }}
           >
             {isCalculating ? (
               <>

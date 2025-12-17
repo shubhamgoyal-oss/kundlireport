@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { trackEvent } from '@/lib/analytics';
 
 export default function LanguageToggle() {
   const { i18n, t } = useTranslation();
@@ -38,6 +39,15 @@ export default function LanguageToggle() {
 
   const toggle = () => {
     const next = isHindi ? 'en' : 'hi';
+    
+    // Track analytics event for language switch
+    trackEvent(next === 'en' ? 'switch_to_english_click' : 'switch_to_hindi_click', {
+      page: 'home',
+      metadata: {
+        from_language: isHindi ? 'hi' : 'en',
+        to_language: next
+      }
+    });
     
     // Track GTM event
     if (typeof window !== 'undefined' && (window as any).dataLayer) {

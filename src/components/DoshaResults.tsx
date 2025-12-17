@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Info, Flame, Waves, Users, Moon, Loader2, ArrowUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { SriMandirPujaCarousel } from '@/components/SriMandirPujaCarousel';
 import { SriMandirPujaVerticalCard } from '@/components/SriMandirPujaVerticalCard';
@@ -1077,6 +1077,17 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
       {/* Kundali Chart - After detailed analysis */}
       {birthDetails && (
         <div id="kundali-chart-section">
+          {/* Go Back Link */}
+          <div className="flex justify-end mb-2">
+            <button
+              type="button"
+              onClick={() => statusMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 transition-colors font-medium"
+            >
+              <ArrowUp className="w-4 h-4" />
+              {isHindi ? 'वापस जाएं' : 'Go Back'}
+            </button>
+          </div>
           <KundaliCard birthDetails={birthDetails} />
           
           {/* Dosha Planetary Positions Summary - All doshas including "Other Doshas" */}

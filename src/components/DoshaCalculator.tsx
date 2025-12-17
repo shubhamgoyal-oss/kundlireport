@@ -494,7 +494,7 @@ const DoshaCalculator = () => {
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="w-full min-h-[44px] px-3 py-2 text-left bg-input border border-input rounded-md flex items-center justify-between hover:bg-accent/50 transition-colors"
               >
-                <span className={`text-sm ${selectedProblems.length === 0 && !showOtherInput ? 'text-muted-foreground' : ''}`}>
+                <span className={`text-base ${selectedProblems.length === 0 && !showOtherInput ? 'text-muted-foreground' : ''}`}>
                   {getSelectedDisplayText()}
                 </span>
                 <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />

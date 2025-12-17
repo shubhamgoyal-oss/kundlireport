@@ -137,7 +137,10 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
           <PopoverTrigger asChild>
             <Button
               variant="outline"
-              className="w-full min-h-[44px] justify-start text-left font-normal bg-input"
+              className={cn(
+                "w-full min-h-[44px] justify-start text-left font-normal bg-input text-base",
+                !value && "text-muted-foreground"
+              )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {getDisplayValue()}
@@ -182,7 +185,10 @@ export const DateOfBirthPicker = ({ value, onChange, error }: DateOfBirthPickerP
         <DrawerTrigger asChild>
           <Button
             variant="outline"
-            className="w-full min-h-[44px] justify-start text-left font-normal bg-input"
+            className={cn(
+              "w-full min-h-[44px] justify-start text-left font-normal bg-input text-base",
+              !value && "text-muted-foreground"
+            )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {getDisplayValue()}

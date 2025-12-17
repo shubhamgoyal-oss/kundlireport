@@ -1079,30 +1079,37 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
         <div id="kundali-chart-section">
           <KundaliCard birthDetails={birthDetails} />
           
-          {/* Dosha Summary Box - One-liner explanations */}
+          {/* Dosha Planetary Positions Summary - Specific positions causing each dosha */}
           {hasAnyDosha && activeDoshas.length > 0 && (
             <Card className="mt-4 bg-accent/10 border border-accent/30">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-semibold">
-                  {isHindi ? 'आपकी कुंडली में पाए गए दोषों का सारांश' : 'Summary of Doshas Found in Your Kundli'}
+                  {isHindi ? 'दोषों का कारण - ग्रह स्थिति' : 'Planetary Positions Causing These Doshas'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <ul className="space-y-2 text-sm">
+                <ul className="space-y-3 text-sm">
                   {activeDoshas.map((dosha) => {
-                    // Get the first placement or a brief summary
-                    const placement = dosha.placements?.[0] || '';
-                    const briefExplanation = dosha.explanation 
-                      ? dosha.explanation.split('.')[0] + '.'
-                      : (isHindi ? 'ग्रहों की स्थिति के कारण।' : 'Due to planetary positions.');
+                    // Show actual planetary placements that caused the dosha
+                    const placements = dosha.placements || [];
                     
                     return (
-                      <li key={dosha.type} className="flex items-start gap-2 text-muted-foreground">
-                        <span className="text-primary font-semibold flex-shrink-0">•</span>
-                        <span>
-                          <strong className="text-foreground">{dosha.label}:</strong>{' '}
-                          {briefExplanation}
-                        </span>
+                      <li key={dosha.type} className="text-muted-foreground">
+                        <div className="font-semibold text-foreground mb-1">{dosha.label}:</div>
+                        {placements.length > 0 ? (
+                          <ul className="ml-4 space-y-1">
+                            {placements.map((p, i) => (
+                              <li key={i} className="flex items-start gap-2">
+                                <span className="text-primary flex-shrink-0">→</span>
+                                <span>{translatePlacement(p)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="ml-4 text-muted-foreground/70 italic">
+                            {isHindi ? 'विस्तृत स्थिति ऊपर दोष विवरण में देखें' : 'See detailed positions in dosha section above'}
+                          </p>
+                        )}
                       </li>
                     );
                   })}

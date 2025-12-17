@@ -1079,9 +1079,19 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
         <div id="kundali-chart-section">
           <KundaliCard birthDetails={birthDetails} />
           
-          {/* Dosha Planetary Positions Summary - only show evidence lines (placements/triggeredBy/notes), no generic text */}
-          {hasAnyDosha && activeDoshas.length > 0 && (() => {
-            const doshaItems = activeDoshas.map((dosha) => {
+          {/* Dosha Planetary Positions Summary - All doshas including "Other Doshas" */}
+          {hasAnyDosha && (() => {
+            // Helper to check if dosha is present
+            const isDoshaActive = (status?: string) => {
+              const s = (status || '').toLowerCase();
+              return s === 'present' || s === 'active' || s === 'partial' || s === 'suggested';
+            };
+
+            // Gather all doshas with their evidence
+            const allDoshaItems: { label: string; evidence: string[] }[] = [];
+
+            // Main 4 doshas from activeDoshas
+            activeDoshas.forEach((dosha) => {
               const detail = (details as any)?.[dosha.detailKey] || {};
               const rawEvidence: string[] = [
                 ...(detail.placements || []),
@@ -1092,30 +1102,64 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
                 .filter(Boolean);
 
               const uniqueEvidence = Array.from(new Set(rawEvidence));
-
-              // Prefer lines that actually mention planets/houses/signs
-              const positionHintRegex = /\b(house|lagna|ascendant|moon|mars|saturn|rahu|ketu|sun|jupiter|venus|mercury|sign)\b|भाव|लग्न|चंद्र|मंगल|शनि|राहु|केतु|सूर्य|बृहस्पति|शुक्र|बुध/i;
+              const positionHintRegex = /\b(house|lagna|ascendant|moon|mars|saturn|rahu|ketu|sun|jupiter|venus|mercury|sign|degree|H\d+)\b|भाव|लग्न|चंद्र|मंगल|शनि|राहु|केतु|सूर्य|बृहस्पति|शुक्र|बुध/i;
               const evidence = uniqueEvidence.filter((l) => positionHintRegex.test(l));
               const finalEvidence = evidence.length > 0 ? evidence : uniqueEvidence;
 
-              if (finalEvidence.length === 0) return null;
+              if (finalEvidence.length > 0) {
+                allDoshaItems.push({ label: dosha.label, evidence: finalEvidence });
+              }
+            });
 
-              return (
-                <li key={dosha.type} className="text-muted-foreground">
-                  <div className="font-semibold text-foreground mb-1">{dosha.label}:</div>
-                  <ul className="ml-4 space-y-1">
-                    {finalEvidence.map((line: string, i: number) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-primary flex-shrink-0">→</span>
-                        <span>{translatePlacement(line)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              );
-            }).filter(Boolean);
+            // Other Doshas names mapping
+            const otherDoshaNames: Record<string, { en: string; hi: string }> = {
+              grahan: { en: 'Rahu-Ketu / Grahan Dosha', hi: 'राहु-केतु / ग्रहण दोष' },
+              rahuKetu: { en: 'Rahu-Ketu / Grahan Dosha', hi: 'राहु-केतु / ग्रहण दोष' },
+              shrapit: { en: 'Shrapit Dosha', hi: 'श्रापित दोष' },
+              guruChandal: { en: 'Guru Chandal Dosha', hi: 'गुरु चांडाल दोष' },
+              punarphoo: { en: 'Punarphoo Dosha', hi: 'पुनर्फू दोष' },
+              kemadruma: { en: 'Kemadruma Yoga', hi: 'केमद्रुम योग' },
+              gandmool: { en: 'Gandmool Dosha', hi: 'गण्डमूल दोष' },
+              kalathra: { en: 'Kalathra Dosha', hi: 'कलात्र दोष' },
+              vishDaridra: { en: 'Vish Daridra Yoga', hi: 'विष दरिद्र योग' },
+              ketuNaga: { en: 'Ketu Naga Dosha', hi: 'केतु नाग दोष' },
+              navagraha: { en: 'Navagraha Imbalance', hi: 'नवग्रह असंतुलन' },
+            };
 
-            if (doshaItems.length === 0) return null;
+            // Add Other Doshas
+            const otherDoshaKeys = ['grahan', 'rahuKetu', 'shrapit', 'guruChandal', 'punarphoo', 'kemadruma', 'gandmool', 'kalathra', 'vishDaridra', 'ketuNaga', 'navagraha'] as const;
+            
+            otherDoshaKeys.forEach((key) => {
+              const detailKey = key === 'rahuKetu' ? 'grahan' : key;
+              const flag = (summary as any)?.[key] || (summary as any)?.[detailKey];
+              const detail = (details as any)?.[key] || (details as any)?.[detailKey];
+              
+              if (isDoshaActive(flag)) {
+                const rawEvidence: string[] = [
+                  ...(detail?.placements || []),
+                  ...(detail?.triggeredBy || []),
+                  ...(detail?.notes || []),
+                ]
+                  .map((s: any) => String(s || '').trim())
+                  .filter(Boolean);
+
+                const uniqueEvidence = Array.from(new Set(rawEvidence));
+                const positionHintRegex = /\b(house|lagna|ascendant|moon|mars|saturn|rahu|ketu|sun|jupiter|venus|mercury|sign|degree|H\d+|conjunction|aspect)\b|भाव|लग्न|चंद्र|मंगल|शनि|राहु|केतु|सूर्य|बृहस्पति|शुक्र|बुध/i;
+                const evidence = uniqueEvidence.filter((l) => positionHintRegex.test(l));
+                const finalEvidence = evidence.length > 0 ? evidence : uniqueEvidence;
+
+                if (finalEvidence.length > 0) {
+                  const doshaName = otherDoshaNames[key];
+                  const label = isHindi ? doshaName?.hi : doshaName?.en;
+                  // Avoid duplicates
+                  if (!allDoshaItems.some(d => d.label === label)) {
+                    allDoshaItems.push({ label: label || key, evidence: finalEvidence });
+                  }
+                }
+              }
+            });
+
+            if (allDoshaItems.length === 0) return null;
 
             return (
               <Card className="mt-4 bg-accent/10 border border-accent/30">
@@ -1125,7 +1169,21 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <ul className="space-y-3 text-sm">{doshaItems as any}</ul>
+                  <ul className="space-y-3 text-sm">
+                    {allDoshaItems.map((item, idx) => (
+                      <li key={idx} className="text-muted-foreground">
+                        <div className="font-semibold text-foreground mb-1">{item.label}:</div>
+                        <ul className="ml-4 space-y-1">
+                          {item.evidence.map((line, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-primary flex-shrink-0">→</span>
+                              <span>{translatePlacement(line)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             );

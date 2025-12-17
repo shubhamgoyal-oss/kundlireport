@@ -116,10 +116,7 @@ const DoshaCalculator = () => {
     defaultValues: {
       unknownTime: false,
       chartStyle: "north",
-      place: "Mumbai, Maharashtra, India",
-      lat: 19.0760,
-      lon: 72.8777,
-      tz: "Asia/Kolkata",
+      place: "",
     },
   });
 

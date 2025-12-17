@@ -448,6 +448,9 @@ export function calculateKalathraDosh(snapshot: Snapshot) {
   // Check 2: 7th lord conjunct malefic or in dusthana (H6/H8/H12)
   if (seventhLordPlanet) {
     for (const maleficName of malefics) {
+      // Skip self-conjunction (e.g., if Saturn is 7th lord, don't report "Saturn conjunct Saturn")
+      if (maleficName === seventhLord) continue;
+      
       const malefic = planets[maleficName];
       const dist = delta(seventhLordPlanet.deg, malefic.deg);
       if (dist <= ORB_CONJ) {

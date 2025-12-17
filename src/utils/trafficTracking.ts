@@ -90,21 +90,31 @@ async function getCountryCode(): Promise<string | undefined> {
   return undefined;
 }
 
+// Module-level flag to prevent race conditions within the same page load
+const trackingInProgress = new Set<string>();
+
 /**
  * Track traffic source for the current visitor
  * Should be called once per session on initial page load
  */
 export async function trackTrafficSource(visitorId: string, sessionId: string): Promise<void> {
+  const trackingKey = `traffic_tracked_${sessionId}`;
+  
   try {
-    // Check if we've already tracked this session
-    const trackingKey = `traffic_tracked_${sessionId}`;
+    // Check localStorage first (synchronous)
     if (localStorage.getItem(trackingKey)) {
-      console.log('[TrafficTracking] Session already tracked:', sessionId);
       return; // Already tracked this session
     }
-
-    console.log('[TrafficTracking] Starting tracking for session:', sessionId);
-
+    
+    // Check module-level flag to prevent race condition from multiple simultaneous calls
+    if (trackingInProgress.has(sessionId)) {
+      return; // Already tracking this session
+    }
+    
+    // Set BOTH flags immediately BEFORE any async work to prevent duplicates
+    trackingInProgress.add(sessionId);
+    localStorage.setItem(trackingKey, 'pending'); // Mark as pending immediately
+    
     const utmParams = extractUTMParameters();
     
     // Get country code with timeout to prevent blocking
@@ -114,7 +124,6 @@ export async function trackTrafficSource(visitorId: string, sessionId: string): 
       const timeoutPromise = new Promise<undefined>((resolve) => setTimeout(() => resolve(undefined), 3000));
       countryCode = await Promise.race([countryPromise, timeoutPromise]);
     } catch (e) {
-      console.warn('[TrafficTracking] Country code fetch failed:', e);
       countryCode = undefined;
     }
     
@@ -127,8 +136,6 @@ export async function trackTrafficSource(visitorId: string, sessionId: string): 
       referrer: document.referrer || undefined,
     };
 
-    console.log('[TrafficTracking] Inserting traffic data:', { session_id: sessionId, utm_source: utmParams.utm_source });
-
     // Store in database
     const { error } = await supabase
       .from('traffic_sources')
@@ -136,12 +143,17 @@ export async function trackTrafficSource(visitorId: string, sessionId: string): 
 
     if (error) {
       console.error('[TrafficTracking] Failed to insert:', error.message, error.code);
+      // On error, remove the pending flag so it can be retried on next page load
+      localStorage.removeItem(trackingKey);
     } else {
-      // Mark this session as tracked
+      // Mark as successfully tracked
       localStorage.setItem(trackingKey, 'true');
-      console.log('[TrafficTracking] Success for session:', sessionId);
     }
   } catch (e) {
     console.error('[TrafficTracking] Unexpected error:', e);
+    // On error, remove the pending flag
+    try { localStorage.removeItem(trackingKey); } catch {}
+  } finally {
+    trackingInProgress.delete(sessionId);
   }
 }

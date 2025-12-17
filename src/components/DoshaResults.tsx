@@ -1079,44 +1079,57 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
         <div id="kundali-chart-section">
           <KundaliCard birthDetails={birthDetails} />
           
-          {/* Dosha Planetary Positions Summary - Specific positions causing each dosha */}
-          {hasAnyDosha && activeDoshas.length > 0 && (
-            <Card className="mt-4 bg-accent/10 border border-accent/30">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">
-                  {isHindi ? 'दोषों का कारण - ग्रह स्थिति' : 'Planetary Positions Causing These Doshas'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="space-y-3 text-sm">
-                  {activeDoshas.map((dosha) => {
-                    // Show actual planetary placements that caused the dosha
-                    const placements = dosha.placements || [];
-                    
-                    return (
-                      <li key={dosha.type} className="text-muted-foreground">
-                        <div className="font-semibold text-foreground mb-1">{dosha.label}:</div>
-                        {placements.length > 0 ? (
-                          <ul className="ml-4 space-y-1">
-                            {placements.map((p, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="text-primary flex-shrink-0">→</span>
-                                <span>{translatePlacement(p)}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="ml-4 text-muted-foreground/70 italic">
-                            {isHindi ? 'विस्तृत स्थिति ऊपर दोष विवरण में देखें' : 'See detailed positions in dosha section above'}
-                          </p>
-                        )}
+          {/* Dosha Planetary Positions Summary - only show evidence lines (placements/triggeredBy/notes), no generic text */}
+          {hasAnyDosha && activeDoshas.length > 0 && (() => {
+            const doshaItems = activeDoshas.map((dosha) => {
+              const detail = (details as any)?.[dosha.detailKey] || {};
+              const rawEvidence: string[] = [
+                ...(detail.placements || []),
+                ...(detail.triggeredBy || []),
+                ...(detail.notes || []),
+              ]
+                .map((s: any) => String(s || '').trim())
+                .filter(Boolean);
+
+              const uniqueEvidence = Array.from(new Set(rawEvidence));
+
+              // Prefer lines that actually mention planets/houses/signs
+              const positionHintRegex = /\b(house|lagna|ascendant|moon|mars|saturn|rahu|ketu|sun|jupiter|venus|mercury|sign)\b|भाव|लग्न|चंद्र|मंगल|शनि|राहु|केतु|सूर्य|बृहस्पति|शुक्र|बुध/i;
+              const evidence = uniqueEvidence.filter((l) => positionHintRegex.test(l));
+              const finalEvidence = evidence.length > 0 ? evidence : uniqueEvidence;
+
+              if (finalEvidence.length === 0) return null;
+
+              return (
+                <li key={dosha.type} className="text-muted-foreground">
+                  <div className="font-semibold text-foreground mb-1">{dosha.label}:</div>
+                  <ul className="ml-4 space-y-1">
+                    {finalEvidence.map((line: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2">
+                        <span className="text-primary flex-shrink-0">→</span>
+                        <span>{translatePlacement(line)}</span>
                       </li>
-                    );
-                  })}
-                </ul>
-              </CardContent>
-            </Card>
-          )}
+                    ))}
+                  </ul>
+                </li>
+              );
+            }).filter(Boolean);
+
+            if (doshaItems.length === 0) return null;
+
+            return (
+              <Card className="mt-4 bg-accent/10 border border-accent/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-semibold">
+                    {isHindi ? 'दोषों का कारण - ग्रह स्थिति' : 'Planetary Positions Causing These Doshas'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="space-y-3 text-sm">{doshaItems as any}</ul>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
       )}
 

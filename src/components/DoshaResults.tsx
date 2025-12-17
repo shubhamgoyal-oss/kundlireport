@@ -668,6 +668,18 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
                 <h4 className="font-semibold text-base flex items-center gap-2">
                   <Info className="w-4 h-4 text-primary" />
                   {isHindi ? 'यह दोष आपकी कुंडली में क्यों है?' : 'Why is this dosha marked in your kundli?'}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const kundaliSection = document.getElementById('kundali-chart-section');
+                      if (kundaliSection) {
+                        kundaliSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }}
+                    className="text-xs text-primary hover:underline ml-auto"
+                  >
+                    {isHindi ? 'कुंडली देखें ↓' : 'View Kundli ↓'}
+                  </button>
                 </h4>
                 {isHindi && isTranslating ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -1064,7 +1076,41 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
 
       {/* Kundali Chart - After detailed analysis */}
       {birthDetails && (
-        <KundaliCard birthDetails={birthDetails} />
+        <div id="kundali-chart-section">
+          <KundaliCard birthDetails={birthDetails} />
+          
+          {/* Dosha Summary Box - One-liner explanations */}
+          {hasAnyDosha && activeDoshas.length > 0 && (
+            <Card className="mt-4 bg-accent/10 border border-accent/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold">
+                  {isHindi ? 'आपकी कुंडली में पाए गए दोषों का सारांश' : 'Summary of Doshas Found in Your Kundli'}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="space-y-2 text-sm">
+                  {activeDoshas.map((dosha) => {
+                    // Get the first placement or a brief summary
+                    const placement = dosha.placements?.[0] || '';
+                    const briefExplanation = dosha.explanation 
+                      ? dosha.explanation.split('.')[0] + '.'
+                      : (isHindi ? 'ग्रहों की स्थिति के कारण।' : 'Due to planetary positions.');
+                    
+                    return (
+                      <li key={dosha.type} className="flex items-start gap-2 text-muted-foreground">
+                        <span className="text-primary font-semibold flex-shrink-0">•</span>
+                        <span>
+                          <strong className="text-foreground">{dosha.label}:</strong>{' '}
+                          {briefExplanation}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
 
 

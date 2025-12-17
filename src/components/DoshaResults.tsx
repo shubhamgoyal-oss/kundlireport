@@ -671,6 +671,14 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
                   <button
                     type="button"
                     onClick={() => {
+                      // Track see my kundli click
+                      trackEvent('see_my_kundli_click', {
+                        page: 'home',
+                        metadata: {
+                          dosha_type: dosha.type,
+                          dosha_label: dosha.label
+                        }
+                      });
                       const kundaliSection = document.getElementById('kundali-chart-section');
                       if (kundaliSection) {
                         kundaliSection.scrollIntoView({ behavior: 'smooth', block: 'center' });

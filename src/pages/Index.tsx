@@ -52,6 +52,7 @@ const Index = () => {
                     width="277"
                     height="84"
                     fetchPriority="high"
+                    decoding="sync"
                   />
                   <div className="text-[10px] sm:text-xs text-muted-foreground font-medium space-y-0.5">
                     <div className="flex items-center justify-center gap-1.5">

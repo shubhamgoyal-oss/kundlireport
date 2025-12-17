@@ -113,10 +113,19 @@ All colors MUST be HSL and based on traditional Indian spiritual palette
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   :root {
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Ensure text is visible while fonts load */
+  @font-face {
+    font-family: 'Inter';
+    font-display: swap;
+    src: local('Inter');
   }
 
   .spiritual-glow {

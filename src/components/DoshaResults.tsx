@@ -10,7 +10,7 @@ import { OtherDoshas } from '@/components/OtherDoshas';
 import { useTranslation } from 'react-i18next';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
-import { useScrollTracking } from '@/hooks/useScrollTracking';
+
 import { KundaliCard } from '@/components/KundaliCard';
 import { BirthDetails } from '@/utils/kundaliChart';
 
@@ -68,7 +68,7 @@ export const DoshaResults = ({ summary, details, calculationId, problemArea, bir
   const resultsRef = React.useRef<HTMLDivElement>(null);
   const statusMessageRef = React.useRef<HTMLHeadingElement>(null);
   
-  useScrollTracking();
+  
 
   // Translate explanations when language changes to Hindi using Lovable AI
   useEffect(() => {

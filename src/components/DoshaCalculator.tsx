@@ -323,12 +323,6 @@ const DoshaCalculator = () => {
       gender: data.gender,
     };
     
-    // Start tracking scroll events after calculation starts
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('track_post_calculation_scroll', 'true');
-      sessionStorage.setItem('calculation_start_time', Date.now().toString());
-    }
-    
     trackEvent('calculate_dosha_clicked', {
       metadata: {
         hasTime: !submissionData.unknownTime,
@@ -336,6 +330,28 @@ const DoshaCalculator = () => {
         date: submissionData.date
       }
     });
+    
+    // Track session-level problem statements
+    if (selectedProblems.length > 0) {
+      const visitorId = localStorage.getItem('analytics_visitor_id') || 'unknown';
+      const sessionId = localStorage.getItem('analytics_session_id') || 'unknown';
+      const problemStatements = selectedProblems
+        .filter(id => id !== 'other')
+        .map(id => {
+          const option = problemOptions.find(o => o.id === id);
+          return option ? (i18n.language?.startsWith('hi') ? option.hi : option.en) : id;
+        });
+      if (showOtherInput && otherProblemText.trim()) {
+        problemStatements.push(otherProblemText.trim());
+      }
+      
+      supabase.from('session_problem_statements').insert({
+        visitor_id: visitorId,
+        session_id: sessionId,
+        problem_statements: problemStatements,
+        language: i18n.language?.startsWith('hi') ? 'hi' : 'en'
+      }).then(() => {}, () => {});
+    }
     
     setIsCalculating(true);
     

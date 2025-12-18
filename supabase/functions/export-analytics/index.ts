@@ -52,7 +52,8 @@ serve(async (req) => {
       'traffic_sources',
       'seer_api_logs',
       'expert_chat_logs',
-      'problem_area_selections'
+      'problem_area_selections',
+      'session_problem_statements'
     ];
 
     if (!allowedTables.includes(table)) {

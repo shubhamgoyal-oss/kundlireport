@@ -349,6 +349,10 @@ export function getUpcomingPujas(
   maxCount = 1,
   priorityKeywords?: string[]
 ): SriMandirPuja[] {
+  // Get today's date at midnight for comparison (exclude today's pujas)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
   const sorted = pujas
     .map(puja => ({
       puja,
@@ -361,6 +365,11 @@ export function getUpcomingPujas(
         return title.startsWith(lowerKeyword) || englishTitle.startsWith(lowerKeyword);
       }) : false
     }))
+    // Filter out pujas scheduled for today or earlier
+    .filter(item => {
+      if (!item.date) return true; // Keep pujas without dates
+      return item.date.getTime() > today.getTime();
+    })
     .sort((a, b) => {
       // First prioritize pujas that start with keyword
       if (a.startsWithKeyword && !b.startsWithKeyword) return -1;

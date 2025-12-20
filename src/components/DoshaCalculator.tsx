@@ -114,7 +114,7 @@ const DoshaCalculator = () => {
   } = useForm<BirthInput>({
     resolver: zodResolver(birthInputSchema),
     defaultValues: {
-      unknownTime: false,
+      unknownTime: true,
       chartStyle: "north",
       place: "",
     },
@@ -691,32 +691,30 @@ const DoshaCalculator = () => {
           <div className="space-y-2">
             <Label htmlFor="time" className="flex items-center gap-2 text-sm sm:text-base">
               <Clock className="w-4 h-4 flex-shrink-0" />
-              {t('dosha.timeOfBirth')} *
+              {t('dosha.timeOfBirth')}
             </Label>
             
+            <div className="p-3 bg-accent/30 border border-primary/40 rounded-md mb-2">
+              <p className="text-sm text-foreground">
+                {t('dosha.timeOfBirthDisclaimer', 'Even without your time of birth, we can offer guidance using moon-sign based checks.')}
+              </p>
+            </div>
+
             <div className="flex items-center gap-2 mb-2">
               <Switch
-                id="unknownTime"
-                checked={unknownTime}
+                id="knowTime"
+                checked={!unknownTime}
                 onCheckedChange={(checked) => {
-                  setValue('unknownTime', checked);
-                  if (checked) {
+                  setValue('unknownTime', !checked);
+                  if (!checked) {
                     setValue('time', '');
                   }
                 }}
               />
-              <Label htmlFor="unknownTime" className="text-sm cursor-pointer">
-                {t('dosha.unknownTime')}
+              <Label htmlFor="knowTime" className="text-sm cursor-pointer">
+                {t('dosha.knowTimeOfBirth', 'I know my time of birth')}
               </Label>
             </div>
-
-            {unknownTime && (
-              <div className="p-3 bg-accent/30 border border-primary/40 rounded-md mb-2">
-                <p className="text-sm text-foreground">
-                  {t('dosha.unknownTimeWarning')}
-                </p>
-              </div>
-            )}
 
             {!unknownTime && (
               <>

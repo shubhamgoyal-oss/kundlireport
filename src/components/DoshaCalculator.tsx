@@ -694,13 +694,7 @@ const DoshaCalculator = () => {
               {t('dosha.timeOfBirth')}
             </Label>
             
-            <div className="p-3 bg-accent/30 border border-primary/40 rounded-md mb-2">
-              <p className="text-sm text-foreground">
-                {t('dosha.timeOfBirthDisclaimer', 'Even without your time of birth, we can offer guidance using moon-sign based checks.')}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2">
               <Switch
                 id="knowTime"
                 checked={!unknownTime}
@@ -712,9 +706,15 @@ const DoshaCalculator = () => {
                 }}
               />
               <Label htmlFor="knowTime" className="text-sm cursor-pointer">
-                {t('dosha.knowTimeOfBirth', 'I know my time of birth')}
+                {isHindi ? 'मुझे अपने जन्म का समय पता है' : 'I know my time of birth'}
               </Label>
             </div>
+
+            {unknownTime && (
+              <p className="text-sm text-muted-foreground">
+                {isHindi ? 'आपके जन्म समय के बिना भी, हम चंद्र राशि के आधार पर मार्गदर्शन दे सकते हैं।' : 'Even without your time of birth, we can offer guidance using moon-sign based checks.'}
+              </p>
+            )}
 
             {!unknownTime && (
               <>

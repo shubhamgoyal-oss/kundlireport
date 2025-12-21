@@ -20,7 +20,6 @@ import {
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
 import Footer from '@/components/Footer';
-import ContactSection from '@/components/ContactSection';
 
 const Index = () => {
   const [isSolutionFinderOpen, setIsSolutionFinderOpen] = useState(false);
@@ -140,9 +139,6 @@ const Index = () => {
 
       {/* Reviews Section */}
       <ReviewTiles />
-
-      {/* Contact Section */}
-      <ContactSection />
 
       {/* Footer */}
       <Footer />

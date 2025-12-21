@@ -114,7 +114,7 @@ const DoshaCalculator = () => {
   } = useForm<BirthInput>({
     resolver: zodResolver(birthInputSchema),
     defaultValues: {
-      unknownTime: true,
+      unknownTime: false,
       chartStyle: "north",
       place: "",
     },
@@ -691,29 +691,31 @@ const DoshaCalculator = () => {
           <div className="space-y-2">
             <Label htmlFor="time" className="flex items-center gap-2 text-sm sm:text-base">
               <Clock className="w-4 h-4 flex-shrink-0" />
-              {t('dosha.timeOfBirth')}
+              {t('dosha.timeOfBirth')} *
             </Label>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-2">
               <Switch
-                id="knowTime"
-                checked={!unknownTime}
+                id="unknownTime"
+                checked={unknownTime}
                 onCheckedChange={(checked) => {
-                  setValue('unknownTime', !checked);
-                  if (!checked) {
+                  setValue('unknownTime', checked);
+                  if (checked) {
                     setValue('time', '');
                   }
                 }}
               />
-              <Label htmlFor="knowTime" className="text-sm cursor-pointer">
-                {isHindi ? 'मुझे अपने जन्म का समय पता है' : 'I know my time of birth'}
+              <Label htmlFor="unknownTime" className="text-sm cursor-pointer">
+                {t('dosha.unknownTime')}
               </Label>
             </div>
 
             {unknownTime && (
-              <p className="text-sm text-muted-foreground">
-                {isHindi ? 'आपके जन्म समय के बिना भी, हम चंद्र राशि के आधार पर मार्गदर्शन दे सकते हैं।' : 'Even without your time of birth, we can offer guidance using moon-sign based checks.'}
-              </p>
+              <div className="p-3 bg-accent/30 border border-primary/40 rounded-md mb-2">
+                <p className="text-sm text-foreground">
+                  {t('dosha.unknownTimeWarning')}
+                </p>
+              </div>
             )}
 
             {!unknownTime && (

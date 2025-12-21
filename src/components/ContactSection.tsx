@@ -18,9 +18,6 @@ export default function ContactSection() {
         >
           +91 9930601106
         </a>
-        <p className="text-base sm:text-lg text-muted-foreground mt-2">
-          — Shubham Goyal
-        </p>
       </div>
     </section>
   );

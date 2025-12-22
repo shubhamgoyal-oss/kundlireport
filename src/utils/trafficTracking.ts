@@ -109,12 +109,16 @@ export function appendUTMToUrl(baseUrl: string): string {
   try {
     const url = new URL(baseUrl);
     
-    // Override utm_source with actual source from user's landing
+    // Always remove any existing values coming from the sheet (avoid stale tagging)
+    url.searchParams.delete('utm_source');
+    url.searchParams.delete('utm_medium');
+
+    // utm_source should reflect the actual acquisition source of this session
     if (utmParams.utm_source) {
       url.searchParams.set('utm_source', utmParams.utm_source);
     }
     
-    // Pass utm_campaign from traffic_sources as utm_medium in puja link
+    // utm_medium should mirror the utm_campaign captured in traffic_sources
     if (utmParams.utm_campaign) {
       url.searchParams.set('utm_medium', utmParams.utm_campaign);
     }

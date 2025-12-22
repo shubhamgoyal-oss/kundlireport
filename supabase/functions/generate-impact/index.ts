@@ -10,8 +10,12 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  console.log('[GENERATE-IMPACT] Request received');
+
   try {
     const { doshaType, problemArea, language } = await req.json();
+    console.log('[GENERATE-IMPACT] Params:', { doshaType, problemArea: problemArea?.substring(0, 50), language });
     
     if (!doshaType || !problemArea) {
       return new Response(
@@ -32,19 +36,11 @@ serve(async (req) => {
     const isHindi = language === 'hi';
     
     // Map dosha types to their characteristics for Vedic astrology
-    // CRITICAL: Each dosha must have accurate Vedic correlations
-    // Mars: blood, muscles, accidents, conflicts, brothers, property - NOT eyes
-    // Sun: right eye, father, authority, heart
-    // Moon: left eye, mother, mind, emotions
-    // Saturn: bones, delays, karma, chronic issues
-    // Rahu/Ketu: sudden events, karma, obsessions
     const doshaInfo: Record<string, { 
       planet: string; 
       energy: string; 
       planetHi: string; 
       energyHi: string;
-      vedicContext: string;
-      vedicContextHi: string;
       affectedAreas: string;
       affectedAreasHi: string;
       notAffected: string;
@@ -54,8 +50,6 @@ serve(async (req) => {
         energy: 'aggressive fire energy that creates conflict and impatience',
         planetHi: 'मंगल ग्रह',
         energyHi: 'आक्रामक अग्नि ऊर्जा जो संघर्ष और अधीरता उत्पन्न करती है',
-        vedicContext: 'When Mars occupies certain houses (1st, 2nd, 4th, 7th, 8th, or 12th) from Lagna, Moon, or Venus in a birth chart, its fiery and combative nature becomes dominant in life matters.',
-        vedicContextHi: 'जब मंगल लग्न, चंद्र या शुक्र से 1, 2, 4, 7, 8 या 12वें भाव में स्थित होता है, तो इसकी अग्नि और युद्धक प्रकृति जीवन के मामलों में प्रबल हो जाती है।',
         affectedAreas: 'marriage harmony, blood-related health, accidents, surgeries, property disputes, sibling relationships, physical vitality, anger management',
         affectedAreasHi: 'वैवाहिक सामंजस्य, रक्त संबंधी स्वास्थ्य, दुर्घटनाएं, शल्य क्रिया, संपत्ति विवाद, भाई-बहन संबंध, शारीरिक ऊर्जा, क्रोध नियंत्रण',
         notAffected: 'Mars does NOT affect eyes (Sun/Moon govern eyes), mental peace (Moon), or chronic diseases (Saturn). Only mention blood, muscles, accidents, conflicts, marriage, property.'
@@ -65,8 +59,6 @@ serve(async (req) => {
         energy: 'karmic serpent energy that creates cycles of struggle and sudden reversals',
         planetHi: 'राहु-केतु अक्ष (छाया ग्रह)',
         energyHi: 'कर्म सर्प ऊर्जा जो संघर्ष और अचानक उलटफेर के चक्र बनाती है',
-        vedicContext: 'When all seven classical planets fall between Rahu and Ketu, the native experiences a serpent-like grip on destiny, causing repeated obstacles despite sincere efforts.',
-        vedicContextHi: 'जब सभी सात शास्त्रीय ग्रह राहु और केतु के बीच आ जाते हैं, तो जातक भाग्य पर सर्प जैसी पकड़ का अनुभव करता है, जिससे ईमानदार प्रयासों के बावजूद बार-बार बाधाएं आती हैं।',
         affectedAreas: 'sudden reversals, obstacles despite efforts, delayed success, karmic patterns, anxiety, fear of unknown, unexpected events, struggles in achieving goals',
         affectedAreasHi: 'अचानक उलटफेर, प्रयासों के बावजूद बाधाएं, विलंबित सफलता, कर्म पैटर्न, चिंता, अज्ञात का भय, अप्रत्याशित घटनाएं',
         notAffected: 'Kaal Sarp affects life patterns and destiny, not specific body parts. Focus on obstacles, reversals, and karmic struggles.'
@@ -76,8 +68,6 @@ serve(async (req) => {
         energy: 'unresolved ancestral debts that block blessings and progress',
         planetHi: 'राहु/केतु से पीड़ित सूर्य (पितृ कर्म)',
         energyHi: 'अनसुलझे पैतृक ऋण जो आशीर्वाद और प्रगति को रोकते हैं',
-        vedicContext: 'When Sun conjuncts or is aspected by Rahu/Ketu in the 9th house of fortune, ancestral souls seek resolution, causing unexplained blockages in prosperity and peace.',
-        vedicContextHi: 'जब सूर्य भाग्य के 9वें भाव में राहु/केतु से युक्त या दृष्ट होता है, तो पितृ आत्माएं समाधान चाहती हैं, जिससे समृद्धि और शांति में अकारण अवरोध आते हैं।',
         affectedAreas: 'family harmony, ancestral blessings, unexplained obstacles, childbirth issues, father-related matters, fortune and luck, spiritual growth, family peace',
         affectedAreasHi: 'पारिवारिक सामंजस्य, पैतृक आशीर्वाद, अकारण बाधाएं, संतान संबंधी समस्याएं, पिता संबंधी मामले, भाग्य, आध्यात्मिक विकास',
         notAffected: 'Pitra Dosha affects fortune, family, and blessings - not physical health directly. Focus on ancestral patterns and unexplained blockages.'
@@ -87,8 +77,6 @@ serve(async (req) => {
         energy: 'slow-moving karmic energy that brings tests, delays, and mandatory life lessons',
         planetHi: 'शनि देव',
         energyHi: 'धीमी कर्म ऊर्जा जो परीक्षाएं, देरी और अनिवार्य जीवन सबक लाती है',
-        vedicContext: 'During Sade Sati (7.5 year transit over Moon sign), Saturn tests patience and strips away what is not meant for you, often through hardship and isolation.',
-        vedicContextHi: 'साढ़े साती (चंद्र राशि पर 7.5 वर्ष का गोचर) के दौरान, शनि धैर्य की परीक्षा लेता है और जो आपके लिए नहीं है उसे कठिनाई और अकेलेपन के माध्यम से छीन लेता है।',
         affectedAreas: 'delays in success, career obstacles, chronic health issues, bone/joint problems, loneliness, depression, financial hardship, patience tests, karma lessons',
         affectedAreasHi: 'सफलता में देरी, करियर में बाधाएं, दीर्घकालिक स्वास्थ्य समस्याएं, हड्डी/जोड़ों की समस्याएं, अकेलापन, अवसाद, आर्थिक कठिनाई',
         notAffected: 'Saturn affects bones, delays, and karma. NOT eyes (Sun/Moon), NOT blood (Mars), NOT sudden events (Rahu). Focus on slow, grinding challenges.'
@@ -100,56 +88,53 @@ serve(async (req) => {
       energy: 'planetary affliction affecting life areas',
       planetHi: doshaType,
       energyHi: 'ग्रह पीड़ा जो जीवन क्षेत्रों को प्रभावित करती है',
-      vedicContext: 'This dosha creates specific planetary imbalances in the birth chart.',
-      vedicContextHi: 'यह दोष जन्म कुंडली में विशिष्ट ग्रह असंतुलन बनाता है।',
       affectedAreas: 'various life areas based on planetary positions',
       affectedAreasHi: 'ग्रह स्थिति के आधार पर विभिन्न जीवन क्षेत्र',
       notAffected: 'Stick to accurate Vedic correlations only.'
     };
 
+    // Combined prompt for both title and impact in ONE API call
     const systemPrompt = isHindi 
       ? `आप एक वैदिक ज्योतिषी हैं। ${info.planetHi} दोष का प्रभाव समझाएं।
 
 वैदिक सटीकता नियम:
 - ${info.planetHi} केवल इन क्षेत्रों को प्रभावित करता है: ${info.affectedAreasHi}
-- गलत ग्रह-अंग संबंध न बताएं (जैसे मंगल आंखों को प्रभावित नहीं करता)
+- गलत ग्रह-अंग संबंध न बताएं
 
-लेखन नियम:
-- 3 वाक्य लिखें, हर वाक्य 12-15 शब्दों का
-- पहला वाक्य: ${info.planetHi} की ऊर्जा इस समस्या से कैसे जुड़ी है
-- दूसरा वाक्य: इससे जीवन में क्या रुकावट आती है
-- तीसरा वाक्य: बिना उपाय के यह क्यों जारी रहता है
-- सरल हिंदी, स्पष्ट और सीधा
-- आपको केवल हिंदी में जवाब देना है
-- महत्वपूर्ण: कोई मार्कडाउन फॉर्मेटिंग न करें। कोई बोल्ड टेक्स्ट (**) न करें। सिर्फ सादा टेक्स्ट लिखें।`
+आपको JSON format में जवाब देना है:
+{"title": "समस्या पर प्रभाव (8-10 शब्द)", "text": "3 वाक्य, हर वाक्य 12-15 शब्द"}
+
+नियम:
+- title: "पर प्रभाव" से शुरू करें
+- text: पहला वाक्य ऊर्जा का संबंध, दूसरा रुकावट, तीसरा बिना उपाय क्यों जारी
+- सरल हिंदी, कोई markdown नहीं`
       : `You are a Vedic astrologer. Explain how ${info.planet} dosha impacts life.
 
-VEDIC ACCURACY RULES (CRITICAL):
+VEDIC ACCURACY RULES:
 - ${info.planet} ONLY affects: ${info.affectedAreas}
 - ${info.notAffected}
-- Do NOT make up body part correlations. Each planet has specific significations in Vedic astrology.
 
-Writing Rules:
-- Write exactly 3 sentences, each 12-15 words max
-- Sentence 1: How ${info.planet}'s energy connects to this specific problem
-- Sentence 2: What life obstacle or block this creates
-- Sentence 3: Why this pattern continues without remedies
-- Use simple, clear English - no complex astrological jargon
-- Be specific but concise
-- CRITICAL: You MUST respond in English only, even if the problem description is in Hindi or another language. Always output English text.
-- IMPORTANT: Do NOT use any markdown formatting. No bold text (**), no italics, no headers. Write plain text only.`;
+Respond in JSON format:
+{"title": "Impact on [problem] (8-10 words)", "text": "3 sentences, each 12-15 words max"}
+
+Rules:
+- title: Start with "Impact on"
+- text: Sentence 1 = energy connection, Sentence 2 = life obstacle, Sentence 3 = why continues without remedy
+- Simple English, no markdown, no asterisks`;
 
     const userPrompt = isHindi
       ? `दोष: ${doshaType}
 समस्या: ${problemArea}
 
-बताएं कि ${info.planetHi} की ऊर्जा इस समस्या को कैसे प्रभावित करती है। केवल सही वैदिक संबंध बताएं।`
+JSON में जवाब दें।`
       : `Dosha: ${doshaType}
 Problem: ${problemArea}
 
-IMPORTANT: The problem above may be written in Hindi or another language. You MUST translate the meaning and respond entirely in English.
-Explain how ${info.planet}'s energy affects this problem. Stay accurate to Vedic astrology - only mention effects that this planet actually governs.`;
+Respond in JSON only.`;
 
+    console.log('[GENERATE-IMPACT] Calling AI API...');
+    const apiStartTime = Date.now();
+    
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -157,13 +142,15 @@ Explain how ${info.planet}'s energy affects this problem. Stay accurate to Vedic
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'google/gemini-2.5-flash-lite', // Use faster model
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
       }),
     });
+
+    console.log('[GENERATE-IMPACT] AI API responded in', Date.now() - apiStartTime, 'ms');
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -189,44 +176,30 @@ Explain how ${info.planet}'s energy affects this problem. Stay accurate to Vedic
     }
 
     const data = await response.json();
-    const impactText = data.choices?.[0]?.message?.content?.trim() || '';
-
-    // Generate title based on problem area
-    const titlePrompt = isHindi
-      ? `उपयोगकर्ता की समस्या: "${problemArea}"
-
-इस समस्या के लिए एक छोटा शीर्षक लिखें जो "पर प्रभाव" से शुरू हो। उदाहरण: "नौकरी खोजने में देरी पर प्रभाव"
-
-केवल शीर्षक लिखें, कुछ और नहीं।`
-      : `User's problem: "${problemArea}"
-
-Write a short title for impact on this problem. Start with "Impact on". Example: "Impact on delay in finding job"
-
-Write ONLY the title, nothing else.`;
-
-    const titleResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: isHindi ? 'आप एक संक्षिप्त शीर्षक लेखक हैं।' : 'You are a concise title writer.' },
-          { role: 'user', content: titlePrompt }
-        ],
-      }),
-    });
-
+    const rawContent = data.choices?.[0]?.message?.content?.trim() || '';
+    
+    // Parse JSON response
     let impactTitle = isHindi ? 'प्रभाव' : 'Impact if Present';
-    if (titleResponse.ok) {
-      const titleData = await titleResponse.json();
-      const generatedTitle = titleData.choices?.[0]?.message?.content?.trim();
-      if (generatedTitle) {
-        impactTitle = generatedTitle;
+    let impactText = '';
+    
+    try {
+      // Try to extract JSON from response (handle markdown code blocks)
+      let jsonStr = rawContent;
+      if (rawContent.includes('```')) {
+        const match = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (match) jsonStr = match[1].trim();
       }
+      
+      const parsed = JSON.parse(jsonStr);
+      impactTitle = parsed.title || impactTitle;
+      impactText = parsed.text || rawContent;
+    } catch {
+      // Fallback to raw content if JSON parsing fails
+      console.log('[GENERATE-IMPACT] JSON parse failed, using raw content');
+      impactText = rawContent;
     }
+
+    console.log('[GENERATE-IMPACT] Total time:', Date.now() - startTime, 'ms');
 
     return new Response(
       JSON.stringify({ impactText, impactTitle }),

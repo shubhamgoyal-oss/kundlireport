@@ -11,6 +11,15 @@ export function getMangalExplanationSeer(mangal: DoshaResult): string {
     return `Mars in your chart is not positioned in any of the sensitive houses (1st, 2nd, 4th, 7th, 8th, or 12th) from your Lagna, Moon, or Venus. Your chart is free from Mangal Dosha.`;
   }
   
+  // Handle nullified status - Mars is present but effects are canceled
+  if (mangal.status === "present (nullified)" || mangal.nullified === true) {
+    const placement = mangal.placements[0] || "Mars is in a sensitive house";
+    const nullificationReason = mangal.cancellations.length > 0 
+      ? mangal.cancellations.join(" and ")
+      : "beneficial planetary influences";
+    return `In your chart, ${placement}. However, this Mangal Dosha is nullified by ${nullificationReason}. The negative effects are significantly reduced or eliminated.`;
+  }
+  
   // Extract specific house placements from reasons
   const housePlacements: string[] = [];
   for (const placement of mangal.placements) {

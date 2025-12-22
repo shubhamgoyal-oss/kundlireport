@@ -142,7 +142,7 @@ Respond in JSON only.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-lite', // Use faster model
+        model: 'google/gemini-2.5-flash', // Use faster model
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

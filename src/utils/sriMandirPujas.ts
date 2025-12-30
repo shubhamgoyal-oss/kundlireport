@@ -385,17 +385,31 @@ export function getUpcomingPujas(
   return sorted.map(item => item.puja);
 }
 
+// Preferred store IDs for specific doshas (these have the dosha name in title)
+const PREFERRED_DOSHA_STORE_IDS: Record<string, string> = {
+  pitra: 'a414f090-25c9-48e3-ba76-4b7c9ad3194b', // Pitru Dosha Nivaran puja
+};
+
 /**
  * Get single prioritized puja for specific dosha types
- * Prefers pujas that start with the dosha name
+ * First checks for preferred store ID, then falls back to keyword matching
  * Falls back to any puja if no upcoming ones found
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
   doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha' | 'mangal'
 ): SriMandirPuja | null {
+  // First, check if there's a preferred store ID for this dosha
+  const preferredStoreId = PREFERRED_DOSHA_STORE_IDS[doshaType];
+  if (preferredStoreId) {
+    const preferredPuja = pujas.find(puja => puja.store_id === preferredStoreId);
+    if (preferredPuja) {
+      return preferredPuja;
+    }
+  }
+
   const priorityKeywords: Record<string, string[]> = {
-    pitra: ['pitru', 'pitra', 'pishach mochan', 'पितृ', 'पिशाच मोचन', 'varanasi', 'वाराणसी'],
+    pitra: ['pitru dosha', 'pitra dosha', 'पितृ दोष', 'पितर दोष'],
     shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
     'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],

@@ -284,8 +284,8 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
 // Priority patterns for matching dosha-specific pujas (require all terms to match)
 const DOSHA_PRIORITY_PATTERNS: Record<string, string[][]> = {
   pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
-  kaalSarp: [['sarp', 'dosh'], ['सर्प', 'दोष']],
-  'kaal-sarp': [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  kaalSarp: [['ka', 'l', 'sarp', 'dosh'], ['काल', 'सर्प', 'दोष']],
+  'kaal-sarp': [['ka', 'l', 'sarp', 'dosh'], ['काल', 'सर्प', 'दोष']],
   mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
   sadeSati: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
   shani: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
@@ -428,8 +428,8 @@ const PREFERRED_DOSHA_STORE_IDS: Record<string, string> = {
 const PRIORITIZED_PUJA_PATTERNS: Record<string, string[][]> = {
   pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
   shani: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
-  'kaal-sarp': [['sarp', 'dosh'], ['सर्प', 'दोष']],
-  kaalSarp: [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  'kaal-sarp': [['ka', 'l', 'sarp', 'dosh'], ['काल', 'सर्प', 'दोष']],
+  kaalSarp: [['ka', 'l', 'sarp', 'dosh'], ['काल', 'सर्प', 'दोष']],
   mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
   'guru-chandal': [['guru', 'chandal'], ['गुरु', 'चांडाल']],
   navagraha: [['navagraha'], ['navagrah'], ['नवग्रह']],

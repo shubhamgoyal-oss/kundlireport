@@ -281,50 +281,84 @@ export async function fetchSriMandirPujas(): Promise<SriMandirPuja[]> {
   }
 }
 
+// Priority patterns for matching dosha-specific pujas (require all terms to match)
+const DOSHA_PRIORITY_PATTERNS: Record<string, string[][]> = {
+  pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
+  kaalSarp: [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  'kaal-sarp': [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
+  sadeSati: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
+  shani: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
+};
+
+// Fallback keywords for general matching
+const DOSHA_FALLBACK_KEYWORDS: Record<string, string[]> = {
+  pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
+  kaalSarp: ['kaal sarp', 'काल सर्प', 'sarp'],
+  'kaal-sarp': ['kaal sarp', 'काल सर्प', 'sarp'],
+  mangal: ['mangal', 'kuja', 'मंगल', '30 day', '30-day', '30 din'],
+  sadeSati: ['shani', 'saturn', 'शनि'],
+  shani: ['shani', 'saturn', 'शनि'],
+  rahu: ['rahu', 'राहु', 'grahan', 'ग्रहण'],
+  shrapit: ['shrapit', 'श्रापित'],
+  'guru-chandal': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
+  navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
+  vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य', 'navagraha', 'नवग्रह'],
+  punarphoo: ['punarphoo', 'पुनर्फू', 'navagraha', 'नवग्रह'],
+  kemadruma: ['kemadruma', 'केमद्रुम', 'navagraha', 'नवग्रह'],
+  gandmool: ['gandmool', 'गंडमूल', 'navagraha', 'नवग्रह'],
+  kalathra: ['kalathra', 'कलत्र', 'navagraha', 'नवग्रह'],
+  ketuNaga: ['ketu', 'naga', 'केतु', 'नाग', 'navagraha', 'नवग्रह'],
+};
+
 /**
- * Filter pujas by dosha type
+ * Check if title matches priority pattern (all terms must be present)
+ */
+function matchesPriorityPattern(title: string, patterns: string[][]): boolean {
+  const lowerTitle = title.toLowerCase();
+  return patterns.some(terms => 
+    terms.every(term => lowerTitle.includes(term.toLowerCase()))
+  );
+}
+
+/**
+ * Filter pujas by dosha type - prioritizes pujas with dosha name in title
  */
 export function filterPujasByDosha(
   pujas: SriMandirPuja[], 
   doshaType: 'mangal' | 'kaalSarp' | 'kaal-sarp' | 'pitra' | 'sadeSati' | 'shani' | 'rahu' | 'shrapit' | 'guru-chandal' | 'navagraha' | 'vishDaridra' | 'punarphoo' | 'kemadruma' | 'gandmool' | 'kalathra' | 'ketuNaga'
 ): SriMandirPuja[] {
-  const keywords: Record<string, string[]> = {
-    pitra: ['pitru', 'pitra', 'पितृ', 'पितर'],
-    kaalSarp: ['kaal sarp', 'काल सर्प'],
-    'kaal-sarp': ['kaal sarp', 'काल सर्प'],
-    mangal: ['mangal', 'kuja', 'मंगल', '30 day', '30-day', '30 din'],
-    sadeSati: ['shani', 'saturn', 'शनि'],
-    shani: ['shani', 'saturn', 'शनि'],
-    rahu: ['rahu', 'राहु', 'grahan', 'ग्रहण'],
-    shrapit: ['shrapit', 'श्रापित'],
-    'guru-chandal': ['brihaspati-rahu', 'brihaspati rahu', 'guru chandal', 'बृहस्पति राहु', 'गुरु चांडाल'],
-    navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
-    vishDaridra: ['vish', 'daridra', 'विष', 'दारिद्र्य', 'navagraha', 'नवग्रह'],
-    punarphoo: ['punarphoo', 'पुनर्फू', 'navagraha', 'नवग्रह'],
-    kemadruma: ['kemadruma', 'केमद्रुम', 'navagraha', 'नवग्रह'],
-    gandmool: ['gandmool', 'गंडमूल', 'navagraha', 'नवग्रह'],
-    kalathra: ['kalathra', 'कलत्र', 'navagraha', 'नवग्रह'],
-    ketuNaga: ['ketu', 'naga', 'केतु', 'नाग', 'navagraha', 'नवग्रह'],
-  };
-
-  const searchTerms = keywords[doshaType];
-  if (!searchTerms) return [];
+  const priorityPatterns = DOSHA_PRIORITY_PATTERNS[doshaType];
+  const fallbackKeywords = DOSHA_FALLBACK_KEYWORDS[doshaType];
   
-  return pujas.filter(puja => {
+  if (!fallbackKeywords) return [];
+  
+  // First, filter out Rashi pujas
+  const validPujas = pujas.filter(puja => {
     const title = puja.pooja_title.toLowerCase();
     const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
-    
-    // Exclude Rashi pujas from dosha remedies
-    if (title.includes('rashi') || title.includes('राशि') || 
-        englishTitle.includes('rashi')) {
-      return false;
-    }
-    
-    return searchTerms.some(term => {
-      const lowerTerm = term.toLowerCase();
-      return title.includes(lowerTerm) || englishTitle.includes(lowerTerm);
-    });
+    return !(title.includes('rashi') || title.includes('राशि') || englishTitle.includes('rashi'));
   });
+  
+  // Separate into priority matches and fallback matches
+  const priorityMatches: SriMandirPuja[] = [];
+  const fallbackMatches: SriMandirPuja[] = [];
+  
+  validPujas.forEach(puja => {
+    const title = puja.pooja_title.toLowerCase();
+    const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+    const combinedTitle = `${title} ${englishTitle}`;
+    
+    // Check priority patterns first
+    if (priorityPatterns && matchesPriorityPattern(combinedTitle, priorityPatterns)) {
+      priorityMatches.push(puja);
+    } else if (fallbackKeywords.some(term => combinedTitle.includes(term.toLowerCase()))) {
+      fallbackMatches.push(puja);
+    }
+  });
+  
+  // Return priority matches first, then fallback matches
+  return [...priorityMatches, ...fallbackMatches];
 }
 
 /**
@@ -390,14 +424,25 @@ const PREFERRED_DOSHA_STORE_IDS: Record<string, string> = {
   pitra: 'a414f090-25c9-48e3-ba76-4b7c9ad3194b', // Pitru Dosha Nivaran puja
 };
 
+// Priority patterns for getPrioritizedPuja - all terms must match
+const PRIORITIZED_PUJA_PATTERNS: Record<string, string[][]> = {
+  pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
+  shani: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']],
+  'kaal-sarp': [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  kaalSarp: [['sarp', 'dosh'], ['सर्प', 'दोष']],
+  mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
+  'guru-chandal': [['guru', 'chandal'], ['गुरु', 'चांडाल']],
+  navagraha: [['navagraha'], ['navagrah'], ['नवग्रह']],
+};
+
 /**
  * Get single prioritized puja for specific dosha types
- * First checks for preferred store ID, then falls back to keyword matching
- * Falls back to any puja if no upcoming ones found
+ * Prioritizes pujas with dosha name in title
+ * First checks for preferred store ID, then pattern matching, then keyword matching
  */
 export function getPrioritizedPuja(
   pujas: SriMandirPuja[],
-  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha' | 'mangal'
+  doshaType: 'pitra' | 'shani' | 'guru-chandal' | 'navagraha' | 'mangal' | 'kaal-sarp' | 'kaalSarp'
 ): SriMandirPuja | null {
   // First, check if there's a preferred store ID for this dosha
   const preferredStoreId = PREFERRED_DOSHA_STORE_IDS[doshaType];
@@ -408,24 +453,44 @@ export function getPrioritizedPuja(
     }
   }
 
+  // Get priority patterns for this dosha
+  const patterns = PRIORITIZED_PUJA_PATTERNS[doshaType];
+  
+  if (patterns) {
+    // Find pujas matching priority patterns
+    const patternMatches = pujas.filter(puja => {
+      const title = puja.pooja_title.toLowerCase();
+      const englishTitle = puja.pooja_title_english?.toLowerCase() || '';
+      const combinedTitle = `${title} ${englishTitle}`;
+      return matchesPriorityPattern(combinedTitle, patterns);
+    });
+    
+    if (patternMatches.length > 0) {
+      // Get upcoming one from pattern matches
+      const upcomingMatch = getUpcomingPujas(patternMatches, 1)[0];
+      return upcomingMatch || patternMatches[0];
+    }
+  }
+
+  // Fallback to old keyword-based matching
   const priorityKeywords: Record<string, string[]> = {
-    pitra: ['pitru dosha', 'pitra dosha', 'पितृ दोष', 'पितर दोष'],
-    shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती शांति'],
-    'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु', 'बृहस्पति-राहु'],
+    pitra: ['pitru dosha', 'pitra dosha', 'पितृ दोष', 'पितर दोष', 'pitru', 'pitra'],
+    shani: ['shani sade sati', 'शनि साढ़े साती', 'साढ़ेसाती', 'shani'],
+    'kaal-sarp': ['kaal sarp', 'sarp dosh', 'सर्प दोष', 'काल सर्प'],
+    kaalSarp: ['kaal sarp', 'sarp dosh', 'सर्प दोष', 'काल सर्प'],
+    'guru-chandal': ['guru chandal', 'brihaspati-rahu', 'brihaspati rahu', 'गुरु चांडाल', 'बृहस्पति राहु'],
     navagraha: ['navagraha', 'navagrah', 'नवग्रह'],
-    mangal: ['30 day', '30 din', '30-day', 'mangal dosha', 'मंगल दोष', 'manglik', 'मंगलिक']
+    mangal: ['mangal dosha', 'मंगल दोष', '30 day', '30 din', '30-day', 'manglik', 'मंगलिक']
   };
 
   const keywords = priorityKeywords[doshaType];
   if (!keywords) {
-    // Fallback: return first available puja if no upcoming ones
     return getUpcomingPujas(pujas, 1)[0] || pujas[0] || null;
   }
 
   // Try to get upcoming puja with priority keywords
   const upcomingPuja = getUpcomingPujas(pujas, 1, keywords)[0];
   
-  // If no upcoming puja, return the first puja that matches priority keywords
   if (!upcomingPuja && pujas.length > 0) {
     for (const keyword of keywords) {
       const match = pujas.find(puja => {
@@ -435,7 +500,6 @@ export function getPrioritizedPuja(
       });
       if (match) return match;
     }
-    // Last fallback: just return first available puja
     return pujas[0];
   }
   

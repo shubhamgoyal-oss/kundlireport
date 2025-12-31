@@ -317,71 +317,215 @@ export function calculatePunarphooDosha(snapshot: Snapshot) {
 }
 
 /**
- * 5. Kemadruma Yoga (Moon isolated)
- * Present if no classical planets in H12/H2 from Moon AND no planets in kendras from Moon
+ * 5. Kemadruma Yoga (Moon isolated) - STRICT PARĀŚARI RULES
+ * 
+ * Present ONLY IF ALL of the following are TRUE:
+ * - No planets (except Sun) in 2nd house from Moon
+ * - No planets (except Sun) in 12th house from Moon  
+ * - No planets in any kendra from Moon (1st, 4th, 7th, 10th from Moon)
+ * 
+ * CANCELLED if ANY ONE of these is true:
+ * - Moon is conjunct with any planet
+ * - Any planet exists in kendras from Moon
+ * - Moon is aspected by Jupiter
+ * - Moon is in its own sign (Cancer) or exaltation (Taurus)
+ * - Moon is associated with a yoga-producing planet
  */
 export function calculateKemadrumaYoga(snapshot: Snapshot) {
   const { planets } = snapshot;
-  const { Moon } = planets;
+  const { Moon, Jupiter, Sun, Mercury, Venus, Mars, Saturn, Rahu, Ketu } = planets;
   const moonIdx = Moon.signIdx;
 
   const reason: string[] = [];
-  const classicalPlanets = ["Sun", "Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
+  const debug: string[] = [];
+  
+  // Planets to check for H2/H12 isolation (EXCLUDE Sun per classical rules)
+  const planetsForAdjacent = ["Mercury", "Venus", "Mars", "Jupiter", "Saturn"];
+  
+  // All planets for kendra and conjunction checks (including Rahu/Ketu)
+  const allPlanets = ["Sun", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Rahu", "Ketu"];
 
-  // Check H12 and H2 from Moon (adjacent signs)
-  const h12Idx = (moonIdx + 11) % 12; // Sign behind
-  const h2Idx = (moonIdx + 1) % 12;   // Sign ahead
-
-  let hasH12 = false;
-  let hasH2 = false;
-
-  for (const name of classicalPlanets) {
+  // ==================== CANCELLATION CHECKS (Apply FIRST) ====================
+  
+  // Cancellation 1: Moon in own sign (Cancer, idx=3) or exaltation (Taurus, idx=1)
+  if (moonIdx === 3) {
+    return {
+      status: "absent",
+      severity: null,
+      reason: ["Kemadruma cancelled: Moon in own sign (Cancer)"],
+      cancelled: true,
+      cancellationReason: "Moon in own sign (Cancer)"
+    };
+  }
+  
+  if (moonIdx === 1) {
+    return {
+      status: "absent", 
+      severity: null,
+      reason: ["Kemadruma cancelled: Moon exalted in Taurus"],
+      cancelled: true,
+      cancellationReason: "Moon exalted (Taurus)"
+    };
+  }
+  
+  // Cancellation 2: Moon conjunct any planet (within 8°)
+  for (const name of allPlanets) {
     const planet = planets[name];
-    if (planet.signIdx === h12Idx) {
-      hasH12 = true;
-      reason.push(`${name} in H12 from Moon (${planet.sign})`);
-    }
-    if (planet.signIdx === h2Idx) {
-      hasH2 = true;
-      reason.push(`${name} in H2 from Moon (${planet.sign})`);
+    if (!planet) continue;
+    const conjDelta = delta(Moon.deg, planet.deg);
+    if (conjDelta <= ORB_CONJ) {
+      return {
+        status: "absent",
+        severity: null,
+        reason: [`Kemadruma cancelled: Moon conjunct ${name} (Δ=${conjDelta.toFixed(2)}°)`],
+        cancelled: true,
+        cancellationReason: `Moon conjunct ${name}`
+      };
     }
   }
-
-  // Check kendras from Moon (H1, H4, H7, H10)
+  
+  // Cancellation 3: Any planet in kendras from Moon (H1, H4, H7, H10)
   const kendraIdxs = [
-    moonIdx,                  // H1
+    moonIdx,                  // H1 (Moon's own sign)
     (moonIdx + 3) % 12,      // H4
     (moonIdx + 6) % 12,      // H7
     (moonIdx + 9) % 12       // H10
   ];
-
-  let hasKendra = false;
-  for (const name of classicalPlanets) {
+  
+  for (const name of allPlanets) {
     const planet = planets[name];
+    if (!planet) continue;
     if (kendraIdxs.includes(planet.signIdx)) {
-      hasKendra = true;
       const houseNum = houseFrom(moonIdx, planet.signIdx);
-      reason.push(`${name} in kendra from Moon (H${houseNum}, ${planet.sign})`);
+      return {
+        status: "absent",
+        severity: null,
+        reason: [`Kemadruma cancelled: ${name} in kendra from Moon (H${houseNum}, ${planet.sign})`],
+        cancelled: true,
+        cancellationReason: `${name} in kendra from Moon`
+      };
+    }
+  }
+  
+  // Cancellation 4: Moon aspected by Jupiter (Jupiter aspects 5th, 7th, 9th from its position)
+  // Jupiter's position determines which signs it aspects
+  const jupiterAspects = [
+    Jupiter.signIdx,                      // Jupiter's own position
+    (Jupiter.signIdx + 4) % 12,          // 5th aspect
+    (Jupiter.signIdx + 6) % 12,          // 7th aspect  
+    (Jupiter.signIdx + 8) % 12           // 9th aspect
+  ];
+  
+  if (jupiterAspects.includes(moonIdx)) {
+    const aspectType = Jupiter.signIdx === moonIdx ? "conjunction" : "aspect";
+    return {
+      status: "absent",
+      severity: null,
+      reason: [`Kemadruma cancelled: Moon receives Jupiter ${aspectType}`],
+      cancelled: true,
+      cancellationReason: "Moon aspected by Jupiter"
+    };
+  }
+  
+  // Cancellation 5: Moon associated with yoga-producing planets (Jupiter, Venus, well-placed Mercury)
+  // Check if Jupiter or Venus are in trines (H5, H9) from Moon
+  const trineIdxs = [
+    (moonIdx + 4) % 12,   // H5
+    (moonIdx + 8) % 12    // H9
+  ];
+  
+  if (trineIdxs.includes(Jupiter.signIdx)) {
+    return {
+      status: "absent",
+      severity: null,
+      reason: [`Kemadruma cancelled: Jupiter in trine from Moon (H${houseFrom(moonIdx, Jupiter.signIdx)}, ${Jupiter.sign})`],
+      cancelled: true,
+      cancellationReason: "Jupiter in trine from Moon"
+    };
+  }
+  
+  if (trineIdxs.includes(Venus.signIdx)) {
+    return {
+      status: "absent",
+      severity: null,
+      reason: [`Kemadruma cancelled: Venus in trine from Moon (H${houseFrom(moonIdx, Venus.signIdx)}, ${Venus.sign})`],
+      cancelled: true,
+      cancellationReason: "Venus in trine from Moon"
+    };
+  }
+
+  // ==================== ISOLATION CHECKS ====================
+  
+  // Check H12 and H2 from Moon (adjacent signs) - EXCLUDE Sun
+  const h12Idx = (moonIdx + 11) % 12; // Sign behind (12th from Moon)
+  const h2Idx = (moonIdx + 1) % 12;   // Sign ahead (2nd from Moon)
+
+  let hasH12 = false;
+  let hasH2 = false;
+
+  for (const name of planetsForAdjacent) {
+    const planet = planets[name];
+    if (!planet) continue;
+    
+    if (planet.signIdx === h12Idx) {
+      hasH12 = true;
+      debug.push(`${name} in H12 from Moon (${planet.sign})`);
+    }
+    if (planet.signIdx === h2Idx) {
+      hasH2 = true;
+      debug.push(`${name} in H2 from Moon (${planet.sign})`);
     }
   }
 
-  // Determine status
-  if (!hasH12 && !hasH2 && !hasKendra) {
+  // ==================== DETERMINE STATUS ====================
+  
+  // Kemadruma ONLY present if ALL conditions met:
+  // - No planets (except Sun) in H2 from Moon
+  // - No planets (except Sun) in H12 from Moon
+  // - No planets in kendras (already checked above - would have cancelled)
+  
+  if (!hasH12 && !hasH2) {
+    // Calculate severity based on overall planetary support
+    // Strong = complete isolation, Moderate = some distant support, Mild = weak indication
+    
+    // Check for any benefic aspects as severity mitigator
+    let severity: "mild" | "moderate" | "strong" = "strong";
+    
+    // If Venus or Mercury are in H3, H5, H9, H11 - reduce severity
+    const supportHouses = [
+      (moonIdx + 2) % 12,   // H3
+      (moonIdx + 4) % 12,   // H5
+      (moonIdx + 8) % 12,   // H9  
+      (moonIdx + 10) % 12   // H11
+    ];
+    
+    const hasBeneficSupport = 
+      supportHouses.includes(Venus.signIdx) || 
+      supportHouses.includes(Mercury.signIdx) ||
+      supportHouses.includes(Jupiter.signIdx);
+    
+    if (hasBeneficSupport) {
+      severity = "moderate";
+      debug.push("Severity reduced: benefic planet in supportive house");
+    }
+    
     return {
       status: "present",
-      reason: ["Moon isolated: no planets in H12/H2 and no kendra planets from Moon"]
-    };
-  } else if (!hasH12 && !hasH2 && hasKendra) {
-    return {
-      status: "partial",
-      reason: ["Adjacent signs empty but kendra has planets", ...reason]
-    };
-  } else {
-    return {
-      status: "absent",
-      reason
+      severity,
+      reason: ["Moon completely isolated: no planets in H2/H12 from Moon, no kendra support"],
+      cancelled: false,
+      debug
     };
   }
+  
+  // If we have planets in H2 or H12, Moon is NOT isolated
+  return {
+    status: "absent",
+    severity: null,
+    reason: debug.length > 0 ? debug : ["Moon has planetary support in adjacent houses"],
+    cancelled: false,
+    debug
+  };
 }
 
 /**

@@ -228,47 +228,86 @@ export const OtherDoshas = ({ pujas, doshaFlags = {} }: OtherDoshasProps) => {
     if (!isHindi) return line;
     let s = line;
 
+    // Planet names
     const planetMap: Record<string, string> = {
-      Sun: 'सूर्य',
-      Moon: 'चंद्र',
-      Mars: 'मंगल',
-      Mercury: 'बुध',
-      Jupiter: 'गुरु',
-      Venus: 'शुक्र',
-      Saturn: 'शनि',
-      Rahu: 'राहु',
-      Ketu: 'केतु',
+      Sun: 'सूर्य', Moon: 'चंद्र', Mars: 'मंगल', Mercury: 'बुध',
+      Jupiter: 'गुरु', Venus: 'शुक्र', Saturn: 'शनि', Rahu: 'राहु', Ketu: 'केतु',
+      Ascendant: 'लग्न', Lagna: 'लग्न', Asc: 'लग्न',
     };
+    
+    // Zodiac signs
     const signMap: Record<string, string> = {
-      Aries: 'मेष',
-      Taurus: 'वृषभ',
-      Gemini: 'मिथुन',
-      Cancer: 'कर्क',
-      Leo: 'सिंह',
-      Virgo: 'कन्या',
-      Libra: 'तुला',
-      Scorpio: 'वृश्चिक',
-      Sagittarius: 'धनु',
-      Capricorn: 'मकर',
-      Aquarius: 'कुंभ',
-      Pisces: 'मीन',
+      Aries: 'मेष', Taurus: 'वृषभ', Gemini: 'मिथुन', Cancer: 'कर्क',
+      Leo: 'सिंह', Virgo: 'कन्या', Libra: 'तुला', Scorpio: 'वृश्चिक',
+      Sagittarius: 'धनु', Capricorn: 'मकर', Aquarius: 'कुंभ', Pisces: 'मीन',
     };
 
+    // Replace planet names
     Object.entries(planetMap).forEach(([en, hi]) => {
-      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'gi'), hi);
     });
+    
+    // Replace zodiac signs
     Object.entries(signMap).forEach(([en, hi]) => {
-      s = s.replace(new RegExp(`\\b${en}\\b`, 'g'), hi);
+      s = s.replace(new RegExp(`\\b${en}\\b`, 'gi'), hi);
     });
 
+    // Common astrological terms
     s = s
-      .replace(/\bin\b/gi, 'में')
+      // Conjunction and aspects
+      .replace(/\bconjunction\b/gi, 'युति')
+      .replace(/\baspect\b/gi, 'दृष्टि')
+      .replace(/\bopposition\b/gi, 'सप्तम दृष्टि')
+      
+      // House references - handle H1, H2, etc.
+      .replace(/\bH(\d+)\b/g, '$1वें भाव')
+      .replace(/\(H(\d+),/g, '($1वें भाव,')
       .replace(/\bhouse\b/gi, 'भाव')
+      
+      // Directional words
+      .replace(/\bfrom\b/gi, 'से')
+      .replace(/\bin\b/gi, 'में')
+      .replace(/\bto\b/gi, 'को')
+      .replace(/\band\b/gi, 'और')
+      .replace(/\bor\b/gi, 'या')
+      .replace(/\bwith\b/gi, 'के साथ')
+      
+      // Kaal Sarp specific
+      .replace(/\bArdh Kaal Sarp\b/gi, 'अर्ध काल सर्प')
+      .replace(/\bFull Kaal Sarp\b/gi, 'पूर्ण काल सर्प')
+      .replace(/\bplanets? inside\b/gi, 'ग्रह अंदर')
+      .replace(/\boutside\b/gi, 'बाहर')
+      .replace(/\binside\b/gi, 'अंदर')
+      
+      // Severity
+      .replace(/\bModerate\b/gi, 'मध्यम')
+      .replace(/\bMild\b/gi, 'हल्का')
+      .replace(/\bSevere\b/gi, 'तीव्र')
+      .replace(/\bStrong\b/gi, 'प्रबल')
+      
+      // Status
+      .replace(/\bpresent\b/gi, 'उपस्थित')
+      .replace(/\babsent\b/gi, 'अनुपस्थित')
+      .replace(/\bnullified\b/gi, 'निरस्त')
+      .replace(/\bactive\b/gi, 'सक्रिय')
+      
+      // Other common terms
       .replace(/from\s+Lagna/gi, 'लग्न से')
+      .replace(/from\s+लग्न/gi, 'लग्न से')
       .replace(/with empty neighboring signs/gi, 'पड़ोसी राशियों के बिना')
-      .replace(/isolated/gi, 'अकेला');
+      .replace(/\bisolated\b/gi, 'अकेला')
+      .replace(/\bexalted\b/gi, 'उच्च')
+      .replace(/\bdebilitated\b/gi, 'नीच')
+      .replace(/\bRetrograde\b/gi, 'वक्री')
+      .replace(/\bDegree\b/gi, 'अंश')
+      .replace(/\bdegree\b/gi, 'अंश')
+      
+      // Delta symbol context
+      .replace(/Δ=/g, 'अंतर=');
 
+    // Handle numbered houses like "1st house", "2nd house", etc.
     s = s.replace(/(\d+)(st|nd|rd|th)?\s*भाव/gi, (_m, num) => `${num}वें भाव`);
+    s = s.replace(/(\d+)(st|nd|rd|th)?\s*house/gi, (_m, num) => `${num}वें भाव`);
 
     return s;
   };

@@ -121,6 +121,7 @@ const doshaNameMap: Record<string, { en: string; hi: string }> = {
   pitra: { en: 'Pitra Dosha', hi: 'पितृ दोष' },
   kaalSarp: { en: 'Kaal Sarp Dosha', hi: 'काल सर्प दोष' },
   shani: { en: 'Shani Dosha', hi: 'शनि दोष' },
+  shaniDosha: { en: 'Shani Dosha', hi: 'शनि दोष' },
   sadeSati: { en: 'Sade Sati', hi: 'साढ़े साती' },
   grahan: { en: 'Grahan Dosha', hi: 'ग्रहण दोष' },
   shrapit: { en: 'Shrapit Dosha', hi: 'श्रापित दोष' },
@@ -131,7 +132,8 @@ const doshaNameMap: Record<string, { en: string; hi: string }> = {
   kalathra: { en: 'Kalathra Dosha', hi: 'कलत्र दोष' },
   vishDaridra: { en: 'Vish/Daridra Yoga', hi: 'विष/दरिद्र योग' },
   ketuNaga: { en: 'Ketu/Naga Dosha', hi: 'केतु/नाग दोष' },
-  navagraha: { en: 'Navagraha Umbrella', hi: 'नवग्रह छत्र' }
+  navagraha: { en: 'Navagraha Umbrella', hi: 'नवग्रह छत्र' },
+  navagrahaUmbrella: { en: 'Navagraha Umbrella', hi: 'नवग्रह छत्र' }
 };
 
 // Generate AI impact for a dosha
@@ -375,50 +377,82 @@ serve(async (req) => {
     // Helper to check if dosha is active
     const isActive = (status: string | undefined): boolean => {
       if (!status) return false;
-      const s = status.toLowerCase();
-      return s === 'present' || s === 'active' || s === 'suggested' || s === 'partial' || s.includes('present');
+      const s = status.toLowerCase().trim();
+      return s === 'present' || s === 'active' || s === 'partial' || s.includes('present');
+    };
+    const getSeverity = (key: string): string | null => {
+      const sevKey = `${key}Severity`;
+      const v = (summary as any)?.[sevKey];
+      return typeof v === 'string' ? v : null;
     };
 
-    // Check each dosha
-    for (const [doshaKey, doshaValue] of Object.entries(summary)) {
-      const status = (doshaValue as any)?.status;
-      const severity = (doshaValue as any)?.severity;
-      
-      if (isActive(status)) {
-        presentDoshas.push(doshaKey);
-        
-        const doshaName = doshaNameMap[doshaKey] || { en: doshaKey, hi: doshaKey };
-        
-        // Get explanation from details
-        const doshaData = detailsData[doshaKey] || {};
-        const explanation = doshaData.explanation || '';
-        const remedies = doshaData.remedies || [];
+    // Determine doshas from a stable allowlist (avoid relying on Object.entries ordering/shape)
+    const candidateKeys = Array.from(new Set([
+      ...Object.keys(doshaNameMap),
+      ...Object.keys(DOSHA_PUJA_MAPPING),
+      // extra keys produced by calculate-dosha
+      'sadeSati',
+      'shaniDosha',
+      'navagrahaUmbrella',
+      'kalathra',
+      'vishDaridra'
+    ]));
 
-        doshaDetails.push({
-          key: doshaKey,
-          name: language === 'hi' ? doshaName.hi : doshaName.en,
-          severity: severity || 'moderate',
-          status: status,
-          explanation: explanation,
-          remedies: remedies
-        });
+    for (const doshaKey of candidateKeys) {
+      if (doshaKey === 'navagraha') continue; // not a dosha status in calculate-dosha
+      const rawStatus = (summary as any)?.[doshaKey];
+      if (typeof rawStatus !== 'string') continue;
 
-        // Get puja recommendation
-        const pujaMapping = DOSHA_PUJA_MAPPING[doshaKey];
-        if (pujaMapping) {
-          const puja = pujaMapping.fallback;
-          pujaRecommendations.push({
-            dosha: language === 'hi' ? doshaName.hi : doshaName.en,
-            puja: {
-              title: language === 'hi' ? puja.title_hi : puja.title,
-              price: puja.price,
-              link: puja.link,
-              cover_image: `https://srimandir.com/images/puja-${doshaKey}.jpg`
-            }
-          });
+      const status = rawStatus;
+      if (!isActive(status)) continue;
+      if (status.toLowerCase() === 'suggested') continue; // don't count umbrellas as "dosha found"
+
+      const severity = getSeverity(doshaKey);
+      presentDoshas.push(doshaKey);
+
+      const doshaName = doshaNameMap[doshaKey] || { en: doshaKey, hi: doshaKey };
+
+      // Get explanation from details
+      const doshaData = (detailsData as any)?.[doshaKey] || {};
+      const explanation = doshaData.explanation || '';
+      const remedies = doshaData.remedies || [];
+
+      doshaDetails.push({
+        key: doshaKey,
+        name: language === 'hi' ? doshaName.hi : doshaName.en,
+        severity: severity || undefined,
+        status,
+        explanation,
+        remedies
+      });
+
+      // Get puja recommendation (fallback to Navagraha if we don't have a specific mapping)
+      const pujaMapping = (DOSHA_PUJA_MAPPING as any)[doshaKey] || null;
+      const puja = (pujaMapping?.fallback || DOSHA_PUJA_MAPPING.navagraha.fallback) as any;
+      pujaRecommendations.push({
+        dosha: language === 'hi' ? doshaName.hi : doshaName.en,
+        puja: {
+          title: language === 'hi' ? (puja.title_hi || puja.title) : puja.title,
+          price: puja.price || null,
+          date: puja.date || null,
+          link: puja.link || null,
+          cover_image: puja.cover_image || `https://srimandir.com/images/puja-${doshaKey}.jpg`
         }
-      }
+      });
     }
+
+    // Deduplicate in case a key appears twice
+    const seen = new Set<string>();
+    const dedupedDetails: any[] = [];
+    for (const d of doshaDetails) {
+      if (seen.has(d.key)) continue;
+      seen.add(d.key);
+      dedupedDetails.push(d);
+    }
+    doshaDetails.length = 0;
+    doshaDetails.push(...dedupedDetails);
+    presentDoshas.length = 0;
+    presentDoshas.push(...Array.from(seen));
 
     // If multiple doshas, also recommend Navagraha
     if (presentDoshas.length >= 3 && !presentDoshas.includes('navagraha')) {
@@ -441,10 +475,21 @@ serve(async (req) => {
       
       // Generate impacts in parallel for top 3 doshas
       const topDoshas = presentDoshas.slice(0, 3);
-      const impactPromises = topDoshas.map(doshaKey => 
-        generateImpact(doshaKey, problem_area, language, supabaseUrl, supabaseKey)
-          .then(result => ({ doshaKey, result }))
-      );
+      const impactPromises = topDoshas.map((doshaKey) => {
+        // Map keys to what generate-impact expects
+        const impactType = doshaKey === 'kaalSarp' ? 'kaal-sarp'
+          : doshaKey === 'shaniDosha' || doshaKey === 'sadeSati' ? 'shani'
+          : doshaKey;
+
+        // Only generate for supported types
+        const supported = ['mangal', 'pitra', 'kaal-sarp', 'shani'];
+        if (!supported.includes(impactType)) {
+          return Promise.resolve({ doshaKey, result: null as any });
+        }
+
+        return generateImpact(impactType, problem_area, language, supabaseUrl, supabaseKey)
+          .then(result => ({ doshaKey, result }));
+      });
       
       const impactResults = await Promise.all(impactPromises);
       

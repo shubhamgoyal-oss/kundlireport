@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.test-chart-image]
 verify_jwt = false
+
+[functions.dosha-api]
+verify_jwt = false

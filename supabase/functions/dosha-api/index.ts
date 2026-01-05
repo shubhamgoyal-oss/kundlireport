@@ -316,16 +316,19 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     
+    // Normalize gender to M/F format
+    const normalizedGender = gender?.toLowerCase().startsWith('f') ? 'F' : 'M';
+    
     const doshaPayload = {
       name,
-      dateOfBirth: normalizedDate,
-      timeOfBirth: normalizedTime,
-      placeOfBirth: geoResult.displayName,
-      latitude: geoResult.lat,
-      longitude: geoResult.lon,
-      gender,
-      visitor_id,
-      session_id
+      date: normalizedDate,
+      time: normalizedTime,
+      tz: 'Asia/Kolkata',
+      lat: geoResult.lat,
+      lon: geoResult.lon,
+      place: geoResult.displayName,
+      gender: normalizedGender,
+      unknownTime: false
     };
 
     console.log('Calling calculate-dosha with:', doshaPayload);

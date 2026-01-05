@@ -357,7 +357,7 @@ serve(async (req) => {
     }
 
     const doshaResult = await doshaResponse.json();
-    console.log('Dosha calculation result received');
+    console.log('Dosha calculation result received, summary:', JSON.stringify(doshaResult.summary));
 
     // Step 5: Get Kundali chart (parallel with impact generation)
     const chartPromise = include_chart 
@@ -370,20 +370,27 @@ serve(async (req) => {
     const pujaRecommendations: any[] = [];
 
     const summary = doshaResult.summary || {};
-    const doshaResultsData = doshaResult.doshaResults || {};
+    const detailsData = doshaResult.details || {}; // Fixed: use 'details' not 'doshaResults'
+
+    // Helper to check if dosha is active
+    const isActive = (status: string | undefined): boolean => {
+      if (!status) return false;
+      const s = status.toLowerCase();
+      return s === 'present' || s === 'active' || s === 'suggested' || s === 'partial' || s.includes('present');
+    };
 
     // Check each dosha
     for (const [doshaKey, doshaValue] of Object.entries(summary)) {
       const status = (doshaValue as any)?.status;
       const severity = (doshaValue as any)?.severity;
       
-      if (status === 'present' || status === 'active') {
+      if (isActive(status)) {
         presentDoshas.push(doshaKey);
         
         const doshaName = doshaNameMap[doshaKey] || { en: doshaKey, hi: doshaKey };
         
-        // Get explanation from doshaResults
-        const doshaData = doshaResultsData[doshaKey] || {};
+        // Get explanation from details
+        const doshaData = detailsData[doshaKey] || {};
         const explanation = doshaData.explanation || '';
         const remedies = doshaData.remedies || [];
 

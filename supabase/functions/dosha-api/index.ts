@@ -48,72 +48,224 @@ function getTimezoneOffset(): number {
   return 5.5; // IST
 }
 
-// Puja data - simplified version for API
-const DOSHA_PUJA_MAPPING: Record<string, { keywords: string[]; fallback: any }> = {
-  mangal: {
-    keywords: ['mangal', 'मंगल'],
-    fallback: {
-      title: 'Mangal Dosh Nivaran Puja',
-      title_hi: 'मंगल दोष निवारण पूजा',
-      price: '₹2,100',
-      link: 'https://srimandir.com/puja/mangal-dosh-nivaran'
-    }
-  },
-  pitra: {
-    keywords: ['pitru', 'pitra', 'पितृ'],
-    fallback: {
-      title: 'Pitru Dosh Nivaran Puja',
-      title_hi: 'पितृ दोष निवारण पूजा',
-      price: '₹2,100',
-      link: 'https://srimandir.com/puja/pitru-dosh-nivaran'
-    }
-  },
-  kaalSarp: {
-    keywords: ['kaal sarp', 'काल सर्प'],
-    fallback: {
-      title: 'Kaal Sarp Dosh Nivaran Puja',
-      title_hi: 'काल सर्प दोष निवारण पूजा',
-      price: '₹3,100',
-      link: 'https://srimandir.com/puja/kaal-sarp-dosh-nivaran'
-    }
-  },
-  shani: {
-    keywords: ['shani', 'शनि'],
-    fallback: {
-      title: 'Shani Sade Sati Shanti Puja',
-      title_hi: 'शनि साढ़े साती शांति पूजा',
-      price: '₹2,100',
-      link: 'https://srimandir.com/puja/shani-sade-sati'
-    }
-  },
-  sadeSati: {
-    keywords: ['shani', 'sade sati', 'शनि'],
-    fallback: {
-      title: 'Shani Sade Sati Shanti Puja',
-      title_hi: 'शनि साढ़े साती शांति पूजा',
-      price: '₹2,100',
-      link: 'https://srimandir.com/puja/shani-sade-sati'
-    }
-  },
-  grahan: {
-    keywords: ['grahan', 'ग्रहण'],
-    fallback: {
-      title: 'Grahan Dosh Nivaran Puja',
-      title_hi: 'ग्रहण दोष निवारण पूजा',
-      price: '₹1,500',
-      link: 'https://srimandir.com/puja/grahan-dosh-nivaran'
-    }
-  },
-  navagraha: {
-    keywords: ['navagraha', 'navagrah', 'नवग्रह'],
-    fallback: {
-      title: 'Navagraha Shanti Puja',
-      title_hi: 'नवग्रह शांति पूजा',
-      price: '₹2,500',
-      link: 'https://srimandir.com/puja/navagraha-shanti'
+// Puja data source (same sheet used by the website)
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1erweJnzoGMXOiA8HfZ7w9ZOA1nv2Mbt3ejiaUthfTNY/export?format=csv&gid=0';
+
+type SriMandirPujaRow = {
+  store_id: string;
+  pooja_title: string;
+  temple_name: string;
+  cover_media_url: string;
+  puja_link: string;
+  individual_pack_price_inr: number | null;
+  schedule_date_ist: string;
+  temple_location?: string;
+  puja_link_hindi?: string;
+  pooja_title_english?: string;
+  temple_name_english?: string;
+  temple_location_english?: string;
+  cover_media_url_english?: string;
+};
+
+function parseIndianDate(dateStr: string): Date | null {
+  const parts = (dateStr || '').split('/');
+  if (parts.length !== 3) return null;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const year = parseInt(parts[2], 10);
+  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
+  return new Date(year, month, day);
+}
+
+function splitCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
     }
   }
+  result.push(current);
+  return result.map(v => v.trim().replace(/^"|"$/g, ''));
+}
+
+function getFieldInsensitive(row: Record<string, string>, candidates: string[]): string {
+  const normalize = (k: string) => k.trim().toLowerCase().replace(/[_\s]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const map = new Map<string, string>();
+  for (const [k, v] of Object.entries(row)) map.set(normalize(k), v);
+  for (const c of candidates) {
+    const v = map.get(normalize(c));
+    if (v !== undefined) return (v || '').trim();
+  }
+  return '';
+}
+
+function parseSriMandirCSV(csvText: string): SriMandirPujaRow[] {
+  const text = csvText.replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+
+  const headers = splitCSVLine(lines[0]);
+  const out: SriMandirPujaRow[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = splitCSVLine(lines[i]);
+    if (values.length < headers.length) continue;
+
+    const row: Record<string, string> = {};
+    headers.forEach((h, idx) => { row[h] = values[idx] ?? ''; });
+
+    const store_id = (row['store_id'] || '').trim();
+    const pooja_title = (row['pooja_title'] || '').trim();
+    if (!store_id || !pooja_title) continue;
+
+    const puja_link = getFieldInsensitive(row, ['puja_link', 'pooja_link', 'link']);
+    const puja_link_hindi = getFieldInsensitive(row, ['puja_link_hindi', 'puja_link_hi', 'pooja_link_hindi', 'pooja_link_hi', 'puja link hindi']);
+
+    const individual_pack_price_inr_str = getFieldInsensitive(row, ['individual_pack_price_inr', 'price', 'price_inr']);
+    const individual_pack_price_inr = individual_pack_price_inr_str ? (parseFloat(individual_pack_price_inr_str) || null) : null;
+
+    out.push({
+      store_id,
+      pooja_title,
+      temple_name: (row['temple_name'] || '').trim(),
+      cover_media_url: (row['cover_media_url'] || '').trim(),
+      puja_link,
+      puja_link_hindi: puja_link_hindi || undefined,
+      individual_pack_price_inr,
+      schedule_date_ist: (row['schedule_date_ist'] || '').trim(),
+      temple_location: (row['temple_location'] || '').trim() || undefined,
+      pooja_title_english: getFieldInsensitive(row, ['puja title english', 'pooja title english', 'pooja_title_english', 'puja_title_english']) || undefined,
+      temple_name_english: getFieldInsensitive(row, ['temple name english', 'temple_name_english']) || undefined,
+      temple_location_english: getFieldInsensitive(row, ['temple location english', 'temple_location_english']) || undefined,
+      cover_media_url_english: getFieldInsensitive(row, ['cover image english', 'cover_media_url_english', 'cover media url english']) || undefined,
+    });
+  }
+
+  return out;
+}
+
+let cachedSheetPujas: SriMandirPujaRow[] = [];
+let cachedSheetAt = 0;
+const SHEET_CACHE_MS = 15 * 60 * 1000;
+
+async function fetchSriMandirPujasFromSheet(): Promise<SriMandirPujaRow[]> {
+  const now = Date.now();
+  if (cachedSheetPujas.length && now - cachedSheetAt < SHEET_CACHE_MS) return cachedSheetPujas;
+
+  const resp = await fetch(SHEET_CSV_URL);
+  if (!resp.ok) {
+    console.error('Failed to fetch puja sheet:', resp.status);
+    return cachedSheetPujas;
+  }
+
+  const csv = await resp.text();
+  const parsed = parseSriMandirCSV(csv);
+  cachedSheetPujas = parsed;
+  cachedSheetAt = now;
+  return parsed;
+}
+
+const DOSHA_PUJA_PRIORITY_PATTERNS: Record<string, string[][]> = {
+  pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
+  mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
+  'kaal-sarp': [['ka', 'l', 'sarp', 'dosh'], ['काल', 'सर्प', 'दोष']],
+  shani: [['shani', 'sa', 'de', 'sa', 'ti'], ['शनि', 'साढ़े', 'साती'], ['साढ़ेसाती']]
 };
+
+const DOSHA_PUJA_FALLBACK_KEYWORDS: Record<string, string[]> = {
+  pitra: ['pitru', 'pitra', 'पितृ', 'पितर', 'dosh', 'दोष'],
+  mangal: ['mangal', 'मंगल', 'manglik', 'मंगलिक'],
+  'kaal-sarp': ['kaal sarp', 'काल सर्प', 'sarp', 'सर्प', 'dosh', 'दोष'],
+  shani: ['shani', 'शनि', 'sade sati', 'साढ़े', 'साती', 'साढ़ेसाती'],
+  navagraha: ['navagraha', 'navagrah', 'नवग्रह']
+};
+
+function matchesPriorityPattern(combinedTitle: string, patterns: string[][]): boolean {
+  const t = combinedTitle.toLowerCase();
+  return patterns.some(terms => terms.every(term => t.includes(term.toLowerCase())));
+}
+
+function pickUpcoming(pujas: SriMandirPujaRow[]): SriMandirPujaRow | null {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const scored = pujas
+    .map(p => ({ p, d: parseIndianDate(p.schedule_date_ist) }))
+    .filter(x => !x.d || x.d.getTime() > today.getTime())
+    .sort((a, b) => {
+      if (a.d && b.d) return a.d.getTime() - b.d.getTime();
+      if (a.d && !b.d) return -1;
+      if (!a.d && b.d) return 1;
+      return 0;
+    });
+
+  return scored[0]?.p || pujas[0] || null;
+}
+
+function canonicalDoshaForPuja(doshaKey: string): 'mangal' | 'pitra' | 'kaal-sarp' | 'shani' | 'navagraha' {
+  if (doshaKey === 'kaalSarp') return 'kaal-sarp';
+  if (doshaKey === 'shaniDosha' || doshaKey === 'sadeSati') return 'shani';
+  if (doshaKey === 'pitra') return 'pitra';
+  if (doshaKey === 'mangal') return 'mangal';
+  return 'navagraha';
+}
+
+function getPujaDisplay(puja: SriMandirPujaRow, language: string) {
+  const isHindi = language?.toLowerCase().startsWith('hi');
+  const title = isHindi ? puja.pooja_title : (puja.pooja_title_english || puja.pooja_title);
+  const temple = isHindi ? puja.temple_name : (puja.temple_name_english || puja.temple_name);
+  const location = isHindi ? puja.temple_location : (puja.temple_location_english || puja.temple_location);
+  const link = isHindi ? (puja.puja_link_hindi || puja.puja_link) : (puja.puja_link || puja.puja_link_hindi || '');
+  const cover = isHindi ? (puja.cover_media_url || puja.cover_media_url_english || '') : (puja.cover_media_url_english || puja.cover_media_url || '');
+
+  return { title, temple, location, link, cover };
+}
+
+function pickSheetPujaForDosha(allPujas: SriMandirPujaRow[], doshaKey: string): SriMandirPujaRow | null {
+  const type = canonicalDoshaForPuja(doshaKey);
+  const patterns = DOSHA_PUJA_PRIORITY_PATTERNS[type];
+  const fallback = DOSHA_PUJA_FALLBACK_KEYWORDS[type];
+
+  const valid = allPujas.filter(p => {
+    const combined = `${p.pooja_title} ${(p.pooja_title_english || '')}`.toLowerCase();
+    // Ignore rashi content
+    return !(combined.includes('rashi') || combined.includes('राशि'));
+  });
+
+  const patternMatches = patterns
+    ? valid.filter(p => matchesPriorityPattern(`${p.pooja_title} ${(p.pooja_title_english || '')}`, patterns))
+    : [];
+
+  if (patternMatches.length) return pickUpcoming(patternMatches);
+
+  if (fallback?.length) {
+    const kwMatches = valid.filter(p => {
+      const combined = `${p.pooja_title} ${(p.pooja_title_english || '')}`.toLowerCase();
+      return fallback.some(k => combined.includes(k.toLowerCase()));
+    });
+    if (kwMatches.length) return pickUpcoming(kwMatches);
+  }
+
+  // As a last resort, pick upcoming navagraha (umbrella)
+  if (type !== 'navagraha') {
+    return pickSheetPujaForDosha(allPujas, 'navagraha');
+  }
+
+  return pickUpcoming(valid);
+}
 
 // Dosha name mappings
 const doshaNameMap: Record<string, { en: string; hi: string }> = {
@@ -366,7 +518,11 @@ serve(async (req) => {
       ? getKundaliChart(day, month, year, hour, minute, geoResult.lat, geoResult.lon, language, supabaseUrl, supabaseKey)
       : Promise.resolve(null);
 
-    // Step 6: Extract present doshas and build puja recommendations
+    // Fetch puja sheet in parallel too (used for WhatsApp/API puja recommendations)
+    const sheetPujasPromise = fetchSriMandirPujasFromSheet().catch((e) => {
+      console.error('Puja sheet fetch failed:', e);
+      return [] as SriMandirPujaRow[];
+    });
     const presentDoshas: string[] = [];
     const doshaDetails: any[] = [];
     const pujaRecommendations: any[] = [];
@@ -389,15 +545,23 @@ serve(async (req) => {
     // Determine doshas from a stable allowlist (avoid relying on Object.entries ordering/shape)
     const candidateKeys = Array.from(new Set([
       ...Object.keys(doshaNameMap),
-      ...Object.keys(DOSHA_PUJA_MAPPING),
       // extra keys produced by calculate-dosha
       'sadeSati',
       'shaniDosha',
       'navagrahaUmbrella',
       'kalathra',
-      'vishDaridra'
+      'vishDaridra',
+      // other keys sometimes used across flows
+      'kaalSarp',
+      'guruChandal',
+      'shrapit',
+      'punarphoo',
+      'kemadruma',
+      'gandmool',
+      'ketuNaga'
     ]));
 
+    const sheetPujas = await sheetPujasPromise;
     for (const doshaKey of candidateKeys) {
       if (doshaKey === 'navagraha') continue; // not a dosha status in calculate-dosha
       const rawStatus = (summary as any)?.[doshaKey];
@@ -426,19 +590,28 @@ serve(async (req) => {
         remedies
       });
 
-      // Get puja recommendation (fallback to Navagraha if we don't have a specific mapping)
-      const pujaMapping = (DOSHA_PUJA_MAPPING as any)[doshaKey] || null;
-      const puja = (pujaMapping?.fallback || DOSHA_PUJA_MAPPING.navagraha.fallback) as any;
-      pujaRecommendations.push({
-        dosha: language === 'hi' ? doshaName.hi : doshaName.en,
-        puja: {
-          title: language === 'hi' ? (puja.title_hi || puja.title) : puja.title,
-          price: puja.price || null,
-          date: puja.date || null,
-          link: puja.link || null,
-          cover_image: puja.cover_image || `https://srimandir.com/images/puja-${doshaKey}.jpg`
-        }
-      });
+      // Get puja recommendation from the same sheet the website uses
+      const selectedPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, doshaKey) : null;
+      if (selectedPuja) {
+        const display = getPujaDisplay(selectedPuja, language);
+        const price = selectedPuja.individual_pack_price_inr != null
+          ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(selectedPuja.individual_pack_price_inr))}`
+          : null;
+
+        pujaRecommendations.push({
+          dosha: language === 'hi' ? doshaName.hi : doshaName.en,
+          puja: {
+            store_id: selectedPuja.store_id,
+            title: display.title,
+            temple_name: display.temple || null,
+            temple_location: display.location || null,
+            schedule_date_ist: selectedPuja.schedule_date_ist || null,
+            price,
+            link: display.link || null,
+            cover_image: display.cover || null,
+          }
+        });
+      }
     }
 
     // Deduplicate in case a key appears twice
@@ -454,18 +627,29 @@ serve(async (req) => {
     presentDoshas.length = 0;
     presentDoshas.push(...Array.from(seen));
 
-    // If multiple doshas, also recommend Navagraha
+    // If multiple doshas, also recommend an umbrella Navagraha puja
     if (presentDoshas.length >= 3 && !presentDoshas.includes('navagraha')) {
-      const navagraha = DOSHA_PUJA_MAPPING.navagraha.fallback;
-      pujaRecommendations.push({
-        dosha: language === 'hi' ? 'नवग्रह शांति (एकाधिक दोषों के लिए)' : 'Navagraha Shanti (for multiple doshas)',
-        puja: {
-          title: language === 'hi' ? navagraha.title_hi : navagraha.title,
-          price: navagraha.price,
-          link: navagraha.link,
-          cover_image: 'https://srimandir.com/images/puja-navagraha.jpg'
-        }
-      });
+      const navagrahaPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, 'navagraha') : null;
+      if (navagrahaPuja) {
+        const display = getPujaDisplay(navagrahaPuja, language);
+        const price = navagrahaPuja.individual_pack_price_inr != null
+          ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(navagrahaPuja.individual_pack_price_inr))}`
+          : null;
+
+        pujaRecommendations.push({
+          dosha: language === 'hi' ? 'नवग्रह शांति (एकाधिक दोषों के लिए)' : 'Navagraha Shanti (for multiple doshas)',
+          puja: {
+            store_id: navagrahaPuja.store_id,
+            title: display.title,
+            temple_name: display.temple || null,
+            temple_location: display.location || null,
+            schedule_date_ist: navagrahaPuja.schedule_date_ist || null,
+            price,
+            link: display.link || null,
+            cover_image: display.cover || null,
+          }
+        });
+      }
     }
 
     // Step 7: Generate AI impacts for present doshas (if problem_area provided)

@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -42,6 +41,11 @@ async function geocodeLocation(placeName: string): Promise<{ lat: number; lon: n
     console.error('Geocoding error:', error);
     return null;
   }
+}
+
+// Get timezone offset for India (IST = +5:30)
+function getTimezoneOffset(): number {
+  return 5.5; // IST
 }
 
 // Puja data - simplified version for API
@@ -111,6 +115,102 @@ const DOSHA_PUJA_MAPPING: Record<string, { keywords: string[]; fallback: any }> 
   }
 };
 
+// Dosha name mappings
+const doshaNameMap: Record<string, { en: string; hi: string }> = {
+  mangal: { en: 'Mangal Dosha', hi: 'मंगल दोष' },
+  pitra: { en: 'Pitra Dosha', hi: 'पितृ दोष' },
+  kaalSarp: { en: 'Kaal Sarp Dosha', hi: 'काल सर्प दोष' },
+  shani: { en: 'Shani Dosha', hi: 'शनि दोष' },
+  sadeSati: { en: 'Sade Sati', hi: 'साढ़े साती' },
+  grahan: { en: 'Grahan Dosha', hi: 'ग्रहण दोष' },
+  shrapit: { en: 'Shrapit Dosha', hi: 'श्रापित दोष' },
+  guruChandal: { en: 'Guru Chandal Dosha', hi: 'गुरु चांडाल दोष' },
+  punarphoo: { en: 'Punarphoo Dosha', hi: 'पुनर्फू दोष' },
+  kemadruma: { en: 'Kemadruma Yoga', hi: 'केमद्रुम योग' },
+  gandmool: { en: 'Gandmool Dosha', hi: 'गंडमूल दोष' },
+  kalathra: { en: 'Kalathra Dosha', hi: 'कलत्र दोष' },
+  vishDaridra: { en: 'Vish/Daridra Yoga', hi: 'विष/दरिद्र योग' },
+  ketuNaga: { en: 'Ketu/Naga Dosha', hi: 'केतु/नाग दोष' },
+  navagraha: { en: 'Navagraha Umbrella', hi: 'नवग्रह छत्र' }
+};
+
+// Generate AI impact for a dosha
+async function generateImpact(
+  doshaType: string, 
+  problemArea: string, 
+  language: string,
+  supabaseUrl: string,
+  supabaseKey: string
+): Promise<{ impactTitle: string; impactText: string } | null> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/generate-impact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({ doshaType, problemArea, language })
+    });
+
+    if (!response.ok) {
+      console.error('Generate impact error:', response.status);
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Generate impact failed:', error);
+    return null;
+  }
+}
+
+// Get kundali chart image
+async function getKundaliChart(
+  day: number,
+  month: number,
+  year: number,
+  hour: number,
+  minute: number,
+  lat: number,
+  lon: number,
+  language: string,
+  supabaseUrl: string,
+  supabaseKey: string
+): Promise<string | null> {
+  try {
+    const response = await fetch(`${supabaseUrl}/functions/v1/get-kundali-chart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
+        day,
+        month,
+        year,
+        hour,
+        minute,
+        lat,
+        lon,
+        tzone: getTimezoneOffset(),
+        chartType: 'North',
+        language: language === 'hi' ? 'hi' : 'en'
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Get kundali chart error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    return data?.data?.svg || null;
+  } catch (error) {
+    console.error('Get kundali chart failed:', error);
+    return null;
+  }
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -127,6 +227,9 @@ serve(async (req) => {
       place_of_birth,     // Text location - will be geocoded
       gender = 'male',
       language = 'en',    // 'en' or 'hi'
+      problem_area,       // Optional: for AI-generated impact
+      include_chart = true, // Whether to include kundali SVG
+      include_impacts = true, // Whether to generate AI impacts
       visitor_id = 'whatsapp-api',
       session_id = 'whatsapp-session'
     } = body;
@@ -138,20 +241,22 @@ serve(async (req) => {
           success: false,
           error: 'Missing required fields',
           required: ['name', 'date_of_birth', 'time_of_birth', 'place_of_birth'],
+          optional: ['gender', 'language', 'problem_area', 'include_chart', 'include_impacts'],
           example: {
             name: 'Rahul Sharma',
             date_of_birth: '1990-05-15',
             time_of_birth: '10:30',
             place_of_birth: 'Mumbai',
             gender: 'male',
-            language: 'en'
+            language: 'en',
+            problem_area: 'career and financial stability'
           }
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Processing dosha calculation for:', { name, date_of_birth, time_of_birth, place_of_birth });
+    console.log('Processing dosha calculation for:', { name, date_of_birth, time_of_birth, place_of_birth, problem_area });
 
     // Step 1: Geocode the location
     const geoResult = await geocodeLocation(place_of_birth);
@@ -184,19 +289,27 @@ serve(async (req) => {
       }
     }
 
+    // Parse date components
+    const [yearStr, monthStr, dayStr] = normalizedDate.split('-');
+    const year = parseInt(yearStr);
+    const month = parseInt(monthStr);
+    const day = parseInt(dayStr);
+
     // Step 3: Normalize time to 24hr format
     let normalizedTime = time_of_birth;
+    let hour = 0;
+    let minute = 0;
     const timeMatch = time_of_birth.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
     if (timeMatch) {
-      let hours = parseInt(timeMatch[1]);
-      const minutes = timeMatch[2];
+      hour = parseInt(timeMatch[1]);
+      minute = parseInt(timeMatch[2]);
       const period = timeMatch[3];
       
       if (period) {
-        if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
-        if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        if (period.toUpperCase() === 'PM' && hour !== 12) hour += 12;
+        if (period.toUpperCase() === 'AM' && hour === 12) hour = 0;
       }
-      normalizedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+      normalizedTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
     }
 
     // Step 4: Call the existing calculate-dosha function
@@ -241,33 +354,20 @@ serve(async (req) => {
     }
 
     const doshaResult = await doshaResponse.json();
-    console.log('Dosha calculation result:', JSON.stringify(doshaResult.summary));
+    console.log('Dosha calculation result received');
 
-    // Step 5: Extract present doshas and build puja recommendations
+    // Step 5: Get Kundali chart (parallel with impact generation)
+    const chartPromise = include_chart 
+      ? getKundaliChart(day, month, year, hour, minute, geoResult.lat, geoResult.lon, language, supabaseUrl, supabaseKey)
+      : Promise.resolve(null);
+
+    // Step 6: Extract present doshas and build puja recommendations
     const presentDoshas: string[] = [];
     const doshaDetails: any[] = [];
     const pujaRecommendations: any[] = [];
 
     const summary = doshaResult.summary || {};
-    
-    // Map dosha keys to readable names
-    const doshaNameMap: Record<string, { en: string; hi: string }> = {
-      mangal: { en: 'Mangal Dosha', hi: 'मंगल दोष' },
-      pitra: { en: 'Pitra Dosha', hi: 'पितृ दोष' },
-      kaalSarp: { en: 'Kaal Sarp Dosha', hi: 'काल सर्प दोष' },
-      shani: { en: 'Shani Dosha', hi: 'शनि दोष' },
-      sadeSati: { en: 'Sade Sati', hi: 'साढ़े साती' },
-      grahan: { en: 'Grahan Dosha', hi: 'ग्रहण दोष' },
-      shrapit: { en: 'Shrapit Dosha', hi: 'श्रापित दोष' },
-      guruChandal: { en: 'Guru Chandal Dosha', hi: 'गुरु चांडाल दोष' },
-      punarphoo: { en: 'Punarphoo Dosha', hi: 'पुनर्फू दोष' },
-      kemadruma: { en: 'Kemadruma Yoga', hi: 'केमद्रुम योग' },
-      gandmool: { en: 'Gandmool Dosha', hi: 'गंडमूल दोष' },
-      kalathra: { en: 'Kalathra Dosha', hi: 'कलत्र दोष' },
-      vishDaridra: { en: 'Vish/Daridra Yoga', hi: 'विष/दरिद्र योग' },
-      ketuNaga: { en: 'Ketu/Naga Dosha', hi: 'केतु/नाग दोष' },
-      navagraha: { en: 'Navagraha Umbrella', hi: 'नवग्रह छत्र' }
-    };
+    const doshaResultsData = doshaResult.doshaResults || {};
 
     // Check each dosha
     for (const [doshaKey, doshaValue] of Object.entries(summary)) {
@@ -278,11 +378,19 @@ serve(async (req) => {
         presentDoshas.push(doshaKey);
         
         const doshaName = doshaNameMap[doshaKey] || { en: doshaKey, hi: doshaKey };
+        
+        // Get explanation from doshaResults
+        const doshaData = doshaResultsData[doshaKey] || {};
+        const explanation = doshaData.explanation || '';
+        const remedies = doshaData.remedies || [];
+
         doshaDetails.push({
           key: doshaKey,
           name: language === 'hi' ? doshaName.hi : doshaName.en,
           severity: severity || 'moderate',
-          status: status
+          status: status,
+          explanation: explanation,
+          remedies: remedies
         });
 
         // Get puja recommendation
@@ -316,8 +424,41 @@ serve(async (req) => {
       });
     }
 
-    // Step 6: Build response
-    const response = {
+    // Step 7: Generate AI impacts for present doshas (if problem_area provided)
+    const impacts: Record<string, any> = {};
+    if (include_impacts && problem_area && presentDoshas.length > 0) {
+      console.log('Generating AI impacts for doshas:', presentDoshas);
+      
+      // Generate impacts in parallel for top 3 doshas
+      const topDoshas = presentDoshas.slice(0, 3);
+      const impactPromises = topDoshas.map(doshaKey => 
+        generateImpact(doshaKey, problem_area, language, supabaseUrl, supabaseKey)
+          .then(result => ({ doshaKey, result }))
+      );
+      
+      const impactResults = await Promise.all(impactPromises);
+      
+      for (const { doshaKey, result } of impactResults) {
+        if (result) {
+          impacts[doshaKey] = {
+            title: result.impactTitle,
+            text: result.impactText
+          };
+          
+          // Add impact to dosha details
+          const doshaDetail = doshaDetails.find(d => d.key === doshaKey);
+          if (doshaDetail) {
+            doshaDetail.ai_impact = result;
+          }
+        }
+      }
+    }
+
+    // Wait for chart
+    const kundaliSvg = await chartPromise;
+
+    // Step 8: Build response
+    const response: any = {
       success: true,
       input: {
         name,
@@ -327,7 +468,8 @@ serve(async (req) => {
         coordinates: {
           latitude: geoResult.lat,
           longitude: geoResult.lon
-        }
+        },
+        problem_area: problem_area || null
       },
       doshas: {
         count: presentDoshas.length,
@@ -342,7 +484,20 @@ serve(async (req) => {
       calculation_id: doshaResult.calculationId || null
     };
 
-    console.log('API response:', JSON.stringify(response));
+    // Add kundali chart if available
+    if (kundaliSvg) {
+      response.kundali_chart = {
+        format: 'svg',
+        data: kundaliSvg
+      };
+    }
+
+    // Add AI impacts if generated
+    if (Object.keys(impacts).length > 0) {
+      response.ai_impacts = impacts;
+    }
+
+    console.log('API response prepared, doshas:', presentDoshas.length, 'chart:', !!kundaliSvg, 'impacts:', Object.keys(impacts).length);
 
     return new Response(
       JSON.stringify(response),

@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -318,7 +319,45 @@ async function generateImpact(
   }
 }
 
-// Get kundali chart image
+// Upload file to Supabase Storage and return public URL
+async function uploadKundaliFile(
+  data: Uint8Array,
+  calculationId: string,
+  extension: string,
+  contentType: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<string | null> {
+  try {
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    
+    const fileName = `${calculationId}.${extension}`;
+    
+    const { data: uploadData, error } = await supabase.storage
+      .from('kundali-charts')
+      .upload(fileName, data, {
+        contentType,
+        upsert: true
+      });
+    
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('kundali-charts')
+      .getPublicUrl(fileName);
+    
+    return urlData?.publicUrl || null;
+  } catch (error) {
+    console.error('Upload failed:', error);
+    return null;
+  }
+}
+
+// Get kundali chart SVG and upload to storage
 async function getKundaliChart(
   day: number,
   month: number,
@@ -329,8 +368,9 @@ async function getKundaliChart(
   lon: number,
   language: string,
   supabaseUrl: string,
-  supabaseKey: string
-): Promise<string | null> {
+  supabaseKey: string,
+  calculationId: string
+): Promise<{ svg: string | null; imageUrl: string | null; format: string }> {
   try {
     const response = await fetch(`${supabaseUrl}/functions/v1/get-kundali-chart`, {
       method: 'POST',
@@ -354,14 +394,31 @@ async function getKundaliChart(
 
     if (!response.ok) {
       console.error('Get kundali chart error:', response.status);
-      return null;
+      return { svg: null, imageUrl: null, format: 'none' };
     }
 
     const data = await response.json();
-    return data?.data?.svg || null;
+    const svg = data?.data?.svg || null;
+    
+    if (!svg) {
+      return { svg: null, imageUrl: null, format: 'none' };
+    }
+    
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!serviceRoleKey) {
+      console.error('No service role key for storage upload');
+      return { svg, imageUrl: null, format: 'svg' };
+    }
+    
+    // Upload SVG to storage
+    const encoder = new TextEncoder();
+    const svgData = encoder.encode(svg);
+    const imageUrl = await uploadKundaliFile(svgData, calculationId, 'svg', 'image/svg+xml', supabaseUrl, serviceRoleKey);
+    
+    return { svg, imageUrl, format: 'svg' };
   } catch (error) {
     console.error('Get kundali chart failed:', error);
-    return null;
+    return { svg: null, imageUrl: null, format: 'none' };
   }
 }
 
@@ -512,11 +569,13 @@ serve(async (req) => {
 
     const doshaResult = await doshaResponse.json();
     console.log('Dosha calculation result received, summary:', JSON.stringify(doshaResult.summary));
+    
+    const calculationId = doshaResult.calculationId || `temp-${Date.now()}`;
 
-    // Step 5: Get Kundali chart (parallel with impact generation)
+    // Step 5: Get Kundali chart (parallel with puja fetch)
     const chartPromise = include_chart 
-      ? getKundaliChart(day, month, year, hour, minute, geoResult.lat, geoResult.lon, language, supabaseUrl, supabaseKey)
-      : Promise.resolve(null);
+      ? getKundaliChart(day, month, year, hour, minute, geoResult.lat, geoResult.lon, language, supabaseUrl, supabaseKey, calculationId)
+      : Promise.resolve({ svg: null, imageUrl: null });
 
     // Fetch puja sheet in parallel too (used for WhatsApp/API puja recommendations)
     const sheetPujasPromise = fetchSriMandirPujasFromSheet().catch((e) => {
@@ -694,7 +753,7 @@ serve(async (req) => {
     }
 
     // Wait for chart
-    const kundaliSvg = await chartPromise;
+    const chartResult = await chartPromise;
 
     // Step 8: Build response
     const response: any = {
@@ -720,14 +779,20 @@ serve(async (req) => {
               : `${presentDoshas.length} dosha(s) found in your kundali.`)
       },
       pujas: pujaRecommendations,
-      calculation_id: doshaResult.calculationId || null
+      calculation_id: calculationId
     };
 
     // Add kundali chart if available
-    if (kundaliSvg) {
+    if (chartResult?.imageUrl) {
+      response.kundali_chart = {
+        format: chartResult.format,
+        image_url: chartResult.imageUrl
+      };
+    } else if (chartResult?.svg) {
+      // Fallback to raw SVG data if upload failed
       response.kundali_chart = {
         format: 'svg',
-        data: kundaliSvg
+        data: chartResult.svg
       };
     }
 
@@ -736,7 +801,7 @@ serve(async (req) => {
       response.ai_impacts = impacts;
     }
 
-    console.log('API response prepared, doshas:', presentDoshas.length, 'chart:', !!kundaliSvg, 'impacts:', Object.keys(impacts).length);
+    console.log('API response prepared, doshas:', presentDoshas.length, 'chart:', !!chartResult?.imageUrl || !!chartResult?.svg, 'impacts:', Object.keys(impacts).length);
 
     return new Response(
       JSON.stringify(response),

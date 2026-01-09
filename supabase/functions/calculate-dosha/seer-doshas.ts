@@ -246,41 +246,38 @@ export function calculatePitraDosha(kundli: SeerKundli): DoshaResult {
     }
   }
   
-  if (sun.house === 9) {
-    supporting.push("Sun in H9");
-  }
+  // Note: Sun in H9 alone does NOT create Pitra Dosha
+  // It only acts as a supporting note when primary triggers are present
+  const sunInH9 = sun.house === 9;
 
   // Decision logic
   if (triggeredBy.length >= 1) {
+    const notes: string[] = [];
+    if (supporting.length > 0) {
+      notes.push(`Supporting factors: ${supporting.join(", ")}`);
+    }
+    if (sunInH9) {
+      notes.push("Sun in 9th house (supportive placement)");
+    }
     return {
       status: "present",
       triggeredBy,
       cancellations: [],
       mitigations: [],
       placements,
-      notes: supporting.length > 0 ? [`Supporting factors: ${supporting.join(", ")}`] : []
+      notes
     };
   }
 
-  if (supporting.length >= 2) {
-    return {
-      status: "present",
-      triggeredBy: supporting,
-      cancellations: [],
-      mitigations: [],
-      placements,
-      notes: ["Two supporting factors present"]
-    };
-  }
-
-  if (supporting.length === 1) {
+  // Sun-Saturn conjunction/opposition alone can indicate partial Pitra Dosha
+  if (supporting.length >= 1) {
     return {
       status: "partial",
       triggeredBy: supporting,
       cancellations: [],
       mitigations: [],
       placements,
-      notes: ["One supporting factor only"]
+      notes: ["Saturn affliction to Sun indicates ancestral karma"]
     };
   }
 

@@ -655,7 +655,6 @@ serve(async (req) => {
           not_impacting: true,
           not_impacting_note: notImpactingNote
         });
-        // Don't add puja recommendation for non-impacting Mangal Dosha
       } else {
         // Dosha is impacting the user
         doshaDetails.push({
@@ -666,29 +665,29 @@ serve(async (req) => {
           explanation,
           remedies
         });
+      }
 
-        // Get puja recommendation from the same sheet the website uses
-        const selectedPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, doshaKey) : null;
-        if (selectedPuja) {
-          const display = getPujaDisplay(selectedPuja, language);
-          const price = selectedPuja.individual_pack_price_inr != null
-            ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(selectedPuja.individual_pack_price_inr))}`
-            : null;
+      // Always add puja recommendation for all doshas (including non-impacting Mangal Dosha)
+      const selectedPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, doshaKey) : null;
+      if (selectedPuja) {
+        const display = getPujaDisplay(selectedPuja, language);
+        const price = selectedPuja.individual_pack_price_inr != null
+          ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(selectedPuja.individual_pack_price_inr))}`
+          : null;
 
-          pujaRecommendations.push({
-            dosha: language === 'hi' ? doshaName.hi : doshaName.en,
-            puja: {
-              store_id: selectedPuja.store_id,
-              title: display.title,
-              temple_name: display.temple || null,
-              temple_location: display.location || null,
-              schedule_date_ist: selectedPuja.schedule_date_ist || null,
-              price,
-              link: display.link || null,
-              cover_image: display.cover || null,
-            }
-          });
-        }
+        pujaRecommendations.push({
+          dosha: language === 'hi' ? doshaName.hi : doshaName.en,
+          puja: {
+            store_id: selectedPuja.store_id,
+            title: display.title,
+            temple_name: display.temple || null,
+            temple_location: display.location || null,
+            schedule_date_ist: selectedPuja.schedule_date_ist || null,
+            price,
+            link: display.link || null,
+            cover_image: display.cover || null,
+          }
+        });
       }
     }
 

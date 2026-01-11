@@ -601,28 +601,22 @@ serve(async (req) => {
       return typeof v === 'string' ? v : null;
     };
 
-    // Determine doshas from a stable allowlist (avoid relying on Object.entries ordering/shape)
-    const candidateKeys = Array.from(new Set([
-      ...Object.keys(doshaNameMap),
-      // extra keys produced by calculate-dosha
-      'sadeSati',
-      'shaniDosha',
-      'navagrahaUmbrella',
-      'kalathra',
-      'vishDaridra',
-      // other keys sometimes used across flows
-      'kaalSarp',
-      'guruChandal',
-      'shrapit',
-      'punarphoo',
-      'kemadruma',
-      'gandmool',
-      'ketuNaga'
-    ]));
+    // Only focus on the 4 main doshas for API output
+    const MAIN_DOSHAS = ['mangal', 'pitra', 'kaalSarp', 'shani', 'shaniDosha', 'sadeSati'];
+    
+    // Helper to check if problem area relates to health or marriage
+    const isHealthOrMarriageIssue = (problemArea: string | undefined): boolean => {
+      if (!problemArea) return false;
+      const pa = problemArea.toLowerCase();
+      const healthKeywords = ['health', 'medical', 'illness', 'disease', 'physical', 'स्वास्थ्य', 'बीमारी', 'रोग'];
+      const marriageKeywords = ['marriage', 'relationship', 'spouse', 'partner', 'wedding', 'विवाह', 'शादी', 'रिश्ता', 'पति', 'पत्नी'];
+      return healthKeywords.some(k => pa.includes(k)) || marriageKeywords.some(k => pa.includes(k));
+    };
+    
+    const mangalImpactsProblemArea = isHealthOrMarriageIssue(problem_area);
 
     const sheetPujas = await sheetPujasPromise;
-    for (const doshaKey of candidateKeys) {
-      if (doshaKey === 'navagraha') continue; // not a dosha status in calculate-dosha
+    for (const doshaKey of MAIN_DOSHAS) {
       const rawStatus = (summary as any)?.[doshaKey];
       if (typeof rawStatus !== 'string') continue;
 
@@ -631,8 +625,6 @@ serve(async (req) => {
       if (status.toLowerCase() === 'suggested') continue; // don't count umbrellas as "dosha found"
 
       const severity = getSeverity(doshaKey);
-      presentDoshas.push(doshaKey);
-
       const doshaName = doshaNameMap[doshaKey] || { en: doshaKey, hi: doshaKey };
 
       // Get explanation from details
@@ -640,51 +632,90 @@ serve(async (req) => {
       const explanation = doshaData.explanation || '';
       const remedies = doshaData.remedies || [];
 
-      doshaDetails.push({
-        key: doshaKey,
-        name: language === 'hi' ? doshaName.hi : doshaName.en,
-        severity: severity || undefined,
-        status,
-        explanation,
-        remedies
-      });
+      // For Mangal Dosha: check if it impacts the user's problem area
+      const isMangal = doshaKey === 'mangal';
+      const notImpactingUser = isMangal && !mangalImpactsProblemArea;
 
-      // Get puja recommendation from the same sheet the website uses
-      const selectedPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, doshaKey) : null;
-      if (selectedPuja) {
-        const display = getPujaDisplay(selectedPuja, language);
-        const price = selectedPuja.individual_pack_price_inr != null
-          ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(selectedPuja.individual_pack_price_inr))}`
-          : null;
+      // Always add to presentDoshas (dosha exists)
+      presentDoshas.push(doshaKey);
 
-        pujaRecommendations.push({
-          dosha: language === 'hi' ? doshaName.hi : doshaName.en,
-          puja: {
-            store_id: selectedPuja.store_id,
-            title: display.title,
-            temple_name: display.temple || null,
-            temple_location: display.location || null,
-            schedule_date_ist: selectedPuja.schedule_date_ist || null,
-            price,
-            link: display.link || null,
-            cover_image: display.cover || null,
-          }
+      if (notImpactingUser) {
+        // Mangal Dosha exists but doesn't impact the user's problem area
+        const notImpactingNote = language === 'hi'
+          ? 'यह दोष आपकी कुंडली में मौजूद है, लेकिन आपकी चुनी गई समस्या के क्षेत्र को प्रभावित नहीं कर रहा है। मंगल दोष मुख्य रूप से विवाह और स्वास्थ्य संबंधी मामलों को प्रभावित करता है।'
+          : 'This dosha is present in your kundali but is not impacting your selected problem area. Mangal Dosha primarily affects marriage and health-related matters.';
+        
+        doshaDetails.push({
+          key: doshaKey,
+          name: language === 'hi' ? doshaName.hi : doshaName.en,
+          severity: severity || undefined,
+          status,
+          explanation,
+          remedies: [],
+          not_impacting: true,
+          not_impacting_note: notImpactingNote
         });
+        // Don't add puja recommendation for non-impacting Mangal Dosha
+      } else {
+        // Dosha is impacting the user
+        doshaDetails.push({
+          key: doshaKey,
+          name: language === 'hi' ? doshaName.hi : doshaName.en,
+          severity: severity || undefined,
+          status,
+          explanation,
+          remedies
+        });
+
+        // Get puja recommendation from the same sheet the website uses
+        const selectedPuja = sheetPujas.length ? pickSheetPujaForDosha(sheetPujas, doshaKey) : null;
+        if (selectedPuja) {
+          const display = getPujaDisplay(selectedPuja, language);
+          const price = selectedPuja.individual_pack_price_inr != null
+            ? `₹${new Intl.NumberFormat('en-IN').format(Math.round(selectedPuja.individual_pack_price_inr))}`
+            : null;
+
+          pujaRecommendations.push({
+            dosha: language === 'hi' ? doshaName.hi : doshaName.en,
+            puja: {
+              store_id: selectedPuja.store_id,
+              title: display.title,
+              temple_name: display.temple || null,
+              temple_location: display.location || null,
+              schedule_date_ist: selectedPuja.schedule_date_ist || null,
+              price,
+              link: display.link || null,
+              cover_image: display.cover || null,
+            }
+          });
+        }
       }
     }
 
-    // Deduplicate in case a key appears twice
+    // Deduplicate in case a key appears twice (e.g., shani and shaniDosha)
     const seen = new Set<string>();
     const dedupedDetails: any[] = [];
     for (const d of doshaDetails) {
-      if (seen.has(d.key)) continue;
-      seen.add(d.key);
+      // Normalize shani keys to avoid duplicates
+      const normalizedKey = (d.key === 'shaniDosha' || d.key === 'sadeSati') ? 'shani' : d.key;
+      if (seen.has(normalizedKey)) continue;
+      seen.add(normalizedKey);
       dedupedDetails.push(d);
     }
     doshaDetails.length = 0;
     doshaDetails.push(...dedupedDetails);
+    
+    // Also deduplicate presentDoshas
+    const seenPresent = new Set<string>();
+    const dedupedPresent: string[] = [];
+    for (const key of presentDoshas) {
+      const normalizedKey = (key === 'shaniDosha' || key === 'sadeSati') ? 'shani' : key;
+      if (seenPresent.has(normalizedKey)) continue;
+      seenPresent.add(normalizedKey);
+      dedupedPresent.push(key);
+    }
     presentDoshas.length = 0;
-    presentDoshas.push(...Array.from(seen));
+    presentDoshas.push(...dedupedPresent);
 
     // If multiple doshas, also recommend an umbrella Navagraha puja
     if (presentDoshas.length >= 3 && !presentDoshas.includes('navagraha')) {

@@ -702,6 +702,19 @@ serve(async (req) => {
       seen.add(normalizedKey);
       dedupedDetails.push(d);
     }
+    
+    // Sort by severity (high > medium > low > undefined) and put non-impacting doshas at the end
+    const severityOrder: Record<string, number> = { 'high': 3, 'medium': 2, 'low': 1 };
+    dedupedDetails.sort((a, b) => {
+      // Non-impacting doshas go to the end
+      if (a.not_impacting && !b.not_impacting) return 1;
+      if (!a.not_impacting && b.not_impacting) return -1;
+      
+      const aScore = severityOrder[a.severity?.toLowerCase()] || 0;
+      const bScore = severityOrder[b.severity?.toLowerCase()] || 0;
+      return bScore - aScore; // Descending order
+    });
+    
     doshaDetails.length = 0;
     doshaDetails.push(...dedupedDetails);
     

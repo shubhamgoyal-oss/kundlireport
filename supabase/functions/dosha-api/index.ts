@@ -429,34 +429,6 @@ serve(async (req) => {
   }
 
   try {
-    // API Key Authentication
-    const apiKey = req.headers.get('x-api-key') || req.headers.get('X-API-Key');
-    const expectedApiKey = Deno.env.get('ANALYTICS_API_KEY');
-    
-    if (!expectedApiKey) {
-      console.error('ANALYTICS_API_KEY not configured');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Server configuration error',
-          message: 'API key validation not configured. Please contact support.'
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    if (!apiKey || apiKey !== expectedApiKey) {
-      console.warn('Unauthorized API access attempt');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: 'Unauthorized',
-          message: 'Invalid or missing API key. Include x-api-key header with your request.'
-        }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const body = await req.json();
     
     const {

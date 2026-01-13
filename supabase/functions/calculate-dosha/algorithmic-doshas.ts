@@ -57,68 +57,69 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   }
 
   const R = rahu.deg;
-  const K = (R + 180) % 360;
+  const K = ketu.deg; // Use actual Ketu position, not R+180
   
   // Classical 7 planets
   const classicalPlanets = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
   const placements: any[] = [];
-  let insideCount = 0;
-  let boundaryPlanets: any[] = [];
+  let insideRahuToKetu = 0;  // Count in Rahu→Ketu arc
+  let insideKetuToRahu = 0;  // Count in Ketu→Rahu arc
 
   for (const name of classicalPlanets) {
     const planet = getPlanet(kundli, name);
     if (!planet) continue;
 
-    const inside = isBetweenOnArc(planet.deg, R, K, true);
-    const distToR = degDelta(planet.deg, R);
-    const distToK = degDelta(planet.deg, K);
-    const minDist = Math.min(distToR, distToK);
+    // Check which arc the planet falls in
+    const inRahuToKetu = isBetweenOnArc(planet.deg, R, K, true);
+    const inKetuToRahu = !inRahuToKetu; // If not in R→K, must be in K→R
 
     placements.push({
       name,
       deg: planet.deg,
-      inside,
-      distToR,
-      distToK,
-      minDist
+      inRahuToKetu,
+      inKetuToRahu
     });
 
-    if (inside) {
-      insideCount++;
-    } else if (minDist <= BOUNDARY_TOL) {
-      boundaryPlanets.push({ name, minDist });
+    if (inRahuToKetu) {
+      insideRahuToKetu++;
+    } else {
+      insideKetuToRahu++;
     }
   }
 
-  // Traditional Kaal Sarpa Dosha Definition with Severity:
-  // Purna (Full): ALL 7 planets inside = SEVERE
-  // Ardh: 6 planets inside = MODERATE  
-  // Anshik: 5 planets inside = MILD
-  // Absent: 4 or fewer planets inside
+  // Determine which arc has more planets hemmed
+  const maxInOneArc = Math.max(insideRahuToKetu, insideKetuToRahu);
+  const dominantArc = insideRahuToKetu >= insideKetuToRahu ? "rahu_to_ketu" : "ketu_to_rahu";
+  const orientation = dominantArc === "rahu_to_ketu" ? "ascending" : "descending";
+
+  // Kaal Sarpa Dosha Definition with Severity:
+  // Purna (Full): ALL 7 planets in one arc = SEVERE
+  // Ardh: 6 planets in one arc = MODERATE  
+  // Anshik: 5 planets in one arc = MILD
+  // Absent: 4 or fewer planets in one arc
   let status: "present_full" | "present_partial" | "absent";
   let severity: "severe" | "moderate" | "mild" | null = null;
   let reasons: string[] = [];
-  const outsideCount = 7 - insideCount;
 
-  if (insideCount === 7) {
+  if (maxInOneArc === 7) {
     status = "present_full";
     severity = "severe";
-    reasons.push("All 7 classical planets within Rahu→Ketu arc (Purna Kaal Sarp - Severe)");
-  } else if (insideCount === 6) {
+    reasons.push(`All 7 classical planets within ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc (Purna Kaal Sarp - Severe)`);
+  } else if (maxInOneArc === 6) {
     status = "present_partial";
     severity = "moderate";
-    const outsidePlanet = placements.find(p => !p.inside);
-    reasons.push(`6 planets inside, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp (Moderate)`);
-  } else if (insideCount === 5) {
+    const outsideArc = dominantArc === "rahu_to_ketu" ? "Ketu→Rahu" : "Rahu→Ketu";
+    const outsidePlanet = placements.find(p => dominantArc === "rahu_to_ketu" ? !p.inRahuToKetu : !p.inKetuToRahu);
+    reasons.push(`6 planets in ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp (Moderate)`);
+  } else if (maxInOneArc === 5) {
     status = "present_partial";
     severity = "mild";
-    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
-    reasons.push(`5 planets inside, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp (Mild)`);
+    const outsidePlanets = placements.filter(p => dominantArc === "rahu_to_ketu" ? !p.inRahuToKetu : !p.inKetuToRahu).map(p => p.name);
+    reasons.push(`5 planets in ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp (Mild)`);
   } else {
     status = "absent";
     severity = null;
-    const outsidePlanets = placements.filter(p => !p.inside).map(p => p.name);
-    reasons.push(`Only ${insideCount} planet(s) inside arc (need 5+ for Kaal Sarp)`);
+    reasons.push(`Only ${maxInOneArc} planet(s) in one arc (need 5+ for Kaal Sarp). Planets split: ${insideRahuToKetu} in Rahu→Ketu, ${insideKetuToRahu} in Ketu→Rahu`);
   }
 
   // Variant name by Rahu house
@@ -132,14 +133,16 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
     status,
     severity,
     type: variantType,
-    orientation: status !== "absent" ? "ascending" : null,
+    orientation: status !== "absent" ? orientation : null,
     reasons,
     debug: {
       rahuDeg: R,
       ketuDeg: K,
       placements,
-      insideCount,
-      boundaryPlanets
+      insideRahuToKetu,
+      insideKetuToRahu,
+      maxInOneArc,
+      dominantArc
     }
   };
 }

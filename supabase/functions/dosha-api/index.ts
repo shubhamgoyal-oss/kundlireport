@@ -179,6 +179,11 @@ async function fetchSriMandirPujasFromSheet(): Promise<SriMandirPujaRow[]> {
   return parsed;
 }
 
+// Preferred store IDs for specific doshas
+const PREFERRED_DOSHA_STORE_IDS: Record<string, string> = {
+  pitra: 'bd287bbf-4e24-424c-8508-53b4ea8db600', // Pitru Dosha Nivaran puja
+};
+
 const DOSHA_PUJA_PRIORITY_PATTERNS: Record<string, string[][]> = {
   pitra: [['pitru', 'dosh'], ['pitra', 'dosh'], ['पितृ', 'दोष'], ['पितर', 'दोष']],
   mangal: [['mangal', 'dosh'], ['मंगल', 'दोष']],
@@ -237,6 +242,16 @@ function getPujaDisplay(puja: SriMandirPujaRow, language: string) {
 
 function pickSheetPujaForDosha(allPujas: SriMandirPujaRow[], doshaKey: string): SriMandirPujaRow | null {
   const type = canonicalDoshaForPuja(doshaKey);
+  
+  // First, check if there's a preferred store ID for this dosha
+  const preferredStoreId = PREFERRED_DOSHA_STORE_IDS[type];
+  if (preferredStoreId) {
+    const preferredPuja = allPujas.find(p => p.store_id === preferredStoreId);
+    if (preferredPuja) {
+      return preferredPuja;
+    }
+  }
+  
   const patterns = DOSHA_PUJA_PRIORITY_PATTERNS[type];
   const fallback = DOSHA_PUJA_FALLBACK_KEYWORDS[type];
 

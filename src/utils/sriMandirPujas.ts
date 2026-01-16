@@ -421,7 +421,7 @@ export function getUpcomingPujas(
 
 // Preferred store IDs for specific doshas (these have the dosha name in title)
 const PREFERRED_DOSHA_STORE_IDS: Record<string, string> = {
-  pitra: 'a414f090-25c9-48e3-ba76-4b7c9ad3194b', // Pitru Dosha Nivaran puja
+  pitra: 'bd287bbf-4e24-424c-8508-53b4ea8db600', // Pitru Dosha Nivaran puja
 };
 
 // Priority patterns for getPrioritizedPuja - all terms must match

@@ -1,6 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { render as renderSvgToPng } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -372,69 +373,13 @@ async function uploadKundaliFile(
   }
 }
 
-// Convert SVG to PNG using an external conversion service
+// Convert SVG to PNG using resvg-wasm for Deno
 async function convertSvgToPng(svgString: string): Promise<Uint8Array | null> {
   try {
-    // Use a base64-based approach with an external API for conversion
-    // We'll use the cloudconvert-style approach or a simple rasterization service
-    
-    // For now, encode SVG as base64 data URI and use a free rasterization API
-    const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
-    
-    // Use svg2png online service (or we can use Lovable AI image generation)
-    // Let's try using the image generation API to "render" the SVG
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
-    
-    if (lovableApiKey) {
-      // Use Lovable AI to convert/render the image
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash-image-preview',
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Convert this SVG image to a clean PNG/JPEG format. Just render it exactly as-is without any modifications.'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/svg+xml;base64,${svgBase64}`
-                }
-              }
-            ]
-          }],
-          modalities: ['image', 'text']
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-        
-        if (imageUrl && imageUrl.startsWith('data:image')) {
-          // Extract base64 data
-          const base64Match = imageUrl.match(/base64,(.+)/);
-          if (base64Match) {
-            const binaryString = atob(base64Match[1]);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-              bytes[i] = binaryString.charCodeAt(i);
-            }
-            return bytes;
-          }
-        }
-      }
-    }
-    
-    console.warn('SVG to PNG conversion not available');
-    return null;
+    // Use the Deno-specific resvg_wasm library
+    const pngData = await renderSvgToPng(svgString);
+    console.log('SVG converted to PNG, size:', pngData.length);
+    return pngData;
   } catch (error) {
     console.error('SVG to PNG conversion failed:', error);
     return null;

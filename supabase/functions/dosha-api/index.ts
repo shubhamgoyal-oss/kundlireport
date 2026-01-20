@@ -376,6 +376,7 @@ async function uploadKundaliFile(
 // Convert SVG to PNG using resvg-wasm for Deno
 async function convertSvgToPng(svgString: string): Promise<Uint8Array | null> {
   try {
+    // Use the Deno-specific resvg_wasm library
     const pngData = await renderSvgToPng(svgString);
     console.log('SVG converted to PNG, size:', pngData.length);
     return pngData;
@@ -438,12 +439,17 @@ async function getKundaliChart(
       return { svg, imageUrl: null, format: 'svg' };
     }
     
-    // Convert SVG to PNG
+    // Try to convert SVG to PNG/JPEG
     const pngData = await convertSvgToPng(svg);
     
     if (pngData) {
-      const imageUrl = await uploadKundaliFile(pngData, calculationId, 'png', 'image/png', supabaseUrl, serviceRoleKey);
-      return { svg: null, imageUrl, format: 'png' };
+      // Determine content type based on the data (PNG starts with 0x89 0x50 0x4E 0x47)
+      const isPng = pngData[0] === 0x89 && pngData[1] === 0x50;
+      const extension = isPng ? 'png' : 'jpg';
+      const contentType = isPng ? 'image/png' : 'image/jpeg';
+      
+      const imageUrl = await uploadKundaliFile(pngData, calculationId, extension, contentType, supabaseUrl, serviceRoleKey);
+      return { svg: null, imageUrl, format: extension };
     }
     
     // Fallback to SVG if image conversion fails

@@ -2,6 +2,9 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { render as renderSvgToPng } from "https://deno.land/x/resvg_wasm@0.2.0/mod.ts";
+import UPNG from "https://esm.sh/upng-js@2.1.0";
+// @ts-ignore - jpeg-js types
+import * as jpegJs from "https://esm.sh/jpeg-js@0.4.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -373,15 +376,42 @@ async function uploadKundaliFile(
   }
 }
 
-// Convert SVG to PNG using resvg-wasm for Deno
-async function convertSvgToPng(svgString: string): Promise<Uint8Array | null> {
+// Convert PNG to JPEG
+function convertPngToJpeg(pngData: Uint8Array, quality: number = 85): Uint8Array | null {
   try {
-    // Use the Deno-specific resvg_wasm library
-    const pngData = await renderSvgToPng(svgString);
-    console.log('SVG converted to PNG, size:', pngData.length);
-    return pngData;
+    // Decode PNG to get raw RGBA pixels - create a new ArrayBuffer copy
+    const pngBuffer = new ArrayBuffer(pngData.length);
+    new Uint8Array(pngBuffer).set(pngData);
+    const decoded = UPNG.decode(pngBuffer);
+    const rgba = UPNG.toRGBA8(decoded)[0];
+    
+    // Encode as JPEG using jpeg-js
+    const jpegResult = jpegJs.encode({
+      data: new Uint8Array(rgba),
+      width: decoded.width,
+      height: decoded.height
+    }, quality);
+    
+    console.log('PNG converted to JPEG, size:', jpegResult.data.length);
+    return new Uint8Array(jpegResult.data);
   } catch (error) {
-    console.error('SVG to PNG conversion failed:', error);
+    console.error('PNG to JPEG conversion failed:', error);
+    return null;
+  }
+}
+
+// Convert SVG to JPEG using resvg-wasm for Deno
+async function convertSvgToJpeg(svgString: string, quality: number = 85): Promise<Uint8Array | null> {
+  try {
+    // First render SVG to PNG
+    const pngData = await renderSvgToPng(svgString);
+    console.log('SVG rendered to PNG, size:', pngData.length);
+    
+    // Then convert PNG to JPEG
+    const jpegData = convertPngToJpeg(pngData, quality);
+    return jpegData;
+  } catch (error) {
+    console.error('SVG to JPEG conversion failed:', error);
     return null;
   }
 }
@@ -439,17 +469,12 @@ async function getKundaliChart(
       return { svg, imageUrl: null, format: 'svg' };
     }
     
-    // Try to convert SVG to PNG/JPEG
-    const pngData = await convertSvgToPng(svg);
+    // Convert SVG to JPEG
+    const jpegData = await convertSvgToJpeg(svg);
     
-    if (pngData) {
-      // Determine content type based on the data (PNG starts with 0x89 0x50 0x4E 0x47)
-      const isPng = pngData[0] === 0x89 && pngData[1] === 0x50;
-      const extension = isPng ? 'png' : 'jpg';
-      const contentType = isPng ? 'image/png' : 'image/jpeg';
-      
-      const imageUrl = await uploadKundaliFile(pngData, calculationId, extension, contentType, supabaseUrl, serviceRoleKey);
-      return { svg: null, imageUrl, format: extension };
+    if (jpegData) {
+      const imageUrl = await uploadKundaliFile(jpegData, calculationId, 'jpg', 'image/jpeg', supabaseUrl, serviceRoleKey);
+      return { svg: null, imageUrl, format: 'jpg' };
     }
     
     // Fallback to SVG if image conversion fails

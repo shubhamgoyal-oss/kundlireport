@@ -372,7 +372,76 @@ async function uploadKundaliFile(
   }
 }
 
-// Get kundali chart SVG and upload to storage
+// Convert SVG to PNG using an external conversion service
+async function convertSvgToPng(svgString: string): Promise<Uint8Array | null> {
+  try {
+    // Use a base64-based approach with an external API for conversion
+    // We'll use the cloudconvert-style approach or a simple rasterization service
+    
+    // For now, encode SVG as base64 data URI and use a free rasterization API
+    const svgBase64 = btoa(unescape(encodeURIComponent(svgString)));
+    
+    // Use svg2png online service (or we can use Lovable AI image generation)
+    // Let's try using the image generation API to "render" the SVG
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    
+    if (lovableApiKey) {
+      // Use Lovable AI to convert/render the image
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image-preview',
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'Convert this SVG image to a clean PNG/JPEG format. Just render it exactly as-is without any modifications.'
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/svg+xml;base64,${svgBase64}`
+                }
+              }
+            ]
+          }],
+          modalities: ['image', 'text']
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        
+        if (imageUrl && imageUrl.startsWith('data:image')) {
+          // Extract base64 data
+          const base64Match = imageUrl.match(/base64,(.+)/);
+          if (base64Match) {
+            const binaryString = atob(base64Match[1]);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes;
+          }
+        }
+      }
+    }
+    
+    console.warn('SVG to PNG conversion not available');
+    return null;
+  } catch (error) {
+    console.error('SVG to PNG conversion failed:', error);
+    return null;
+  }
+}
+
+// Get kundali chart SVG and convert to image, upload to storage
 async function getKundaliChart(
   day: number,
   month: number,
@@ -425,7 +494,21 @@ async function getKundaliChart(
       return { svg, imageUrl: null, format: 'svg' };
     }
     
-    // Upload SVG to storage
+    // Try to convert SVG to PNG/JPEG
+    const pngData = await convertSvgToPng(svg);
+    
+    if (pngData) {
+      // Determine content type based on the data (PNG starts with 0x89 0x50 0x4E 0x47)
+      const isPng = pngData[0] === 0x89 && pngData[1] === 0x50;
+      const extension = isPng ? 'png' : 'jpg';
+      const contentType = isPng ? 'image/png' : 'image/jpeg';
+      
+      const imageUrl = await uploadKundaliFile(pngData, calculationId, extension, contentType, supabaseUrl, serviceRoleKey);
+      return { svg: null, imageUrl, format: extension };
+    }
+    
+    // Fallback to SVG if image conversion fails
+    console.warn('Image conversion failed, falling back to SVG');
     const encoder = new TextEncoder();
     const svgData = encoder.encode(svg);
     const imageUrl = await uploadKundaliFile(svgData, calculationId, 'svg', 'image/svg+xml', supabaseUrl, serviceRoleKey);

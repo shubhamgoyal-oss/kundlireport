@@ -230,12 +230,29 @@ function canonicalDoshaForPuja(doshaKey: string): 'mangal' | 'pitra' | 'kaal-sar
   return 'navagraha';
 }
 
+// Append API-specific UTM params to puja links
+function appendApiUtmParams(url: string): string {
+  if (!url) return url;
+  try {
+    const parsed = new URL(url);
+    // Override with API-specific tracking
+    parsed.searchParams.set('utm_source', 'whatsapp');
+    parsed.searchParams.set('utm_campaign', 'api_DoshaCalculator');
+    return parsed.toString();
+  } catch {
+    // Fallback for invalid URLs - append manually
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}utm_source=whatsapp&utm_campaign=api_DoshaCalculator`;
+  }
+}
+
 function getPujaDisplay(puja: SriMandirPujaRow, language: string) {
   const isHindi = language?.toLowerCase().startsWith('hi');
   const title = isHindi ? puja.pooja_title : (puja.pooja_title_english || puja.pooja_title);
   const temple = isHindi ? puja.temple_name : (puja.temple_name_english || puja.temple_name);
   const location = isHindi ? puja.temple_location : (puja.temple_location_english || puja.temple_location);
-  const link = isHindi ? (puja.puja_link_hindi || puja.puja_link) : (puja.puja_link || puja.puja_link_hindi || '');
+  const rawLink = isHindi ? (puja.puja_link_hindi || puja.puja_link) : (puja.puja_link || puja.puja_link_hindi || '');
+  const link = appendApiUtmParams(rawLink);
   const cover = isHindi ? (puja.cover_media_url || puja.cover_media_url_english || '') : (puja.cover_media_url_english || puja.cover_media_url || '');
 
   return { title, temple, location, link, cover };

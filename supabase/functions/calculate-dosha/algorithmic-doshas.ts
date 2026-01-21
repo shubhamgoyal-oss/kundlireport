@@ -92,11 +92,9 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   const dominantArc = insideRahuToKetu >= insideKetuToRahu ? "rahu_to_ketu" : "ketu_to_rahu";
   const orientation = dominantArc === "rahu_to_ketu" ? "ascending" : "descending";
 
-  // Kaal Sarpa Dosha Definition with Severity:
-  // Purna (Full): ALL 7 planets in one arc = SEVERE
-  // Ardh: 6 planets in one arc = MODERATE  
-  // Anshik: 5 planets in one arc = MILD
-  // Absent: 4 or fewer planets in one arc
+  // Kaal Sarpa Dosha Definition:
+  // Only present when ALL 7 planets are hemmed between Rahu and Ketu
+  // 5 or 6 planets = NOT Kaal Sarpa (partial formations not counted)
   let status: "present_full" | "present_partial" | "absent";
   let severity: "severe" | "moderate" | "mild" | null = null;
   let reasons: string[] = [];
@@ -104,22 +102,11 @@ export function calculateKaalSarpaDoshaAlgorithmic(kundli: SeerKundli): KaalSarp
   if (maxInOneArc === 7) {
     status = "present_full";
     severity = "severe";
-    reasons.push(`All 7 classical planets within ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc (Purna Kaal Sarp - Severe)`);
-  } else if (maxInOneArc === 6) {
-    status = "present_partial";
-    severity = "moderate";
-    const outsideArc = dominantArc === "rahu_to_ketu" ? "Ketu→Rahu" : "Rahu→Ketu";
-    const outsidePlanet = placements.find(p => dominantArc === "rahu_to_ketu" ? !p.inRahuToKetu : !p.inKetuToRahu);
-    reasons.push(`6 planets in ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc, ${outsidePlanet?.name || '1 planet'} outside - Ardh Kaal Sarp (Moderate)`);
-  } else if (maxInOneArc === 5) {
-    status = "present_partial";
-    severity = "mild";
-    const outsidePlanets = placements.filter(p => dominantArc === "rahu_to_ketu" ? !p.inRahuToKetu : !p.inKetuToRahu).map(p => p.name);
-    reasons.push(`5 planets in ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc, ${outsidePlanets.join(' and ')} outside - Anshik Kaal Sarp (Mild)`);
+    reasons.push(`All 7 classical planets within ${dominantArc === "rahu_to_ketu" ? "Rahu→Ketu" : "Ketu→Rahu"} arc (Purna Kaal Sarp)`);
   } else {
     status = "absent";
     severity = null;
-    reasons.push(`Only ${maxInOneArc} planet(s) in one arc (need 5+ for Kaal Sarp). Planets split: ${insideRahuToKetu} in Rahu→Ketu, ${insideKetuToRahu} in Ketu→Rahu`);
+    reasons.push(`Only ${maxInOneArc} planet(s) in one arc (need all 7 for Kaal Sarp). Planets split: ${insideRahuToKetu} in Rahu→Ketu, ${insideKetuToRahu} in Ketu→Rahu`);
   }
 
   // Variant name by Rahu house

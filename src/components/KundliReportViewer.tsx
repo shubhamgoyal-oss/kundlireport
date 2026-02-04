@@ -52,22 +52,31 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
 
   // Generate PDF blob for preview
   const generatePdfBlob = useCallback(async () => {
-    if (pdfBlobUrl) return; // Already generated
+    console.log('[KundliReportViewer] generatePdfBlob called, pdfBlobUrl:', pdfBlobUrl);
+    if (pdfBlobUrl) {
+      console.log('[KundliReportViewer] PDF already generated, skipping');
+      return;
+    }
     
+    console.log('[KundliReportViewer] Generating PDF blob...');
     setIsGeneratingPdf(true);
     try {
+      console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name);
       const blob = await pdf(<KundliPDFDocument report={report} />).toBlob();
+      console.log('[KundliReportViewer] PDF blob created, size:', blob.size);
       const url = URL.createObjectURL(blob);
+      console.log('[KundliReportViewer] Blob URL created:', url);
       setPdfBlobUrl(url);
     } catch (error) {
-      console.error('Failed to generate PDF:', error);
+      console.error('[KundliReportViewer] Failed to generate PDF:', error);
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [report, pdfBlobUrl]);
+  }, [report]); // Removed pdfBlobUrl from deps to prevent stale closure
 
   // Download PDF
   const handleDownloadPdf = async () => {
+    console.log('[KundliReportViewer] Download clicked');
     setIsDownloading(true);
     try {
       const blob = await pdf(<KundliPDFDocument report={report} />).toBlob();
@@ -79,8 +88,9 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      console.log('[KundliReportViewer] Download triggered');
     } catch (error) {
-      console.error('Failed to download PDF:', error);
+      console.error('[KundliReportViewer] Failed to download PDF:', error);
     } finally {
       setIsDownloading(false);
     }
@@ -88,10 +98,12 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
 
   // Generate PDF on mount
   useEffect(() => {
-    if (!isLoading && report) {
+    console.log('[KundliReportViewer] useEffect triggered, isLoading:', isLoading, 'hasReport:', !!report, 'hasBlobUrl:', !!pdfBlobUrl);
+    if (!isLoading && report && !pdfBlobUrl) {
+      console.log('[KundliReportViewer] Triggering PDF generation from useEffect');
       generatePdfBlob();
     }
-  }, [isLoading, report, generatePdfBlob]);
+  }, [isLoading, report, pdfBlobUrl, generatePdfBlob]);
 
   if (isLoading) {
     return (

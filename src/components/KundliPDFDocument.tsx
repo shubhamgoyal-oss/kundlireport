@@ -1,16 +1,29 @@
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 
-// Register Noto Sans for Hindi support (optional, uses default otherwise)
+// Disable hyphenation to prevent character substitution issues
+Font.registerHyphenationCallback(word => [word]);
+
+// Register DejaVu Sans as fallback to handle all characters properly
+// DejaVu Sans has complete Latin character coverage
 Font.register({
-  family: 'NotoSans',
-  src: 'https://fonts.gstatic.com/s/notosans/v28/o-0IIpQlx3QUlC5A4PNr5TRA.woff2',
+  family: 'DejaVuSans',
+  fonts: [
+    {
+      src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf',
+      fontWeight: 'normal',
+    },
+    {
+      src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf',
+      fontWeight: 'bold',
+    },
+  ],
 });
 
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 11,
-    fontFamily: 'Helvetica',
+    fontFamily: 'DejaVuSans',
     lineHeight: 1.5,
   },
   coverPage: {
@@ -20,6 +33,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     height: '100%',
+    fontFamily: 'DejaVuSans',
   },
   coverTitle: {
     fontSize: 36,

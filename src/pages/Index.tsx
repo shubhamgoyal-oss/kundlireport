@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import SolutionFinder from '@/components/SolutionFinder';
-import DoshaCalculator from '@/components/DoshaCalculator';
+import KundliReportGenerator from '@/components/KundliReportGenerator';
 import LanguageToggle from '@/components/LanguageToggle';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
@@ -124,9 +124,9 @@ const Index = () => {
                 </Collapsible>
               </div>
 
-              {/* Dosha Calculator Card - Replaces the CTA Button */}
+              {/* Kundli Report Generator - Generates PDF report */}
               <div className="w-full">
-                <DoshaCalculator />
+                <KundliReportGenerator />
               </div>
             </div>
 

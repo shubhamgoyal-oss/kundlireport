@@ -3,6 +3,14 @@ import { fetchSeerKundli, adaptSeerResponse, type SeerKundliRequest } from "./se
 import { generatePanchangPrediction, type PanchangPrediction } from "./panchang-agent.ts";
 import { generatePillarsPrediction, type PillarsPrediction } from "./pillars-agent.ts";
 import { generateAllPlanetProfiles, type PlanetProfile } from "./planets-agent.ts";
+import { generateAllHouseAnalyses, type HouseAnalysis } from "./houses-agent.ts";
+import { generateCareerPrediction, type CareerPrediction } from "./career-agent.ts";
+import { generateMarriagePrediction, type MarriagePrediction } from "./marriage-agent.ts";
+import { generateDashaPrediction, type DashaPrediction } from "./dasha-agent.ts";
+import { generateRahuKetuPrediction, type RahuKetuPrediction } from "./rahu-ketu-agent.ts";
+import { generateRemediesPrediction, type RemediesPrediction } from "./remedies-agent.ts";
+import { generateNumerologyPrediction, type NumerologyPrediction } from "./numerology-agent.ts";
+import { generateSpiritualPrediction, type SpiritualPrediction } from "./spiritual-agent.ts";
 import { calculateCharaKarakas, type CharaKaraka } from "./utils/chara-karakas.ts";
 import { calculateAspects, getConjunctions, type Aspect } from "./utils/aspects.ts";
 import { getNakshatraWithPada } from "./utils/nakshatra.ts";
@@ -53,6 +61,14 @@ interface KundliReport {
   panchang: PanchangPrediction | null;
   pillars: PillarsPrediction | null;
   planets: PlanetProfile[];
+  houses: HouseAnalysis[];
+  career: CareerPrediction | null;
+  marriage: MarriagePrediction | null;
+  dasha: DashaPrediction | null;
+  rahuKetu: RahuKetuPrediction | null;
+  remedies: RemediesPrediction | null;
+  numerology: NumerologyPrediction | null;
+  spiritual: SpiritualPrediction | null;
   generatedAt: string;
   language: "en" | "hi";
   errors: string[];
@@ -66,7 +82,7 @@ serve(async (req) => {
 
   try {
     const body: ReportRequest = await req.json();
-    console.log("📝 [REPORT] Generating Kundli report for:", body.name);
+    console.log("📝 [REPORT] Generating comprehensive Kundli report for:", body.name);
 
     const { name, dateOfBirth, timeOfBirth, placeOfBirth, latitude, longitude, timezone, language = "en", gender = "M" } = body;
 
@@ -83,6 +99,9 @@ serve(async (req) => {
     const [hour, min] = timeOfBirth.split(":").map(Number);
     const birthDate = new Date(year, month - 1, day, hour, min);
 
+    // Normalize gender
+    const normalizedGender = gender === "female" || gender === "F" ? "F" : gender === "other" || gender === "O" ? "O" : "M";
+
     // Step 1: Call Seer API
     console.log("🌐 [REPORT] Calling Seer API...");
     const seerRequest: SeerKundliRequest = {
@@ -96,7 +115,7 @@ serve(async (req) => {
       tzone: timezone,
       user_id: 505,
       name,
-      gender: gender === "female" || gender === "F" ? "F" : gender === "other" || gender === "O" ? "O" : "M",
+      gender: normalizedGender,
     };
 
     const { data: seerData } = await fetchSeerKundli(seerRequest);
@@ -120,24 +139,22 @@ serve(async (req) => {
     const ascLord = getSignLord(kundli.asc.signIdx);
     const ascLordPlanet = kundli.planets.find(p => p.name === ascLord);
 
-    // Step 3: Run prediction agents in parallel
-    console.log("🤖 [REPORT] Starting prediction agents...");
+    // Step 3: Run ALL prediction agents in parallel batches
+    console.log("🤖 [REPORT] Starting prediction agents (Phase 1: Core)...");
     const errors: string[] = [];
     let totalTokens = 0;
 
-    // Run Panchang and Pillars agents in parallel
-    const [panchangResult, pillarsResult] = await Promise.all([
-      // Panchang Agent
+    // Phase 1: Panchang, Pillars, Numerology (fast, independent)
+    const [panchangResult, pillarsResult, numerologyResult] = await Promise.all([
       generatePanchangPrediction({
         birthDate,
         moonDegree: moon?.deg || 0,
         sunDegree: sun?.deg || 0,
         vaarIndex: birthDate.getDay(),
         tithiNumber,
-        karanaName: "Bava", // TODO: Calculate actual karana
-        yogaName: "Siddhi", // TODO: Calculate actual yoga
+        karanaName: "Bava",
+        yogaName: "Siddhi",
       }),
-      // Pillars Agent
       generatePillarsPrediction({
         moonSignIdx: moon?.signIdx || 0,
         moonDegree: moon?.deg || 0,
@@ -147,25 +164,90 @@ serve(async (req) => {
         ascLordHouse: ascLordPlanet?.house || 1,
         ascLordSign: ascLordPlanet?.sign || "Aries",
       }),
+      generateNumerologyPrediction({
+        name,
+        dateOfBirth,
+      }),
     ]);
 
-    if (!panchangResult.success) {
-      errors.push(`Panchang agent: ${panchangResult.error}`);
-    } else {
-      totalTokens += panchangResult.tokensUsed || 0;
-    }
+    if (!panchangResult.success) errors.push(`Panchang: ${panchangResult.error}`);
+    else totalTokens += panchangResult.tokensUsed || 0;
 
-    if (!pillarsResult.success) {
-      errors.push(`Pillars agent: ${pillarsResult.error}`);
-    } else {
-      totalTokens += pillarsResult.tokensUsed || 0;
-    }
+    if (!pillarsResult.success) errors.push(`Pillars: ${pillarsResult.error}`);
+    else totalTokens += pillarsResult.tokensUsed || 0;
 
-    // Run Planets agent (processes in batches internally)
-    console.log("🪐 [REPORT] Generating planet profiles...");
+    if (!numerologyResult.success) errors.push(`Numerology: ${numerologyResult.error}`);
+    else totalTokens += numerologyResult.tokensUsed || 0;
+
+    console.log("🤖 [REPORT] Phase 1 complete. Starting Phase 2: Planets...");
+
+    // Phase 2: Planet profiles (batched internally)
     const planetProfiles = await generateAllPlanetProfiles(kundli.planets, kundli.asc);
 
-    // Assemble the report
+    console.log("🤖 [REPORT] Phase 2 complete. Starting Phase 3: Houses...");
+
+    // Phase 3: House analyses (batched internally)
+    const houseAnalyses = await generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx);
+
+    console.log("🤖 [REPORT] Phase 3 complete. Starting Phase 4: Life Areas...");
+
+    // Phase 4: Career, Marriage, Dasha, Rahu-Ketu (in parallel)
+    const [careerResult, marriageResult, dashaResult, rahuKetuResult] = await Promise.all([
+      generateCareerPrediction({
+        planets: kundli.planets,
+        ascSignIdx: kundli.asc.signIdx,
+        charaKarakas,
+      }),
+      generateMarriagePrediction({
+        planets: kundli.planets,
+        ascSignIdx: kundli.asc.signIdx,
+        charaKarakas,
+        gender: normalizedGender,
+      }),
+      generateDashaPrediction({
+        planets: kundli.planets,
+        moonDegree: moon?.deg || 0,
+        birthDate,
+      }),
+      generateRahuKetuPrediction({
+        planets: kundli.planets,
+      }),
+    ]);
+
+    if (!careerResult.success) errors.push(`Career: ${careerResult.error}`);
+    else totalTokens += careerResult.tokensUsed || 0;
+
+    if (!marriageResult.success) errors.push(`Marriage: ${marriageResult.error}`);
+    else totalTokens += marriageResult.tokensUsed || 0;
+
+    if (!dashaResult.success) errors.push(`Dasha: ${dashaResult.error}`);
+    else totalTokens += dashaResult.tokensUsed || 0;
+
+    if (!rahuKetuResult.success) errors.push(`RahuKetu: ${rahuKetuResult.error}`);
+    else totalTokens += rahuKetuResult.tokensUsed || 0;
+
+    console.log("🤖 [REPORT] Phase 4 complete. Starting Phase 5: Remedies & Spiritual...");
+
+    // Phase 5: Remedies and Spiritual (in parallel)
+    const [remediesResult, spiritualResult] = await Promise.all([
+      generateRemediesPrediction({
+        planets: kundli.planets,
+        ascSignIdx: kundli.asc.signIdx,
+      }),
+      generateSpiritualPrediction({
+        planets: kundli.planets,
+        ascSignIdx: kundli.asc.signIdx,
+        charaKarakas,
+      }),
+    ]);
+
+    if (!remediesResult.success) errors.push(`Remedies: ${remediesResult.error}`);
+    else totalTokens += remediesResult.tokensUsed || 0;
+
+    if (!spiritualResult.success) errors.push(`Spiritual: ${spiritualResult.error}`);
+    else totalTokens += spiritualResult.tokensUsed || 0;
+
+    // Assemble the complete report
     const report: KundliReport = {
       birthDetails: {
         name,
@@ -193,13 +275,25 @@ serve(async (req) => {
       panchang: panchangResult.data || null,
       pillars: pillarsResult.data || null,
       planets: planetProfiles,
+      houses: houseAnalyses,
+      career: careerResult.data || null,
+      marriage: marriageResult.data || null,
+      dasha: dashaResult.data || null,
+      rahuKetu: rahuKetuResult.data || null,
+      remedies: remediesResult.data || null,
+      numerology: numerologyResult.data || null,
+      spiritual: spiritualResult.data || null,
       generatedAt: new Date().toISOString(),
       language,
       errors,
       tokensUsed: totalTokens,
     };
 
-    console.log(`✅ [REPORT] Report generated. Tokens used: ${totalTokens}. Errors: ${errors.length}`);
+    console.log(`✅ [REPORT] Comprehensive report generated.`);
+    console.log(`   📊 Tokens used: ${totalTokens}`);
+    console.log(`   ⚠️ Errors: ${errors.length}`);
+    console.log(`   🪐 Planets: ${planetProfiles.length}`);
+    console.log(`   🏠 Houses: ${houseAnalyses.length}`);
 
     return new Response(
       JSON.stringify(report),

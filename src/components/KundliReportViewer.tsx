@@ -41,15 +41,32 @@ interface PillarsPrediction {
   nakshatra: { name: string; deity: string; interpretation: string };
 }
 
+interface PlanetAspect {
+  aspectType: string;
+  targetHouse: number;
+  interpretation: string;
+}
+
 interface PlanetProfile {
   planet: string;
+  planetHindi?: string;
   sign: string;
+  signHindi?: string;
   house: number;
   degree: number;
-  isRetro: boolean;
+  isRetrograde: boolean;
   dignity: string;
-  interpretation: string;
-  aspects: string[];
+  dignityDescription?: string;
+  nakshatra?: string;
+  nakshatraLord?: string;
+  signLord?: string;
+  signLordHouse?: number;
+  placementAnalysis: string;
+  houseSignificance?: string;
+  aspects: PlanetAspect[];
+  retrogradeEffect?: string;
+  dashaInfluence?: string;
+  remedies?: string[];
 }
 
 interface KundliReport {
@@ -187,8 +204,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
               ${report.planets.map(p => `
                 <div class="planet-card">
                   <h3>${p.planet} ${isHindi ? 'में' : 'in'} ${p.sign} (${isHindi ? 'भाव' : 'House'} ${p.house})</h3>
-                  <p><span class="badge">${p.dignity}</span> ${p.isRetro ? '<span class="badge">Retrograde</span>' : ''}</p>
-                  <p>${p.interpretation}</p>
+                  <p><span class="badge">${p.dignity}</span> ${p.isRetrograde ? '<span class="badge">Retrograde</span>' : ''}</p>
+                  <p>${p.placementAnalysis}</p>
                 </div>
               `).join('')}
             </div>
@@ -439,23 +456,35 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
                 <div className="space-y-4 py-4">
                   {report.planets.map((planet, idx) => (
                     <div key={idx} className="p-4 bg-muted/30 rounded-lg border-l-4 border-primary">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold">{planet.planet}</h4>
-                        <Badge variant="outline">{planet.sign}</Badge>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h4 className="font-semibold">{isHindi && planet.planetHindi ? planet.planetHindi : planet.planet}</h4>
+                        <Badge variant="outline">{isHindi && planet.signHindi ? planet.signHindi : planet.sign}</Badge>
                         <Badge variant="outline">{isHindi ? 'भाव' : 'H'}{planet.house}</Badge>
                         <Badge variant="secondary">{planet.dignity}</Badge>
-                        {planet.isRetro && <Badge variant="destructive">{isHindi ? 'वक्री' : 'R'}</Badge>}
+                        {planet.isRetrograde && <Badge variant="destructive">{isHindi ? 'वक्री' : 'R'}</Badge>}
                       </div>
-                      <p className="text-sm text-muted-foreground">{planet.interpretation}</p>
-                      {planet.aspects.length > 0 && (
+                      <p className="text-sm text-muted-foreground">{planet.placementAnalysis}</p>
+                      {planet.houseSignificance && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          <strong>{isHindi ? 'भाव प्रभाव' : 'House Effect'}:</strong> {planet.houseSignificance}
+                        </p>
+                      )}
+                      {planet.aspects && planet.aspects.length > 0 && (
                         <div className="mt-2">
                           <p className="text-xs font-medium text-muted-foreground">{isHindi ? 'दृष्टि' : 'Aspects'}:</p>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {planet.aspects.map((aspect, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">{aspect}</Badge>
+                              <Badge key={i} variant="outline" className="text-xs">
+                                {aspect.aspectType} → {isHindi ? 'भाव' : 'H'}{aspect.targetHouse}
+                              </Badge>
                             ))}
                           </div>
                         </div>
+                      )}
+                      {planet.retrogradeEffect && planet.isRetrograde && (
+                        <p className="text-sm text-amber-600 mt-2">
+                          <strong>{isHindi ? 'वक्री प्रभाव' : 'Retrograde Effect'}:</strong> {planet.retrogradeEffect}
+                        </p>
                       )}
                     </div>
                   ))}

@@ -3,6 +3,9 @@ project_id = "ockgwzpueburxodfwrau"
 [functions.calculate-dosha]
 verify_jwt = false
 
+[functions.generate-kundli-report]
+verify_jwt = false
+
 [functions.astrology-chat]
 verify_jwt = false
 

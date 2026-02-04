@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileText, Eye } from 'lucide-react';
@@ -87,11 +87,11 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   };
 
   // Generate PDF on mount
-  useState(() => {
+  useEffect(() => {
     if (!isLoading && report) {
       generatePdfBlob();
     }
-  });
+  }, [isLoading, report, generatePdfBlob]);
 
   if (isLoading) {
     return (

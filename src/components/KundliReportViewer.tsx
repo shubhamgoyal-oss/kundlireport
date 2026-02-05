@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileText, Eye } from 'lucide-react';
@@ -48,31 +48,47 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const pdfBlobUrlRef = useRef<string | null>(null);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
+
+  useEffect(() => {
+    pdfBlobUrlRef.current = pdfBlobUrl;
+  }, [pdfBlobUrl]);
 
   // Generate PDF blob for preview
   const generatePdfBlob = useCallback(async () => {
-    console.log('[KundliReportViewer] generatePdfBlob called, pdfBlobUrl:', pdfBlobUrl);
-    if (pdfBlobUrl) {
+    console.log('[KundliReportViewer] generatePdfBlob called, pdfBlobUrl:', pdfBlobUrlRef.current);
+    if (pdfBlobUrlRef.current) {
       console.log('[KundliReportViewer] PDF already generated, skipping');
       return;
     }
     
     console.log('[KundliReportViewer] Generating PDF blob...');
     setIsGeneratingPdf(true);
+    setPdfError(null);
     try {
       console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name);
       const blob = await pdf(<KundliPDFDocument report={report} />).toBlob();
       console.log('[KundliReportViewer] PDF blob created, size:', blob.size);
       const url = URL.createObjectURL(blob);
       console.log('[KundliReportViewer] Blob URL created:', url);
+      pdfBlobUrlRef.current = url;
       setPdfBlobUrl(url);
     } catch (error) {
       console.error('[KundliReportViewer] Failed to generate PDF:', error);
+      setPdfError(error instanceof Error ? error.message : 'Failed to generate PDF preview');
     } finally {
       setIsGeneratingPdf(false);
     }
   }, [report]); // Removed pdfBlobUrl from deps to prevent stale closure
+
+  // Cleanup blob URL
+  useEffect(() => {
+    return () => {
+      if (pdfBlobUrl) URL.revokeObjectURL(pdfBlobUrl);
+    };
+  }, [pdfBlobUrl]);
 
   // Download PDF
   const handleDownloadPdf = async () => {
@@ -229,11 +245,41 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
           </div>
         ) : pdfBlobUrl ? (
           <div className="w-full" style={{ height: '80vh' }}>
-            <iframe
-              src={pdfBlobUrl}
-              className="w-full h-full border-0"
-              title="Kundli Report PDF Preview"
-            />
+            {/* object tends to be more reliable than iframe for PDF blobs across browsers */}
+            <object
+              data={pdfBlobUrl}
+              type="application/pdf"
+              className="w-full h-full"
+              aria-label="Kundli Report PDF Preview"
+            >
+              <iframe
+                src={pdfBlobUrl}
+                className="w-full h-full border-0"
+                title="Kundli Report PDF Preview"
+              />
+            </object>
+          </div>
+        ) : pdfError ? (
+          <div className="flex flex-col items-center justify-center py-20 px-4">
+            <FileText className="w-16 h-16 text-muted-foreground/50 mb-4" />
+            <p className="text-lg font-medium text-foreground mb-2">
+              {isHindi ? 'PDF पूर्वावलोकन नहीं बन पाया' : 'Could not generate PDF preview'}
+            </p>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              {isHindi
+                ? 'कृपया दोबारा कोशिश करें या PDF डाउनलोड करें।'
+                : 'Please try again, or download the PDF instead.'}
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={() => { setPdfBlobUrl(null); generatePdfBlob(); }} variant="outline">
+                <Eye className="w-4 h-4 mr-2" />
+                {isHindi ? 'फिर से प्रयास करें' : 'Retry Preview'}
+              </Button>
+              <Button onClick={handleDownloadPdf}>
+                <Download className="w-4 h-4 mr-2" />
+                {isHindi ? 'डाउनलोड' : 'Download'}
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-4">

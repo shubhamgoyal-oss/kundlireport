@@ -9,11 +9,11 @@ Font.register({
   family: 'DejaVuSans',
   fonts: [
     {
-      src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf',
+      src: '/fonts/DejaVuSans.ttf',
       fontWeight: 'normal',
     },
     {
-      src: 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf',
+      src: '/fonts/DejaVuSans-Bold.ttf',
       fontWeight: 'bold',
     },
   ],
@@ -86,7 +86,9 @@ const styles = StyleSheet.create({
   },
   paragraph: {
     marginBottom: 10,
-    textAlign: 'justify',
+    // Justify can cause bad word spacing/overlap in some PDF renderers.
+    // Left-aligned is more reliable/readable.
+    textAlign: 'left',
   },
   table: {
     width: '100%',
@@ -210,11 +212,14 @@ const styles = StyleSheet.create({
     marginRight: '2%',
     marginBottom: 8,
   },
+  section: {
+    marginBottom: 10,
+  },
 });
 
 // Helper components
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <View wrap={false}>
+  <View style={styles.section}>
     <Text style={styles.header}>{title}</Text>
     {children}
   </View>
@@ -266,7 +271,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     <Document>
       {/* Cover Page */}
       <Page size="A4" style={styles.coverPage}>
-        <Text style={styles.coverTitle}>🕉️ Kundli Report</Text>
+        {/* Avoid emoji here: the embedded font may not contain emoji glyphs and can break layout */}
+        <Text style={styles.coverTitle}>Kundli Report</Text>
         <Text style={styles.coverSubtitle}>Comprehensive Vedic Astrology Analysis</Text>
         <View style={{ marginTop: 40 }}>
           <Text style={styles.coverName}>{report.birthDetails.name}</Text>
@@ -930,7 +936,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Recommended Mantras">
                 {(report.remedies.mantras || []).map((mantra: any, idx: number) => (
                   <Card key={idx} title={mantra.planet}>
-                    <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 5 }}>{mantra.mantra}</Text>
+                    <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{mantra.mantra}</Text>
                     <InfoRow label="Japa Count" value={String(mantra.japaCount)} />
                     <InfoRow label="Timing" value={mantra.timing} />
                     <Text style={styles.paragraph}>{mantra.benefits}</Text>

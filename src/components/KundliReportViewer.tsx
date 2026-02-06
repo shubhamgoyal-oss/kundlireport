@@ -5,6 +5,7 @@ import { Loader2, Download, FileText, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
+import { fetchMultipleCharts, PDF_CHARTS, ChartData, BirthDetails } from '@/utils/kundaliChart';
 
 interface KundliReport {
   birthDetails: {
@@ -36,6 +37,7 @@ interface KundliReport {
   language: string;
   errors: string[];
   tokensUsed: number;
+  charts?: ChartData[]; // Added for PDF charts
 }
 
 interface KundliReportViewerProps {
@@ -49,12 +51,50 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
+  const [charts, setCharts] = useState<ChartData[]>([]);
+  const [isFetchingCharts, setIsFetchingCharts] = useState(false);
   const pdfBlobUrlRef = useRef<string | null>(null);
+  const chartsFetchedRef = useRef(false);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
 
   useEffect(() => {
     pdfBlobUrlRef.current = pdfBlobUrl;
   }, [pdfBlobUrl]);
+
+  // Fetch charts after report is ready
+  useEffect(() => {
+    if (!isLoading && report && !chartsFetchedRef.current) {
+      chartsFetchedRef.current = true;
+      setIsFetchingCharts(true);
+      
+      // Parse birth details for chart fetching
+      const [year, month, day] = report.birthDetails.dateOfBirth.split('-').map(Number);
+      const [hour, minute] = report.birthDetails.timeOfBirth.split(':').map(Number);
+      
+      const birthDetails: BirthDetails = {
+        day,
+        month,
+        year,
+        hour,
+        minute,
+        lat: report.birthDetails.latitude,
+        lon: report.birthDetails.longitude,
+        tzone: report.birthDetails.timezone
+      };
+      
+      fetchMultipleCharts(birthDetails, 'North', isHindi ? 'hi' : 'en', PDF_CHARTS)
+        .then(fetchedCharts => {
+          console.log('[KundliReportViewer] Fetched', fetchedCharts.length, 'charts');
+          setCharts(fetchedCharts);
+        })
+        .catch(err => {
+          console.error('[KundliReportViewer] Failed to fetch charts:', err);
+        })
+        .finally(() => {
+          setIsFetchingCharts(false);
+        });
+    }
+  }, [isLoading, report, isHindi]);
 
   // Generate PDF blob for preview
   const generatePdfBlob = useCallback(async () => {
@@ -68,8 +108,10 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     setIsGeneratingPdf(true);
     setPdfError(null);
     try {
-      console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name);
-      const blob = await pdf(<KundliPDFDocument report={report} />).toBlob();
+      // Include charts in the report
+      const reportWithCharts = { ...report, charts };
+      console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name, 'and', charts.length, 'charts');
+      const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
       console.log('[KundliReportViewer] PDF blob created, size:', blob.size);
       const url = URL.createObjectURL(blob);
       console.log('[KundliReportViewer] Blob URL created:', url);
@@ -81,7 +123,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [report]); // Removed pdfBlobUrl from deps to prevent stale closure
+  }, [report, charts]);
 
   // Cleanup blob URL
   useEffect(() => {
@@ -95,7 +137,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     console.log('[KundliReportViewer] Download clicked');
     setIsDownloading(true);
     try {
-      const blob = await pdf(<KundliPDFDocument report={report} />).toBlob();
+      const reportWithCharts = { ...report, charts };
+      const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -112,15 +155,14 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     }
   };
 
-  // Generate PDF on mount
+  // Generate PDF after charts are fetched (or after a short delay if charts fail)
   useEffect(() => {
-    console.log('[KundliReportViewer] useEffect triggered, isLoading:', isLoading, 'hasReport:', !!report, 'hasBlobUrl:', !!pdfBlobUrl);
-    if (!isLoading && report && !pdfBlobUrl) {
+    console.log('[KundliReportViewer] useEffect triggered, isLoading:', isLoading, 'hasReport:', !!report, 'hasBlobUrl:', !!pdfBlobUrl, 'isFetchingCharts:', isFetchingCharts);
+    if (!isLoading && report && !pdfBlobUrl && !isFetchingCharts) {
       console.log('[KundliReportViewer] Triggering PDF generation from useEffect');
       generatePdfBlob();
     }
-  }, [isLoading, report, pdfBlobUrl, generatePdfBlob]);
-
+  }, [isLoading, report, pdfBlobUrl, isFetchingCharts, generatePdfBlob]);
   if (isLoading) {
     return (
       <Card className="w-full max-w-5xl mx-auto">

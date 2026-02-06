@@ -16,7 +16,28 @@ interface KundaliRequest {
   tzone: number;
   chartType: 'North' | 'South';
   language: 'en' | 'hi';
+  divisionalChart?: string; // D1, D2, D3, D4, D7, D9, D10, D12, etc.
 }
+
+// Chart names for reference
+const CHART_NAMES: Record<string, string> = {
+  D1: 'Rashi (Birth Chart)',
+  D2: 'Hora (Wealth)',
+  D3: 'Drekkana (Siblings)',
+  D4: 'Chaturthamsa (Fortune)',
+  D7: 'Saptamsa (Children)',
+  D9: 'Navamsa (Marriage)',
+  D10: 'Dasamsa (Career)',
+  D12: 'Dwadasamsa (Parents)',
+  D16: 'Shodasamsa (Vehicles)',
+  D20: 'Vimsamsa (Spiritual)',
+  D24: 'Chaturvimsamsa (Education)',
+  D27: 'Bhamsa (Strength)',
+  D30: 'Trimsamsa (Misfortune)',
+  D40: 'Khavedamsa (Auspiciousness)',
+  D45: 'Akshavedamsa (Character)',
+  D60: 'Shashtiamsa (Karma)',
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,8 +47,9 @@ serve(async (req) => {
 
   try {
     const body: KundaliRequest = await req.json();
+    const divisionalChart = body.divisionalChart || 'D1';
     
-    console.log('[get-kundali-chart] Request:', JSON.stringify(body));
+    console.log('[get-kundali-chart] Request for:', divisionalChart, JSON.stringify(body));
 
     const seerPayload = {
       day: body.day,
@@ -42,7 +64,7 @@ serve(async (req) => {
       image_type: 'svg'
     };
 
-    const response = await fetch('https://api-sbox.a4b.io/gw2/seer/external/v1/chart/horo-image/D1', {
+    const response = await fetch(`https://api-sbox.a4b.io/gw2/seer/external/v1/chart/horo-image/${divisionalChart}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,10 +88,14 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('[get-kundali-chart] Response received, svg length:', data?.data?.svg?.length || 0);
+    console.log('[get-kundali-chart] Response received for', divisionalChart, ', svg length:', data?.data?.svg?.length || 0);
 
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({
+        ...data,
+        chartType: divisionalChart,
+        chartName: CHART_NAMES[divisionalChart] || divisionalChart
+      }),
       { 
         status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

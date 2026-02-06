@@ -1,5 +1,6 @@
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Tspan } from '@react-pdf/renderer';
+import React from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Disable hyphenation to prevent character substitution issues
 Font.registerHyphenationCallback(word => [word]);
 
@@ -215,6 +216,40 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 10,
   },
+  chartContainer: {
+    width: 200,
+    height: 200,
+    marginVertical: 5,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chartGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  chartItem: {
+    width: '48%',
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  chartTitle: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#4c1d95',
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  chartPurpose: {
+    fontSize: 9,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginTop: 3,
+  },
 });
 
 // Helper components
@@ -250,12 +285,129 @@ const BulletList = ({ items }: { items: string[] }) => (
   <View style={styles.list}>
     {items.map((item, idx) => (
       <View key={idx} style={{ flexDirection: 'row', marginBottom: 3 }}>
-        <Text style={styles.bullet}>•</Text>
+        <Text style={styles.bullet}>-</Text>
         <Text style={{ flex: 1 }}>{item}</Text>
       </View>
     ))}
   </View>
 );
+
+// SVG Parser - converts SVG string to react-pdf components
+const parseSvgElement = (element: Element, key: number): React.ReactNode | null => {
+  const tagName = element.tagName.toLowerCase();
+  const attrs: Record<string, any> = {};
+  
+  // Convert attributes
+  for (let i = 0; i < element.attributes.length; i++) {
+    const attr = element.attributes[i];
+    let name = attr.name;
+    let value: string | number = attr.value;
+    
+    // Convert kebab-case to camelCase
+    name = name.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+    
+    // Skip class and style (we handle these separately)
+    if (name === 'class' || name === 'className') continue;
+    
+    // Convert numeric values
+    if (/^-?\d+(\.\d+)?$/.test(value)) {
+      value = parseFloat(value);
+    }
+    
+    attrs[name] = value;
+  }
+  
+  // Parse children
+  const children: React.ReactNode[] = [];
+  for (let i = 0; i < element.children.length; i++) {
+    const child = parseSvgElement(element.children[i], i);
+    if (child) children.push(child);
+  }
+  
+  // Handle text content
+  if (element.children.length === 0 && element.textContent) {
+    const textContent = element.textContent.trim();
+    if (textContent && (tagName === 'text' || tagName === 'tspan')) {
+      children.push(textContent);
+    }
+  }
+  
+  // Map to react-pdf SVG components - cast to any to bypass strict prop requirements
+  switch (tagName) {
+    case 'svg':
+      return <Svg key={key} {...(attrs as any)}>{children}</Svg>;
+    case 'g':
+      return <G key={key} {...(attrs as any)}>{children}</G>;
+    case 'path':
+      if (!attrs.d) return null;
+      return <Path key={key} {...(attrs as any)} />;
+    case 'rect':
+      return <Rect key={key} width={attrs.width || 0} height={attrs.height || 0} {...(attrs as any)} />;
+    case 'circle':
+      return <Circle key={key} r={attrs.r || 0} {...(attrs as any)} />;
+    case 'ellipse':
+      return <Ellipse key={key} rx={attrs.rx || 0} ry={attrs.ry || 0} {...(attrs as any)} />;
+    case 'line':
+      return <Line key={key} x1={attrs.x1 || 0} x2={attrs.x2 || 0} y1={attrs.y1 || 0} y2={attrs.y2 || 0} {...(attrs as any)} />;
+    case 'polygon':
+      if (!attrs.points) return null;
+      return <Polygon key={key} {...(attrs as any)} />;
+    case 'text':
+      return <Text key={key} {...(attrs as any)}>{children}</Text>;
+    case 'tspan':
+      return <Tspan key={key} {...(attrs as any)}>{children}</Tspan>;
+    case 'defs':
+      return <Defs key={key}>{children}</Defs>;
+    case 'clippath':
+      if (!attrs.id) return null;
+      return <ClipPath key={key} {...(attrs as any)}>{children}</ClipPath>;
+    case 'lineargradient':
+      if (!attrs.id) return null;
+      return <LinearGradient key={key} {...(attrs as any)}>{children}</LinearGradient>;
+    case 'radialgradient':
+      if (!attrs.id) return null;
+      return <RadialGradient key={key} {...(attrs as any)}>{children}</RadialGradient>;
+    case 'stop':
+      return <Stop key={key} offset={attrs.offset || '0%'} stopColor={attrs.stopColor || '#000'} {...(attrs as any)} />;
+    default:
+      return null;
+  }
+};
+
+const SVGRenderer = ({ svgString, width = 200, height = 200 }: { svgString: string; width?: number; height?: number }) => {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgString, 'image/svg+xml');
+    const svgElement = doc.querySelector('svg');
+    
+    if (!svgElement) {
+      throw new Error('No SVG element found');
+    }
+    
+    // Set dimensions
+    svgElement.setAttribute('width', String(width));
+    svgElement.setAttribute('height', String(height));
+    
+    const parsed = parseSvgElement(svgElement, 0);
+    return <>{parsed}</>;
+  } catch (error) {
+    console.error('[SVGRenderer] Failed to parse SVG:', error);
+    return (
+      <View style={styles.chartContainer}>
+        <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center' }}>
+          Chart available in web view
+        </Text>
+      </View>
+    );
+  }
+};
+interface ChartData {
+  type: string;
+  name: string;
+  nameHindi: string;
+  purpose: string;
+  svg: string;
+}
 
 interface KundliPDFProps {
   report: any; // Full KundliReport type
@@ -267,6 +419,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   };
 
+  const charts: ChartData[] = report.charts || [];
   return (
     <Document>
       {/* Cover Page */}
@@ -290,6 +443,61 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </View>
       </Page>
 
+      {/* Kundali Charts Section */}
+      {charts.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Kundali Charts (Divisional Charts)">
+            <Text style={styles.paragraph}>
+              These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.
+            </Text>
+            <View style={styles.chartGrid}>
+              {charts.slice(0, 2).map((chart, idx) => (
+                <View key={idx} style={styles.chartItem}>
+                  <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                  <View style={styles.chartContainer}>
+                    <SVGRenderer svgString={chart.svg} />
+                  </View>
+                  <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                </View>
+              ))}
+            </View>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Additional Charts Page */}
+      {charts.length > 2 && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Additional Divisional Charts">
+            <View style={styles.chartGrid}>
+              {charts.slice(2, 4).map((chart, idx) => (
+                <View key={idx} style={styles.chartItem}>
+                  <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                  <View style={styles.chartContainer}>
+                    <SVGRenderer svgString={chart.svg} />
+                  </View>
+                  <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                </View>
+              ))}
+            </View>
+            {charts.length > 4 && (
+              <View style={styles.chartGrid}>
+                {charts.slice(4).map((chart, idx) => (
+                  <View key={idx} style={styles.chartItem}>
+                    <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                    <View style={styles.chartContainer}>
+                      <SVGRenderer svgString={chart.svg} />
+                    </View>
+                    <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
       {/* Birth Details & Planetary Positions */}
       <Page size="A4" style={styles.page}>
         <Section title="Birth Details">
@@ -681,56 +889,127 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Page>
       )}
 
-      {/* Dasha Predictions */}
+      {/* Dasha Predictions - Page 1: Current Mahadasha & Antardasha */}
       {report.dasha && (
         <Page size="A4" style={styles.page}>
           <Section title="Vimshottari Dasha Predictions">
             <Text style={styles.paragraph}>{report.dasha.overview || ''}</Text>
+            <Text style={styles.paragraph}>{report.dasha.vimshottariSystem || ''}</Text>
 
             <SubSection title="Birth Nakshatra">
               <InfoRow label="Nakshatra" value={report.dasha.birthNakshatra?.name || 'N/A'} />
               <InfoRow label="Lord" value={report.dasha.birthNakshatra?.lord || 'N/A'} />
               <InfoRow label="Starting Dasha" value={report.dasha.birthNakshatra?.startingDasha || 'N/A'} />
+              <InfoRow label="Balance at Birth" value={report.dasha.birthNakshatra?.balance || 'N/A'} />
             </SubSection>
 
             <SubSection title={`Current Mahadasha: ${report.dasha.currentMahadasha?.planet || 'N/A'}`}>
-              <InfoRow label="Period" value={`${report.dasha.currentMahadasha?.startDate || ''} to ${report.dasha.currentMahadasha?.endDate || ''}`} />
+              <View style={styles.card}>
+                <InfoRow label="Period" value={`${report.dasha.currentMahadasha?.startDate || ''} to ${report.dasha.currentMahadasha?.endDate || ''}`} />
+                <Text style={{ fontSize: 10, color: '#6d28d9', marginTop: 5 }}>
+                  {report.dasha.currentMahadasha?.planetSignificance || ''}
+                </Text>
+              </View>
               <Text style={styles.paragraph}>{report.dasha.currentMahadasha?.interpretation || ''}</Text>
               
-              {report.dasha.currentMahadasha?.majorThemes && (
+              {report.dasha.currentMahadasha?.majorThemes && report.dasha.currentMahadasha.majorThemes.length > 0 && (
                 <>
                   <Text style={styles.subSubHeader}>Major Themes</Text>
                   <BulletList items={report.dasha.currentMahadasha.majorThemes} />
                 </>
               )}
               
-              {report.dasha.currentMahadasha?.opportunities && (
+              {report.dasha.currentMahadasha?.opportunities && report.dasha.currentMahadasha.opportunities.length > 0 && (
                 <>
                   <Text style={styles.subSubHeader}>Opportunities</Text>
                   <BulletList items={report.dasha.currentMahadasha.opportunities} />
                 </>
               )}
               
-              {report.dasha.currentMahadasha?.challenges && (
+              {report.dasha.currentMahadasha?.challenges && report.dasha.currentMahadasha.challenges.length > 0 && (
                 <>
                   <Text style={styles.subSubHeader}>Challenges</Text>
                   <BulletList items={report.dasha.currentMahadasha.challenges} />
                 </>
               )}
+
+              {report.dasha.currentMahadasha?.advice && (
+                <View style={styles.highlight}>
+                  <Text style={{ fontWeight: 'bold' }}>Advice: </Text>
+                  <Text>{report.dasha.currentMahadasha.advice}</Text>
+                </View>
+              )}
             </SubSection>
 
             <SubSection title={`Current Antardasha: ${report.dasha.currentAntardasha?.planet || 'N/A'}`}>
-              <InfoRow label="Period" value={`${report.dasha.currentAntardasha?.startDate || ''} to ${report.dasha.currentAntardasha?.endDate || ''}`} />
+              <View style={styles.card}>
+                <InfoRow label="Period" value={`${report.dasha.currentAntardasha?.startDate || ''} to ${report.dasha.currentAntardasha?.endDate || ''}`} />
+              </View>
               <Text style={styles.paragraph}>{report.dasha.currentAntardasha?.interpretation || ''}</Text>
-            </SubSection>
+              
+              {report.dasha.currentAntardasha?.keyEvents && report.dasha.currentAntardasha.keyEvents.length > 0 && (
+                <>
+                  <Text style={styles.subSubHeader}>Key Events to Watch</Text>
+                  <BulletList items={report.dasha.currentAntardasha.keyEvents} />
+                </>
+              )}
 
-            <SubSection title="Dasha Sequence">
+              {report.dasha.currentAntardasha?.recommendations && report.dasha.currentAntardasha.recommendations.length > 0 && (
+                <>
+                  <Text style={styles.subSubHeader}>Recommendations</Text>
+                  <BulletList items={report.dasha.currentAntardasha.recommendations} />
+                </>
+              )}
+            </SubSection>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Dasha Predictions - Page 2: Upcoming Periods & Sequence */}
+      {report.dasha && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Upcoming Dasha Periods">
+            <Text style={styles.paragraph}>
+              The following section outlines the upcoming planetary periods that will influence your life journey.
+            </Text>
+
+            {/* Upcoming Antardashas within current Mahadasha */}
+            {report.dasha.upcomingDashas && report.dasha.upcomingDashas.length > 0 && (
+              <SubSection title="Upcoming Periods">
+                <View style={styles.table}>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.tableHeaderCell}>Type</Text>
+                    <Text style={styles.tableHeaderCell}>Planet</Text>
+                    <Text style={styles.tableHeaderCell}>Period</Text>
+                    <Text style={styles.tableHeaderCell}>Focus</Text>
+                  </View>
+                  {report.dasha.upcomingDashas.map((dasha: any, idx: number) => (
+                    <View key={idx} style={styles.tableRow}>
+                      <Text style={styles.tableCell}>{dasha.type}</Text>
+                      <Text style={styles.tableCell}>{dasha.planet}</Text>
+                      <Text style={styles.tableCell}>{dasha.period}</Text>
+                      <Text style={styles.tableCell}>{dasha.focus}</Text>
+                    </View>
+                  ))}
+                </View>
+                
+                {/* Detailed predictions for upcoming periods */}
+                {report.dasha.upcomingDashas.slice(0, 3).map((dasha: any, idx: number) => (
+                  <Card key={idx} title={`${dasha.type}: ${dasha.planet} (${dasha.period})`}>
+                    <Text style={styles.paragraph}>{dasha.briefPrediction}</Text>
+                  </Card>
+                ))}
+              </SubSection>
+            )}
+
+            <SubSection title="Complete Dasha Sequence (Vimshottari 120-Year Cycle)">
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
                   <Text style={styles.tableHeaderCell}>Planet</Text>
                   <Text style={styles.tableHeaderCell}>Years</Text>
-                  <Text style={styles.tableHeaderCell}>Period</Text>
-                  <Text style={styles.tableHeaderCell}>Focus</Text>
+                  <Text style={styles.tableHeaderCell}>Approximate Period</Text>
+                  <Text style={styles.tableHeaderCell}>Life Focus</Text>
                 </View>
                 {(report.dasha.dashaSequence || []).map((dasha: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
@@ -743,14 +1022,27 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               </View>
             </SubSection>
 
+            {report.dasha.currentTransitImpact && (
+              <SubSection title="Current Transit Impact">
+                <Text style={styles.paragraph}>{report.dasha.currentTransitImpact}</Text>
+              </SubSection>
+            )}
+
+            {report.dasha.periodRecommendations && report.dasha.periodRecommendations.length > 0 && (
+              <SubSection title="Period Recommendations">
+                <BulletList items={report.dasha.periodRecommendations} />
+              </SubSection>
+            )}
+
             <SubSection title="Spiritual Guidance">
-              <Text style={styles.paragraph}>{report.dasha.spiritualGuidance || ''}</Text>
+              <View style={styles.highlight}>
+                <Text>{report.dasha.spiritualGuidance || ''}</Text>
+              </View>
             </SubSection>
           </Section>
           <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
         </Page>
       )}
-
       {/* Rahu-Ketu Analysis */}
       {report.rahuKetu && (
         <Page size="A4" style={styles.page}>

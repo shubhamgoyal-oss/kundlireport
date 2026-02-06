@@ -12,10 +12,23 @@ Font.register({
     {
       src: '/fonts/DejaVuSans.ttf',
       fontWeight: 'normal',
+      fontStyle: 'normal',
     },
     {
       src: '/fonts/DejaVuSans-Bold.ttf',
       fontWeight: 'bold',
+      fontStyle: 'normal',
+    },
+    // Map italic to regular (we don't have a separate italic font file)
+    {
+      src: '/fonts/DejaVuSans.ttf',
+      fontWeight: 'normal',
+      fontStyle: 'italic',
+    },
+    {
+      src: '/fonts/DejaVuSans-Bold.ttf',
+      fontWeight: 'bold',
+      fontStyle: 'italic',
     },
   ],
 });

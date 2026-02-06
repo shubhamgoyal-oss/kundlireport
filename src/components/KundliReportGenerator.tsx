@@ -10,6 +10,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Calendar, Clock, MapPin, Loader2, Edit, User, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { KundliReportViewer } from './KundliReportViewer';
+import { KundliProgressTracker } from './KundliProgressTracker';
 import { DateOfBirthPicker } from './DateOfBirthPicker';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
@@ -68,6 +69,8 @@ const KundliReportGenerator = () => {
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
   const [selectedPlaceIndex, setSelectedPlaceIndex] = useState(-1);
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
+  const [jobProgress, setJobProgress] = useState(0);
+  const [jobPhase, setJobPhase] = useState("");
   const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -237,8 +240,14 @@ const KundliReportGenerator = () => {
         
         const jobStatus = await response.json();
         console.log('[KundliReportGenerator] Job status:', jobStatus.status, jobStatus.progressPercent + '%');
+        
+        // Update progress state for UI
+        setJobProgress(jobStatus.progressPercent || 0);
+        setJobPhase(jobStatus.currentPhase || '');
 
         if (jobStatus.status === 'completed' && jobStatus.report) {
+          setJobProgress(100);
+          setJobPhase('Complete');
           return jobStatus.report;
         }
 
@@ -285,6 +294,8 @@ const KundliReportGenerator = () => {
       toast.error(isHindi ? 'रिपोर्ट बनाने में त्रुटि। कृपया पुनः प्रयास करें।' : 'Error generating report. Please try again.');
     } finally {
       setIsGenerating(false);
+      setJobProgress(0);
+      setJobPhase('');
     }
   };
 
@@ -474,10 +485,19 @@ const KundliReportGenerator = () => {
         </Collapsible>
       </Card>
 
-      {/* Report Viewer */}
+      {/* Progress Tracker */}
       {isGenerating && (
+        <KundliProgressTracker 
+          progress={jobProgress} 
+          currentPhase={jobPhase} 
+          isHindi={isHindi} 
+        />
+      )}
+
+      {/* Report Viewer */}
+      {kundliReport && !isGenerating && (
         <div className="mt-6">
-          <KundliReportViewer report={{} as any} isLoading={true} />
+          <KundliReportViewer report={kundliReport} />
         </div>
       )}
 

@@ -966,14 +966,188 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Page>
       )}
 
-      {/* Dasha Predictions - Page 2: Upcoming Periods & Sequence */}
+      {/* Dasha Predictions - Page 2: Detailed Mahadasha Predictions */}
+      {report.dasha?.mahadashaPredictions && report.dasha.mahadashaPredictions.length > 0 && (
+        <>
+          {report.dasha.mahadashaPredictions.map((md: any, idx: number) => (
+            <Page key={`md-${idx}`} size="A4" style={styles.page}>
+              <Section title={`${md.planet} Mahadasha Predictions`}>
+                <View style={styles.card}>
+                  <InfoRow label="Period" value={`${md.startDate || ''} to ${md.endDate || ''}`} />
+                  <InfoRow label="Duration" value={md.duration || ''} />
+                </View>
+                
+                <Text style={styles.paragraph}>{md.overview || ''}</Text>
+
+                <SubSection title="Career Impact">
+                  <Text style={styles.paragraph}>{md.careerImpact || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Relationship Impact">
+                  <Text style={styles.paragraph}>{md.relationshipImpact || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Health Impact">
+                  <Text style={styles.paragraph}>{md.healthImpact || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Financial Impact">
+                  <Text style={styles.paragraph}>{md.financialImpact || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Spiritual Growth">
+                  <Text style={styles.paragraph}>{md.spiritualGrowth || ''}</Text>
+                </SubSection>
+
+                {md.keyEvents && md.keyEvents.length > 0 && (
+                  <SubSection title="Key Events">
+                    <BulletList items={md.keyEvents} />
+                  </SubSection>
+                )}
+
+                <View style={styles.grid2}>
+                  {md.opportunities && md.opportunities.length > 0 && (
+                    <View style={styles.gridItem}>
+                      <Text style={styles.subSubHeader}>Opportunities</Text>
+                      <BulletList items={md.opportunities} />
+                    </View>
+                  )}
+                  {md.challenges && md.challenges.length > 0 && (
+                    <View style={styles.gridItem}>
+                      <Text style={styles.subSubHeader}>Challenges</Text>
+                      <BulletList items={md.challenges} />
+                    </View>
+                  )}
+                </View>
+
+                {md.remedies && md.remedies.length > 0 && (
+                  <SubSection title="Recommended Remedies">
+                    <BulletList items={md.remedies} />
+                  </SubSection>
+                )}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          ))}
+        </>
+      )}
+
+      {/* Dasha Predictions - Antardasha Details */}
+      {report.dasha?.antardashaPredictions && report.dasha.antardashaPredictions.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Antardasha Predictions (Current Mahadasha)">
+            <Text style={styles.paragraph}>
+              The following are the sub-periods (Antardashas) within your current Mahadasha. Each sub-period brings specific influences based on the interplay between the Mahadasha and Antardasha lords.
+            </Text>
+            
+            {report.dasha.antardashaPredictions.map((ad: any, idx: number) => (
+              <Card key={idx} title={`${ad.mahadasha}/${ad.antardasha} (${ad.duration || ''})`}>
+                <InfoRow label="Period" value={`${ad.startDate || ''} to ${ad.endDate || ''}`} />
+                <Text style={styles.paragraph}>{ad.overview || ''}</Text>
+                
+                {ad.focusAreas && ad.focusAreas.length > 0 && (
+                  <>
+                    <Text style={styles.subSubHeader}>Focus Areas</Text>
+                    <BulletList items={ad.focusAreas} />
+                  </>
+                )}
+                
+                {ad.predictions && ad.predictions.length > 0 && (
+                  <>
+                    <Text style={styles.subSubHeader}>Predictions</Text>
+                    <BulletList items={ad.predictions} />
+                  </>
+                )}
+                
+                {ad.advice && (
+                  <View style={styles.highlight}>
+                    <Text style={{ fontSize: 10 }}>{ad.advice}</Text>
+                  </View>
+                )}
+              </Card>
+            ))}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Yogini Dasha Section */}
+      {report.dasha?.yoginiDasha && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Yogini Dasha System">
+            <Text style={styles.paragraph}>{report.dasha.yoginiDasha.systemExplanation || ''}</Text>
+            
+            <SubSection title={`Current Yogini: ${report.dasha.yoginiDasha.currentYogini?.name || 'N/A'}`}>
+              <View style={styles.card}>
+                <InfoRow label="Associated Planet" value={report.dasha.yoginiDasha.currentYogini?.planet || 'N/A'} />
+                <InfoRow label="Duration" value={`${report.dasha.yoginiDasha.currentYogini?.years || 0} years`} />
+                <InfoRow label="Period" value={`${report.dasha.yoginiDasha.currentYogini?.startDate || ''} to ${report.dasha.yoginiDasha.currentYogini?.endDate || ''}`} />
+              </View>
+              
+              <Text style={styles.paragraph}>{report.dasha.yoginiDasha.currentYogini?.characteristics || ''}</Text>
+              
+              {report.dasha.yoginiDasha.currentYogini?.lifeThemes && report.dasha.yoginiDasha.currentYogini.lifeThemes.length > 0 && (
+                <>
+                  <Text style={styles.subSubHeader}>Life Themes</Text>
+                  <BulletList items={report.dasha.yoginiDasha.currentYogini.lifeThemes} />
+                </>
+              )}
+              
+              <Text style={styles.paragraph}>{report.dasha.yoginiDasha.currentYogini?.predictions || ''}</Text>
+            </SubSection>
+
+            <SubSection title="Upcoming Yogini Periods">
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.tableHeaderCell}>Yogini</Text>
+                  <Text style={styles.tableHeaderCell}>Planet</Text>
+                  <Text style={styles.tableHeaderCell}>Years</Text>
+                  <Text style={styles.tableHeaderCell}>Period</Text>
+                </View>
+                {(report.dasha.yoginiDasha.upcomingYoginis || []).map((y: any, idx: number) => (
+                  <View key={idx} style={styles.tableRow}>
+                    <Text style={styles.tableCell}>{y.name}</Text>
+                    <Text style={styles.tableCell}>{y.planet}</Text>
+                    <Text style={styles.tableCell}>{y.years}</Text>
+                    <Text style={styles.tableCell}>{y.approximatePeriod}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {(report.dasha.yoginiDasha.upcomingYoginis || []).slice(0, 3).map((y: any, idx: number) => (
+                <Card key={idx} title={`${y.name} (${y.planet})`}>
+                  <Text style={styles.paragraph}>{y.briefPrediction}</Text>
+                </Card>
+              ))}
+            </SubSection>
+
+            <SubSection title="Complete Yogini Dasha Cycle (36 Years)">
+              <View style={styles.table}>
+                <View style={styles.tableHeader}>
+                  <Text style={styles.tableHeaderCell}>Yogini</Text>
+                  <Text style={styles.tableHeaderCell}>Planet</Text>
+                  <Text style={styles.tableHeaderCell}>Years</Text>
+                  <Text style={styles.tableHeaderCell}>Nature</Text>
+                </View>
+                {(report.dasha.yoginiDasha.yoginiSequence || []).map((y: any, idx: number) => (
+                  <View key={idx} style={styles.tableRow}>
+                    <Text style={styles.tableCell}>{y.name}</Text>
+                    <Text style={styles.tableCell}>{y.planet}</Text>
+                    <Text style={styles.tableCell}>{y.years}</Text>
+                    <Text style={styles.tableCell}>{y.nature}</Text>
+                  </View>
+                ))}
+              </View>
+            </SubSection>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Dasha Predictions - Page 3: Upcoming Periods & Sequence */}
       {report.dasha && (
         <Page size="A4" style={styles.page}>
-          <Section title="Upcoming Dasha Periods">
-            <Text style={styles.paragraph}>
-              The following section outlines the upcoming planetary periods that will influence your life journey.
-            </Text>
-
+          <Section title="Dasha Sequence & Timing">
             {/* Upcoming Antardashas within current Mahadasha */}
             {report.dasha.upcomingDashas && report.dasha.upcomingDashas.length > 0 && (
               <SubSection title="Upcoming Periods">
@@ -993,13 +1167,6 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     </View>
                   ))}
                 </View>
-                
-                {/* Detailed predictions for upcoming periods */}
-                {report.dasha.upcomingDashas.slice(0, 3).map((dasha: any, idx: number) => (
-                  <Card key={idx} title={`${dasha.type}: ${dasha.planet} (${dasha.period})`}>
-                    <Text style={styles.paragraph}>{dasha.briefPrediction}</Text>
-                  </Card>
-                ))}
               </SubSection>
             )}
 
@@ -1183,107 +1350,323 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Page>
       )}
 
-      {/* Remedies */}
+      {/* Remedies - Understanding the Science */}
+      {report.remedies?.remediesPhilosophy && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Understanding Vedic Remedies">
+            <Text style={styles.paragraph}>
+              Before exploring specific remedies, it is essential to understand the profound science and tradition behind Vedic Upayas (remedial measures). This section explains why these remedies work and how they have been validated through millennia of practice.
+            </Text>
+
+            <SubSection title="Vedic Foundation">
+              <Text style={styles.paragraph}>{report.remedies.remediesPhilosophy.vedicFoundation || ''}</Text>
+            </SubSection>
+
+            <SubSection title="How Remedies Work">
+              <View style={styles.card}>
+                <Text style={styles.paragraph}>{report.remedies.remediesPhilosophy.howRemediesWork || ''}</Text>
+              </View>
+            </SubSection>
+
+            <SubSection title="The Role of Faith and Intention">
+              <Text style={styles.paragraph}>{report.remedies.remediesPhilosophy.importanceOfFaith || ''}</Text>
+            </SubSection>
+
+            <SubSection title="Scientific Perspective">
+              <View style={styles.highlight}>
+                <Text>{report.remedies.remediesPhilosophy.scientificPerspective || ''}</Text>
+              </View>
+            </SubSection>
+
+            <SubSection title="Traditional Wisdom">
+              <Text style={styles.paragraph}>{report.remedies.remediesPhilosophy.traditionalWisdom || ''}</Text>
+            </SubSection>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Remedies - Gemstones with Trust Details */}
       {report.remedies && (
-        <>
-          <Page size="A4" style={styles.page}>
-            <Section title="Remedial Measures (Upayas)">
-              <Text style={styles.paragraph}>{report.remedies.overview || ''}</Text>
+        <Page size="A4" style={styles.page}>
+          <Section title="Gemstone Therapy (Ratna Shastra)">
+            <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.gemologyExplanation || 'Gemstones have been used in Vedic astrology for millennia to harness planetary energies and balance cosmic influences.'}</Text>
 
-              <SubSection title="Weak Planets">
-                {(report.remedies.weakPlanets || []).map((wp: any, idx: number) => (
-                  <Card key={idx} title={wp.planet}>
-                    <Text>Reason: {wp.reason}</Text>
-                    <Text>Severity: {wp.severity}</Text>
+            <SubSection title={`Primary Gemstone: ${report.remedies.gemstoneRecommendations?.primary?.stone || 'N/A'}`}>
+              <View style={styles.card}>
+                <InfoRow label="Planet" value={report.remedies.gemstoneRecommendations?.primary?.planet || 'N/A'} />
+                <InfoRow label="Weight" value={report.remedies.gemstoneRecommendations?.primary?.weight || 'N/A'} />
+                <InfoRow label="Metal" value={report.remedies.gemstoneRecommendations?.primary?.metal || 'N/A'} />
+                <InfoRow label="Finger" value={report.remedies.gemstoneRecommendations?.primary?.finger || 'N/A'} />
+                <InfoRow label="Day to Wear" value={report.remedies.gemstoneRecommendations?.primary?.day || 'N/A'} />
+              </View>
+              
+              <Text style={styles.subSubHeader}>Benefits</Text>
+              <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.benefits || ''}</Text>
+              
+              <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+              <View style={styles.highlight}>
+                <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{report.remedies.gemstoneRecommendations?.primary?.scripturalReference || ''}</Text>
+              </View>
+              
+              <Text style={styles.subSubHeader}>How It Works</Text>
+              <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.howItWorks || ''}</Text>
+              
+              <Text style={styles.subSubHeader}>Scientific Basis</Text>
+              <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.scientificBasis || ''}</Text>
+              
+              <Text style={styles.subSubHeader}>Quality Guidelines</Text>
+              <View style={styles.card}>
+                <Text style={{ fontSize: 10 }}>{report.remedies.gemstoneRecommendations?.primary?.qualityGuidelines || ''}</Text>
+              </View>
+              
+              <Text style={styles.subSubHeader}>Cautions</Text>
+              <Text style={{ fontSize: 10, color: '#dc2626' }}>{report.remedies.gemstoneRecommendations?.primary?.cautions || ''}</Text>
+            </SubSection>
+
+            {report.remedies.gemstoneRecommendations?.secondary && (
+              <SubSection title={`Secondary Gemstone: ${report.remedies.gemstoneRecommendations.secondary.stone}`}>
+                <InfoRow label="Planet" value={report.remedies.gemstoneRecommendations.secondary.planet || 'N/A'} />
+                <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations.secondary.benefits || ''}</Text>
+                <Text style={{ fontSize: 10, fontStyle: 'italic', color: '#6b7280' }}>{report.remedies.gemstoneRecommendations.secondary.scripturalReference || ''}</Text>
+              </SubSection>
+            )}
+
+            {report.remedies.gemstoneRecommendations?.avoid && report.remedies.gemstoneRecommendations.avoid.length > 0 && (
+              <SubSection title="Gemstones to Avoid">
+                <BulletList items={report.remedies.gemstoneRecommendations.avoid} />
+              </SubSection>
+            )}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Remedies - Rudraksha with Trust Details */}
+      {report.remedies?.rudrakshaRecommendations && report.remedies.rudrakshaRecommendations.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Rudraksha Therapy">
+            <Text style={styles.paragraph}>
+              Rudraksha beads are sacred seeds from the Elaeocarpus ganitrus tree, revered for their spiritual and healing properties. Each Mukhi (face) of Rudraksha resonates with specific planetary energies.
+            </Text>
+
+            {report.remedies.rudrakshaRecommendations.map((rud: any, idx: number) => (
+              <Card key={idx} title={`${rud.mukhi} Mukhi Rudraksha - ${rud.name}`}>
+                <InfoRow label="Associated Planet" value={rud.planet} />
+                
+                <Text style={styles.subSubHeader}>Benefits</Text>
+                <Text style={styles.paragraph}>{rud.benefits}</Text>
+                
+                <Text style={styles.subSubHeader}>Wearing Instructions</Text>
+                <Text style={{ fontSize: 10 }}>{rud.wearingInstructions}</Text>
+                
+                <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+                <View style={styles.highlight}>
+                  <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{rud.scripturalReference || ''}</Text>
+                </View>
+                
+                <Text style={styles.subSubHeader}>Scientific Basis</Text>
+                <Text style={{ fontSize: 10 }}>{rud.scientificBasis || ''}</Text>
+                
+                <Text style={styles.subSubHeader}>How to Verify Authenticity</Text>
+                <Text style={{ fontSize: 10, color: '#059669' }}>{rud.authenticity || ''}</Text>
+              </Card>
+            ))}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Remedies - Mantras with Trust Details */}
+      {report.remedies?.mantras && report.remedies.mantras.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Mantra Therapy (Mantra Shastra)">
+            <Text style={styles.paragraph}>
+              Mantras are sacred sound vibrations that connect the practitioner to cosmic energies. The science of Mantra Shastra explains how specific sound frequencies can influence planetary energies and transform consciousness.
+            </Text>
+
+            {report.remedies.mantras.map((mantra: any, idx: number) => (
+              <Card key={idx} title={`${mantra.planet} Mantra`}>
+                <Text style={{ fontWeight: 'bold', fontSize: 12, color: '#7c3aed', marginBottom: 5 }}>{mantra.mantra}</Text>
+                
+                <View style={styles.row}>
+                  <InfoRow label="Japa Count" value={String(mantra.japaCount)} />
+                </View>
+                <InfoRow label="Timing" value={mantra.timing} />
+                <InfoRow label="Pronunciation" value={mantra.pronunciation} />
+                
+                <Text style={styles.subSubHeader}>Benefits</Text>
+                <Text style={styles.paragraph}>{mantra.benefits}</Text>
+                
+                <Text style={styles.subSubHeader}>Scriptural Source</Text>
+                <View style={styles.highlight}>
+                  <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{mantra.scripturalSource || ''}</Text>
+                </View>
+                
+                <Text style={styles.subSubHeader}>Vibrational Science</Text>
+                <Text style={{ fontSize: 10 }}>{mantra.vibrationalScience || ''}</Text>
+                
+                <Text style={styles.subSubHeader}>Proper Method</Text>
+                <Text style={{ fontSize: 10 }}>{mantra.properMethod || ''}</Text>
+              </Card>
+            ))}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Remedies - Yantras and Pujas */}
+      {report.remedies && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Yantras & Puja Recommendations">
+            {report.remedies.yantras && report.remedies.yantras.length > 0 && (
+              <SubSection title="Yantra Recommendations">
+                <Text style={styles.paragraph}>
+                  Yantras are sacred geometric diagrams that serve as focal points for meditation and planetary propitiation. Each Yantra embodies specific cosmic energies through precise mathematical proportions.
+                </Text>
+                {report.remedies.yantras.map((yantra: any, idx: number) => (
+                  <Card key={idx} title={yantra.name}>
+                    <InfoRow label="Planet" value={yantra.planet} />
+                    <InfoRow label="Placement" value={yantra.placement} />
+                    <Text style={styles.paragraph}>{yantra.benefits}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Geometric Significance</Text>
+                    <Text style={{ fontSize: 10 }}>{yantra.geometricSignificance || ''}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Consecration Method</Text>
+                    <Text style={{ fontSize: 10 }}>{yantra.consecrationMethod || ''}</Text>
+                    
+                    <Text style={{ fontSize: 9, fontStyle: 'italic', color: '#6b7280', marginTop: 5 }}>{yantra.scripturalReference || ''}</Text>
                   </Card>
                 ))}
               </SubSection>
+            )}
 
-              <SubSection title="Gemstone Recommendations">
-                <Card title={`Primary: ${report.remedies.gemstoneRecommendations?.primary?.stone || 'N/A'}`}>
-                  <InfoRow label="Planet" value={report.remedies.gemstoneRecommendations?.primary?.planet || 'N/A'} />
-                  <InfoRow label="Weight" value={report.remedies.gemstoneRecommendations?.primary?.weight || 'N/A'} />
-                  <InfoRow label="Metal" value={report.remedies.gemstoneRecommendations?.primary?.metal || 'N/A'} />
-                  <InfoRow label="Finger" value={report.remedies.gemstoneRecommendations?.primary?.finger || 'N/A'} />
-                  <InfoRow label="Day to Wear" value={report.remedies.gemstoneRecommendations?.primary?.day || 'N/A'} />
-                  <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.benefits || ''}</Text>
+            {report.remedies.pujaRecommendations && report.remedies.pujaRecommendations.length > 0 && (
+              <SubSection title="Recommended Pujas">
+                {report.remedies.pujaRecommendations.map((puja: any, idx: number) => (
+                  <Card key={idx} title={puja.name}>
+                    <InfoRow label="Deity" value={puja.deity} />
+                    <InfoRow label="Purpose" value={puja.purpose} />
+                    <InfoRow label="Frequency" value={puja.frequency} />
+                    
+                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <BulletList items={puja.benefits || []} />
+                    
+                    <Text style={styles.subSubHeader}>Scriptural Basis</Text>
+                    <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{puja.scripturalBasis || ''}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Procedure</Text>
+                    <Text style={{ fontSize: 10 }}>{puja.procedure || ''}</Text>
+                  </Card>
+                ))}
+              </SubSection>
+            )}
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
+
+      {/* Remedies - Ishta Devata and Spiritual Practices */}
+      {report.remedies && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Ishta Devata & Spiritual Practices">
+            <SubSection title="Your Ishta Devata (Personal Deity)">
+              <Card title={report.remedies.ishtaDevata?.deity || 'N/A'}>
+                <Text style={styles.paragraph}>{report.remedies.ishtaDevata?.reason || ''}</Text>
+                
+                <InfoRow label="Worship Method" value={report.remedies.ishtaDevata?.worship || 'N/A'} />
+                <InfoRow label="Mantra" value={report.remedies.ishtaDevata?.mantra || 'N/A'} />
+                <InfoRow label="Temple Visit" value={report.remedies.ishtaDevata?.templeVisit || 'N/A'} />
+                
+                <Text style={styles.subSubHeader}>Scriptural Derivation</Text>
+                <View style={styles.highlight}>
+                  <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{report.remedies.ishtaDevata?.scripturalDerivation || ''}</Text>
+                </View>
+                
+                <Text style={styles.subSubHeader}>Significance</Text>
+                <Text style={styles.paragraph}>{report.remedies.ishtaDevata?.significance || ''}</Text>
+              </Card>
+            </SubSection>
+
+            <SubSection title="Fasting Recommendations (Vrata)">
+              {(report.remedies.fasting || []).map((fast: any, idx: number) => (
+                <Card key={idx} title={`${fast.day} - ${fast.planet}`}>
+                  <Text style={styles.paragraph}>{fast.method}</Text>
+                  <Text style={styles.paragraph}>{fast.benefits}</Text>
+                  
+                  <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+                  <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{fast.scripturalReference || ''}</Text>
+                  
+                  <Text style={styles.subSubHeader}>Physiological Benefits</Text>
+                  <Text style={{ fontSize: 10 }}>{fast.physiologicalBenefits || ''}</Text>
                 </Card>
-              </SubSection>
+              ))}
+            </SubSection>
 
-              <SubSection title="Rudraksha Recommendations">
-                {(report.remedies.rudrakshaRecommendations || []).slice(0, 3).map((rud: any, idx: number) => (
-                  <Card key={idx} title={`${rud.mukhi} Mukhi - ${rud.name}`}>
-                    <InfoRow label="Planet" value={rud.planet} />
-                    <Text style={styles.paragraph}>{rud.benefits}</Text>
-                    <Text style={{ fontSize: 10, color: '#6b7280' }}>{rud.wearingInstructions}</Text>
-                  </Card>
-                ))}
-              </SubSection>
-            </Section>
-            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
-          </Page>
+            <SubSection title="Donations (Daan)">
+              {(report.remedies.donations || []).map((don: any, idx: number) => (
+                <View key={idx} style={{ marginBottom: 10 }}>
+                  <Text style={{ fontWeight: 'bold' }}>{don.day} - {don.item}</Text>
+                  <Text style={{ fontSize: 10 }}>Planet: {don.planet} | {don.reason}</Text>
+                  <Text style={{ fontSize: 9, fontStyle: 'italic', color: '#6b7280' }}>{don.scripturalReference || ''}</Text>
+                  <Text style={{ fontSize: 9, color: '#059669' }}>{don.karmaScience || ''}</Text>
+                </View>
+              ))}
+            </SubSection>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
+      )}
 
-          <Page size="A4" style={styles.page}>
-            <Section title="Mantras & Spiritual Practices">
-              <SubSection title="Recommended Mantras">
-                {(report.remedies.mantras || []).map((mantra: any, idx: number) => (
-                  <Card key={idx} title={mantra.planet}>
-                    <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{mantra.mantra}</Text>
-                    <InfoRow label="Japa Count" value={String(mantra.japaCount)} />
-                    <InfoRow label="Timing" value={mantra.timing} />
-                    <Text style={styles.paragraph}>{mantra.benefits}</Text>
-                  </Card>
-                ))}
-              </SubSection>
+      {/* Remedies - Lifestyle Guidance */}
+      {report.remedies && (
+        <Page size="A4" style={styles.page}>
+          <Section title="Lifestyle Remedies & Guidance">
+            <SubSection title="Color Therapy">
+              <InfoRow label="Favorable Colors" value={(report.remedies.colorTherapy?.favorable || []).join(', ')} />
+              <InfoRow label="Colors to Avoid" value={(report.remedies.colorTherapy?.avoid || []).join(', ')} />
+              <Text style={styles.paragraph}>{report.remedies.colorTherapy?.explanation || ''}</Text>
+              
+              <Text style={styles.subSubHeader}>Scientific Basis</Text>
+              <Text style={{ fontSize: 10 }}>{report.remedies.colorTherapy?.scientificBasis || ''}</Text>
+            </SubSection>
 
-              <SubSection title="Ishta Devata (Personal Deity)">
-                <Card title={report.remedies.ishtaDevata?.deity || 'N/A'}>
-                  <Text style={styles.paragraph}>{report.remedies.ishtaDevata?.reason || ''}</Text>
-                  <InfoRow label="Worship Method" value={report.remedies.ishtaDevata?.worship || 'N/A'} />
-                  <InfoRow label="Mantra" value={report.remedies.ishtaDevata?.mantra || 'N/A'} />
-                </Card>
-              </SubSection>
+            <SubSection title="Direction Guidance (Vastu)">
+              <InfoRow label="Favorable Directions" value={(report.remedies.directionGuidance?.favorable || []).join(', ')} />
+              <InfoRow label="Directions to Avoid" value={(report.remedies.directionGuidance?.avoid || []).join(', ')} />
+              <InfoRow label="Sleep Direction" value={report.remedies.directionGuidance?.sleepDirection || 'N/A'} />
+              <InfoRow label="Work Direction" value={report.remedies.directionGuidance?.workDirection || 'N/A'} />
+              
+              <Text style={styles.subSubHeader}>Vastu Explanation</Text>
+              <Text style={{ fontSize: 10 }}>{report.remedies.directionGuidance?.vastuExplanation || ''}</Text>
+            </SubSection>
 
-              <SubSection title="Fasting Recommendations">
-                {(report.remedies.fasting || []).map((fast: any, idx: number) => (
-                  <View key={idx} style={styles.row}>
-                    <Text style={styles.label}>{fast.day} ({fast.planet}):</Text>
-                    <Text style={styles.value}>{fast.method}</Text>
-                  </View>
-                ))}
-              </SubSection>
+            <SubSection title="Daily Routine Recommendations">
+              <BulletList items={report.remedies.dailyRoutine || []} />
+            </SubSection>
 
-              <SubSection title="Donations">
-                {(report.remedies.donations || []).map((don: any, idx: number) => (
-                  <View key={idx} style={styles.row}>
-                    <Text style={styles.label}>{don.day}:</Text>
-                    <Text style={styles.value}>{don.item} - {don.reason}</Text>
-                  </View>
-                ))}
-              </SubSection>
+            <SubSection title="Daily Spiritual Practices">
+              <BulletList items={report.remedies.spiritualPractices || []} />
+            </SubSection>
 
-              <SubSection title="Color Therapy">
-                <InfoRow label="Favorable Colors" value={(report.remedies.colorTherapy?.favorable || []).join(', ')} />
-                <InfoRow label="Avoid Colors" value={(report.remedies.colorTherapy?.avoid || []).join(', ')} />
-              </SubSection>
+            <SubSection title="General Advice">
+              <View style={styles.highlight}>
+                <Text>{report.remedies.generalAdvice || ''}</Text>
+              </View>
+            </SubSection>
 
-              <SubSection title="Direction Guidance">
-                <InfoRow label="Favorable" value={(report.remedies.directionGuidance?.favorable || []).join(', ')} />
-                <InfoRow label="Sleep Direction" value={report.remedies.directionGuidance?.sleepDirection || 'N/A'} />
-                <InfoRow label="Work Direction" value={report.remedies.directionGuidance?.workDirection || 'N/A'} />
-              </SubSection>
-
-              <SubSection title="Daily Spiritual Practices">
-                <BulletList items={report.remedies.spiritualPractices || []} />
-              </SubSection>
-
-              <SubSection title="General Advice">
-                <Text style={styles.paragraph}>{report.remedies.generalAdvice || ''}</Text>
-              </SubSection>
-            </Section>
-            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
-          </Page>
-        </>
+            <SubSection title="Weak Planets Summary">
+              {(report.remedies.weakPlanets || []).map((wp: any, idx: number) => (
+                <View key={idx} style={styles.row}>
+                  <Text style={styles.label}>{wp.planet}:</Text>
+                  <Text style={styles.value}>{wp.reason} (Severity: {wp.severity})</Text>
+                </View>
+              ))}
+            </SubSection>
+          </Section>
+          <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+        </Page>
       )}
 
       {/* Final Page */}

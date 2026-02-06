@@ -1,8 +1,20 @@
-// Remedies Agent - Generates comprehensive remedial measures
+// Remedies Agent - Generates comprehensive remedial measures with trust-building content
 
 import { callAgent, type AgentResponse } from "./agent-base.ts";
 import { calculateDignity } from "./utils/dignity.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
+
+export interface RemedyDetail {
+  name: string;
+  description: string;
+  scripturalReference: string;
+  scientificBasis: string;
+  howItWorks: string;
+  procedure: string;
+  expectedBenefits: string[];
+  timeToResults: string;
+  precautions: string[];
+}
 
 export interface RemediesPrediction {
   overview: string;
@@ -17,6 +29,10 @@ export interface RemediesPrediction {
     planet: string;
     benefits: string;
     wearingInstructions: string;
+    // Trust-building details
+    scripturalReference: string;
+    scientificBasis: string;
+    authenticity: string;
   }>;
   gemstoneRecommendations: {
     primary: {
@@ -28,13 +44,20 @@ export interface RemediesPrediction {
       day: string;
       benefits: string;
       cautions: string;
+      // Trust-building details
+      scripturalReference: string;
+      scientificBasis: string;
+      howItWorks: string;
+      qualityGuidelines: string;
     };
     secondary: {
       stone: string;
       planet: string;
       benefits: string;
+      scripturalReference: string;
     };
     avoid: string[];
+    gemologyExplanation: string;
   };
   mantras: Array<{
     mantra: string;
@@ -43,12 +66,29 @@ export interface RemediesPrediction {
     timing: string;
     benefits: string;
     pronunciation: string;
+    // Trust-building details
+    scripturalSource: string;
+    vibrationalScience: string;
+    properMethod: string;
   }>;
   yantras: Array<{
     name: string;
     planet: string;
     placement: string;
     benefits: string;
+    // Trust-building details
+    geometricSignificance: string;
+    consecrationMethod: string;
+    scripturalReference: string;
+  }>;
+  pujaRecommendations: Array<{
+    name: string;
+    deity: string;
+    purpose: string;
+    frequency: string;
+    benefits: string[];
+    scripturalBasis: string;
+    procedure: string;
   }>;
   ishtaDevata: {
     deity: string;
@@ -56,54 +96,90 @@ export interface RemediesPrediction {
     worship: string;
     mantra: string;
     templeVisit: string;
+    // Trust-building details
+    scripturalDerivation: string;
+    significance: string;
   };
   donations: Array<{
     item: string;
     day: string;
     planet: string;
     reason: string;
+    // Trust-building details
+    scripturalReference: string;
+    karmaScience: string;
   }>;
   fasting: Array<{
     day: string;
     planet: string;
     method: string;
     benefits: string;
+    // Trust-building details
+    scripturalReference: string;
+    physiologicalBenefits: string;
   }>;
   colorTherapy: {
     favorable: string[];
     avoid: string[];
     explanation: string;
+    scientificBasis: string;
   };
   directionGuidance: {
     favorable: string[];
     avoid: string[];
     sleepDirection: string;
     workDirection: string;
+    vastuExplanation: string;
   };
   dailyRoutine: string[];
   spiritualPractices: string[];
   generalAdvice: string;
+  // Master trust-building section
+  remediesPhilosophy: {
+    vedicFoundation: string;
+    howRemediesWork: string;
+    importanceOfFaith: string;
+    scientificPerspective: string;
+    traditionalWisdom: string;
+  };
 }
 
 const REMEDIES_SYSTEM_PROMPT = `You are an expert Vedic astrologer specializing in Jyotish remedies (Upayas).
+
+Your role is not just to recommend remedies, but to explain WHY they work and build trust through:
+1. Scriptural references (citing Brihat Parashara Hora Shastra, Jataka Parijata, Phaladeepika, etc.)
+2. Scientific/logical explanations (vibration, energy, psychology, biochemistry)
+3. Traditional wisdom and time-tested practices
+4. Clear procedures and expected outcomes
 
 Provide comprehensive remedial measures based on:
 1. Weak or afflicted planets in the chart
 2. Current dasha period requirements
 3. Specific life challenges indicated by the chart
 
+For EACH remedy category, include:
+- The specific recommendation
+- Scriptural source/reference
+- Scientific or logical basis
+- How it works mechanistically
+- Proper procedure
+- Expected timeline for results
+- Precautions
+
 Remedies should include:
-- Rudraksha recommendations with specific mukhi
-- Gemstone recommendations with proper wearing instructions
-- Mantras with japa count and timing
-- Yantras for specific purposes
-- Ishta Devata (personal deity) recommendations
-- Donations (daan) with specific items and days
-- Fasting recommendations
-- Color and direction guidance
+- Rudraksha recommendations with specific mukhi and authenticity guidance
+- Gemstone recommendations with quality guidelines and wearing instructions
+- Mantras with proper pronunciation, japa count, and vibrational science
+- Yantras with geometric significance and consecration methods
+- Puja recommendations with specific deities and procedures
+- Ishta Devata (personal deity) with scriptural derivation
+- Donations (daan) with karma science explanation
+- Fasting recommendations with physiological benefits
+- Color and direction guidance with Vastu principles
 - Daily spiritual practices
 
-Be specific about timing, quantities, and methods. Reference classical texts where appropriate.`;
+Be specific about timing, quantities, and methods. Reference classical texts where appropriate.
+Build trust by explaining the science and tradition behind each remedy.`;
 
 interface RemediesInput {
   planets: SeerPlanet[];
@@ -123,7 +199,7 @@ export async function generateRemediesPrediction(input: RemediesInput): Promise<
   // Find afflicted planets (in houses 6, 8, 12)
   const afflictedPlanets = planets.filter(p => [6, 8, 12].includes(p.house));
 
-  const userPrompt = `Provide comprehensive remedies based on the chart:
+  const userPrompt = `Provide comprehensive remedies with trust-building explanations based on the chart:
 
 **Weak Planets (Debilitated/Enemy signs):**
 ${weakPlanets.map(p => `- ${p.name} in ${p.sign} (House ${p.house})`).join("\n") || "- None significantly weak"}
@@ -137,21 +213,35 @@ ${planets.map(p => {
   return `- ${p.name}: ${p.sign} (House ${p.house}) - ${dignity}${p.isRetro ? " [R]" : ""}`;
 }).join("\n")}
 
-Provide detailed remedies with:
-1. Rudraksha recommendations (multiple options)
-2. Gemstone guidance (primary + secondary)
-3. Mantras with specific counts and timing
-4. Yantra recommendations
-5. Ishta Devata identification
-6. Donation schedule
-7. Fasting recommendations
-8. Color and direction guidance
-9. Daily spiritual practices`;
+For EACH remedy, provide:
+1. The specific recommendation
+2. Scriptural source (e.g., "As per Brihat Parashara Hora Shastra, Chapter 85...")
+3. Scientific/logical explanation of how it works
+4. Proper procedure with step-by-step guidance
+5. Expected benefits and timeline
+
+Provide detailed remedies with trust-building content for:
+1. Rudraksha recommendations (with authenticity guidance)
+2. Gemstone guidance (with quality guidelines and proper wearing instructions)
+3. Mantras with pronunciation, vibrational science, and proper method
+4. Yantra recommendations with geometric significance
+5. Puja recommendations with specific procedures
+6. Ishta Devata identification with scriptural derivation
+7. Donation schedule with karma science explanation
+8. Fasting recommendations with physiological benefits
+9. Color and direction guidance with Vastu principles
+10. Daily spiritual practices
+
+Also include a "Remedies Philosophy" section explaining:
+- The Vedic foundation of remedies
+- How remedies work (energy, karma, vibration)
+- The role of faith and intention
+- Scientific perspective on traditional practices`;
 
   const toolSchema = {
     type: "object",
     properties: {
-      overview: { type: "string", description: "3-4 paragraph remedies overview" },
+      overview: { type: "string", description: "3-4 paragraph remedies overview explaining the approach" },
       weakPlanets: {
         type: "array",
         items: {
@@ -173,9 +263,12 @@ Provide detailed remedies with:
             name: { type: "string" },
             planet: { type: "string" },
             benefits: { type: "string" },
-            wearingInstructions: { type: "string" }
+            wearingInstructions: { type: "string" },
+            scripturalReference: { type: "string" },
+            scientificBasis: { type: "string" },
+            authenticity: { type: "string", description: "How to verify authenticity of the rudraksha" }
           },
-          required: ["mukhi", "name", "planet", "benefits", "wearingInstructions"]
+          required: ["mukhi", "name", "planet", "benefits", "wearingInstructions", "scripturalReference", "scientificBasis", "authenticity"]
         }
       },
       gemstoneRecommendations: {
@@ -191,22 +284,28 @@ Provide detailed remedies with:
               finger: { type: "string" },
               day: { type: "string" },
               benefits: { type: "string" },
-              cautions: { type: "string" }
+              cautions: { type: "string" },
+              scripturalReference: { type: "string" },
+              scientificBasis: { type: "string" },
+              howItWorks: { type: "string" },
+              qualityGuidelines: { type: "string" }
             },
-            required: ["stone", "planet", "weight", "metal", "finger", "day", "benefits", "cautions"]
+            required: ["stone", "planet", "weight", "metal", "finger", "day", "benefits", "cautions", "scripturalReference", "scientificBasis", "howItWorks", "qualityGuidelines"]
           },
           secondary: {
             type: "object",
             properties: {
               stone: { type: "string" },
               planet: { type: "string" },
-              benefits: { type: "string" }
+              benefits: { type: "string" },
+              scripturalReference: { type: "string" }
             },
-            required: ["stone", "planet", "benefits"]
+            required: ["stone", "planet", "benefits", "scripturalReference"]
           },
-          avoid: { type: "array", items: { type: "string" } }
+          avoid: { type: "array", items: { type: "string" } },
+          gemologyExplanation: { type: "string", description: "How gemstones work from Vedic perspective" }
         },
-        required: ["primary", "secondary", "avoid"]
+        required: ["primary", "secondary", "avoid", "gemologyExplanation"]
       },
       mantras: {
         type: "array",
@@ -218,9 +317,12 @@ Provide detailed remedies with:
             japaCount: { type: "number" },
             timing: { type: "string" },
             benefits: { type: "string" },
-            pronunciation: { type: "string" }
+            pronunciation: { type: "string" },
+            scripturalSource: { type: "string" },
+            vibrationalScience: { type: "string" },
+            properMethod: { type: "string" }
           },
-          required: ["mantra", "planet", "japaCount", "timing", "benefits", "pronunciation"]
+          required: ["mantra", "planet", "japaCount", "timing", "benefits", "pronunciation", "scripturalSource", "vibrationalScience", "properMethod"]
         }
       },
       yantras: {
@@ -231,9 +333,28 @@ Provide detailed remedies with:
             name: { type: "string" },
             planet: { type: "string" },
             placement: { type: "string" },
-            benefits: { type: "string" }
+            benefits: { type: "string" },
+            geometricSignificance: { type: "string" },
+            consecrationMethod: { type: "string" },
+            scripturalReference: { type: "string" }
           },
-          required: ["name", "planet", "placement", "benefits"]
+          required: ["name", "planet", "placement", "benefits", "geometricSignificance", "consecrationMethod", "scripturalReference"]
+        }
+      },
+      pujaRecommendations: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            deity: { type: "string" },
+            purpose: { type: "string" },
+            frequency: { type: "string" },
+            benefits: { type: "array", items: { type: "string" } },
+            scripturalBasis: { type: "string" },
+            procedure: { type: "string" }
+          },
+          required: ["name", "deity", "purpose", "frequency", "benefits", "scripturalBasis", "procedure"]
         }
       },
       ishtaDevata: {
@@ -243,9 +364,11 @@ Provide detailed remedies with:
           reason: { type: "string" },
           worship: { type: "string" },
           mantra: { type: "string" },
-          templeVisit: { type: "string" }
+          templeVisit: { type: "string" },
+          scripturalDerivation: { type: "string" },
+          significance: { type: "string" }
         },
-        required: ["deity", "reason", "worship", "mantra", "templeVisit"]
+        required: ["deity", "reason", "worship", "mantra", "templeVisit", "scripturalDerivation", "significance"]
       },
       donations: {
         type: "array",
@@ -255,9 +378,11 @@ Provide detailed remedies with:
             item: { type: "string" },
             day: { type: "string" },
             planet: { type: "string" },
-            reason: { type: "string" }
+            reason: { type: "string" },
+            scripturalReference: { type: "string" },
+            karmaScience: { type: "string" }
           },
-          required: ["item", "day", "planet", "reason"]
+          required: ["item", "day", "planet", "reason", "scripturalReference", "karmaScience"]
         }
       },
       fasting: {
@@ -268,9 +393,11 @@ Provide detailed remedies with:
             day: { type: "string" },
             planet: { type: "string" },
             method: { type: "string" },
-            benefits: { type: "string" }
+            benefits: { type: "string" },
+            scripturalReference: { type: "string" },
+            physiologicalBenefits: { type: "string" }
           },
-          required: ["day", "planet", "method", "benefits"]
+          required: ["day", "planet", "method", "benefits", "scripturalReference", "physiologicalBenefits"]
         }
       },
       colorTherapy: {
@@ -278,9 +405,10 @@ Provide detailed remedies with:
         properties: {
           favorable: { type: "array", items: { type: "string" } },
           avoid: { type: "array", items: { type: "string" } },
-          explanation: { type: "string" }
+          explanation: { type: "string" },
+          scientificBasis: { type: "string" }
         },
-        required: ["favorable", "avoid", "explanation"]
+        required: ["favorable", "avoid", "explanation", "scientificBasis"]
       },
       directionGuidance: {
         type: "object",
@@ -288,15 +416,28 @@ Provide detailed remedies with:
           favorable: { type: "array", items: { type: "string" } },
           avoid: { type: "array", items: { type: "string" } },
           sleepDirection: { type: "string" },
-          workDirection: { type: "string" }
+          workDirection: { type: "string" },
+          vastuExplanation: { type: "string" }
         },
-        required: ["favorable", "avoid", "sleepDirection", "workDirection"]
+        required: ["favorable", "avoid", "sleepDirection", "workDirection", "vastuExplanation"]
       },
       dailyRoutine: { type: "array", items: { type: "string" } },
       spiritualPractices: { type: "array", items: { type: "string" } },
-      generalAdvice: { type: "string" }
+      generalAdvice: { type: "string" },
+      remediesPhilosophy: {
+        type: "object",
+        description: "Master section explaining the philosophy of remedies",
+        properties: {
+          vedicFoundation: { type: "string", description: "Explain the Vedic basis of remedies" },
+          howRemediesWork: { type: "string", description: "Explain the mechanism of how remedies work" },
+          importanceOfFaith: { type: "string", description: "Role of faith and intention in remedies" },
+          scientificPerspective: { type: "string", description: "Modern scientific view on traditional remedies" },
+          traditionalWisdom: { type: "string", description: "Why these practices have survived millennia" }
+        },
+        required: ["vedicFoundation", "howRemediesWork", "importanceOfFaith", "scientificPerspective", "traditionalWisdom"]
+      }
     },
-    required: ["overview", "weakPlanets", "rudrakshaRecommendations", "gemstoneRecommendations", "mantras", "yantras", "ishtaDevata", "donations", "fasting", "colorTherapy", "directionGuidance", "dailyRoutine", "spiritualPractices", "generalAdvice"],
+    required: ["overview", "weakPlanets", "rudrakshaRecommendations", "gemstoneRecommendations", "mantras", "yantras", "pujaRecommendations", "ishtaDevata", "donations", "fasting", "colorTherapy", "directionGuidance", "dailyRoutine", "spiritualPractices", "generalAdvice", "remediesPhilosophy"],
     additionalProperties: false
   };
 
@@ -304,7 +445,7 @@ Provide detailed remedies with:
     REMEDIES_SYSTEM_PROMPT,
     userPrompt,
     "generate_remedies_prediction",
-    "Generate comprehensive astrological remedies",
+    "Generate comprehensive astrological remedies with trust-building content",
     toolSchema
   );
 }

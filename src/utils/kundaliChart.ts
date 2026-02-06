@@ -13,6 +13,31 @@ export interface BirthDetails {
 
 export type ChartType = 'North' | 'South';
 
+// Divisional chart types supported by Seer API
+export type DivisionalChart = 'D1' | 'D2' | 'D3' | 'D4' | 'D7' | 'D9' | 'D10' | 'D12' | 'D16' | 'D20' | 'D24' | 'D27' | 'D30' | 'D40' | 'D45' | 'D60';
+
+export const CHART_INFO: Record<DivisionalChart, { name: string; nameHindi: string; purpose: string }> = {
+  D1: { name: 'Rashi (Birth Chart)', nameHindi: 'राशि चक्र', purpose: 'Overall life assessment' },
+  D2: { name: 'Hora', nameHindi: 'होरा', purpose: 'Wealth and finances' },
+  D3: { name: 'Drekkana', nameHindi: 'द्रेक्काण', purpose: 'Siblings and courage' },
+  D4: { name: 'Chaturthamsa', nameHindi: 'चतुर्थांश', purpose: 'Fortune and property' },
+  D7: { name: 'Saptamsa', nameHindi: 'सप्तांश', purpose: 'Children and progeny' },
+  D9: { name: 'Navamsa', nameHindi: 'नवांश', purpose: 'Marriage and spouse' },
+  D10: { name: 'Dasamsa', nameHindi: 'दशांश', purpose: 'Career and profession' },
+  D12: { name: 'Dwadasamsa', nameHindi: 'द्वादशांश', purpose: 'Parents and ancestry' },
+  D16: { name: 'Shodasamsa', nameHindi: 'षोडशांश', purpose: 'Vehicles and comforts' },
+  D20: { name: 'Vimsamsa', nameHindi: 'विंशांश', purpose: 'Spiritual progress' },
+  D24: { name: 'Chaturvimsamsa', nameHindi: 'चतुर्विंशांश', purpose: 'Education and learning' },
+  D27: { name: 'Bhamsa', nameHindi: 'भांश', purpose: 'Strength and weakness' },
+  D30: { name: 'Trimsamsa', nameHindi: 'त्रिंशांश', purpose: 'Misfortune and evil' },
+  D40: { name: 'Khavedamsa', nameHindi: 'खवेदांश', purpose: 'Auspiciousness' },
+  D45: { name: 'Akshavedamsa', nameHindi: 'अक्षवेदांश', purpose: 'Character and morals' },
+  D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', purpose: 'Past life karma' },
+};
+
+// Important charts for PDF report
+export const PDF_CHARTS: DivisionalChart[] = ['D1', 'D9', 'D10', 'D7', 'D3'];
+
 interface CacheEntry {
   svg: string;
   timestamp: number;
@@ -24,8 +49,8 @@ const svgCache = new Map<string, CacheEntry>();
 // Cache TTL: 30 minutes
 const CACHE_TTL = 30 * 60 * 1000;
 
-function getCacheKey(birthDetails: BirthDetails, chartType: ChartType, language: string): string {
-  return `D1|${chartType}|svg|${birthDetails.day}-${birthDetails.month}-${birthDetails.year}-${birthDetails.hour}-${birthDetails.minute}-${birthDetails.lat}-${birthDetails.lon}-${birthDetails.tzone}|${language}`;
+function getCacheKey(birthDetails: BirthDetails, chartType: ChartType, language: string, divisionalChart: DivisionalChart): string {
+  return `${divisionalChart}|${chartType}|svg|${birthDetails.day}-${birthDetails.month}-${birthDetails.year}-${birthDetails.hour}-${birthDetails.minute}-${birthDetails.lat}-${birthDetails.lon}-${birthDetails.tzone}|${language}`;
 }
 
 function getFromCache(key: string): string | null {
@@ -106,13 +131,14 @@ export interface FetchKundaliOptions {
   birthDetails: BirthDetails;
   chartType: ChartType;
   language: 'en' | 'hi';
+  divisionalChart?: DivisionalChart;
   signal?: AbortSignal;
 }
 
 export async function fetchKundaliSvg(options: FetchKundaliOptions): Promise<string> {
-  const { birthDetails, chartType, language, signal } = options;
+  const { birthDetails, chartType, language, divisionalChart = 'D1', signal } = options;
   
-  const cacheKey = getCacheKey(birthDetails, chartType, language);
+  const cacheKey = getCacheKey(birthDetails, chartType, language, divisionalChart);
   
   // Check cache first
   const cached = getFromCache(cacheKey);
@@ -127,7 +153,8 @@ export async function fetchKundaliSvg(options: FetchKundaliOptions): Promise<str
     body: {
       ...birthDetails,
       chartType,
-      language
+      language,
+      divisionalChart
     }
   });
   
@@ -152,4 +179,45 @@ export async function fetchKundaliSvg(options: FetchKundaliOptions): Promise<str
   setCache(cacheKey, responsiveSvg);
   
   return responsiveSvg;
+}
+
+export interface ChartData {
+  type: DivisionalChart;
+  name: string;
+  nameHindi: string;
+  purpose: string;
+  svg: string;
+}
+
+/**
+ * Fetch multiple divisional charts in parallel
+ */
+export async function fetchMultipleCharts(
+  birthDetails: BirthDetails,
+  chartType: ChartType,
+  language: 'en' | 'hi',
+  charts: DivisionalChart[] = PDF_CHARTS
+): Promise<ChartData[]> {
+  const results = await Promise.allSettled(
+    charts.map(async (chart) => {
+      const svg = await fetchKundaliSvg({
+        birthDetails,
+        chartType,
+        language,
+        divisionalChart: chart
+      });
+      const info = CHART_INFO[chart];
+      return {
+        type: chart,
+        name: info.name,
+        nameHindi: info.nameHindi,
+        purpose: info.purpose,
+        svg
+      };
+    })
+  );
+  
+  return results
+    .filter((r): r is PromiseFulfilledResult<ChartData> => r.status === 'fulfilled')
+    .map(r => r.value);
 }

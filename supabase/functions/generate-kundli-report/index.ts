@@ -13,6 +13,7 @@ import { generateNumerologyPrediction, type NumerologyPrediction } from "./numer
 import { generateSpiritualPrediction, type SpiritualPrediction } from "./spiritual-agent.ts";
 import { generateCharaKarakasPrediction, type CharaKarakasPrediction } from "./chara-karakas-agent.ts";
 import { generateGlossaryPrediction, type GlossaryPrediction } from "./glossary-agent.ts";
+import { runQAValidation, sanitizeReportContent, type QAResult } from "./qa-agent.ts";
 import { calculateCharaKarakas, type CharaKaraka } from "./utils/chara-karakas.ts";
 import { calculateAspects, getConjunctions, type Aspect } from "./utils/aspects.ts";
 import { getNakshatraWithPada } from "./utils/nakshatra.ts";
@@ -73,6 +74,7 @@ interface KundliReport {
   numerology: NumerologyPrediction | null;
   spiritual: SpiritualPrediction | null;
   glossary: GlossaryPrediction | null;
+  qa: QAResult | null;
   generatedAt: string;
   language: "en" | "hi";
   errors: string[];
@@ -262,8 +264,8 @@ serve(async (req) => {
     if (!glossaryResult.success) errors.push(`Glossary: ${glossaryResult.error}`);
     else totalTokens += glossaryResult.tokensUsed || 0;
 
-    // Assemble the complete report
-    const report: KundliReport = {
+    // Assemble the complete report (pre-QA)
+    let report: KundliReport = {
       birthDetails: {
         name,
         dateOfBirth,
@@ -300,17 +302,44 @@ serve(async (req) => {
       numerology: numerologyResult.data || null,
       spiritual: spiritualResult.data || null,
       glossary: glossaryResult.data || null,
+      qa: null,
       generatedAt: new Date().toISOString(),
       language,
       errors,
       tokensUsed: totalTokens,
     };
 
+    // Step 6: Run QA validation on the complete report
+    console.log("🔍 [REPORT] Running QA validation...");
+    const qaResult = await runQAValidation(report as unknown as Record<string, any>);
+    
+    // Apply sanitization if needed
+    if (qaResult.blockedContent.length > 0 || qaResult.issues.some(i => i.severity === "critical")) {
+      console.log("🧹 [REPORT] Sanitizing report content...");
+      report = sanitizeReportContent(report as unknown as Record<string, any>) as unknown as KundliReport;
+    }
+    
+    // Add QA results to report
+    report.qa = qaResult;
+    
+    // Log QA results
+    console.log(`✅ [REPORT] QA complete. Score: ${qaResult.overallScore}/10, Approved: ${qaResult.approved}`);
+    if (qaResult.issues.length > 0) {
+      console.log(`   🚨 QA Issues: ${qaResult.issues.length}`);
+      for (const issue of qaResult.issues.filter(i => i.severity === "critical")) {
+        console.log(`   ❌ CRITICAL: ${issue.section} - ${issue.description}`);
+      }
+    }
+    if (qaResult.blockedContent.length > 0) {
+      console.log(`   🚫 Blocked content: ${qaResult.blockedContent.join(", ")}`);
+    }
+
     console.log(`✅ [REPORT] Comprehensive report generated.`);
     console.log(`   📊 Tokens used: ${totalTokens}`);
     console.log(`   ⚠️ Errors: ${errors.length}`);
     console.log(`   🪐 Planets: ${planetProfiles.length}`);
     console.log(`   🏠 Houses: ${houseAnalyses.length}`);
+    console.log(`   🔍 QA Score: ${qaResult.overallScore}/10`);
 
     return new Response(
       JSON.stringify(report),

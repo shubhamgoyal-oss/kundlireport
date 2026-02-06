@@ -15,6 +15,8 @@ import { generateNumerologyPrediction } from "../_shared/generate-kundli-report/
 import { generateSpiritualPrediction } from "../_shared/generate-kundli-report/spiritual-agent.ts";
 import { generateCharaKarakasPrediction } from "../_shared/generate-kundli-report/chara-karakas-agent.ts";
 import { generateGlossaryPrediction } from "../_shared/generate-kundli-report/glossary-agent.ts";
+import { generateDoshasPrediction } from "../_shared/generate-kundli-report/doshas-agent.ts";
+import { generateRajYogsPrediction } from "../_shared/generate-kundli-report/raj-yogs-agent.ts";
 import { runQAValidation, sanitizeReportContent } from "../_shared/generate-kundli-report/qa-agent.ts";
 
 import { calculateCharaKarakas } from "../_shared/generate-kundli-report/utils/chara-karakas.ts";
@@ -160,13 +162,16 @@ serve(async (req) => {
     const houseAnalyses = await generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx);
 
     // Phase 5
-    await updateJobStatus(supabaseAdmin, jobId, "processing", "Predicting life areas", 70);
+    await updateJobStatus(supabaseAdmin, jobId, "processing", "Predicting life areas", 65);
 
-    const [careerResult, marriageResult, dashaResult, rahuKetuResult] = await Promise.all([
+    const moonSignIdx = moon?.signIdx || 0;
+    const [careerResult, marriageResult, dashaResult, rahuKetuResult, doshasResult, rajYogsResult] = await Promise.all([
       generateCareerPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }),
       generateMarriagePrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas, gender: normalizedGender }),
       generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }),
       generateRahuKetuPrediction({ planets: kundli.planets }),
+      generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }),
+      generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }),
     ]);
 
     if (!careerResult.success) errors.push(`Career: ${careerResult.error}`);
@@ -180,6 +185,12 @@ serve(async (req) => {
 
     if (!rahuKetuResult.success) errors.push(`RahuKetu: ${rahuKetuResult.error}`);
     else totalTokens += rahuKetuResult.tokensUsed || 0;
+
+    if (!doshasResult.success) errors.push(`Doshas: ${doshasResult.error}`);
+    else totalTokens += doshasResult.tokensUsed || 0;
+
+    if (!rajYogsResult.success) errors.push(`RajYogs: ${rajYogsResult.error}`);
+    else totalTokens += rajYogsResult.tokensUsed || 0;
 
     // Phase 6
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Generating remedies & spiritual insights", 85);
@@ -233,6 +244,8 @@ serve(async (req) => {
       marriage: marriageResult.data || null,
       dasha: dashaResult.data || null,
       rahuKetu: rahuKetuResult.data || null,
+      doshas: doshasResult.data || null,
+      rajYogs: rajYogsResult.data || null,
       remedies: remediesResult.data || null,
       numerology: numerologyResult.data || null,
       spiritual: spiritualResult.data || null,

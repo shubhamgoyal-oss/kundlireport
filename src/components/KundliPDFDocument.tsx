@@ -1271,6 +1271,316 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Page>
       )}
 
+      {/* Doshas Analysis - Standardized Template */}
+      {report.doshas && (
+        <>
+          <Page size="A4" style={styles.page}>
+            <Section title="Dosha Analysis">
+              <Text style={styles.paragraph}>{report.doshas.overview || ''}</Text>
+              
+              <View style={styles.highlight}>
+                <Text style={{ fontWeight: 'bold' }}>Total Doshas Detected: {report.doshas.totalDoshasDetected || 0}</Text>
+              </View>
+
+              <SubSection title="Major Doshas">
+                {(report.doshas.majorDoshas || []).map((dosha: any, idx: number) => (
+                  <Card key={idx} title={`${dosha.name} (${dosha.nameHindi})`}>
+                    <View style={styles.row}>
+                      <Text style={[styles.badge, { 
+                        backgroundColor: dosha.status === 'present' ? '#dc2626' : 
+                                        dosha.status === 'nullified' ? '#059669' : 
+                                        dosha.status === 'partial' ? '#f59e0b' : '#6b7280' 
+                      }]}>
+                        {dosha.status?.toUpperCase()}
+                      </Text>
+                      <Text style={[styles.badgeOutline, { 
+                        borderColor: dosha.severity === 'high' ? '#dc2626' : 
+                                    dosha.severity === 'medium' ? '#f59e0b' : '#059669',
+                        color: dosha.severity === 'high' ? '#dc2626' : 
+                              dosha.severity === 'medium' ? '#f59e0b' : '#059669'
+                      }]}>
+                        {dosha.severity?.toUpperCase()} SEVERITY
+                      </Text>
+                    </View>
+                    
+                    <Text style={styles.paragraph}>{dosha.description}</Text>
+                    
+                    {dosha.cause && (
+                      <>
+                        <Text style={styles.subSubHeader}>Cause</Text>
+                        <Text style={{ fontSize: 10 }}>{dosha.cause}</Text>
+                      </>
+                    )}
+                    
+                    {dosha.effects && dosha.effects.length > 0 && (
+                      <>
+                        <Text style={styles.subSubHeader}>Effects</Text>
+                        <BulletList items={dosha.effects} />
+                      </>
+                    )}
+                    
+                    {dosha.affectedLifeAreas && dosha.affectedLifeAreas.length > 0 && (
+                      <InfoRow label="Affected Areas" value={dosha.affectedLifeAreas.join(', ')} />
+                    )}
+                    
+                    {dosha.nullificationReason && (
+                      <View style={styles.highlight}>
+                        <Text style={{ fontSize: 10, color: '#059669' }}>Nullified: {dosha.nullificationReason}</Text>
+                      </View>
+                    )}
+                    
+                    <Text style={{ fontSize: 9, fontStyle: 'italic', color: '#6b7280', marginTop: 5 }}>{dosha.scripturalReference}</Text>
+                  </Card>
+                ))}
+              </SubSection>
+            </Section>
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+
+          {/* Minor Doshas */}
+          {report.doshas.minorDoshas && report.doshas.minorDoshas.length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Minor Doshas">
+                {report.doshas.minorDoshas.map((dosha: any, idx: number) => (
+                  <Card key={idx} title={`${dosha.name} (${dosha.nameHindi})`}>
+                    <View style={styles.row}>
+                      <Text style={[styles.badge, { 
+                        backgroundColor: dosha.status === 'present' ? '#dc2626' : 
+                                        dosha.status === 'nullified' ? '#059669' : '#6b7280' 
+                      }]}>
+                        {dosha.status?.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={styles.paragraph}>{dosha.description}</Text>
+                    {dosha.cause && <Text style={{ fontSize: 10 }}>Cause: {dosha.cause}</Text>}
+                    {dosha.effects && dosha.effects.length > 0 && <BulletList items={dosha.effects} />}
+                  </Card>
+                ))}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+
+          {/* Dosha Remedies */}
+          {report.doshas.doshaRemedies && report.doshas.doshaRemedies.length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Dosha Remedies">
+                <SubSection title="Priority Remedies">
+                  {report.doshas.priorityRemedies && (
+                    <>
+                      <Text style={styles.subSubHeader}>Immediate (Start Now)</Text>
+                      <BulletList items={report.doshas.priorityRemedies.immediate || []} />
+                      
+                      <Text style={styles.subSubHeader}>Short-Term (1-3 Months)</Text>
+                      <BulletList items={report.doshas.priorityRemedies.shortTerm || []} />
+                      
+                      <Text style={styles.subSubHeader}>Long-Term (Ongoing)</Text>
+                      <BulletList items={report.doshas.priorityRemedies.longTerm || []} />
+                    </>
+                  )}
+                </SubSection>
+
+                {report.doshas.doshaRemedies.map((remedy: any, idx: number) => (
+                  <Card key={idx} title={`Remedies for ${remedy.doshaName}`}>
+                    <Text style={styles.subSubHeader}>Primary Remedy: {remedy.primaryRemedy?.name}</Text>
+                    <InfoRow label="Type" value={remedy.primaryRemedy?.type || 'N/A'} />
+                    <Text style={{ fontSize: 10 }}>{remedy.primaryRemedy?.description}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Procedure</Text>
+                    <Text style={{ fontSize: 10 }}>{remedy.primaryRemedy?.procedure}</Text>
+                    
+                    <InfoRow label="Timing" value={remedy.primaryRemedy?.timing || 'N/A'} />
+                    
+                    {remedy.primaryRemedy?.expectedBenefits && (
+                      <>
+                        <Text style={styles.subSubHeader}>Expected Benefits</Text>
+                        <BulletList items={remedy.primaryRemedy.expectedBenefits} />
+                      </>
+                    )}
+                    
+                    <Text style={{ fontSize: 9, fontStyle: 'italic', color: '#6b7280' }}>{remedy.primaryRemedy?.scripturalBasis}</Text>
+                    
+                    {remedy.mantras && remedy.mantras.length > 0 && (
+                      <>
+                        <Text style={styles.subSubHeader}>Mantras</Text>
+                        {remedy.mantras.map((m: any, mIdx: number) => (
+                          <View key={mIdx} style={{ marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold', color: '#7c3aed' }}>{m.mantra}</Text>
+                            <Text style={{ fontSize: 9 }}>Deity: {m.deity} | Count: {m.japaCount} | Timing: {m.timing}</Text>
+                          </View>
+                        ))}
+                      </>
+                    )}
+                  </Card>
+                ))}
+
+                <View style={styles.highlight}>
+                  <Text>{report.doshas.generalGuidance || ''}</Text>
+                </View>
+
+                <Text style={{ fontSize: 9, color: '#6b7280', marginTop: 10 }}>{report.doshas.disclaimerNote || ''}</Text>
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+        </>
+      )}
+
+      {/* Raj Yogs Analysis - Standardized Template */}
+      {report.rajYogs && (
+        <>
+          <Page size="A4" style={styles.page}>
+            <Section title="Raja Yogas (Auspicious Combinations)">
+              <Text style={styles.paragraph}>{report.rajYogs.overview || ''}</Text>
+              
+              <View style={styles.highlight}>
+                <Text style={{ fontWeight: 'bold' }}>Total Yogas Detected: {report.rajYogs.totalYogasDetected || 0}</Text>
+                <Text>Overall Strength: {report.rajYogs.overallYogaStrength?.rating?.toUpperCase() || 'N/A'}</Text>
+              </View>
+              
+              <Text style={styles.paragraph}>{report.rajYogs.overallYogaStrength?.description || ''}</Text>
+
+              <SubSection title="Raja Yogas (Power & Success)">
+                {(report.rajYogs.rajYogas || []).filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
+                  <Card key={idx} title={`${yoga.name} (${yoga.nameHindi})`}>
+                    <View style={styles.row}>
+                      <Text style={[styles.badge, { 
+                        backgroundColor: yoga.strength === 'very strong' ? '#059669' : 
+                                        yoga.strength === 'strong' ? '#10b981' : 
+                                        yoga.strength === 'moderate' ? '#f59e0b' : '#6b7280' 
+                      }]}>
+                        {yoga.strength?.toUpperCase()}
+                      </Text>
+                    </View>
+                    
+                    <Text style={{ fontSize: 10, fontStyle: 'italic', color: '#6b7280' }}>{yoga.nameSanskrit}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Definition</Text>
+                    <Text style={{ fontSize: 10 }}>{yoga.definition}</Text>
+                    
+                    <Text style={styles.subSubHeader}>Formation in Your Chart</Text>
+                    <View style={styles.highlight}>
+                      <Text style={{ fontSize: 10 }}>{yoga.formationInChart}</Text>
+                    </View>
+                    
+                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <BulletList items={yoga.benefits || []} />
+                    
+                    <InfoRow label="Activation Period" value={yoga.activationPeriod || 'N/A'} />
+                    
+                    <Text style={{ fontSize: 9, fontStyle: 'italic', color: '#6b7280', marginTop: 5 }}>{yoga.scripturalReference}</Text>
+                  </Card>
+                ))}
+              </SubSection>
+            </Section>
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+
+          {/* Dhana Yogas */}
+          {report.rajYogs.dhanaYogas && report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Dhana Yogas (Wealth Combinations)">
+                {report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
+                  <Card key={idx} title={`${yoga.name} (${yoga.nameHindi})`}>
+                    <View style={styles.row}>
+                      <Text style={[styles.badge, { backgroundColor: '#f59e0b' }]}>
+                        {yoga.strength?.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 10 }}>{yoga.definition}</Text>
+                    <Text style={styles.subSubHeader}>In Your Chart</Text>
+                    <Text style={{ fontSize: 10 }}>{yoga.formationInChart}</Text>
+                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <BulletList items={yoga.benefits || []} />
+                    <InfoRow label="Activation" value={yoga.activationPeriod || 'N/A'} />
+                  </Card>
+                ))}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+
+          {/* Life Predictions from Yogas */}
+          {report.rajYogs.lifePredictions && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Life Predictions Based on Yogas">
+                <SubSection title="Career">
+                  <InfoRow label="Strength" value={report.rajYogs.lifePredictions.career?.strength || 'N/A'} />
+                  <Text style={styles.paragraph}>{report.rajYogs.lifePredictions.career?.prediction || ''}</Text>
+                  <InfoRow label="Peak Period" value={report.rajYogs.lifePredictions.career?.peakPeriod || 'N/A'} />
+                </SubSection>
+
+                <SubSection title="Wealth">
+                  <InfoRow label="Strength" value={report.rajYogs.lifePredictions.wealth?.strength || 'N/A'} />
+                  <Text style={styles.paragraph}>{report.rajYogs.lifePredictions.wealth?.prediction || ''}</Text>
+                  <InfoRow label="Peak Period" value={report.rajYogs.lifePredictions.wealth?.peakPeriod || 'N/A'} />
+                </SubSection>
+
+                <SubSection title="Fame & Recognition">
+                  <InfoRow label="Strength" value={report.rajYogs.lifePredictions.fame?.strength || 'N/A'} />
+                  <Text style={styles.paragraph}>{report.rajYogs.lifePredictions.fame?.prediction || ''}</Text>
+                  <InfoRow label="Peak Period" value={report.rajYogs.lifePredictions.fame?.peakPeriod || 'N/A'} />
+                </SubSection>
+
+                <SubSection title="Spirituality">
+                  <InfoRow label="Strength" value={report.rajYogs.lifePredictions.spirituality?.strength || 'N/A'} />
+                  <Text style={styles.paragraph}>{report.rajYogs.lifePredictions.spirituality?.prediction || ''}</Text>
+                  <InfoRow label="Peak Period" value={report.rajYogs.lifePredictions.spirituality?.peakPeriod || 'N/A'} />
+                </SubSection>
+
+                {report.rajYogs.yogaEnhancement && (
+                  <SubSection title="Yoga Enhancement">
+                    <Text style={styles.subSubHeader}>Practices to Strengthen Yogas</Text>
+                    <BulletList items={report.rajYogs.yogaEnhancement.practices || []} />
+                    
+                    {report.rajYogs.yogaEnhancement.mantras && report.rajYogs.yogaEnhancement.mantras.length > 0 && (
+                      <>
+                        <Text style={styles.subSubHeader}>Mantras</Text>
+                        {report.rajYogs.yogaEnhancement.mantras.map((m: any, idx: number) => (
+                          <View key={idx} style={{ marginBottom: 5 }}>
+                            <Text style={{ fontWeight: 'bold' }}>{m.mantra}</Text>
+                            <Text style={{ fontSize: 9 }}>Purpose: {m.purpose} | Timing: {m.timing}</Text>
+                          </View>
+                        ))}
+                      </>
+                    )}
+                    
+                    <InfoRow label="Recommended Gemstones" value={(report.rajYogs.yogaEnhancement.gemstones || []).join(', ')} />
+                    <InfoRow label="Favorable Periods" value={(report.rajYogs.yogaEnhancement.favorablePeriods || []).join(', ')} />
+                  </SubSection>
+                )}
+
+                <View style={styles.highlight}>
+                  <Text>{report.rajYogs.summaryNote || ''}</Text>
+                </View>
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+
+          {/* Challenging Yogas */}
+          {report.rajYogs.challengingYogas && report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Challenging Yogas (For Awareness)">
+                <Text style={styles.paragraph}>
+                  The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.
+                </Text>
+                {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
+                  <Card key={idx} title={`${yoga.name} (${yoga.nameHindi})`}>
+                    <Text style={{ fontSize: 10 }}>{yoga.definition}</Text>
+                    <Text style={styles.subSubHeader}>In Your Chart</Text>
+                    <Text style={{ fontSize: 10 }}>{yoga.formationInChart}</Text>
+                    <Text style={styles.subSubHeader}>Effects</Text>
+                    <BulletList items={yoga.benefits || []} />
+                  </Card>
+                ))}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+        </>
+      )}
+
       {/* Numerology */}
       {report.numerology && (
         <Page size="A4" style={styles.page}>

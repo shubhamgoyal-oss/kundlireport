@@ -35,8 +35,21 @@ export const CHART_INFO: Record<DivisionalChart, { name: string; nameHindi: stri
   D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', purpose: 'Past life karma' },
 };
 
-// Important charts for PDF report
-export const PDF_CHARTS: DivisionalChart[] = ['D1', 'D9', 'D10', 'D7', 'D3'];
+// Important charts for PDF report (12 key divisional charts)
+export const PDF_CHARTS: DivisionalChart[] = [
+  'D1',  // Rashi - Birth Chart
+  'D2',  // Hora - Wealth
+  'D3',  // Drekkana - Siblings
+  'D4',  // Chaturthamsa - Fortune
+  'D7',  // Saptamsa - Children
+  'D9',  // Navamsa - Marriage
+  'D10', // Dasamsa - Career
+  'D12', // Dwadasamsa - Parents
+  'D20', // Vimsamsa - Spiritual
+  'D24', // Chaturvimsamsa - Education
+  'D27', // Bhamsa - Strength
+  'D60', // Shashtiamsa - Past Karma
+];
 
 interface CacheEntry {
   svg: string;

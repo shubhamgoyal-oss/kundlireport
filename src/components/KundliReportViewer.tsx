@@ -30,6 +30,8 @@ interface KundliReport {
   marriage: any | null;
   dasha: any | null;
   rahuKetu: any | null;
+  doshas: any | null;
+  rajYogs: any | null;
   remedies: any | null;
   numerology: any | null;
   spiritual: any | null;
@@ -199,6 +201,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     report.marriage,
     report.dasha,
     report.rahuKetu,
+    report.doshas,
+    report.rajYogs,
     report.remedies,
     report.numerology,
     report.spiritual,
@@ -215,6 +219,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     (report.marriage ? 1 : 0) +
     (report.dasha ? 1 : 0) +
     (report.rahuKetu ? 1 : 0) +
+    (report.doshas ? 3 : 0) + // Doshas analysis (major, minor, remedies)
+    (report.rajYogs ? 4 : 0) + // Raj Yogs (raja, dhana, life predictions, challenging)
     (report.numerology ? 1 : 0) +
     (report.spiritual ? 1 : 0) +
     (report.remedies ? 2 : 0) +
@@ -392,6 +398,16 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
                 {report.rahuKetu && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Rahu-Ketu Analysis
+                  </div>
+                )}
+                {report.doshas && (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <span>✓</span> Dosha Analysis
+                  </div>
+                )}
+                {report.rajYogs && (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <span>✓</span> Raja Yogas
                   </div>
                 )}
                 {report.numerology && (

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Calendar, Clock, MapPin, Loader2, Edit, User, ChevronDown, X, FileText } from 'lucide-react';
+import { Calendar, Clock, MapPin, Loader2, Edit, User, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { KundliReportViewer } from './KundliReportViewer';
 import { DateOfBirthPicker } from './DateOfBirthPicker';
@@ -60,7 +60,7 @@ const birthInputSchema = z
 type BirthInput = z.infer<typeof birthInputSchema>;
 
 const KundliReportGenerator = () => {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const { predictions, searchPlaces, getPlaceDetails, clearPredictions } = useIndianCitiesAutocomplete();
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -177,7 +177,15 @@ const KundliReportGenerator = () => {
         }
       }
 
-      const response = await supabase.functions.invoke('generate-kundli-report', {
+      // Get visitor/session IDs from localStorage (same pattern as analytics)
+      const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
+      const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
+      
+      if (!localStorage.getItem('visitor_id')) localStorage.setItem('visitor_id', visitorId);
+      if (!localStorage.getItem('session_id')) localStorage.setItem('session_id', sessionId);
+
+      // Start async job instead of waiting for full report
+      const { data: jobData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
         body: {
           name: data.name.trim(),
           dateOfBirth: data.date,
@@ -188,14 +196,68 @@ const KundliReportGenerator = () => {
           timezone: tzOffset,
           language: isHindi ? 'hi' : 'en',
           gender: data.gender,
+          visitorId,
+          sessionId,
         },
       });
 
-      if (response.error) {
-        throw new Error(response.error.message || 'Report generation failed');
+      if (startError) {
+        throw new Error(startError.message || 'Failed to start report generation');
       }
 
-      setKundliReport(response.data);
+      const jobId = jobData?.jobId;
+      if (!jobId) {
+        throw new Error('No job ID returned');
+      }
+
+      console.log('[KundliReportGenerator] Job started:', jobId);
+      
+      // Poll for job completion
+      const pollInterval = 3000; // 3 seconds
+      const maxPolls = 120; // 6 minutes max
+      let pollCount = 0;
+
+      const pollJob = async (): Promise<any> => {
+        pollCount++;
+        
+        // Use fetch directly since invoke doesn't support query params well
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to check job status');
+        }
+        
+        const jobStatus = await response.json();
+        console.log('[KundliReportGenerator] Job status:', jobStatus.status, jobStatus.progressPercent + '%');
+
+        if (jobStatus.status === 'completed' && jobStatus.report) {
+          return jobStatus.report;
+        }
+
+        if (jobStatus.status === 'failed') {
+          throw new Error(jobStatus.error || 'Report generation failed');
+        }
+
+        if (pollCount >= maxPolls) {
+          throw new Error('Report generation timed out. Please try again.');
+        }
+
+        // Wait and poll again
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        return pollJob();
+      };
+
+      const report = await pollJob();
+      
+      setKundliReport(report);
       setIsFormCollapsed(true);
       
       toast.success(isHindi ? 'कुंडली रिपोर्ट तैयार!' : 'Kundli report generated!');
@@ -205,6 +267,7 @@ const KundliReportGenerator = () => {
           place: data.place,
           date: data.date,
           hasTime: !data.unknownTime,
+          jobId,
         }
       });
       
@@ -219,7 +282,7 @@ const KundliReportGenerator = () => {
         }
       });
       
-      toast.error(isHindi ? 'रिपोर्ट बनाने में त्रुटि' : 'Error generating report');
+      toast.error(isHindi ? 'रिपोर्ट बनाने में त्रुटि। कृपया पुनः प्रयास करें।' : 'Error generating report. Please try again.');
     } finally {
       setIsGenerating(false);
     }

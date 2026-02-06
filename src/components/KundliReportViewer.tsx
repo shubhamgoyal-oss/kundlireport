@@ -33,10 +33,13 @@ interface KundliReport {
   remedies: any | null;
   numerology: any | null;
   spiritual: any | null;
+  charaKarakasDetailed?: any | null;
+  glossary?: any | null;
   generatedAt: string;
   language: string;
   errors: string[];
   tokensUsed: number;
+  qa?: any | null;
   charts?: ChartData[]; // Added for PDF charts
 }
 

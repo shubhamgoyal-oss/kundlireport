@@ -20,3 +20,15 @@ verify_jwt = false
 
 [functions.dosha-api]
 verify_jwt = false
+
+[functions.start-kundli-job]
+verify_jwt = false
+
+[functions.get-kundli-job]
+verify_jwt = false
+
+[functions.process-kundli-job]
+verify_jwt = false
+
+[functions.get-kundali-chart]
+verify_jwt = false

@@ -433,6 +433,78 @@ export type Database = {
         }
         Relationships: []
       }
+      kundli_report_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_phase: string | null
+          date_of_birth: string
+          error_message: string | null
+          expires_at: string
+          gender: string
+          id: string
+          language: string
+          latitude: number
+          longitude: number
+          name: string
+          place_of_birth: string
+          progress_percent: number | null
+          report_data: Json | null
+          session_id: string
+          status: string
+          time_of_birth: string
+          timezone: number
+          updated_at: string
+          visitor_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_phase?: string | null
+          date_of_birth: string
+          error_message?: string | null
+          expires_at?: string
+          gender?: string
+          id?: string
+          language?: string
+          latitude: number
+          longitude: number
+          name: string
+          place_of_birth: string
+          progress_percent?: number | null
+          report_data?: Json | null
+          session_id: string
+          status?: string
+          time_of_birth: string
+          timezone: number
+          updated_at?: string
+          visitor_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_phase?: string | null
+          date_of_birth?: string
+          error_message?: string | null
+          expires_at?: string
+          gender?: string
+          id?: string
+          language?: string
+          latitude?: number
+          longitude?: number
+          name?: string
+          place_of_birth?: string
+          progress_percent?: number | null
+          report_data?: Json | null
+          session_id?: string
+          status?: string
+          time_of_birth?: string
+          timezone?: number
+          updated_at?: string
+          visitor_id?: string
+        }
+        Relationships: []
+      }
       problem_area_selections: {
         Row: {
           calculation_id: string | null

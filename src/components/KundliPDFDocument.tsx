@@ -1669,6 +1669,258 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Page>
       )}
 
+      {/* Chara Karakas (Jaimini) - Detailed Analysis */}
+      {report.charaKarakasDetailed && (
+        <>
+          <Page size="A4" style={styles.page}>
+            <Section title="Chara Karakas - Jaimini Astrology">
+              <Text style={styles.paragraph}>{report.charaKarakasDetailed.overview || ''}</Text>
+              
+              <SubSection title="Understanding the Jaimini System">
+                <Text style={styles.paragraph}>{report.charaKarakasDetailed.jaiminiSystemExplanation || ''}</Text>
+              </SubSection>
+
+              <SubSection title="Your Chara Karakas">
+                <View style={styles.table}>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.tableHeaderCell}>Karaka</Text>
+                    <Text style={styles.tableHeaderCell}>Planet</Text>
+                    <Text style={styles.tableHeaderCell}>Sign</Text>
+                    <Text style={styles.tableHeaderCell}>House</Text>
+                    <Text style={styles.tableHeaderCell}>Signification</Text>
+                  </View>
+                  {(report.charaKarakasDetailed.karakaInterpretations || []).map((k: any, idx: number) => (
+                    <View key={idx} style={styles.tableRow}>
+                      <Text style={styles.tableCell}>{k.karaka}</Text>
+                      <Text style={styles.tableCell}>{k.planet}</Text>
+                      <Text style={styles.tableCell}>{k.sign}</Text>
+                      <Text style={styles.tableCell}>{k.house}</Text>
+                      <Text style={styles.tableCell}>{k.signification}</Text>
+                    </View>
+                  ))}
+                </View>
+              </SubSection>
+            </Section>
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+
+          {/* Atmakaraka Special Analysis */}
+          {report.charaKarakasDetailed.atmakarakaSpecial && (
+            <Page size="A4" style={styles.page}>
+              <Section title={`Atmakaraka: ${report.charaKarakasDetailed.atmakarakaSpecial.planet} - Soul Significator`}>
+                <View style={styles.card}>
+                  <Text style={{ fontWeight: 'bold', color: '#7c3aed', fontSize: 14, marginBottom: 10 }}>
+                    The Atmakaraka is the most important planet in Jaimini astrology, representing your soul's purpose.
+                  </Text>
+                </View>
+
+                <SubSection title="Soul Purpose">
+                  <Text style={styles.paragraph}>{report.charaKarakasDetailed.atmakarakaSpecial.soulPurpose || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Spiritual Lesson">
+                  <View style={styles.highlight}>
+                    <Text>{report.charaKarakasDetailed.atmakarakaSpecial.spiritualLesson || ''}</Text>
+                  </View>
+                </SubSection>
+
+                <SubSection title={`Karakamsa: ${report.charaKarakasDetailed.atmakarakaSpecial.karakamsaSign || ''}`}>
+                  <Text style={styles.paragraph}>{report.charaKarakasDetailed.atmakarakaSpecial.karakamsaInterpretation || ''}</Text>
+                </SubSection>
+              </Section>
+
+              {/* Darakaraka Special Analysis */}
+              {report.charaKarakasDetailed.darakarakaSpecial && (
+                <Section title={`Darakaraka: ${report.charaKarakasDetailed.darakarakaSpecial.planet} - Spouse Significator`}>
+                  <SubSection title="Spouse Characteristics">
+                    <Text style={styles.paragraph}>{report.charaKarakasDetailed.darakarakaSpecial.spouseCharacteristics || ''}</Text>
+                  </SubSection>
+
+                  <SubSection title="Marriage Indications">
+                    <Text style={styles.paragraph}>{report.charaKarakasDetailed.darakarakaSpecial.marriageIndications || ''}</Text>
+                  </SubSection>
+
+                  {report.charaKarakasDetailed.darakarakaSpecial.partnerQualities && (
+                    <SubSection title="Partner Qualities">
+                      <BulletList items={report.charaKarakasDetailed.darakarakaSpecial.partnerQualities} />
+                    </SubSection>
+                  )}
+                </Section>
+              )}
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+
+          {/* Amatyakaraka and Karaka Details */}
+          <Page size="A4" style={styles.page}>
+            {report.charaKarakasDetailed.amatyakarakaSpecial && (
+              <Section title={`Amatyakaraka: ${report.charaKarakasDetailed.amatyakarakaSpecial.planet} - Career Significator`}>
+                <SubSection title="Career Direction">
+                  <Text style={styles.paragraph}>{report.charaKarakasDetailed.amatyakarakaSpecial.careerDirection || ''}</Text>
+                </SubSection>
+
+                {report.charaKarakasDetailed.amatyakarakaSpecial.professionalStrengths && (
+                  <SubSection title="Professional Strengths">
+                    <BulletList items={report.charaKarakasDetailed.amatyakarakaSpecial.professionalStrengths} />
+                  </SubSection>
+                )}
+
+                {report.charaKarakasDetailed.amatyakarakaSpecial.suitableProfessions && (
+                  <SubSection title="Suitable Professions">
+                    <BulletList items={report.charaKarakasDetailed.amatyakarakaSpecial.suitableProfessions} />
+                  </SubSection>
+                )}
+              </Section>
+            )}
+
+            {report.charaKarakasDetailed.karakaInteractions && report.charaKarakasDetailed.karakaInteractions.length > 0 && (
+              <Section title="Karaka Interactions">
+                {report.charaKarakasDetailed.karakaInteractions.map((interaction: any, idx: number) => (
+                  <Card key={idx} title={interaction.karakas?.join(' + ') || ''}>
+                    <Text style={styles.paragraph}>{interaction.interaction}</Text>
+                    <View style={styles.highlight}>
+                      <Text style={{ fontSize: 10 }}>Effect: {interaction.effect}</Text>
+                    </View>
+                  </Card>
+                ))}
+              </Section>
+            )}
+
+            <SubSection title="Scriptural References">
+              <View style={styles.card}>
+                <Text style={{ fontSize: 10, fontStyle: 'italic' }}>{report.charaKarakasDetailed.scripturalReferences || ''}</Text>
+              </View>
+            </SubSection>
+
+            {report.charaKarakasDetailed.recommendations && (
+              <SubSection title="Recommendations">
+                <BulletList items={report.charaKarakasDetailed.recommendations} />
+              </SubSection>
+            )}
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+
+          {/* Detailed Karaka Interpretations */}
+          {(report.charaKarakasDetailed.karakaInterpretations || []).map((karaka: any, idx: number) => (
+            <Page key={`karaka-${idx}`} size="A4" style={styles.page}>
+              <Section title={`${karaka.karaka}: ${karaka.planet} in ${karaka.sign}`}>
+                <View style={styles.card}>
+                  <InfoRow label="House" value={String(karaka.house)} />
+                  <InfoRow label="Degree" value={`${karaka.degree?.toFixed(2) || 0}°`} />
+                  <InfoRow label="Signification" value={karaka.signification || ''} />
+                </View>
+
+                <SubSection title="Detailed Interpretation">
+                  <Text style={styles.paragraph}>{karaka.detailedInterpretation || ''}</Text>
+                </SubSection>
+
+                <SubSection title="Life Impact">
+                  <Text style={styles.paragraph}>{karaka.lifeImpact || ''}</Text>
+                </SubSection>
+
+                <View style={styles.grid2}>
+                  {karaka.strengths && karaka.strengths.length > 0 && (
+                    <View style={styles.gridItem}>
+                      <Text style={styles.subSubHeader}>Strengths</Text>
+                      <BulletList items={karaka.strengths} />
+                    </View>
+                  )}
+                  {karaka.challenges && karaka.challenges.length > 0 && (
+                    <View style={styles.gridItem}>
+                      <Text style={styles.subSubHeader}>Challenges</Text>
+                      <BulletList items={karaka.challenges} />
+                    </View>
+                  )}
+                </View>
+
+                {karaka.remedies && karaka.remedies.length > 0 && (
+                  <SubSection title="Remedies">
+                    <BulletList items={karaka.remedies} />
+                  </SubSection>
+                )}
+
+                {karaka.timing && (
+                  <SubSection title="Timing">
+                    <Text style={styles.paragraph}>{karaka.timing}</Text>
+                  </SubSection>
+                )}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          ))}
+        </>
+      )}
+
+      {/* Glossary of Astrological Terms */}
+      {report.glossary && (
+        <>
+          <Page size="A4" style={styles.page}>
+            <Section title="Glossary of Vedic Astrology Terms">
+              <Text style={styles.paragraph}>{report.glossary.introduction || ''}</Text>
+
+              <SubSection title="Quick Reference">
+                <View style={styles.table}>
+                  <View style={styles.tableHeader}>
+                    <Text style={styles.tableHeaderCell}>Term</Text>
+                    <Text style={styles.tableHeaderCell}>Definition</Text>
+                  </View>
+                  {(report.glossary.quickReference || []).slice(0, 15).map((term: any, idx: number) => (
+                    <View key={idx} style={styles.tableRow}>
+                      <Text style={styles.tableCell}>{term.term}</Text>
+                      <Text style={styles.tableCell}>{term.briefDefinition}</Text>
+                    </View>
+                  ))}
+                </View>
+              </SubSection>
+            </Section>
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+          </Page>
+
+          {/* Glossary Sections */}
+          {(report.glossary.sections || []).map((section: any, sIdx: number) => (
+            <Page key={`glossary-${sIdx}`} size="A4" style={styles.page}>
+              <Section title={section.category}>
+                <Text style={styles.paragraph}>{section.categoryDescription || ''}</Text>
+
+                {(section.terms || []).map((term: any, tIdx: number) => (
+                  <Card key={tIdx} title={`${term.term} (${term.termSanskrit})`}>
+                    <Text style={{ fontSize: 9, color: '#6b7280', marginBottom: 5 }}>Pronunciation: {term.pronunciation}</Text>
+                    
+                    <Text style={{ fontWeight: 'bold', marginBottom: 3 }}>{term.definition}</Text>
+                    
+                    <Text style={styles.paragraph}>{term.detailedExplanation}</Text>
+                    
+                    {term.example && (
+                      <View style={styles.highlight}>
+                        <Text style={{ fontSize: 10 }}>Example: {term.example}</Text>
+                      </View>
+                    )}
+                    
+                    {term.relatedTerms && term.relatedTerms.length > 0 && (
+                      <Text style={{ fontSize: 9, color: '#7c3aed' }}>Related: {term.relatedTerms.join(', ')}</Text>
+                    )}
+                  </Card>
+                ))}
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          ))}
+
+          {/* Further Reading */}
+          {report.glossary.furtherReading && report.glossary.furtherReading.length > 0 && (
+            <Page size="A4" style={styles.page}>
+              <Section title="Recommended Reading & Classical Texts">
+                <Text style={styles.paragraph}>
+                  For deeper understanding of Vedic astrology, the following classical texts and resources are recommended:
+                </Text>
+                <BulletList items={report.glossary.furtherReading} />
+              </Section>
+              <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+            </Page>
+          )}
+        </>
+      )}
+
       {/* Final Page */}
       <Page size="A4" style={styles.page}>
         <Section title="Report Summary">
@@ -1694,7 +1946,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           )}
 
           <View style={{ marginTop: 40, textAlign: 'center' }}>
-            <Text style={{ fontSize: 14, color: '#7c3aed', fontWeight: 'bold' }}>🙏 May the stars guide your path 🙏</Text>
+            <Text style={{ fontSize: 14, color: '#7c3aed', fontWeight: 'bold' }}>May the stars guide your path</Text>
             <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
               For personalized puja recommendations and remedies, consult with Sri Mandir experts.
             </Text>
@@ -1702,7 +1954,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Section>
 
         <Text style={styles.footer}>
-          © Sri Mandir • This report is for guidance purposes only • www.srimandir.com
+          Sri Mandir - This report is for guidance purposes only - www.srimandir.com
         </Text>
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
       </Page>

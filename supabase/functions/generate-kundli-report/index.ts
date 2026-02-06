@@ -11,6 +11,8 @@ import { generateRahuKetuPrediction, type RahuKetuPrediction } from "./rahu-ketu
 import { generateRemediesPrediction, type RemediesPrediction } from "./remedies-agent.ts";
 import { generateNumerologyPrediction, type NumerologyPrediction } from "./numerology-agent.ts";
 import { generateSpiritualPrediction, type SpiritualPrediction } from "./spiritual-agent.ts";
+import { generateCharaKarakasPrediction, type CharaKarakasPrediction } from "./chara-karakas-agent.ts";
+import { generateGlossaryPrediction, type GlossaryPrediction } from "./glossary-agent.ts";
 import { calculateCharaKarakas, type CharaKaraka } from "./utils/chara-karakas.ts";
 import { calculateAspects, getConjunctions, type Aspect } from "./utils/aspects.ts";
 import { getNakshatraWithPada } from "./utils/nakshatra.ts";
@@ -56,6 +58,7 @@ interface KundliReport {
     degree: number;
   };
   charaKarakas: CharaKaraka[];
+  charaKarakasDetailed: CharaKarakasPrediction | null;
   aspects: Aspect[];
   conjunctions: Array<{ house: number; planets: string[] }>;
   panchang: PanchangPrediction | null;
@@ -69,6 +72,7 @@ interface KundliReport {
   remedies: RemediesPrediction | null;
   numerology: NumerologyPrediction | null;
   spiritual: SpiritualPrediction | null;
+  glossary: GlossaryPrediction | null;
   generatedAt: string;
   language: "en" | "hi";
   errors: string[];
@@ -226,10 +230,10 @@ serve(async (req) => {
     if (!rahuKetuResult.success) errors.push(`RahuKetu: ${rahuKetuResult.error}`);
     else totalTokens += rahuKetuResult.tokensUsed || 0;
 
-    console.log("🤖 [REPORT] Phase 4 complete. Starting Phase 5: Remedies & Spiritual...");
+    console.log("🤖 [REPORT] Phase 4 complete. Starting Phase 5: Remedies, Spiritual, Karakas, Glossary...");
 
-    // Phase 5: Remedies and Spiritual (in parallel)
-    const [remediesResult, spiritualResult] = await Promise.all([
+    // Phase 5: Remedies, Spiritual, Chara Karakas, and Glossary (in parallel)
+    const [remediesResult, spiritualResult, charaKarakasResult, glossaryResult] = await Promise.all([
       generateRemediesPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
@@ -239,6 +243,11 @@ serve(async (req) => {
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
       }),
+      generateCharaKarakasPrediction({
+        planets: kundli.planets,
+        ascSignIdx: kundli.asc.signIdx,
+      }),
+      generateGlossaryPrediction(),
     ]);
 
     if (!remediesResult.success) errors.push(`Remedies: ${remediesResult.error}`);
@@ -246,6 +255,12 @@ serve(async (req) => {
 
     if (!spiritualResult.success) errors.push(`Spiritual: ${spiritualResult.error}`);
     else totalTokens += spiritualResult.tokensUsed || 0;
+
+    if (!charaKarakasResult.success) errors.push(`CharaKarakas: ${charaKarakasResult.error}`);
+    else totalTokens += charaKarakasResult.tokensUsed || 0;
+
+    if (!glossaryResult.success) errors.push(`Glossary: ${glossaryResult.error}`);
+    else totalTokens += glossaryResult.tokensUsed || 0;
 
     // Assemble the complete report
     const report: KundliReport = {
@@ -270,6 +285,7 @@ serve(async (req) => {
         degree: kundli.asc.deg,
       },
       charaKarakas,
+      charaKarakasDetailed: charaKarakasResult.data || null,
       aspects,
       conjunctions,
       panchang: panchangResult.data || null,
@@ -283,6 +299,7 @@ serve(async (req) => {
       remedies: remediesResult.data || null,
       numerology: numerologyResult.data || null,
       spiritual: spiritualResult.data || null,
+      glossary: glossaryResult.data || null,
       generatedAt: new Date().toISOString(),
       language,
       errors,

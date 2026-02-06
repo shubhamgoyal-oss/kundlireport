@@ -67,12 +67,12 @@ export const KundliProgressTracker = ({ progress, currentPhase, isHindi }: Kundl
               key={phase.id}
               className={cn(
                 "flex items-center gap-3 p-2 rounded-lg transition-all duration-300",
-                isComplete && "bg-green-500/10",
+                isComplete && "bg-primary/10",
                 isCurrent && "bg-primary/5 border border-primary/20"
               )}
             >
               {isComplete ? (
-                <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0" />
               ) : isCurrent ? (
                 <Loader2 className="w-5 h-5 text-primary animate-spin flex-shrink-0" />
               ) : (
@@ -81,7 +81,7 @@ export const KundliProgressTracker = ({ progress, currentPhase, isHindi }: Kundl
               <span
                 className={cn(
                   "text-sm transition-colors",
-                  isComplete && "text-green-600 dark:text-green-400",
+                  isComplete && "text-primary",
                   isCurrent && "text-primary font-medium",
                   !isComplete && !isCurrent && "text-muted-foreground"
                 )}
@@ -89,7 +89,7 @@ export const KundliProgressTracker = ({ progress, currentPhase, isHindi }: Kundl
                 {isHindi ? phase.labelHi : phase.label}
               </span>
               {isComplete && (
-                <span className="ml-auto text-xs text-green-600 dark:text-green-400">
+                <span className="ml-auto text-xs text-primary">
                   {isHindi ? "✓ पूर्ण" : "✓ Done"}
                 </span>
               )}

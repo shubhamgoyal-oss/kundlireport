@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
-import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
+import { useIndianCitiesAutocomplete } from '@/hooks/useIndianCitiesAutocomplete';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 // Form validation schema
@@ -61,7 +61,7 @@ type BirthInput = z.infer<typeof birthInputSchema>;
 
 const KundliReportGenerator = () => {
   const { t } = useTranslation();
-  const { predictions, searchPlaces: searchGooglePlaces, getPlaceDetails, clearPredictions } = useGooglePlacesAutocomplete();
+  const { predictions, searchPlaces, getPlaceDetails, clearPredictions } = useIndianCitiesAutocomplete();
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [kundliReport, setKundliReport] = useState<any>(null);
@@ -99,22 +99,22 @@ const KundliReportGenerator = () => {
     }
 
     const timer = setTimeout(async () => {
-      await searchGooglePlaces(searchTerm);
+      await searchPlaces(searchTerm);
       setShowPlaceResults(true);
       setSelectedPlaceIndex(-1);
-    }, 300);
+    }, 150); // Faster since it's local search
 
     setSearchTimer(timer);
   };
 
-  const handlePlaceSelect = async (placeId: string, displayName: string) => {
-    const details = await getPlaceDetails(placeId);
+  const handlePlaceSelect = async (cityId: string, displayName: string) => {
+    const details = await getPlaceDetails(cityId);
     
     if (details) {
       setValue('place', details.display_name);
       setValue('lat', details.lat);
       setValue('lon', details.lng);
-      setValue('tz', 'Asia/Kolkata');
+      setValue('tz', 'Asia/Kolkata'); // All Indian cities use IST
       toast.success(isHindi ? 'स्थान चुना गया' : 'Location selected');
     } else {
       setValue('place', displayName);
@@ -142,7 +142,7 @@ const KundliReportGenerator = () => {
         e.preventDefault();
         if (selectedPlaceIndex >= 0 && selectedPlaceIndex < predictions.length) {
           const selected = predictions[selectedPlaceIndex];
-          handlePlaceSelect(selected.place_id, selected.description);
+          handlePlaceSelect(selected.id, selected.displayName);
         }
         break;
       case 'Escape':
@@ -368,14 +368,14 @@ const KundliReportGenerator = () => {
                       <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {predictions.map((prediction, idx) => (
                           <button
-                            key={prediction.place_id}
+                            key={prediction.id}
                             type="button"
                             className={`w-full text-left px-4 py-3 hover:bg-accent/50 transition-colors ${
                               idx === selectedPlaceIndex ? 'bg-accent' : ''
                             }`}
-                            onClick={() => handlePlaceSelect(prediction.place_id, prediction.description)}
+                            onClick={() => handlePlaceSelect(prediction.id, prediction.displayName)}
                           >
-                            <span className="text-sm">{prediction.description}</span>
+                            <span className="text-sm">{prediction.displayName}</span>
                           </button>
                         ))}
                       </div>

@@ -1,6 +1,27 @@
 // Shared AI calling logic for all prediction agents
 
 const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-3-flash-preview";
+
+// Core honesty guidelines added to ALL agent prompts
+export const HONESTY_GUIDELINES = `
+
+CRITICAL HONESTY RULES:
+1. BE COMPLETELY FRANK: Do not sugarcoat negative aspects. If something is challenging, say it clearly.
+2. BE DIRECT ABOUT POSITIVES: When something is genuinely favorable, state it confidently.
+3. NO SPIN: Do not try to "rotate" the user or make bad news sound good. State facts as they are.
+4. BALANCED BUT HONEST: Present both challenges and strengths, but never downplay difficulties.
+5. CLEAR LANGUAGE: Use direct, clear language. Avoid vague platitudes like "with effort things will improve."
+6. SPECIFIC PREDICTIONS: Give concrete, specific interpretations, not generic feel-good statements.
+
+Examples of WRONG approach:
+- "While Saturn brings challenges, these are opportunities for growth" ← Too positive spin
+- "Marriage may face some minor adjustments" ← Minimizing real issues
+
+Examples of RIGHT approach:
+- "Saturn in 7th house indicates delayed marriage and significant marital challenges. Divorce risk is elevated."
+- "Jupiter debilitated in 10th shows career struggles and lack of recognition in early life."
+- "Sun exalted in 10th indicates strong career success and recognition from authority figures."`;
 
 export interface AgentResponse<T> {
   success: boolean;
@@ -21,6 +42,9 @@ export async function callAgent<T>(
     return { success: false, error: "LOVABLE_API_KEY is not configured" };
   }
 
+  // Add honesty guidelines to system prompt
+  const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES;
+
   try {
     const response = await fetch(LOVABLE_AI_URL, {
       method: "POST",
@@ -29,9 +53,9 @@ export async function callAgent<T>(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: AI_MODEL,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: enhancedSystemPrompt },
           { role: "user", content: userPrompt }
         ],
         tools: [

@@ -76,10 +76,11 @@ serve(async (req) => {
 
     console.log("✅ [START-JOB] Job created:", job.id);
 
-    // Trigger the worker function asynchronously (fire and forget)
+    // Trigger the worker function asynchronously using EdgeRuntime.waitUntil
     const workerUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-kundli-job`;
     
-    fetch(workerUrl, {
+    // Use waitUntil to keep the worker running after response is sent
+    const workerPromise = fetch(workerUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -89,6 +90,13 @@ serve(async (req) => {
     }).catch(err => {
       console.error("⚠️ [START-JOB] Failed to trigger worker:", err);
     });
+    
+    // EdgeRuntime.waitUntil keeps the function alive for the background task
+    // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(workerPromise);
+    }
 
     return new Response(
       JSON.stringify({ jobId: job.id, status: "pending" }),

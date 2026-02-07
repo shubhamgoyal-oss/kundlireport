@@ -100,7 +100,12 @@ serve(async (req) => {
       gender: normalizedGender,
     };
 
-    const { data: seerData } = await fetchSeerKundli(seerRequest);
+    const { data: seerData, responseTimeMs, status } = await fetchSeerKundli(seerRequest);
+    console.log(`📡 [PROCESS-JOB] Seer API returned in ${responseTimeMs}ms with status ${status}`);
+    
+    // Store raw Seer response for debugging
+    const seerRawResponse = seerData;
+    
     const kundli = adaptSeerResponse(seerData);
 
     // Derived
@@ -224,6 +229,9 @@ serve(async (req) => {
         longitude,
         timezone,
       },
+      // Store raw Seer API response for debugging dasha calculations
+      seerRawResponse,
+      seerRequest,
       planetaryPositions: kundli.planets.map((p: any) => ({
         name: p.name,
         sign: p.sign,

@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.get-kundali-chart]
 verify_jwt = false
+
+[functions.debug-seer-api]
+verify_jwt = false

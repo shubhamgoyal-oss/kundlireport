@@ -169,6 +169,16 @@ const YOGINI_ORDER = [
   { name: "Sankata", planet: "Rahu", years: 8 }
 ];
 
+// Convert years to milliseconds for precise calculations
+const DAYS_PER_YEAR = 365.25; // Account for leap years
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function addYearsToDate(date: Date, years: number): Date {
+  // Use precise day-based calculation instead of setFullYear/setMonth
+  const days = years * DAYS_PER_YEAR;
+  return new Date(date.getTime() + days * MS_PER_DAY);
+}
+
 function calculateCurrentDasha(moonDegree: number, birthDate: Date): {
   mahadasha: string;
   mahadashaStart: Date;
@@ -177,17 +187,20 @@ function calculateCurrentDasha(moonDegree: number, birthDate: Date): {
   antardashaStart: Date;
   antardashaEnd: Date;
 } {
-  // Calculate nakshatra index
-  const nakshatraIndex = Math.floor(moonDegree / (360 / 27));
+  // Calculate nakshatra index (each nakshatra = 13°20' = 13.333...°)
+  const NAKSHATRA_SPAN = 360 / 27; // 13.333... degrees
+  const nakshatraIndex = Math.floor(moonDegree / NAKSHATRA_SPAN);
   const nakshatraLord = NAKSHATRA_LORDS[nakshatraIndex];
   
   // Calculate balance of dasha at birth
-  const nakshatraDegree = moonDegree % (360 / 27);
-  const nakshatraProgress = nakshatraDegree / (360 / 27);
+  // The balance is the remaining portion of the first dasha
+  const nakshatraDegree = moonDegree % NAKSHATRA_SPAN;
+  const nakshatraProgress = nakshatraDegree / NAKSHATRA_SPAN;
   const dashaYears = DASHA_YEARS[nakshatraLord];
+  // Balance = remaining years of first dasha (1 - progress already traversed)
   const balanceYears = dashaYears * (1 - nakshatraProgress);
   
-  // Find current dasha
+  // Find current dasha using precise day-based calculations
   let currentDate = new Date(birthDate);
   let dashaIndex = DASHA_ORDER.indexOf(nakshatraLord);
   let firstDasha = true;
@@ -201,9 +214,7 @@ function calculateCurrentDasha(moonDegree: number, birthDate: Date): {
     const years = firstDasha ? balanceYears : DASHA_YEARS[DASHA_ORDER[dashaIndex]];
     mahadasha = DASHA_ORDER[dashaIndex];
     mahadashaStart = new Date(currentDate);
-    mahadashaEnd = new Date(currentDate);
-    mahadashaEnd.setFullYear(mahadashaEnd.getFullYear() + Math.floor(years));
-    mahadashaEnd.setMonth(mahadashaEnd.getMonth() + Math.round((years % 1) * 12));
+    mahadashaEnd = addYearsToDate(currentDate, years);
     
     if (mahadashaEnd > now) break;
     
@@ -212,12 +223,12 @@ function calculateCurrentDasha(moonDegree: number, birthDate: Date): {
     firstDasha = false;
   }
   
-  // Calculate antardasha (simplified)
+  // Calculate antardasha using precise proportions
   const mahadashaDuration = mahadashaEnd.getTime() - mahadashaStart.getTime();
   const elapsedInMahadasha = now.getTime() - mahadashaStart.getTime();
   const mahadashaProgress = elapsedInMahadasha / mahadashaDuration;
   
-  // Antardasha proportions
+  // Antardasha proportions based on Vimshottari rules
   let antardasha = mahadasha;
   let antardashaStart = new Date(mahadashaStart);
   let antardashaEnd = new Date(mahadashaStart);
@@ -228,6 +239,7 @@ function calculateCurrentDasha(moonDegree: number, birthDate: Date): {
   
   for (let i = 0; i < 9; i++) {
     const adPlanet = DASHA_ORDER[(adDashaIndex + i) % 9];
+    // Antardasha duration = (AD lord years × MD lord years) / 120
     const adYears = (DASHA_YEARS[adPlanet] * mahadashaYears) / 120;
     const adProportion = adYears / mahadashaYears;
     
@@ -255,12 +267,13 @@ function calculateYoginiDasha(moonDegree: number, birthDate: Date): {
   sequence: Array<{ name: string; planet: string; years: number; startDate: Date; endDate: Date }>;
 } {
   // Yogini dasha starts from birth nakshatra
-  const nakshatraIndex = Math.floor(moonDegree / (360 / 27));
+  const NAKSHATRA_SPAN = 360 / 27;
+  const nakshatraIndex = Math.floor(moonDegree / NAKSHATRA_SPAN);
   const yoginiIndex = nakshatraIndex % 8;
   
-  // Calculate balance
-  const nakshatraDegree = moonDegree % (360 / 27);
-  const nakshatraProgress = nakshatraDegree / (360 / 27);
+  // Calculate balance using precise method
+  const nakshatraDegree = moonDegree % NAKSHATRA_SPAN;
+  const nakshatraProgress = nakshatraDegree / NAKSHATRA_SPAN;
   const firstYogini = YOGINI_ORDER[yoginiIndex];
   const balanceYears = firstYogini.years * (1 - nakshatraProgress);
   
@@ -272,7 +285,7 @@ function calculateYoginiDasha(moonDegree: number, birthDate: Date): {
   const sequence: Array<{ name: string; planet: string; years: number; startDate: Date; endDate: Date }> = [];
   let currentYogini = { ...YOGINI_ORDER[yIndex], startDate: new Date(birthDate), endDate: new Date(birthDate) };
   
-  // Build full sequence for next 36 years from birth
+  // Build full sequence using precise day-based calculations
   let tempDate = new Date(birthDate);
   let tempFirst = true;
   let tempIdx = yoginiIndex;
@@ -282,9 +295,7 @@ function calculateYoginiDasha(moonDegree: number, birthDate: Date): {
       const yogini = YOGINI_ORDER[(tempIdx + i) % 8];
       const years = (cycle === 0 && i === 0 && tempFirst) ? balanceYears : yogini.years;
       const startDate = new Date(tempDate);
-      const endDate = new Date(tempDate);
-      endDate.setFullYear(endDate.getFullYear() + Math.floor(years));
-      endDate.setMonth(endDate.getMonth() + Math.round((years % 1) * 12));
+      const endDate = addYearsToDate(tempDate, years);
       
       sequence.push({
         name: yogini.name,
@@ -322,13 +333,16 @@ function calculateAllAntardashas(mahadasha: string, mahadashaStart: Date, mahada
   
   for (let i = 0; i < 9; i++) {
     const adPlanet = DASHA_ORDER[(adDashaIndex + i) % 9];
+    // Antardasha duration formula: (AD lord years × MD lord years) / 120
     const adYears = (DASHA_YEARS[adPlanet] * mahadashaYears) / 120;
     const adProportion = adYears / mahadashaYears;
     const adDuration = adProportion * mahadashaDuration;
     
     const startDate = new Date(adStartTime);
     const endDate = new Date(adStartTime + adDuration);
-    const durationMonths = Math.round(adYears * 12);
+    // More precise month calculation
+    const durationDays = adDuration / MS_PER_DAY;
+    const durationMonths = Math.round(durationDays / 30.4375); // Average days per month
     
     result.push({
       antardasha: adPlanet,

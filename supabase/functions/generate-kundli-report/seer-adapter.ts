@@ -241,3 +241,59 @@ export function insideRahuKetuArc(planetDeg: number, rahuDeg: number, ketuDeg: n
   const arcLength = (ketuDeg - rahuDeg + 360) % 360;
   return dist <= arcLength;
 }
+
+// Helper: Get next hour parameters, handling day rollover
+export function nextHourParams(day: number, month: number, year: number, hour: number): { day: number; month: number; year: number; hour: number } {
+  if (hour < 23) {
+    return { day, month, year, hour: hour + 1 };
+  }
+  // Rollover to next day
+  const d = new Date(year, month - 1, day + 1);
+  return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hour: 0 };
+}
+
+// Linear interpolation between two kundli snapshots at H:00 and (H+1):00
+export function interpolateKundli(k0: SeerKundli, k1: SeerKundli, minute: number): SeerKundli {
+  const t = minute / 60; // fraction of hour
+
+  function lerpDeg(a: number, b: number): number {
+    let delta = b - a;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    return ((a + delta * t) + 360) % 360;
+  }
+
+  function signFromDeg(deg: number): { signIdx: number; sign: string } {
+    const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+    const idx = Math.floor(((deg % 360) + 360) % 360 / 30);
+    return { signIdx: idx, sign: SIGNS[idx] };
+  }
+
+  const ascDeg = lerpDeg(k0.asc.deg, k1.asc.deg);
+  const ascSign = signFromDeg(ascDeg);
+
+  const planets: SeerPlanet[] = k0.planets.map((p0) => {
+    const p1 = k1.planets.find((q) => q.name === p0.name);
+    if (!p1) return { ...p0 };
+
+    const deg = lerpDeg(p0.deg, p1.deg);
+    const s = signFromDeg(deg);
+    const ascIdx = ascSign.signIdx;
+    const house = ((s.signIdx - ascIdx + 12) % 12) + 1;
+
+    return {
+      name: p0.name,
+      sign: s.sign,
+      signIdx: s.signIdx,
+      deg,
+      house,
+      isRetro: p0.isRetro,
+    };
+  });
+
+  return {
+    asc: { ...k0.asc, deg: ascDeg, sign: ascSign.sign, signIdx: ascSign.signIdx, house: 1 },
+    planets,
+    notes: [...k0.notes, `Interpolated at minute ${minute} (t=${t.toFixed(4)})`],
+  };
+}

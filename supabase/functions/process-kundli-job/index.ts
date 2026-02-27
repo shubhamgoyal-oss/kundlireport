@@ -475,7 +475,7 @@ serve(async (req) => {
     });
     report = truthGuard.report;
     if (truthGuard.issues.length > 0) {
-      report.errors = [...(report.errors || []), ...truthGuard.issues.map(i => `TruthGuard: ${i}`)];
+      report.errors = [...(report.errors || []), ...truthGuard.issues.map((i: any) => `TruthGuard: ${i}`)];
     }
     if (truthGuard.corrections > 0) {
       console.log(`🛡️ [PROCESS-JOB] Truth guard applied ${truthGuard.corrections} corrections`);
@@ -527,7 +527,7 @@ serve(async (req) => {
 });
 
 async function updateJobStatus(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   jobId: string,
   status: string,
   phase: string,

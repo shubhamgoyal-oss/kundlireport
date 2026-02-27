@@ -214,6 +214,7 @@ interface KundliReport {
   language: "en" | "hi";
   errors: string[];
   tokensUsed: number;
+  computationMeta?: Record<string, unknown>;
 }
 
 serve(async (req) => {
@@ -285,9 +286,9 @@ serve(async (req) => {
       const kundliH1 = adaptSeerResponse(resH1.data);
       kundli = interpolateKundli(kundliH, kundliH1, min);
 
-      const moonH = kundliH.planets.find((p) => p.name === "Moon");
-      const moonH1 = kundliH1.planets.find((p) => p.name === "Moon");
-      const moonI = kundli.planets.find((p) => p.name === "Moon");
+      const moonH = kundliH.planets.find((p: any) => p.name === "Moon");
+      const moonH1 = kundliH1.planets.find((p: any) => p.name === "Moon");
+      const moonI = kundli.planets.find((p: any) => p.name === "Moon");
       const ascH = kundliH.asc.deg;
       const ascH1 = kundliH1.asc.deg;
       const ascI = kundli.asc.deg;
@@ -324,15 +325,15 @@ serve(async (req) => {
     const conjunctions = Array.from(conjunctionsMap.entries()).map(([house, planets]) => ({ house, planets }));
 
     // Find Moon and Sun for panchang calculations
-    const moon = kundli.planets.find(p => p.name === "Moon");
-    const sun = kundli.planets.find(p => p.name === "Sun");
+    const moon = kundli.planets.find((p: any) => p.name === "Moon");
+    const sun = kundli.planets.find((p: any) => p.name === "Sun");
     const moonNakshatra = moon ? getNakshatraWithPada(moon.deg) : null;
     const vaar = getVaar(birthDate);
     const tithiNumber = moon && sun ? calculateTithi(moon.deg, sun.deg) : 1;
 
     // Find ascendant lord placement
     const ascLord = getSignLord(kundli.asc.signIdx);
-    const ascLordPlanet = kundli.planets.find(p => p.name === ascLord);
+    const ascLordPlanet = kundli.planets.find((p: any) => p.name === ascLord);
     const reportGeneratedAt = new Date();
 
     // Step 3: Run ALL prediction agents in parallel batches
@@ -475,7 +476,7 @@ serve(async (req) => {
         longitude,
         timezone,
       },
-      planetaryPositions: kundli.planets.map(p => ({
+      planetaryPositions: kundli.planets.map((p: any) => ({
         name: p.name,
         sign: p.sign,
         house: p.house,
@@ -522,7 +523,7 @@ serve(async (req) => {
     });
     report = truthGuard.report as unknown as KundliReport;
     if (truthGuard.issues.length > 0) {
-      report.errors.push(...truthGuard.issues.map(i => `TruthGuard: ${i}`));
+      report.errors.push(...truthGuard.issues.map((i: any) => `TruthGuard: ${i}`));
     }
     if (truthGuard.corrections > 0) {
       console.log(`🛡️ [REPORT] Truth guard applied ${truthGuard.corrections} corrections`);

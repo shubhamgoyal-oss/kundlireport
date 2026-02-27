@@ -375,6 +375,69 @@ function calculateAllAntardashas(mahadasha: string, mahadashaStart: Date, mahada
   return result;
 }
 
+const PLANET_SIGNIFICATIONS: Record<string, { themes: string; opportunity: string; caution: string }> = {
+  Sun: { themes: "authority, recognition, and life-direction", opportunity: "step into visible responsibility", caution: "ego friction and authority clashes" },
+  Moon: { themes: "emotions, home-life, and mental balance", opportunity: "stabilize routines and family support", caution: "mood volatility and over-sensitivity" },
+  Mars: { themes: "drive, conflict, and decisive action", opportunity: "execute bold plans with discipline", caution: "impulsiveness, disputes, and burnout" },
+  Mercury: { themes: "intellect, communication, and commerce", opportunity: "upgrade skills, negotiation, and strategy", caution: "over-analysis and scattered execution" },
+  Jupiter: { themes: "growth, wisdom, guidance, and ethics", opportunity: "expand with mentorship and long-term thinking", caution: "over-promising or complacency" },
+  Venus: { themes: "relationships, comforts, creative value, and agreements", opportunity: "build harmony and value-led partnerships", caution: "indulgence and misaligned attachments" },
+  Saturn: { themes: "structure, accountability, endurance, and karmic tests", opportunity: "build durable outcomes through consistency", caution: "delay frustration and rigid pessimism" },
+  Rahu: { themes: "ambition, unconventional pushes, and material acceleration", opportunity: "break ceilings through strategic risk", caution: "obsession, shortcuts, and instability" },
+  Ketu: { themes: "detachment, correction, and inner realignment", opportunity: "remove noise and sharpen spiritual clarity", caution: "withdrawal, confusion, and disengagement" },
+};
+
+function planetContext(planet: string, allPlanets: SeerPlanet[]): string {
+  const p = allPlanets.find((x) => x.name === planet);
+  if (!p) return `${planet} (placement unavailable)`;
+  return `${planet} in ${p.sign} (House ${p.house})${p.isRetro ? ", retrograde" : ""}`;
+}
+
+function isWeakNarrative(text: string | undefined, minLength = 130): boolean {
+  const t = (text || "").trim();
+  if (t.length < minLength) return true;
+  const genericPatterns = [
+    /meaningful shift in priorities/i,
+    /structured action/i,
+    /work with sequence and timing/i,
+    /distinct life chapter/i,
+  ];
+  return genericPatterns.some((rx) => rx.test(t));
+}
+
+function useOrFallbackArray(values: string[] | undefined, fallback: string[]): string[] {
+  const clean = (values || []).map((v) => String(v).trim()).filter(Boolean);
+  return clean.length >= 3 ? clean : fallback;
+}
+
+function buildAntardashaInterpretation(
+  mahadasha: string,
+  antardasha: string,
+  allPlanets: SeerPlanet[],
+): string {
+  const md = PLANET_SIGNIFICATIONS[mahadasha] || PLANET_SIGNIFICATIONS.Saturn;
+  const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
+  const mdCtx = planetContext(mahadasha, allPlanets);
+  const adCtx = planetContext(antardasha, allPlanets);
+  return `${mahadasha}/${antardasha} combines ${md.themes} with ${ad.themes}. In this chart, ${mdCtx} works in tandem with ${adCtx}, so results come through intentional sequencing rather than sudden luck. This window is strongest for actions that align responsibility with timing: commit to high-value priorities, formalize key decisions, and keep execution measurable. If unmanaged, ${md.caution} can amplify ${ad.caution}, so avoid reactive decisions and keep your strategy grounded in facts.`;
+}
+
+function buildAntardashaFocusAreas(mahadasha: string, antardasha: string): string[] {
+  const md = PLANET_SIGNIFICATIONS[mahadasha] || PLANET_SIGNIFICATIONS.Saturn;
+  const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
+  return [
+    `Primary theme integration: ${md.themes} with ${ad.themes}.`,
+    `Opportunity focus: ${md.opportunity}; supported by ${ad.opportunity}.`,
+    `Risk management: control ${md.caution} and ${ad.caution}.`,
+  ];
+}
+
+function buildAntardashaAdvice(mahadasha: string, antardasha: string): string {
+  const md = PLANET_SIGNIFICATIONS[mahadasha] || PLANET_SIGNIFICATIONS.Saturn;
+  const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
+  return `Use this sub-period to pursue ${md.opportunity} while consciously channeling ${ad.opportunity}. Keep decisions paced, documented, and review-based so ${md.caution} and ${ad.caution} do not derail progress.`;
+}
+
 export async function generateDashaPrediction(input: DashaInput): Promise<AgentResponse<DashaPrediction>> {
   const { planets, moonDegree, birthDate } = input;
   
@@ -386,6 +449,8 @@ export async function generateDashaPrediction(input: DashaInput): Promise<AgentR
     currentDasha.mahadashaStart, 
     currentDasha.mahadashaEnd
   );
+  const now = new Date();
+  const relevantCurrentAntardashas = allAntardashas.filter((ad) => ad.endDate.getTime() >= now.getTime());
   
   const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
   const antarPlanet = planets.find(p => p.name === currentDasha.antardasha);
@@ -434,8 +499,8 @@ export async function generateDashaPrediction(input: DashaInput): Promise<AgentR
 - Planet's Sign: ${antarPlanet?.sign || "N/A"}
 - Planet's House: ${antarPlanet?.house || "N/A"}
 
-**All Antardashas in Current Mahadasha:**
-${allAntardashas.map(ad => `- ${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}
+**Current + Upcoming Antardashas in Current Mahadasha (exclude completed past periods):**
+${relevantCurrentAntardashas.map(ad => `- ${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}
 
 **Upcoming Mahadashas:**
 ${upcomingMahadashas.map(md => {
@@ -462,7 +527,7 @@ Provide detailed dasha predictions with:
 1. Deep analysis of current mahadasha themes
 2. Current antardasha effects
 3. DETAILED predictions for EACH upcoming mahadasha (career, relationships, health, finances, spirituality)
-4. Predictions for EACH antardasha within current mahadasha
+4. Predictions for current and upcoming antardashas within current mahadasha (exclude completed past antardashas)
 5. Predictions for EACH antardasha within EACH upcoming mahadasha listed above
 6. Yogini Dasha analysis with current and upcoming yoginis
 7. Complete dasha sequence for life
@@ -718,6 +783,9 @@ CRITICAL DEPTH REQUIREMENTS:
   const aiUpcomingByMahadasha = new Map(
     (aiResult.data.upcomingMahadashaAntardashaPredictions || []).map((md) => [md.mahadasha, md] as const)
   );
+  const aiCurrentAntardashaByPlanet = new Map(
+    (aiResult.data.antardashaPredictions || []).map((ad) => [ad.antardasha, ad] as const)
+  );
 
   const normalized: DashaPrediction = {
     ...aiResult.data,
@@ -749,14 +817,34 @@ CRITICAL DEPTH REQUIREMENTS:
         endDate: formatDate(deterministic.endDate),
       };
     }),
-    antardashaPredictions: (aiResult.data.antardashaPredictions || []).map((ad) => {
-      const deterministic = antardashaByPlanet.get(ad.antardasha);
-      if (!deterministic) return { ...ad, mahadasha: currentDasha.mahadasha };
+    antardashaPredictions: relevantCurrentAntardashas.map((adWindow) => {
+      const aiAd = aiCurrentAntardashaByPlanet.get(adWindow.antardasha);
+      const deterministic = antardashaByPlanet.get(adWindow.antardasha);
+      const fallbackInterpretation = buildAntardashaInterpretation(currentDasha.mahadasha, adWindow.antardasha, planets);
       return {
-        ...ad,
         mahadasha: currentDasha.mahadasha,
-        startDate: formatDate(deterministic.startDate),
-        endDate: formatDate(deterministic.endDate),
+        antardasha: adWindow.antardasha,
+        startDate: formatDate(deterministic?.startDate || adWindow.startDate),
+        endDate: formatDate(deterministic?.endDate || adWindow.endDate),
+        duration: `~${adWindow.durationMonths} months`,
+        overview: !isWeakNarrative(aiAd?.overview, 150)
+          ? aiAd!.overview
+          : fallbackInterpretation,
+        focusAreas: useOrFallbackArray(
+          aiAd?.focusAreas,
+          buildAntardashaFocusAreas(currentDasha.mahadasha, adWindow.antardasha),
+        ),
+        predictions: useOrFallbackArray(
+          aiAd?.predictions,
+          [
+            `This ${currentDasha.mahadasha}/${adWindow.antardasha} phase can reset priorities in work and responsibility structures.`,
+            `Outcomes improve when commitments are sequenced and reviewed rather than rushed.`,
+            `Relationship and financial choices should be evaluated for long-term stability before execution.`,
+          ],
+        ),
+        advice: !isWeakNarrative(aiAd?.advice, 90)
+          ? aiAd!.advice
+          : buildAntardashaAdvice(currentDasha.mahadasha, adWindow.antardasha),
       };
     }),
     upcomingMahadashaAntardashaPredictions: upcomingMahadashaAntardashaWindows.map((mdWindow) => {
@@ -770,18 +858,28 @@ CRITICAL DEPTH REQUIREMENTS:
         mahadasha: mdWindow.mahadasha,
         startDate: formatDate(mdWindow.startDate),
         endDate: formatDate(mdWindow.endDate),
-        overview: aiGroup?.overview || `${mdWindow.mahadasha} Mahadasha opens a distinct life chapter. Plan transitions intentionally and pace major decisions through sub-period shifts.`,
+        overview: !isWeakNarrative(aiGroup?.overview, 170)
+          ? aiGroup!.overview
+          : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Expect outcomes to unfold through sub-period shifts, where each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
         antardashas: mdWindow.antardashas.map((adWindow) => {
           const deterministic = deterministicByAntardasha?.get(adWindow.antardasha);
           const aiAd = aiAntardashaByPlanet.get(adWindow.antardasha);
+          const fallbackInterpretation = buildAntardashaInterpretation(mdWindow.mahadasha, adWindow.antardasha, planets);
           return {
             antardasha: adWindow.antardasha,
             startDate: formatDate(deterministic?.startDate || adWindow.startDate),
             endDate: formatDate(deterministic?.endDate || adWindow.endDate),
             duration: `~${adWindow.durationMonths} months`,
-            interpretation: aiAd?.interpretation || `${mdWindow.mahadasha}/${adWindow.antardasha} brings a meaningful shift in priorities. Use this period for structured action, realistic expectations, and disciplined follow-through.`,
-            focusAreas: aiAd?.focusAreas || ["Timing-sensitive decisions", "Consistency in execution", "Relationship and resource balance"],
-            advice: aiAd?.advice || "Work with sequence and timing instead of forcing outcomes.",
+            interpretation: !isWeakNarrative(aiAd?.interpretation, 140)
+              ? aiAd!.interpretation
+              : fallbackInterpretation,
+            focusAreas: useOrFallbackArray(
+              aiAd?.focusAreas,
+              buildAntardashaFocusAreas(mdWindow.mahadasha, adWindow.antardasha),
+            ),
+            advice: !isWeakNarrative(aiAd?.advice, 80)
+              ? aiAd!.advice
+              : buildAntardashaAdvice(mdWindow.mahadasha, adWindow.antardasha),
           };
         }),
       };

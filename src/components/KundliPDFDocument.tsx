@@ -1956,7 +1956,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Antardasha Predictions">
           <Section title="Antardasha Predictions (Current Mahadasha)">
             <Text style={styles.paragraph}>
-              The following are the sub-periods (Antardashas) within your current Mahadasha. Each sub-period brings specific influences based on the interplay between the Mahadasha and Antardasha lords.
+              The following are the current and upcoming sub-periods (Antardashas) within your current Mahadasha.
+              Completed past Antardashas are intentionally excluded so this section stays forward-looking and actionable.
             </Text>
             
             {report.dasha.antardashaPredictions.map((ad: any, idx: number) => (

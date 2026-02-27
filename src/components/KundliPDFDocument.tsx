@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    height: '100%',
+    minHeight: 841.89,
     fontFamily: 'DejaVuSans',
     backgroundColor: '#160603',
   },
@@ -402,10 +402,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   coverIdentityCard: {
-    position: 'absolute',
-    bottom: 118,
-    left: 76,
-    right: 76,
+    marginTop: 12,
+    width: 430,
     backgroundColor: 'rgba(30, 12, 7, 0.82)',
     borderWidth: 1,
     borderColor: 'rgba(251, 191, 36, 0.52)',
@@ -413,6 +411,10 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 12,
     paddingHorizontal: 18,
+  },
+  coverFooterWrap: {
+    marginTop: 28,
+    alignItems: 'center',
   },
   header: {
     fontSize: 16,
@@ -1582,7 +1584,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
   return (
     <Document>
       {/* Cover Page */}
-      <Page size="A4" style={styles.coverPage} wrap={false}>
+      <Page size="A4" style={styles.coverPage}>
         <View style={styles.coverBackgroundLayer}>
           <Svg width={595} height={842}>
           <Defs>
@@ -1667,7 +1669,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{report.birthDetails.placeOfBirth}</Text>
         </View>
 
-        <View style={{ position: 'absolute', bottom: 52, left: 0, right: 0, alignItems: 'center' }}>
+        <View style={styles.coverFooterWrap}>
           <Text style={styles.coverFooterMeta}>
             Created by expert astrologers
           </Text>

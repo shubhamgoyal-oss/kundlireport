@@ -311,7 +311,7 @@ serve(async (req) => {
 });
 
 async function updateJobStatus(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   jobId: string,
   status: string,
   phase: string,

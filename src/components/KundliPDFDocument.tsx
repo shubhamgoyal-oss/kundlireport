@@ -135,6 +135,28 @@ const DASHA_YEARS: Record<string, number> = {
   Venus: 20,
 };
 
+const CHART_LABEL_MAP: Record<string, string> = {
+  "लग्न": "Asc",
+  "लग": "Asc",
+  "सू": "Su",
+  "चं": "Mo",
+  "मं": "Ma",
+  "बु": "Me",
+  "गु": "Ju",
+  "शु": "Ve",
+  "श": "Sa",
+  "रा": "Ra",
+  "के": "Ke",
+};
+
+const normalizeChartLabel = (raw: string): string => {
+  const text = String(raw || "").trim();
+  if (!text) return "";
+  if (CHART_LABEL_MAP[text]) return CHART_LABEL_MAP[text];
+  // If Devanagari remains, strip to avoid PDF glyph corruption.
+  return sanitizeText(text);
+};
+
 /**
  * Sanitize text to remove characters that DejaVuSans cannot render (Devanagari, etc.).
  * Keeps Latin, common punctuation, and basic symbols. Strips Devanagari Unicode blocks
@@ -975,7 +997,7 @@ const parseSvgElement = (element: Element, key: number): React.ReactNode | null 
   
   // Handle text content
   if (element.children.length === 0 && element.textContent) {
-    const textContent = element.textContent.trim();
+    const textContent = normalizeChartLabel(element.textContent);
     if (textContent && (tagName === 'text' || tagName === 'tspan')) {
       children.push(textContent);
     }
@@ -1002,8 +1024,10 @@ const parseSvgElement = (element: Element, key: number): React.ReactNode | null 
       if (!attrs.points) return null;
       return <Polygon key={key} {...(attrs as any)} />;
     case 'text':
+      attrs.fontFamily = 'DejaVuSans';
       return <Text key={key} {...(attrs as any)}>{children}</Text>;
     case 'tspan':
+      attrs.fontFamily = 'DejaVuSans';
       return <Tspan key={key} {...(attrs as any)}>{children}</Tspan>;
     case 'defs':
       return <Defs key={key}>{children}</Defs>;

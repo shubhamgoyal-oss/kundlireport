@@ -87,7 +87,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
         tzone: report.birthDetails.timezone
       };
       
-      fetchMultipleCharts(birthDetails, 'North', isHindi ? 'hi' : 'en', PDF_CHARTS)
+      // Force English chart labels for PDF to avoid SVG font glyph issues in react-pdf.
+      fetchMultipleCharts(birthDetails, 'North', 'en', PDF_CHARTS)
         .then(fetchedCharts => {
           console.log('[KundliReportViewer] Fetched', fetchedCharts.length, 'charts');
           setCharts(fetchedCharts);

@@ -738,6 +738,44 @@ const styles = StyleSheet.create({
     marginTop: -2,
     marginBottom: 3,
   },
+  tocColumns: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  tocColumn: {
+    width: '48%',
+  },
+  tocEntryCompact: {
+    marginBottom: 4,
+    paddingBottom: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: P.lightBorder,
+  },
+  tocEntryCompactTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  tocNumberCompact: {
+    width: 22,
+    fontSize: 9.8,
+    color: P.gold,
+    fontWeight: 'bold',
+  },
+  tocTitleCompact: {
+    flex: 1,
+    fontSize: 9.6,
+    color: P.bodyText,
+    fontWeight: 'bold',
+    lineHeight: 1.2,
+  },
+  tocSubtitleCompact: {
+    fontSize: 7.6,
+    color: P.mutedText,
+    marginLeft: 22,
+    marginTop: 1,
+    lineHeight: 1.25,
+  },
   // ── Callout boxes ──────────────────────────────────────────
   calloutBox: {
     backgroundColor: '#fff7ed',
@@ -866,8 +904,8 @@ const styles = StyleSheet.create({
 });
 
 // Helper components
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <View style={styles.section}>
+const Section = ({ title, children, wrap = true }: { title: string; children: React.ReactNode; wrap?: boolean }) => (
+  <View style={styles.section} wrap={wrap}>
     <Text style={styles.header}>{title}</Text>
     {children}
   </View>
@@ -1580,6 +1618,27 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         combust: isCombust ? 'C' : '',
       };
     });
+  const tocEntries = [
+    { num: '01', title: 'Birth Details & Planetary Positions', sub: 'Ascendant, planetary placements, Chara Karakas (Jaimini)' },
+    { num: '02', title: 'Panchang Analysis', sub: 'Vaar, Tithi, Nakshatra, Yoga, Karana at birth' },
+    { num: '03', title: 'Three Pillars of Your Chart', sub: 'Moon Sign, Ascendant, Birth Nakshatra' },
+    { num: '04', title: 'Personal Planetary Profiles', sub: 'Detailed analysis of all 9 planets' },
+    { num: '05', title: 'Bhavphal — The 12 Houses', sub: 'Complete house-by-house life analysis' },
+    { num: '06', title: 'Career & Professional Life', sub: 'Career calling, wealth potential, suitable fields' },
+    { num: '07', title: 'Love, Romance & Marriage', sub: 'Partner profile, marriage timing, compatibility' },
+    { num: '08', title: 'Health & Well-Being', sub: 'Age-aware lifestyle guidance and preventive care focus' },
+    { num: '09', title: 'Vimshottari Dasha Predictions', sub: 'Current & upcoming planetary periods' },
+    { num: '10', title: 'Rahu–Ketu Karmic Axis', sub: 'Past karma, future direction, Kaal Sarp Yoga' },
+    { num: '11', title: 'Raja Yogas & Auspicious Combinations', sub: 'Pancha Mahapurusha, Dhana Yogas and more' },
+    { num: '12', title: 'Dosha Analysis', sub: 'Mangal Dosha, Kaal Sarp and other planetary afflictions' },
+    { num: '13', title: 'Sade Sati — Saturn\'s 7.5-Year Transit', sub: 'Current status, phases, remedies' },
+    { num: '14', title: 'Numerology Analysis', sub: 'Birth number, destiny number, personal year' },
+    { num: '15', title: 'Spiritual Potential & Dharma', sub: 'Atmakaraka, Ishta Devata, Moksha path' },
+    { num: '16', title: 'Vedic Remedies', sub: 'Gemstones, Rudraksha, Mantras, Yantras, Pujas' },
+    { num: '17', title: 'Chara Karakas — Jaimini System', sub: 'Atmakaraka, Amatyakaraka, Darakaraka in depth' },
+  ];
+  const tocSplitIndex = Math.ceil(tocEntries.length / 2);
+  const tocColumns = [tocEntries.slice(0, tocSplitIndex), tocEntries.slice(tocSplitIndex)];
 
   return (
     <Document>
@@ -1691,34 +1750,21 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             remedial guidance.
           </Text>
 
-          {/* TOC Entries */}
-          {[
-            { num: '01', title: 'Birth Details & Planetary Positions', sub: 'Ascendant, planetary placements, Chara Karakas (Jaimini)' },
-            { num: '02', title: 'Panchang Analysis', sub: 'Vaar, Tithi, Nakshatra, Yoga, Karana at birth' },
-            { num: '03', title: 'Three Pillars of Your Chart', sub: 'Moon Sign, Ascendant, Birth Nakshatra' },
-            { num: '04', title: 'Personal Planetary Profiles', sub: 'Detailed analysis of all 9 planets' },
-            { num: '05', title: 'Bhavphal — The 12 Houses', sub: 'Complete house-by-house life analysis' },
-            { num: '06', title: 'Career & Professional Life', sub: 'Career calling, wealth potential, suitable fields' },
-            { num: '07', title: 'Love, Romance & Marriage', sub: 'Partner profile, marriage timing, compatibility' },
-            { num: '08', title: 'Health & Well-Being', sub: 'Age-aware lifestyle guidance and preventive care focus' },
-            { num: '09', title: 'Vimshottari Dasha Predictions', sub: 'Current & upcoming planetary periods' },
-            { num: '10', title: 'Rahu–Ketu Karmic Axis', sub: 'Past karma, future direction, Kaal Sarp Yoga' },
-            { num: '11', title: 'Raja Yogas & Auspicious Combinations', sub: 'Pancha Mahapurusha, Dhana Yogas and more' },
-            { num: '12', title: 'Dosha Analysis', sub: 'Mangal Dosha, Kaal Sarp and other planetary afflictions' },
-            { num: '13', title: 'Sade Sati — Saturn\'s 7.5-Year Transit', sub: 'Current status, phases, remedies' },
-            { num: '14', title: 'Numerology Analysis', sub: 'Birth number, destiny number, personal year' },
-            { num: '15', title: 'Spiritual Potential & Dharma', sub: 'Atmakaraka, Ishta Devata, Moksha path' },
-            { num: '16', title: 'Vedic Remedies', sub: 'Gemstones, Rudraksha, Mantras, Yantras, Pujas' },
-            { num: '17', title: 'Chara Karakas — Jaimini System', sub: 'Atmakaraka, Amatyakaraka, Darakaraka in depth' },
-          ].map((entry) => (
-            <View key={entry.num}>
-              <View style={styles.tocEntry}>
-                <Text style={styles.tocNumber}>{entry.num}</Text>
-                <Text style={styles.tocTitle}>{entry.title}</Text>
+          <View style={styles.tocColumns}>
+            {tocColumns.map((column, cIdx) => (
+              <View key={cIdx} style={styles.tocColumn}>
+                {column.map((entry) => (
+                  <View key={entry.num} style={styles.tocEntryCompact}>
+                    <View style={styles.tocEntryCompactTop}>
+                      <Text style={styles.tocNumberCompact}>{entry.num}</Text>
+                      <Text style={styles.tocTitleCompact}>{entry.title}</Text>
+                    </View>
+                    <Text style={styles.tocSubtitleCompact}>{entry.sub}</Text>
+                  </View>
+                ))}
               </View>
-              <Text style={styles.tocSubtitle}>{entry.sub}</Text>
-            </View>
-          ))}
+            ))}
+          </View>
         </Section>
       </ContentPage>
 
@@ -1834,7 +1880,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
         </Section>
 
-        <Section title="Detailed Planetary Snapshot">
+        <Section title="Detailed Planetary Snapshot" wrap={false}>
           <View style={styles.card}>
             <View style={styles.grid2}>
               <View style={styles.gridItem}>

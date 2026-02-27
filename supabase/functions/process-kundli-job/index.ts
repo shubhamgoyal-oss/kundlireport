@@ -424,6 +424,7 @@ serve(async (req) => {
         latitude,
         longitude,
         timezone,
+        gender: normalizedGender,
       },
       // Store raw Seer API response for debugging dasha calculations
       seerRawResponse,

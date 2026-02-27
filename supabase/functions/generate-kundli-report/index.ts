@@ -184,6 +184,7 @@ interface KundliReport {
     latitude: number;
     longitude: number;
     timezone: number;
+    gender?: "M" | "F" | "O";
   };
   planetaryPositions: Array<{
     name: string;
@@ -221,6 +222,8 @@ interface KundliReport {
   errors: string[];
   tokensUsed: number;
   computationMeta?: Record<string, unknown>;
+  seerRawResponse?: Record<string, unknown> | null;
+  seerRequest?: Record<string, unknown> | null;
 }
 
 serve(async (req) => {
@@ -269,13 +272,16 @@ serve(async (req) => {
       name,
       gender: normalizedGender,
     };
+    const seerRequest = baseReq;
 
     let kundli;
+    let seerRawResponse: Record<string, unknown> | null = null;
     let interpolationDiagnostics: Record<string, unknown> | null = null;
     if (min === 0) {
       // Exact hour — single call is sufficient
       console.log("🌐 [REPORT] Calling Seer API (exact hour, single call)...");
       const { data: seerData } = await fetchSeerKundli(baseReq);
+      seerRawResponse = (seerData as Record<string, unknown>) || null;
       kundli = adaptSeerResponse(seerData);
     } else {
       // Need interpolation: fetch H:00 and (H+1):00 in parallel
@@ -290,6 +296,7 @@ serve(async (req) => {
         fetchSeerKundli(baseReq),
         fetchSeerKundli(nextReq),
       ]);
+      seerRawResponse = (resH.data as Record<string, unknown>) || null;
 
       const kundliH  = adaptSeerResponse(resH.data);
       const kundliH1 = adaptSeerResponse(resH1.data);
@@ -474,6 +481,7 @@ serve(async (req) => {
         latitude,
         longitude,
         timezone,
+        gender: normalizedGender,
       },
       planetaryPositions: kundli.planets.map((p: any) => ({
         name: p.name,
@@ -513,6 +521,8 @@ serve(async (req) => {
       computationMeta: {
         interpolation: interpolationDiagnostics || { applied: min !== 0, minute: min },
       },
+      seerRawResponse,
+      seerRequest: seerRequest as unknown as Record<string, unknown>,
     };
 
     // Step 5.5: Deterministic truth guard — overwrite any inconsistent computed fields.

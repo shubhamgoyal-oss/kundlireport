@@ -55,6 +55,86 @@ const SRIMANDIR_ORANGE = '#f97316';
 // Brand header bar color — deep warm brown (NOT purple)
 const BRAND_HEADER_DARK = '#7c2d12';
 
+const SIGN_TO_INDEX: Record<string, number> = {
+  Aries: 0,
+  Taurus: 1,
+  Gemini: 2,
+  Cancer: 3,
+  Leo: 4,
+  Virgo: 5,
+  Libra: 6,
+  Scorpio: 7,
+  Sagittarius: 8,
+  Capricorn: 9,
+  Aquarius: 10,
+  Pisces: 11,
+};
+
+const SIGN_SHORT: Record<string, string> = {
+  Aries: 'Ari',
+  Taurus: 'Tau',
+  Gemini: 'Gem',
+  Cancer: 'Can',
+  Leo: 'Leo',
+  Virgo: 'Vir',
+  Libra: 'Lib',
+  Scorpio: 'Sco',
+  Sagittarius: 'Sag',
+  Capricorn: 'Cap',
+  Aquarius: 'Aqu',
+  Pisces: 'Pis',
+};
+
+const SIGN_LORDS = [
+  'Mars', 'Venus', 'Mercury', 'Moon', 'Sun', 'Mercury',
+  'Venus', 'Mars', 'Jupiter', 'Saturn', 'Saturn', 'Jupiter',
+];
+
+const NAKSHATRA_SPAN = 13.333333;
+const NAKSHATRA_PADA_SPAN = 3.333333;
+const NAKSHATRAS = [
+  { name: 'Ashwini', lord: 'Ketu' },
+  { name: 'Bharani', lord: 'Venus' },
+  { name: 'Krittika', lord: 'Sun' },
+  { name: 'Rohini', lord: 'Moon' },
+  { name: 'Mrigashira', lord: 'Mars' },
+  { name: 'Ardra', lord: 'Rahu' },
+  { name: 'Punarvasu', lord: 'Jupiter' },
+  { name: 'Pushya', lord: 'Saturn' },
+  { name: 'Ashlesha', lord: 'Mercury' },
+  { name: 'Magha', lord: 'Ketu' },
+  { name: 'Purva Phalguni', lord: 'Venus' },
+  { name: 'Uttara Phalguni', lord: 'Sun' },
+  { name: 'Hasta', lord: 'Moon' },
+  { name: 'Chitra', lord: 'Mars' },
+  { name: 'Swati', lord: 'Rahu' },
+  { name: 'Vishakha', lord: 'Jupiter' },
+  { name: 'Anuradha', lord: 'Saturn' },
+  { name: 'Jyeshtha', lord: 'Mercury' },
+  { name: 'Mula', lord: 'Ketu' },
+  { name: 'Purva Ashadha', lord: 'Venus' },
+  { name: 'Uttara Ashadha', lord: 'Sun' },
+  { name: 'Shravana', lord: 'Moon' },
+  { name: 'Dhanishta', lord: 'Mars' },
+  { name: 'Shatabhisha', lord: 'Rahu' },
+  { name: 'Purva Bhadrapada', lord: 'Jupiter' },
+  { name: 'Uttara Bhadrapada', lord: 'Saturn' },
+  { name: 'Revati', lord: 'Mercury' },
+];
+
+const DASHA_ORDER = ['Ketu', 'Venus', 'Sun', 'Moon', 'Mars', 'Rahu', 'Jupiter', 'Saturn', 'Mercury'];
+const DASHA_YEARS: Record<string, number> = {
+  Sun: 6,
+  Moon: 10,
+  Mars: 7,
+  Rahu: 18,
+  Jupiter: 16,
+  Saturn: 19,
+  Mercury: 17,
+  Ketu: 7,
+  Venus: 20,
+};
+
 /**
  * Sanitize text to remove characters that DejaVuSans cannot render (Devanagari, etc.).
  * Keeps Latin, common punctuation, and basic symbols. Strips Devanagari Unicode blocks
@@ -174,6 +254,13 @@ const styles = StyleSheet.create({
     height: '100%',
     fontFamily: 'DejaVuSans',
     backgroundColor: '#160603',
+  },
+  coverBackgroundLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   dividerPage: {
     padding: 0,
@@ -411,6 +498,51 @@ const styles = StyleSheet.create({
     fontSize: 10,
     paddingHorizontal: 6,
     color: P.bodyText,
+  },
+  advancedTable: {
+    width: '100%',
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: P.lightBorder,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  advancedTableHeader: {
+    flexDirection: 'row',
+    backgroundColor: P.primary,
+    paddingVertical: 5,
+  },
+  advancedTableHeaderCell: {
+    fontSize: 8.2,
+    color: P.white,
+    fontWeight: 'bold',
+    paddingHorizontal: 3,
+    textAlign: 'center',
+  },
+  advancedTableRow: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: P.lightBorder,
+    paddingVertical: 4,
+  },
+  advancedTableRowAlt: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: P.lightBorder,
+    paddingVertical: 4,
+    backgroundColor: P.tableAlt,
+  },
+  advancedCellText: {
+    fontSize: 8,
+    color: P.bodyText,
+    textAlign: 'center',
+    paddingHorizontal: 3,
+  },
+  tinyNote: {
+    fontSize: 8.2,
+    color: P.mutedText,
+    marginTop: 4,
+    lineHeight: 1.35,
   },
   card: {
     backgroundColor: P.cardBg,
@@ -970,6 +1102,197 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     return 5.5;
   };
 
+  const formatUtcOffset = (offsetHours: number): string => {
+    const sign = offsetHours >= 0 ? '+' : '-';
+    const abs = Math.abs(offsetHours);
+    const hh = Math.floor(abs);
+    const mm = Math.round((abs - hh) * 60);
+    return `UTC${sign}${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+  };
+
+  const formatCoordinate = (value: unknown, axis: 'lat' | 'lon'): string => {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n)) return 'N/A';
+    const abs = Math.abs(n).toFixed(4);
+    if (axis === 'lat') return `${abs}° ${n >= 0 ? 'North' : 'South'}`;
+    return `${abs}° ${n >= 0 ? 'East' : 'West'}`;
+  };
+
+  const getWeekday = (dateStr: string): string => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-IN', { weekday: 'long' });
+  };
+
+  const formatDegreeInSign = (sign: unknown, degree: unknown): string => {
+    const signText = String(sign || '').trim();
+    const deg = Number(degree);
+    if (!signText || !Number.isFinite(deg)) return 'N/A';
+    return `${signText} (${deg.toFixed(2)}°)`;
+  };
+
+  const parsePlaceDetails = (place: string, fallback: any) => {
+    const parts = String(place || '')
+      .split(',')
+      .map((v) => v.trim())
+      .filter(Boolean);
+    const city = String(fallback?.city || parts[0] || 'N/A');
+    const state = String(fallback?.state || parts[1] || 'N/A');
+    const country = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : 'N/A'));
+    return { city, state, country };
+  };
+
+  const normalizeDegree360 = (degree: number): number => {
+    const normalized = degree % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
+  };
+
+  const formatDmsFromSignDegree = (degreeInSign: number): string => {
+    const d = Math.max(0, degreeInSign);
+    const deg = Math.floor(d);
+    const minutesRaw = (d - deg) * 60;
+    const min = Math.floor(minutesRaw);
+    const sec = Math.floor((minutesRaw - min) * 60);
+    return `${String(deg).padStart(2, '0')}:${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const getNakshatraMeta = (degree: number) => {
+    const normalized = normalizeDegree360(degree);
+    const index = Math.floor(normalized / NAKSHATRA_SPAN);
+    const nakshatra = NAKSHATRAS[Math.max(0, Math.min(26, index))];
+    const degreeInNakshatra = normalized % NAKSHATRA_SPAN;
+    const pada = Math.floor(degreeInNakshatra / NAKSHATRA_PADA_SPAN) + 1;
+    return {
+      name: nakshatra?.name || 'N/A',
+      lord: nakshatra?.lord || 'N/A',
+      number: index + 1,
+      pada: Math.max(1, Math.min(4, pada)),
+      degreeInNakshatra,
+    };
+  };
+
+  const getKpSubLord = (nakshatraLord: string, degreeInNakshatra: number): string => {
+    const startIdx = DASHA_ORDER.indexOf(nakshatraLord);
+    if (startIdx < 0) return 'N/A';
+
+    const totalSpan = NAKSHATRA_SPAN;
+    let accumulated = 0;
+    for (let i = 0; i < 9; i++) {
+      const lord = DASHA_ORDER[(startIdx + i) % 9];
+      const part = (DASHA_YEARS[lord] / 120) * totalSpan;
+      accumulated += part;
+      if (degreeInNakshatra <= accumulated + 1e-9) return lord;
+    }
+    return DASHA_ORDER[(startIdx + 8) % 9];
+  };
+
+  const getCombustFlag = (planetName: string, planetDegree: number, sunDegree: number): boolean => {
+    const thresholds: Record<string, number> = {
+      Moon: 12,
+      Mars: 17,
+      Mercury: 14,
+      Jupiter: 11,
+      Venus: 10,
+      Saturn: 15,
+    };
+    const threshold = thresholds[planetName];
+    if (!threshold) return false;
+    const delta = Math.abs(((planetDegree - sunDegree + 540) % 360) - 180);
+    return delta <= threshold;
+  };
+
+  const getDignityLabel = (planetName: string, signIdx: number): string => {
+    const exaltation: Record<string, number> = { Sun: 0, Moon: 1, Mars: 9, Mercury: 5, Jupiter: 3, Venus: 11, Saturn: 6, Rahu: 1, Ketu: 7 };
+    const debilitation: Record<string, number> = { Sun: 6, Moon: 7, Mars: 3, Mercury: 11, Jupiter: 9, Venus: 5, Saturn: 0, Rahu: 7, Ketu: 1 };
+    const ownSigns: Record<string, number[]> = {
+      Sun: [4], Moon: [3], Mars: [0, 7], Mercury: [2, 5], Jupiter: [8, 11], Venus: [1, 6], Saturn: [9, 10], Rahu: [10], Ketu: [7],
+    };
+    const friends: Record<string, string[]> = {
+      Sun: ['Moon', 'Mars', 'Jupiter'],
+      Moon: ['Sun', 'Mercury'],
+      Mars: ['Sun', 'Moon', 'Jupiter'],
+      Mercury: ['Sun', 'Venus'],
+      Jupiter: ['Sun', 'Moon', 'Mars'],
+      Venus: ['Mercury', 'Saturn'],
+      Saturn: ['Mercury', 'Venus'],
+      Rahu: ['Mercury', 'Venus', 'Saturn'],
+      Ketu: ['Mars', 'Venus', 'Saturn'],
+    };
+    const enemies: Record<string, string[]> = {
+      Sun: ['Saturn', 'Venus'],
+      Moon: [],
+      Mars: ['Mercury'],
+      Mercury: ['Moon'],
+      Jupiter: ['Mercury', 'Venus'],
+      Venus: ['Sun', 'Moon'],
+      Saturn: ['Sun', 'Moon', 'Mars'],
+      Rahu: ['Sun', 'Moon', 'Mars'],
+      Ketu: ['Sun', 'Moon'],
+    };
+
+    if (exaltation[planetName] === signIdx) return 'Exalted';
+    if (debilitation[planetName] === signIdx) return 'Debilitated';
+    if (ownSigns[planetName]?.includes(signIdx)) return 'Own';
+    const signLord = SIGN_LORDS[signIdx] || '';
+    if (friends[planetName]?.includes(signLord)) return 'Friendly';
+    if (enemies[planetName]?.includes(signLord)) return 'Enemy';
+    return 'Neutral';
+  };
+
+  const getVedicRoot = (raw: any) => {
+    if (!raw) return null;
+    if (raw?.vedic_horoscope) return raw;
+    if (raw?.data?.vedic_horoscope) return raw.data;
+    if (raw?.data?.data?.vedic_horoscope) return raw.data.data;
+    return null;
+  };
+
+  const vedicRoot = getVedicRoot(report?.seerRawResponse);
+  const rawPlanets = Array.isArray(vedicRoot?.vedic_horoscope?.planets_position)
+    ? vedicRoot.vedic_horoscope.planets_position
+    : [];
+  const rawAstroDetails = vedicRoot?.vedic_horoscope?.astro_details || {};
+
+  const resolveRawPlanet = (name: string) => {
+    const nameMap: Record<string, string[]> = {
+      Asc: ['लग्न', 'Asc'],
+      Sun: ['सूर्य', 'Sun'],
+      Moon: ['चन्द्र', 'Moon'],
+      Mars: ['मंगल', 'Mars'],
+      Mercury: ['बुध', 'Mercury'],
+      Jupiter: ['गुरु', 'Jupiter'],
+      Venus: ['शुक्र', 'Venus'],
+      Saturn: ['शनि', 'Saturn'],
+      Rahu: ['राहु', 'Rahu'],
+      Ketu: ['केतु', 'Ketu'],
+    };
+    const aliases = nameMap[name] || [name];
+    return rawPlanets.find((p: any) => aliases.includes(String(p?.name || '').trim()));
+  };
+
+  const resolveSpeed = (name: string): string => {
+    const rawPlanet = resolveRawPlanet(name);
+    if (!rawPlanet) return 'N/A';
+    const candidates = [
+      rawPlanet.speed,
+      rawPlanet.planet_speed,
+      rawPlanet.motion_speed,
+      rawPlanet.gati,
+      rawPlanet.daily_motion,
+    ];
+    const speedVal = candidates.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
+    return speedVal ? String(speedVal) : 'N/A';
+  };
+
+  const pickAstroValue = (...keys: string[]): string => {
+    for (const key of keys) {
+      const value = rawAstroDetails?.[key];
+      if (value !== undefined && value !== null && String(value).trim() !== '') return String(value);
+    }
+    return 'N/A';
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1143,11 +1466,101 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
   };
 
   const charts: ChartData[] = report.charts || [];
+  const birthDetails = report?.birthDetails || {};
+  const placeDetails = parsePlaceDetails(birthDetails.placeOfBirth || '', birthDetails);
+  const timezoneOffset = parseTimezoneOffset(birthDetails.timezone);
+  const timezoneText = typeof birthDetails.timezone === 'string' && birthDetails.timezone.includes('/')
+    ? `${birthDetails.timezone} (${formatUtcOffset(timezoneOffset)})`
+    : formatUtcOffset(timezoneOffset);
+  const genderRaw = String(birthDetails.gender || '').toUpperCase();
+  const sex = genderRaw === 'F' || genderRaw === 'FEMALE'
+    ? 'Female'
+    : genderRaw === 'O' || genderRaw === 'OTHER'
+      ? 'Other'
+      : genderRaw === 'M' || genderRaw === 'MALE'
+        ? 'Male'
+        : 'N/A';
+  const birthDateValue = String(birthDetails.dateOfBirth || '');
+  const sunPosition = report?.planetaryPositions?.find((planet: any) => planet?.name === 'Sun');
+  const tithiName = report?.panchang?.tithi?.name || 'N/A';
+  const tithiPaksha = report?.panchang?.tithi?.paksha || '';
+  const nakshatraName = report?.panchang?.nakshatra?.name || 'N/A';
+  const nakshatraPada = report?.panchang?.nakshatra?.pada;
+  const yogaName = report?.panchang?.yoga?.name || 'N/A';
+  const karanaName = report?.panchang?.karana?.name || 'N/A';
+  const parsedBirthTime = parseBirthTime(birthDetails.timeOfBirth);
+  const birthUtcDate = (() => {
+    if (!birthDateValue || !parsedBirthTime) return null;
+    const [y, m, d] = birthDateValue.split('-').map((x) => Number(x));
+    if ([y, m, d].some((n) => Number.isNaN(n))) return null;
+    const utcMs = Date.UTC(y, m - 1, d, parsedBirthTime.hour, parsedBirthTime.minute) - timezoneOffset * 60 * 60 * 1000;
+    return new Date(utcMs);
+  })();
+  const lahiriAyanamsha = birthUtcDate
+    ? (() => {
+        const jd = birthUtcDate.getTime() / 86400000 + 2440587.5;
+        const t = (jd - 2451545.0) / 36525;
+        return 23.85 + 0.013848 * t * 100;
+      })()
+    : null;
+  const ayanamshaText = pickAstroValue('ayanamsha', 'lahiri_ayanamsha') !== 'N/A'
+    ? pickAstroValue('ayanamsha', 'lahiri_ayanamsha')
+    : (lahiriAyanamsha ? `${lahiriAyanamsha.toFixed(4)}°` : 'N/A');
+
+  const planetProfileMap = new Map(
+    Array.isArray(report?.planets)
+      ? report.planets.map((p: any) => [String(p?.planet || ''), p] as const)
+      : []
+  );
+  const sunDegreeAbsolute = Number(sunPosition?.degree);
+  const detailedPlanetRows = [
+    {
+      name: 'Asc',
+      sign: report?.ascendant?.sign,
+      house: 1,
+      degree: Number(report?.ascendant?.degree),
+      isRetro: false,
+    },
+    ...(Array.isArray(report?.planetaryPositions) ? report.planetaryPositions : []),
+  ]
+    .filter((p: any) => p?.name && Number.isFinite(Number(p?.degree)))
+    .map((p: any) => {
+      const name = String(p.name);
+      const sign = String(p.sign || '');
+      const signIdx = SIGN_TO_INDEX[sign];
+      const degreeAbs = Number(p.degree);
+      const degreeInSign = signIdx !== undefined ? normalizeDegree360(degreeAbs) - signIdx * 30 : degreeAbs % 30;
+      const nak = getNakshatraMeta(degreeAbs);
+      const profile = planetProfileMap.get(name);
+      const isRetro = Boolean(p.isRetro || profile?.isRetrograde);
+      const isCombust = Number.isFinite(sunDegreeAbsolute)
+        ? getCombustFlag(name, degreeAbs, sunDegreeAbsolute)
+        : false;
+      const signLord = signIdx !== undefined ? SIGN_LORDS[signIdx] : 'N/A';
+      const nakLord = profile?.nakshatraLord || nak.lord;
+      return {
+        name,
+        signShort: SIGN_SHORT[sign] || sign || 'N/A',
+        degreeText: formatDmsFromSignDegree(Math.max(0, degreeInSign)),
+        speed: resolveSpeed(name),
+        nakshatra: profile?.nakshatra || nak.name,
+        pada: nak.pada,
+        nakNo: nak.number,
+        rashiLord: signLord || 'N/A',
+        nakLord: nakLord || 'N/A',
+        subLord: getKpSubLord(nak.lord, nak.degreeInNakshatra),
+        dignity: profile?.dignity || (signIdx !== undefined ? getDignityLabel(name, signIdx) : 'N/A'),
+        retro: isRetro ? 'R' : '',
+        combust: isCombust ? 'C' : '',
+      };
+    });
+
   return (
     <Document>
       {/* Cover Page */}
-      <Page size="A4" style={styles.coverPage}>
-        <Svg width={595} height={842} style={{ position: 'absolute', top: 0, left: 0 }}>
+      <Page size="A4" style={styles.coverPage} wrap={false}>
+        <View style={styles.coverBackgroundLayer}>
+          <Svg width={595} height={842}>
           <Defs>
             <RadialGradient id="coverCore" cx="50%" cy="62%" r="60%">
               <Stop offset="0%" stopColor="#f59e0b" stopOpacity={0.75} />
@@ -1198,7 +1611,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Path d="M286 612 L308 612 L323 690 L271 690 Z" fill="#2a0d07" opacity={0.98} />
           <Circle cx={297} cy={602} r={88} fill="none" stroke="#fbbf24" strokeWidth={1.2} opacity={0.45} />
           <Circle cx={297} cy={602} r={56} fill="none" stroke="#fcd34d" strokeWidth={1.1} opacity={0.55} />
-        </Svg>
+          </Svg>
+        </View>
 
         <View style={styles.coverBrandRow}>
           <View style={styles.coverBrandBadge}>
@@ -1339,11 +1753,37 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       <ContentPage sectionName="Birth Details & Planetary Positions">
         <Section title="Birth Details">
           <View style={styles.card}>
-            <InfoRow label="Name" value={report.birthDetails.name} />
-            <InfoRow label="Date of Birth" value={report.birthDetails.dateOfBirth} />
-            <InfoRow label="Time of Birth" value={report.birthDetails.timeOfBirth} />
-            <InfoRow label="Place of Birth" value={report.birthDetails.placeOfBirth} />
-            <InfoRow label="Ascendant (Lagna)" value={`${report.ascendant.sign} (${report.ascendant.degree.toFixed(2)}°)`} />
+            <View style={styles.grid2}>
+              <View style={styles.gridItem}>
+                <InfoRow label="Name" value={birthDetails.name || 'N/A'} />
+                <InfoRow label="Sex" value={sex} />
+                <InfoRow label="Date of Birth" value={formatBirthDate(birthDateValue) || birthDateValue || 'N/A'} />
+                <InfoRow label="Day" value={report?.panchang?.vaar?.day || getWeekday(birthDateValue)} />
+                <InfoRow label="Time of Birth" value={birthDetails.timeOfBirth || 'N/A'} />
+                <InfoRow label="Place of Birth" value={birthDetails.placeOfBirth || 'N/A'} />
+                <InfoRow label="City" value={placeDetails.city} />
+                <InfoRow label="State" value={placeDetails.state} />
+                <InfoRow label="Country" value={placeDetails.country} />
+              </View>
+
+              <View style={styles.gridItem}>
+                <InfoRow label="Latitude" value={formatCoordinate(birthDetails.latitude, 'lat')} />
+                <InfoRow label="Longitude" value={formatCoordinate(birthDetails.longitude, 'lon')} />
+                <InfoRow label="Timezone" value={timezoneText} />
+                <InfoRow label="Tithi at Birth" value={tithiPaksha ? `${tithiName} (${tithiPaksha})` : tithiName} />
+                <InfoRow label="Nakshatra at Birth" value={nakshatraPada ? `${nakshatraName} (Pada ${nakshatraPada})` : nakshatraName} />
+                <InfoRow label="Yoga at Birth" value={yogaName} />
+                <InfoRow label="Karana at Birth" value={karanaName} />
+                <InfoRow
+                  label="Sun Degree"
+                  value={sunPosition ? formatDegreeInSign(sunPosition.sign, sunPosition.degree) : 'N/A'}
+                />
+                <InfoRow
+                  label="Ascendant Degree"
+                  value={report?.ascendant ? formatDegreeInSign(report.ascendant.sign, report.ascendant.degree) : 'N/A'}
+                />
+              </View>
+            </View>
           </View>
         </Section>
 
@@ -1365,6 +1805,63 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <Text style={styles.tableCell}>{planet.isRetro ? 'Retrograde' : 'Direct'}</Text>
               </View>
             ))}
+          </View>
+        </Section>
+
+        <Section title="Detailed Planetary Snapshot">
+          <View style={styles.card}>
+            <View style={styles.grid2}>
+              <View style={styles.gridItem}>
+                <InfoRow label="Lahiri Ayanamsha" value={ayanamshaText} />
+                <InfoRow label="Ishta (if available)" value={pickAstroValue('ishta', 'ishta_kaal', 'ishtkaal', 'isht')} />
+                <InfoRow label="Sunrise (if available)" value={pickAstroValue('sunrise', 'sun_rise')} />
+                <InfoRow label="Sunset (if available)" value={pickAstroValue('sunset', 'sun_set')} />
+              </View>
+              <View style={styles.gridItem}>
+                <InfoRow label="Local Mean Time (if available)" value={pickAstroValue('local_mean_time', 'lmt')} />
+                <InfoRow label="Sidereal Time (if available)" value={pickAstroValue('sidereal_time', 'lst')} />
+                <InfoRow label="Tithi Ending Time (if available)" value={pickAstroValue('tithi_ending_time', 'tithi_end_time')} />
+                <InfoRow label="Nakshatra Ending Time (if available)" value={pickAstroValue('nakshatra_ending_time', 'nakshatra_end_time')} />
+              </View>
+            </View>
+
+            <View style={styles.advancedTable}>
+              <View style={styles.advancedTableHeader}>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Pl</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>R</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>C</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Rasi</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.3 }]}>Degree</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.2 }]}>Speed</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.8 }]}>Nak</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>Pad</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>No.</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>RL</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>NL</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Sub</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>Dignity</Text>
+              </View>
+              {detailedPlanetRows.map((row: any, idx: number) => (
+                <View key={`${row.name}-${idx}`} style={idx % 2 === 0 ? styles.advancedTableRow : styles.advancedTableRowAlt}>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.name}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.retro}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.combust}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.signShort}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.3 }]}>{row.degreeText}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.2 }]}>{row.speed}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.8 }]}>{row.nakshatra}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.pada}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.nakNo}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.rashiLord}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.nakLord}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.subLord}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.5 }]}>{row.dignity}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={styles.tinyNote}>
+              R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.
+            </Text>
           </View>
         </Section>
 

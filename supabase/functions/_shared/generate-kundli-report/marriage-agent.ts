@@ -115,6 +115,7 @@ interface MarriageInput {
 
 export async function generateMarriagePrediction(input: MarriageInput): Promise<AgentResponse<MarriagePrediction>> {
   const { planets, ascSignIdx, charaKarakas, gender, birthDate, generatedAt, maritalStatus = "unknown" } = input;
+  const genderLabel = gender === "F" ? "female" : gender === "M" ? "male" : "gender-diverse";
   
   const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
   
@@ -141,7 +142,7 @@ export async function generateMarriagePrediction(input: MarriageInput): Promise<
     ? Math.max(0, Math.floor((now.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
     : null;
 
-  const userPrompt = `Provide comprehensive marriage analysis for a ${gender === "F" ? "female" : "male"} native:
+  const userPrompt = `Provide comprehensive marriage analysis for a ${genderLabel} native:
 
 **5th House (Romance & Love):**
 - Sign: ${SIGNS[fifthHouseSignIdx]}
@@ -182,6 +183,8 @@ CRITICAL SAFETY RULES (MANDATORY):
    - "If married" spouse-harmony and relationship-strengthening guidance
 3) Never produce advice that could destabilize an existing marriage.
 4) Keep partner profiling explicitly labeled as applicable to unmarried natives only.
+5) Use inclusive, gender-sensitive language and avoid heteronormative assumptions.
+6) Use "partner/spouse" terminology by default; avoid rigid gender-role framing.
 
 Also answer explicitly:
 - Ideal marriage timing for young natives

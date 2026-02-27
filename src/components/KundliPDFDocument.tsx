@@ -1002,12 +1002,15 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
 
 const BulletList = ({ items }: { items: string[] }) => (
   <View style={styles.list}>
-    {items.map((item, idx) => (
-      <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }}>
-        <Text style={styles.bullet}>•</Text>
-        <Text style={[styles.bodyText, { flex: 1 }]}>{item}</Text>
-      </View>
-    ))}
+    {items
+      .map((item) => String(item ?? '').trim())
+      .filter((item) => item.length > 0)
+      .map((item, idx) => (
+        <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
+          <Text style={styles.bullet}>•</Text>
+          <Text style={[styles.bodyText, { flex: 1 }]}>{item}</Text>
+        </View>
+      ))}
   </View>
 );
 

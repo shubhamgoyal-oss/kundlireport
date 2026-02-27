@@ -922,6 +922,21 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
   const formatMonthYear = (date: Date) =>
     date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
+  const normalizeDashaToken = (value: unknown, which: "first" | "last" = "first") => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const parts = raw.split('/').map((s) => s.trim()).filter(Boolean);
+    if (parts.length === 0) return raw;
+    return which === "first" ? parts[0] : parts[parts.length - 1];
+  };
+
+  const formatDashaPair = (mahadasha: unknown, antardasha: unknown) => {
+    const md = normalizeDashaToken(mahadasha, 'first');
+    const ad = normalizeDashaToken(antardasha, 'last');
+    if (md && ad) return `${md}/${ad}`;
+    return md || ad || 'N/A';
+  };
+
   // Frontend safety-net: recompute Dasha timeline deterministically from Moon degree + birth details.
   // This prevents stale/wrong backend values from leaking into final PDF.
   const dashaTruth = React.useMemo(() => {
@@ -1961,7 +1976,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </Text>
             
             {report.dasha.antardashaPredictions.map((ad: any, idx: number) => (
-              <Card key={idx} title={`${ad.mahadasha}/${ad.antardasha} (${ad.duration || ''})`}>
+              <Card key={idx} title={`${formatDashaPair(ad.mahadasha, ad.antardasha)} (${ad.duration || ''})`}>
                 {(() => {
                   const adDates = resolveAdDates(ad.antardasha, ad.startDate, ad.endDate);
                   return <InfoRow label="Period" value={`${adDates.start} to ${adDates.end}`} />;
@@ -2524,7 +2539,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   </View>
                   <View style={styles.row}>
                     <Text style={styles.label}>Current Phase</Text>
-                    <Text style={styles.value}>{report.sadeSati.currentPhase || 'N/A'}</Text>
+                    <Text style={styles.value}>
+                      {report.sadeSati.currentPhase || (report.sadeSati.isCurrentlyActive ? 'Active' : 'Not Active')}
+                    </Text>
                   </View>
                 </View>
                 {report.sadeSati.currentPhaseInterpretation && (

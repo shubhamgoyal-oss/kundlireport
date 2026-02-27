@@ -79,6 +79,8 @@ function sanitizeText(text: string): string {
   
   // Remove explicit sexual content
   sanitized = sanitized.replace(/sexual intercourse|sexual activity|sex life details/gi, "marital harmony");
+  sanitized = sanitized.replace(/\bsexuali[sz]ed\b/gi, "intense relational");
+  sanitized = sanitized.replace(/\bsexual\b/gi, "intimate");
   sanitized = sanitized.replace(/\bsex\b(?!th)/gi, "intimacy"); // "sex" but not "sixth"
   
   // Soften violent language
@@ -92,6 +94,15 @@ function isWeakNarrative(text: unknown, minLength: number): boolean {
   const t = typeof text === "string" ? text.trim() : "";
   if (t.length < minLength) return true;
   return VAGUE_PATTERNS.some((rx) => rx.test(t));
+}
+
+function parseMonthYearToDate(value: unknown): Date | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = new Date(`${trimmed} 01`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
 }
 
 function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIssue[] {
@@ -137,6 +148,50 @@ function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIs
         suggestedFix: "Regenerate those Antardasha narratives with chart-specific, paragraph-style interpretation.",
       });
     }
+  }
+
+  if (dasha?.antardashaPredictions && Array.isArray(dasha.antardashaPredictions)) {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    let pastLeakCount = 0;
+    let malformedLabelCount = 0;
+    for (const ad of dasha.antardashaPredictions) {
+      const end = parseMonthYearToDate(ad?.endDate);
+      if (end && end < monthStart) pastLeakCount++;
+      if (typeof ad?.mahadasha === "string" && ad.mahadasha.includes("/")) malformedLabelCount++;
+    }
+
+    if (pastLeakCount > 0) {
+      issues.push({
+        section: "dasha.antardashaPredictions",
+        issueType: "inconsistency",
+        severity: "critical",
+        description: `${pastLeakCount} completed past Antardasha period(s) leaked into current-Mahadasha section.`,
+        suggestedFix: "Filter current-Mahadasha Antardashas by endDate >= current month before rendering.",
+      });
+    }
+
+    if (malformedLabelCount > 0) {
+      issues.push({
+        section: "dasha.antardashaPredictions.labels",
+        issueType: "formatting",
+        severity: "warning",
+        description: `${malformedLabelCount} Antardasha label(s) contain malformed Mahadasha strings.`,
+        suggestedFix: "Normalize Dasha labels to single-planet names before rendering.",
+      });
+    }
+  }
+
+  const dashaText = JSON.stringify(dasha || {});
+  const repetitiveTemplateHits = (dashaText.match(/meaningful shift in priorities/gi) || []).length;
+  if (repetitiveTemplateHits >= 4) {
+    issues.push({
+      section: "dasha.future_antardasha_narratives",
+      issueType: "clarity",
+      severity: "critical",
+      description: `Detected repetitive template phrase usage (${repetitiveTemplateHits} hits) in Dasha narratives.`,
+      suggestedFix: "Regenerate future Antardasha narratives with chart-specific paragraph interpretations.",
+    });
   }
 
   const careerOverview = reportContent.career?.overview;

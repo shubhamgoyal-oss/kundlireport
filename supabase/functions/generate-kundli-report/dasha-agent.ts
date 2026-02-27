@@ -405,8 +405,15 @@ function isWeakNarrative(text: string | undefined, minLength = 130): boolean {
   return genericPatterns.some((rx) => rx.test(t));
 }
 
+function cleanTextArtifact(text: string | undefined): string {
+  return String(text || "")
+    .replace(/\s+landscapes\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function useOrFallbackArray(values: string[] | undefined, fallback: string[]): string[] {
-  const clean = (values || []).map((v) => String(v).trim()).filter(Boolean);
+  const clean = (values || []).map((v) => cleanTextArtifact(String(v))).filter(Boolean);
   return clean.length >= 3 ? clean : fallback;
 }
 
@@ -828,7 +835,7 @@ CRITICAL DEPTH REQUIREMENTS:
         endDate: formatDate(deterministic?.endDate || adWindow.endDate),
         duration: `~${adWindow.durationMonths} months`,
         overview: !isWeakNarrative(aiAd?.overview, 150)
-          ? aiAd!.overview
+          ? cleanTextArtifact(aiAd!.overview)
           : fallbackInterpretation,
         focusAreas: useOrFallbackArray(
           aiAd?.focusAreas,
@@ -843,7 +850,7 @@ CRITICAL DEPTH REQUIREMENTS:
           ],
         ),
         advice: !isWeakNarrative(aiAd?.advice, 90)
-          ? aiAd!.advice
+          ? cleanTextArtifact(aiAd!.advice)
           : buildAntardashaAdvice(currentDasha.mahadasha, adWindow.antardasha),
       };
     }),
@@ -859,7 +866,7 @@ CRITICAL DEPTH REQUIREMENTS:
         startDate: formatDate(mdWindow.startDate),
         endDate: formatDate(mdWindow.endDate),
         overview: !isWeakNarrative(aiGroup?.overview, 170)
-          ? aiGroup!.overview
+          ? cleanTextArtifact(aiGroup!.overview)
           : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Expect outcomes to unfold through sub-period shifts, where each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
         antardashas: mdWindow.antardashas.map((adWindow) => {
           const deterministic = deterministicByAntardasha?.get(adWindow.antardasha);
@@ -871,14 +878,14 @@ CRITICAL DEPTH REQUIREMENTS:
             endDate: formatDate(deterministic?.endDate || adWindow.endDate),
             duration: `~${adWindow.durationMonths} months`,
             interpretation: !isWeakNarrative(aiAd?.interpretation, 140)
-              ? aiAd!.interpretation
+              ? cleanTextArtifact(aiAd!.interpretation)
               : fallbackInterpretation,
             focusAreas: useOrFallbackArray(
               aiAd?.focusAreas,
               buildAntardashaFocusAreas(mdWindow.mahadasha, adWindow.antardasha),
             ),
             advice: !isWeakNarrative(aiAd?.advice, 80)
-              ? aiAd!.advice
+              ? cleanTextArtifact(aiAd!.advice)
               : buildAntardashaAdvice(mdWindow.mahadasha, adWindow.antardasha),
           };
         }),

@@ -8,8 +8,11 @@ type SadeSatiPhase = "rising" | "peak" | "setting" | "not_active";
 interface SadeSatiPhaseWindow {
   phaseName: string;
   saturnSign: string;
+  startMonth: string;
   startYear: number;
+  endMonth: string;
   endYear: number;
+  periodLabel: string;
   description: string;
   challenges: string[];
   hidden_blessings: string[];
@@ -90,6 +93,11 @@ const SIGN_HINDI: Record<string, string> = {
   Pisces: "Meena",
 };
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
 // Must stay aligned with calculate-dosha*/algorithmic-doshas.ts
 const CURRENT_SATURN_SIGN = "Pisces";
 
@@ -161,6 +169,13 @@ function estimateNextStartYear(moonSign: string, saturnSign: string, currentYear
   return currentYear + Math.round(years);
 }
 
+function addMonths(year: number, monthIndex: number, delta: number): { year: number; monthIndex: number } {
+  const total = year * 12 + monthIndex + delta;
+  const y = Math.floor(total / 12);
+  const m = ((total % 12) + 12) % 12;
+  return { year: y, monthIndex: m };
+}
+
 function normalizeSadeSatiPrediction(
   raw: Partial<SadeSatiPrediction>,
   planets: SeerPlanet[],
@@ -185,13 +200,24 @@ function normalizeSadeSatiPrediction(
   const nextStartYear = estimateNextStartYear(moonSign, saturnSign, currentYear);
   const nextPeriod = nextStartYear ? `${nextStartYear} - ${nextStartYear + 8}` : "To be determined by future Saturn transits";
 
-  const phaseStart = startYear ?? currentYear;
+  const phaseAnchorYear = isActive ? (startYear ?? currentYear) : (nextStartYear ?? (currentYear + 1));
+  const phaseAnchorMonth = 2; // March (approximate Saturn ingress anchor)
+  const phase0Start = addMonths(phaseAnchorYear, phaseAnchorMonth, 0);
+  const phase0End = addMonths(phaseAnchorYear, phaseAnchorMonth, 29);
+  const phase1Start = addMonths(phaseAnchorYear, phaseAnchorMonth, 30);
+  const phase1End = addMonths(phaseAnchorYear, phaseAnchorMonth, 59);
+  const phase2Start = addMonths(phaseAnchorYear, phaseAnchorMonth, 60);
+  const phase2End = addMonths(phaseAnchorYear, phaseAnchorMonth, 89);
+
   const phaseWindows: SadeSatiPhaseWindow[] = [
     {
       phaseName: "Rising Phase (12th from Moon)",
       saturnSign: signAtOffset(moonSign, -1),
-      startYear: phaseStart,
-      endYear: phaseStart + 2,
+      startMonth: MONTH_NAMES[phase0Start.monthIndex],
+      startYear: phase0Start.year,
+      endMonth: MONTH_NAMES[phase0End.monthIndex],
+      endYear: phase0End.year,
+      periodLabel: `${MONTH_NAMES[phase0Start.monthIndex]} ${phase0Start.year} to ${MONTH_NAMES[phase0End.monthIndex]} ${phase0End.year}`,
       description: "Pressure builds through expenses, relocations, and mindset restructuring. This phase asks for discipline before visible gains.",
       challenges: [
         "Rising expenses and responsibility load",
@@ -208,8 +234,11 @@ function normalizeSadeSatiPrediction(
     {
       phaseName: "Peak Phase (Over Moon)",
       saturnSign: moonSign,
-      startYear: phaseStart + 2,
-      endYear: phaseStart + 5,
+      startMonth: MONTH_NAMES[phase1Start.monthIndex],
+      startYear: phase1Start.year,
+      endMonth: MONTH_NAMES[phase1End.monthIndex],
+      endYear: phase1End.year,
+      periodLabel: `${MONTH_NAMES[phase1Start.monthIndex]} ${phase1Start.year} to ${MONTH_NAMES[phase1End.monthIndex]} ${phase1End.year}`,
       description: "This is the most psychologically intense phase. Saturn tests emotional maturity, accountability, and resilience.",
       challenges: [
         "Higher emotional pressure and self-doubt spikes",
@@ -226,8 +255,11 @@ function normalizeSadeSatiPrediction(
     {
       phaseName: "Setting Phase (2nd from Moon)",
       saturnSign: signAtOffset(moonSign, 1),
-      startYear: phaseStart + 5,
-      endYear: phaseStart + 8,
+      startMonth: MONTH_NAMES[phase2Start.monthIndex],
+      startYear: phase2Start.year,
+      endMonth: MONTH_NAMES[phase2End.monthIndex],
+      endYear: phase2End.year,
+      periodLabel: `${MONTH_NAMES[phase2Start.monthIndex]} ${phase2Start.year} to ${MONTH_NAMES[phase2End.monthIndex]} ${phase2End.year}`,
       description: "Closure and consolidation phase. Earlier effort starts converting into durable results and karmic lessons settle.",
       challenges: [
         "Family/finance restructuring decisions",

@@ -72,6 +72,8 @@ ${planets.map(p => `- ${p.name}: ${p.sign} (House ${p.house}, ${p.deg.toFixed(1)
 **Ascendant Sign Index:** ${ascSignIdx}
 **Moon Sign Index:** ${moonSignIdx}
 
+Important: Do NOT include Shani Sade Sati in major/minor dosha lists. Sade Sati is analyzed in a dedicated section by a separate agent and must not be duplicated here.
+
 Provide comprehensive dosha analysis with remedies.`;
 
   const toolSchema = {
@@ -91,7 +93,7 @@ Provide comprehensive dosha analysis with remedies.`;
   };
 
   return callAgent<DoshasPrediction>(
-    "You are an expert Vedic astrologer specializing in Dosha analysis. Analyze all major and minor doshas with remedies.",
+    "You are an expert Vedic astrologer specializing in Dosha analysis. Analyze all major and minor doshas with remedies. Never include Sade Sati in this output.",
     userPrompt,
     "generate_doshas_prediction",
     "Generate comprehensive dosha analysis",

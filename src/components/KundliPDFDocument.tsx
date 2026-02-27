@@ -173,6 +173,56 @@ const sanitizeText = (text: string | null | undefined): string => {
   return cleaned.replace(/\s+/g, ' ').replace(/^\s*\(\s*\)\s*$/, '').replace(/^\s*\(\s*/, '(').replace(/\s*\)\s*$/, ')').replace(/^\s*-?\s*$/, '').trim();
 };
 
+const SATURN_TRANSIT_FALLBACK_SIGN = 'Pisces';
+const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+type SadeSatiPhaseKey = 'rising' | 'peak' | 'setting' | 'not_active';
+
+const normalizeSadeSatiPhase = (raw: unknown): SadeSatiPhaseKey => {
+  const text = String(raw || '').toLowerCase();
+  if (text.includes('rising') || text.includes('12th')) return 'rising';
+  if (text.includes('peak') || text.includes('over moon') || text.includes('1st')) return 'peak';
+  if (text.includes('setting') || text.includes('2nd')) return 'setting';
+  if (text.includes('not active') || text.includes('not currently active')) return 'not_active';
+  return 'not_active';
+};
+
+const computeSadeSatiPhaseFromSigns = (moonSign: string, saturnSign: string): SadeSatiPhaseKey => {
+  const moonIdx = SIGNS.indexOf(moonSign);
+  const saturnIdx = SIGNS.indexOf(saturnSign);
+  if (moonIdx < 0 || saturnIdx < 0) return 'not_active';
+  const relative = (saturnIdx - moonIdx + 12) % 12;
+  if (relative === 11) return 'rising';
+  if (relative === 0) return 'peak';
+  if (relative === 1) return 'setting';
+  return 'not_active';
+};
+
+const phaseLabel = (phase: SadeSatiPhaseKey): string => {
+  if (phase === 'rising') return 'Rising Phase (12th from Moon)';
+  if (phase === 'peak') return 'Peak Phase (Over Moon)';
+  if (phase === 'setting') return 'Setting Phase (2nd from Moon)';
+  return 'Not Active';
+};
+
+const isSadeSatiDoshaName = (name: unknown, nameHindi?: unknown): boolean => {
+  const full = `${String(name || '')} ${String(nameHindi || '')}`.toLowerCase();
+  return full.includes('sade sati') || (full.includes('shani') && full.includes('sati'));
+};
+
+const parseYearLike = (value: unknown): number | null => {
+  const n = Number(String(value ?? '').match(/\d{4}/)?.[0]);
+  return Number.isFinite(n) ? n : null;
+};
+
+const addMonthsUtc = (year: number, monthIndex: number, delta: number): { year: number; monthIndex: number } => {
+  const total = year * 12 + monthIndex + delta;
+  const y = Math.floor(total / 12);
+  const m = ((total % 12) + 12) % 12;
+  return { year: y, monthIndex: m };
+};
+
 const styles = StyleSheet.create({
   page: {
     // CRITICAL: Page-level padding ensures ALL pages (including overflow/continuation)
@@ -913,16 +963,34 @@ const styles = StyleSheet.create({
 });
 
 // Helper components
-const Section = ({ title, children, wrap = true }: { title: string; children: React.ReactNode; wrap?: boolean }) => (
+const Section = ({
+  title,
+  children,
+  wrap = true,
+  keepWithNext = 72,
+}: {
+  title: string;
+  children: React.ReactNode;
+  wrap?: boolean;
+  keepWithNext?: number;
+}) => (
   <View style={styles.section} wrap={wrap}>
-    <Text style={styles.header}>{title}</Text>
+    <Text style={styles.header} minPresenceAhead={keepWithNext}>{title}</Text>
     {children}
   </View>
 );
 
-const SubSection = ({ title, children }: { title: string; children: React.ReactNode }) => (
+const SubSection = ({
+  title,
+  children,
+  keepWithNext = 56,
+}: {
+  title: string;
+  children: React.ReactNode;
+  keepWithNext?: number;
+}) => (
   <View>
-    <Text style={styles.subHeader}>{title}</Text>
+    <Text style={styles.subHeader} minPresenceAhead={keepWithNext}>{title}</Text>
     {children}
   </View>
 );
@@ -1635,6 +1703,56 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         combust: isCombust ? 'C' : '',
       };
     });
+
+  const moonPlanet = report?.planetaryPositions?.find((planet: any) => planet?.name === 'Moon');
+  const sadeSatiMoonSign = String(report?.sadeSati?.moonSign || moonPlanet?.sign || 'N/A');
+  const sadeSatiTransitSign = String(report?.sadeSati?.saturnSign || SATURN_TRANSIT_FALLBACK_SIGN);
+  const sadeSatiPhaseFromSigns = computeSadeSatiPhaseFromSigns(sadeSatiMoonSign, sadeSatiTransitSign);
+  const sadeSatiPhaseFromText = normalizeSadeSatiPhase(report?.sadeSati?.currentPhase || report?.sadeSati?.phase);
+  const sadeSatiPhase = sadeSatiPhaseFromSigns !== 'not_active' || sadeSatiPhaseFromText === 'not_active'
+    ? sadeSatiPhaseFromSigns
+    : sadeSatiPhaseFromText;
+  const sadeSatiIsActive = sadeSatiPhase !== 'not_active';
+  const sadeSatiCurrentPhaseLabel = phaseLabel(sadeSatiPhase);
+
+  const originalMajorDoshas = Array.isArray(report?.doshas?.majorDoshas) ? report.doshas.majorDoshas : [];
+  const originalMinorDoshas = Array.isArray(report?.doshas?.minorDoshas) ? report.doshas.minorDoshas : [];
+  const majorDoshasFiltered = originalMajorDoshas.filter((dosha: any) => !isSadeSatiDoshaName(dosha?.name, dosha?.nameHindi));
+  const minorDoshasFiltered = originalMinorDoshas.filter((dosha: any) => !isSadeSatiDoshaName(dosha?.name, dosha?.nameHindi));
+  const removedSadeSatiDoshaCount = (originalMajorDoshas.length - majorDoshasFiltered.length) + (originalMinorDoshas.length - minorDoshasFiltered.length);
+  const doshaRemediesFiltered = Array.isArray(report?.doshas?.doshaRemedies)
+    ? report.doshas.doshaRemedies.filter((r: any) => !isSadeSatiDoshaName(r?.doshaName))
+    : [];
+  const isDetectedDosha = (d: any) => {
+    const status = String(d?.status || '').toLowerCase();
+    return Boolean(d?.isPresent) || status === 'present' || status === 'partial' || status === 'nullified';
+  };
+  const doshaDisplayTotal = majorDoshasFiltered.filter(isDetectedDosha).length + minorDoshasFiltered.filter(isDetectedDosha).length;
+
+  const generatedAtDate = report?.generatedAt ? new Date(report.generatedAt) : new Date();
+  const fallbackSadeSatiStartYear = generatedAtDate.getFullYear() + (sadeSatiIsActive ? 0 : 1);
+  const explicitSadeSatiStartYear =
+    parseYearLike(report?.sadeSati?.startYear) ||
+    parseYearLike(report?.sadeSati?.currentSadeSati?.period) ||
+    parseYearLike(report?.sadeSati?.nextSadeSati?.approximateStart);
+  const sadeSatiAnchorYear = explicitSadeSatiStartYear || fallbackSadeSatiStartYear;
+  const sadeSatiPhasesForDisplay = (Array.isArray(report?.sadeSati?.phases) ? report.sadeSati.phases : []).map((phase: any, idx: number) => {
+    const estimatedStart = addMonthsUtc(sadeSatiAnchorYear, 2, idx * 30); // March anchor, 30-month Saturn phase
+    const estimatedEnd = addMonthsUtc(sadeSatiAnchorYear, 2, ((idx + 1) * 30) - 1);
+    const startYear = parseYearLike(phase?.startYear) || estimatedStart.year;
+    const endYear = parseYearLike(phase?.endYear) || estimatedEnd.year;
+    const startMonth = sanitizeText(String(phase?.startMonth || MONTH_NAMES[estimatedStart.monthIndex] || 'March'));
+    const endMonth = sanitizeText(String(phase?.endMonth || MONTH_NAMES[estimatedEnd.monthIndex] || 'August'));
+    return {
+      ...phase,
+      startYear,
+      endYear,
+      startMonth,
+      endMonth,
+      periodLabel: `${startMonth} ${startYear} to ${endMonth} ${endYear}`,
+    };
+  });
+
   const tocEntries = [
     { num: '01', title: 'Birth Details & Planetary Positions', sub: 'Ascendant, planetary placements, Chara Karakas (Jaimini)' },
     { num: '02', title: 'Panchang Analysis', sub: 'Vaar, Tithi, Nakshatra, Yoga, Karana at birth' },
@@ -1788,7 +1906,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       {/* Kundali Charts Section */}
       {charts.length > 0 && (
         <ContentPage sectionName="Kundali Charts">
-          <Section title="Kundali Charts (Divisional Charts)">
+          <Section title="Kundali Charts (Divisional Charts)" keepWithNext={260}>
             <Text style={styles.paragraph}>
               These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.
             </Text>
@@ -1810,7 +1928,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       {/* Additional Charts Page */}
       {charts.length > 2 && (
         <ContentPage sectionName="Kundali Charts">
-          <Section title="Additional Divisional Charts">
+          <Section title="Additional Divisional Charts" keepWithNext={260}>
             <View style={styles.chartGrid}>
               {charts.slice(2, 4).map((chart, idx) => (
                 <View key={idx} style={styles.chartItem}>
@@ -1897,7 +2015,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
         </Section>
 
-        <Section title="Detailed Planetary Snapshot">
+        <Section title="Detailed Planetary Snapshot" keepWithNext={180}>
           <View style={styles.card} wrap={false}>
             <View style={styles.stableTwoCol}>
               <View style={styles.stableCol}>
@@ -2927,11 +3045,18 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <Text style={styles.paragraph}>{report.doshas.overview || ''}</Text>
               
               <View style={styles.highlight}>
-                <Text style={styles.boldLabel}>Total Doshas Detected: {report.doshas.totalDoshasDetected || 0}</Text>
+                <Text style={styles.boldLabel}>Total Doshas Detected: {doshaDisplayTotal}</Text>
               </View>
+              {removedSadeSatiDoshaCount > 0 && (
+                <View style={styles.infoBox}>
+                  <Text style={styles.bodyText}>
+                    Sade Sati cards are intentionally removed from Dosha pages and handled only in the dedicated Sade Sati section to prevent conflicting status.
+                  </Text>
+                </View>
+              )}
 
               <SubSection title="Major Doshas">
-                {(report.doshas.majorDoshas || []).map((dosha: any, idx: number) => (
+                {majorDoshasFiltered.map((dosha: any, idx: number) => (
                   <Card key={idx} title={`${dosha.name}${dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
@@ -2972,10 +3097,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </ContentPage>
 
           {/* Minor Doshas */}
-          {report.doshas.minorDoshas && report.doshas.minorDoshas.length > 0 && (
+          {minorDoshasFiltered.length > 0 && (
             <ContentPage sectionName="Minor Doshas">
               <Section title="Minor Doshas">
-                {report.doshas.minorDoshas.map((dosha: any, idx: number) => (
+                {minorDoshasFiltered.map((dosha: any, idx: number) => (
                   <Card key={idx} title={`${dosha.name}${dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
@@ -2990,7 +3115,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           )}
 
           {/* Dosha Remedies */}
-          {report.doshas.doshaRemedies && report.doshas.doshaRemedies.length > 0 && (
+          {doshaRemediesFiltered.length > 0 && (
             <ContentPage sectionName="Dosha Remedies">
               <Section title="Dosha Remedies">
                 <SubSection title="Priority Remedies">
@@ -3008,7 +3133,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   )}
                 </SubSection>
 
-                {report.doshas.doshaRemedies.map((remedy: any, idx: number) => (
+                {doshaRemediesFiltered.map((remedy: any, idx: number) => (
                   <Card key={idx} title={`Remedies for ${remedy.doshaName}`}>
                     <Text style={styles.subSubHeader}>Primary Remedy: {remedy.primaryRemedy?.name}</Text>
                     <InfoRow label="Type" value={remedy.primaryRemedy?.type || 'N/A'} />
@@ -3209,19 +3334,23 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View style={styles.row}>
                     <Text style={styles.label}>Moon Sign</Text>
                     <Text style={[styles.value, { fontWeight: 'bold' }]}>
-                      {report.sadeSati.moonSign || 'N/A'}{report.sadeSati.moonSignHindi ? ` (${sanitizeText(report.sadeSati.moonSignHindi)})` : ''}
+                      {sadeSatiMoonSign || 'N/A'}{report.sadeSati.moonSignHindi ? ` (${sanitizeText(report.sadeSati.moonSignHindi)})` : ''}
                     </Text>
                   </View>
                   <View style={styles.row}>
+                    <Text style={styles.label}>Transit Saturn</Text>
+                    <Text style={styles.value}>{sadeSatiTransitSign}</Text>
+                  </View>
+                  <View style={styles.row}>
                     <Text style={styles.label}>Currently Active</Text>
-                    <Text style={[styles.value, { fontWeight: 'bold', color: report.sadeSati.isCurrentlyActive ? '#dc2626' : '#059669' }]}>
-                      {report.sadeSati.isCurrentlyActive ? 'YES — ACTIVE NOW' : 'Not Currently Active'}
+                    <Text style={[styles.value, { fontWeight: 'bold', color: sadeSatiIsActive ? '#dc2626' : '#059669' }]}>
+                      {sadeSatiIsActive ? 'YES — ACTIVE NOW' : 'Not Currently Active'}
                     </Text>
                   </View>
                   <View style={styles.row}>
                     <Text style={styles.label}>Current Phase</Text>
                     <Text style={styles.value}>
-                      {report.sadeSati.currentPhase || (report.sadeSati.isCurrentlyActive ? 'Active' : 'Not Active')}
+                      {sadeSatiCurrentPhaseLabel}
                     </Text>
                   </View>
                 </View>
@@ -3237,10 +3366,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </ContentPage>
 
           {/* Page 2: The Three Phases */}
-          {report.sadeSati.phases && report.sadeSati.phases.length > 0 && (
+          {sadeSatiPhasesForDisplay.length > 0 && (
             <ContentPage sectionName="Sade Sati">
               <Section title="The Three Phases of Your Sade Sati">
-                {report.sadeSati.phases.map((phase: any, idx: number) => (
+                <Text style={styles.scriptural}>
+                  Month-level periods below are approximate transit windows derived from Saturn phase sequencing.
+                </Text>
+                {sadeSatiPhasesForDisplay.map((phase: any, idx: number) => (
                   <View key={idx} style={{ marginBottom: 6 }}>
                     <Text style={styles.subHeader}>{phase.phaseName}</Text>
                     <View style={styles.card}>
@@ -3250,7 +3382,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       </View>
                       <View style={styles.row}>
                         <Text style={styles.label}>Period</Text>
-                        <Text style={styles.value}>{phase.startYear} – {phase.endYear}</Text>
+                        <Text style={styles.value}>{phase.periodLabel}</Text>
                       </View>
                     </View>
                     <Text style={styles.paragraph}>{phase.description || ''}</Text>

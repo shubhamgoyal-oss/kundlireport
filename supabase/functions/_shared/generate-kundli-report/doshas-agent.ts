@@ -96,9 +96,11 @@ MAJOR DOSHAS TO ANALYZE:
 1. Mangal Dosha (Kuja Dosha) - Mars in 1, 2, 4, 7, 8, or 12 from Lagna/Moon/Venus
 2. Kaal Sarp Dosha - All 7 planets hemmed between Rahu-Ketu axis
 3. Pitra Dosha - Sun afflicted by Rahu/Ketu, or Saturn in 9th
-4. Shani Sade Sati - Saturn transiting 12th, 1st, or 2nd from Moon
-5. Guru Chandal Dosha (Brihaspati-Rahu) - Jupiter-Rahu conjunction
-6. Grahan Dosha (Rahu-Ketu with luminaries) - Sun/Moon with Rahu/Ketu
+4. Guru Chandal Dosha (Brihaspati-Rahu) - Jupiter-Rahu conjunction
+5. Grahan Dosha (Rahu-Ketu with luminaries) - Sun/Moon with Rahu/Ketu
+
+IMPORTANT EXCLUSION:
+- Do NOT include Shani Sade Sati in dosha output. It is handled by a dedicated Sade Sati module for timeline-level consistency.
 
 MINOR DOSHAS TO CHECK:
 - Punarphoo Dosha (Saturn-Moon conjunction)
@@ -166,10 +168,12 @@ ${planets.map(p => `- ${p.name}: ${p.sign} (House ${p.house}, ${p.deg.toFixed(1)
 - Moon-Ketu: ${moon?.signIdx === ketu?.signIdx ? "YES" : "NO"}
 
 Provide a comprehensive dosha analysis with:
-1. All 6 major doshas (even if absent)
+1. All 5 major doshas (even if absent)
 2. Any detected minor doshas
 3. Specific remedies for each present dosha
-4. Priority-based remedy recommendations`;
+4. Priority-based remedy recommendations
+
+Important: Do NOT include Shani Sade Sati in major/minor doshas or remedies.`;
 
   const toolSchema = {
     type: "object",
@@ -178,7 +182,7 @@ Provide a comprehensive dosha analysis with:
       totalDoshasDetected: { type: "number" },
       majorDoshas: {
         type: "array",
-        description: "All 6 major doshas with standardized analysis",
+        description: "All 5 major doshas with standardized analysis (excluding Sade Sati)",
         items: {
           type: "object",
           properties: {

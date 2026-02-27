@@ -131,6 +131,16 @@ export interface RemediesPrediction {
     workDirection: string;
     vastuExplanation: string;
   };
+  healthGuidance: {
+    ageGroup: string;
+    whyThisMatters: string;
+    safeMovement: string[];
+    nutritionAndHydration: string[];
+    recoveryAndSleep: string[];
+    preventiveChecks: string[];
+    avoidOverstrain: string[];
+    medicalDisclaimer: string;
+  };
   dailyRoutine: string[];
   spiritualPractices: string[];
   generalAdvice: string;
@@ -184,10 +194,12 @@ Build trust by explaining the science and tradition behind each remedy.`;
 interface RemediesInput {
   planets: SeerPlanet[];
   ascSignIdx: number;
+  birthDate?: Date;
+  generatedAt?: Date;
 }
 
 export async function generateRemediesPrediction(input: RemediesInput): Promise<AgentResponse<RemediesPrediction>> {
-  const { planets } = input;
+  const { planets, birthDate, generatedAt } = input;
   
   // Find weak planets
   const weakPlanets = planets.filter(p => {
@@ -198,6 +210,19 @@ export async function generateRemediesPrediction(input: RemediesInput): Promise<
   
   // Find afflicted planets (in houses 6, 8, 12)
   const afflictedPlanets = planets.filter(p => [6, 8, 12].includes(p.house));
+  const now = generatedAt || new Date();
+  const ageYears = birthDate
+    ? Math.max(0, Math.floor((now.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
+    : null;
+  const ageGroup = ageYears === null
+    ? "unknown"
+    : ageYears < 18
+      ? "minor"
+      : ageYears < 35
+        ? "young_adult"
+        : ageYears < 60
+          ? "adult"
+          : "senior";
 
   const userPrompt = `Provide comprehensive remedies with trust-building explanations based on the chart:
 
@@ -212,6 +237,18 @@ ${planets.map(p => {
   const dignity = calculateDignity(p.name, p.signIdx, p.deg);
   return `- ${p.name}: ${p.sign} (House ${p.house}) - ${dignity}${p.isRetro ? " [R]" : ""}`;
 }).join("\n")}
+
+**Native Health Context:**
+- Approximate Age: ${ageYears ?? "Unknown"} years
+- Age Group: ${ageGroup}
+
+CRITICAL HEALTH SAFETY RULES (MANDATORY):
+1. All health guidance must be age-appropriate and low-risk.
+2. For seniors, avoid high-impact suggestions (e.g., running, intense HIIT, heavy strain).
+3. For minors, suggest guardian-supervised routines only.
+4. For unknown age, default to gentle, universally safe suggestions.
+5. Never diagnose disease or replace medical treatment.
+6. Include a clear medical disclaimer.
 
 For EACH remedy, provide:
 1. The specific recommendation
@@ -231,6 +268,13 @@ Provide detailed remedies with trust-building content for:
 8. Fasting recommendations with physiological benefits
 9. Color and direction guidance with Vastu principles
 10. Daily spiritual practices
+
+Also include structured "Health Guidance" with:
+- safe movement suggestions
+- nutrition and hydration hygiene
+- sleep/recovery discipline
+- preventive check guidance
+- age-specific strain to avoid
 
 Also include a "Remedies Philosophy" section explaining:
 - The Vedic foundation of remedies
@@ -421,6 +465,20 @@ Also include a "Remedies Philosophy" section explaining:
         },
         required: ["favorable", "avoid", "sleepDirection", "workDirection", "vastuExplanation"]
       },
+      healthGuidance: {
+        type: "object",
+        properties: {
+          ageGroup: { type: "string" },
+          whyThisMatters: { type: "string" },
+          safeMovement: { type: "array", items: { type: "string" } },
+          nutritionAndHydration: { type: "array", items: { type: "string" } },
+          recoveryAndSleep: { type: "array", items: { type: "string" } },
+          preventiveChecks: { type: "array", items: { type: "string" } },
+          avoidOverstrain: { type: "array", items: { type: "string" } },
+          medicalDisclaimer: { type: "string" }
+        },
+        required: ["ageGroup", "whyThisMatters", "safeMovement", "nutritionAndHydration", "recoveryAndSleep", "preventiveChecks", "avoidOverstrain", "medicalDisclaimer"]
+      },
       dailyRoutine: { type: "array", items: { type: "string" } },
       spiritualPractices: { type: "array", items: { type: "string" } },
       generalAdvice: { type: "string" },
@@ -437,7 +495,7 @@ Also include a "Remedies Philosophy" section explaining:
         required: ["vedicFoundation", "howRemediesWork", "importanceOfFaith", "scientificPerspective", "traditionalWisdom"]
       }
     },
-    required: ["overview", "weakPlanets", "rudrakshaRecommendations", "gemstoneRecommendations", "mantras", "yantras", "pujaRecommendations", "ishtaDevata", "donations", "fasting", "colorTherapy", "directionGuidance", "dailyRoutine", "spiritualPractices", "generalAdvice", "remediesPhilosophy"],
+    required: ["overview", "weakPlanets", "rudrakshaRecommendations", "gemstoneRecommendations", "mantras", "yantras", "pujaRecommendations", "ishtaDevata", "donations", "fasting", "colorTherapy", "directionGuidance", "healthGuidance", "dailyRoutine", "spiritualPractices", "generalAdvice", "remediesPhilosophy"],
     additionalProperties: false
   };
 

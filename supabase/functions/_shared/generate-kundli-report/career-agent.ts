@@ -7,6 +7,12 @@ import type { CharaKaraka } from "./utils/chara-karakas.ts";
 
 export interface CareerPrediction {
   overview: string;
+  careerDirection: {
+    rightCareerForYou: string;
+    coreStrengths: string[];
+    idealRoles: string[];
+    idealWorkEnvironment: string;
+  };
   sunAnalysis: {
     placement: string;
     interpretation: string;
@@ -34,6 +40,13 @@ export interface CareerPrediction {
   };
   suitableFields: string[];
   avoidFields: string[];
+  careerSwitchInsights: {
+    isSwitchDueNow: string;
+    nextSwitchWindow: string;
+    oneOrTwoFutureChanges: string[];
+    rationale: string;
+    preparationPlan: string[];
+  };
   careerTiming: {
     currentPhase: string;
     upcomingOpportunities: string[];
@@ -62,10 +75,12 @@ interface CareerInput {
   planets: SeerPlanet[];
   ascSignIdx: number;
   charaKarakas: CharaKaraka[];
+  birthDate?: Date;
+  generatedAt?: Date;
 }
 
 export async function generateCareerPrediction(input: CareerInput): Promise<AgentResponse<CareerPrediction>> {
-  const { planets, ascSignIdx, charaKarakas } = input;
+  const { planets, ascSignIdx, charaKarakas, birthDate, generatedAt } = input;
   
   const sun = planets.find(p => p.name === "Sun");
   const saturn = planets.find(p => p.name === "Saturn");
@@ -78,6 +93,10 @@ export async function generateCareerPrediction(input: CareerInput): Promise<Agen
   const amatyakarakaPlanet = amatyakaraka ? planets.find(p => p.name === amatyakaraka.planet) : null;
   
   const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+  const now = generatedAt || new Date();
+  const ageYears = birthDate
+    ? Math.max(0, Math.floor((now.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
+    : null;
 
   const userPrompt = `Provide comprehensive career analysis:
 
@@ -110,12 +129,31 @@ export async function generateCareerPrediction(input: CareerInput): Promise<Agen
 **11th House (Gains & Income):**
 - Lord Position: House ${planets.find(p => p.name === getSignLord((ascSignIdx + 10) % 12))?.house || "N/A"}
 
-Provide detailed career predictions with specific field recommendations, timing, and success strategies.`;
+**Native Age Context:**
+- Approximate Age: ${ageYears ?? "Unknown"} years
+
+You MUST explicitly answer:
+1) What is the RIGHT career direction for this native (not generic list only)?
+2) Is a switch due now? If yes/no, explain clearly.
+3) Next switch window (month-year or year-range) with reason.
+4) One or two future career change windows with likely nature of change.
+
+Use practical, realistic timing windows (not absolute guarantees).`;
 
   const toolSchema = {
     type: "object",
     properties: {
-      overview: { type: "string", description: "3-4 paragraph career overview" },
+      overview: { type: "string", description: "5-6 paragraph comprehensive career narrative that vividly paints the native's professional destiny — covering natural work style, leadership qualities, ideal environment, relationship with authority, financial ambitions, potential peaks and setbacks, and the unique contribution this person is meant to make in the world" },
+      careerDirection: {
+        type: "object",
+        properties: {
+          rightCareerForYou: { type: "string", description: "A direct, specific statement of the most suitable career direction." },
+          coreStrengths: { type: "array", items: { type: "string" } },
+          idealRoles: { type: "array", items: { type: "string" } },
+          idealWorkEnvironment: { type: "string" }
+        },
+        required: ["rightCareerForYou", "coreStrengths", "idealRoles", "idealWorkEnvironment"]
+      },
       sunAnalysis: {
         type: "object",
         properties: {
@@ -159,6 +197,17 @@ Provide detailed career predictions with specific field recommendations, timing,
       },
       suitableFields: { type: "array", items: { type: "string" }, description: "8-10 suitable career fields" },
       avoidFields: { type: "array", items: { type: "string" }, description: "3-4 fields to avoid" },
+      careerSwitchInsights: {
+        type: "object",
+        properties: {
+          isSwitchDueNow: { type: "string", description: "Direct yes/no style guidance with reason." },
+          nextSwitchWindow: { type: "string", description: "Month-year or year range for the next likely career switch." },
+          oneOrTwoFutureChanges: { type: "array", items: { type: "string" }, description: "One or two future career change windows and likely transition." },
+          rationale: { type: "string" },
+          preparationPlan: { type: "array", items: { type: "string" } }
+        },
+        required: ["isSwitchDueNow", "nextSwitchWindow", "oneOrTwoFutureChanges", "rationale", "preparationPlan"]
+      },
       careerTiming: {
         type: "object",
         properties: {
@@ -169,11 +218,11 @@ Provide detailed career predictions with specific field recommendations, timing,
         required: ["currentPhase", "upcomingOpportunities", "challenges"]
       },
       successFormula: { type: "string", description: "Personal success formula based on chart" },
-      wealthPotential: { type: "string", description: "2-3 paragraph wealth potential analysis" },
-      businessVsJob: { type: "string", description: "Analysis of whether business or job suits better" },
+      wealthPotential: { type: "string", description: "3-4 paragraph wealth potential analysis covering accumulation patterns, investment instincts, money relationship, peak earning periods, and specific wealth-building strategies suited to this chart" },
+      businessVsJob: { type: "string", description: "2-3 paragraph nuanced analysis of the business vs. employment question — examining risk tolerance shown by the chart, entrepreneurial indicators, and the ideal professional structure for this native" },
       recommendations: { type: "array", items: { type: "string" }, description: "5-6 actionable career recommendations" }
     },
-    required: ["overview", "sunAnalysis", "saturnAnalysis", "tenthHouse", "amatyakaraka", "suitableFields", "avoidFields", "careerTiming", "successFormula", "wealthPotential", "businessVsJob", "recommendations"],
+    required: ["overview", "careerDirection", "sunAnalysis", "saturnAnalysis", "tenthHouse", "amatyakaraka", "suitableFields", "avoidFields", "careerSwitchInsights", "careerTiming", "successFormula", "wealthPotential", "businessVsJob", "recommendations"],
     additionalProperties: false
   };
 

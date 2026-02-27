@@ -7,6 +7,11 @@ import type { CharaKaraka } from "./utils/chara-karakas.ts";
 
 export interface MarriagePrediction {
   overview: string;
+  maritalSafety: {
+    statusAssumption: string;
+    safeguardPolicy: string;
+    alreadyMarriedGuidance: string;
+  };
   fifthHouse: {
     sign: string;
     lord: string;
@@ -47,10 +52,22 @@ export interface MarriagePrediction {
     direction: string;
     meetingCircumstances: string;
   };
+  idealPartnerForUnmarried: {
+    whenApplicable: string;
+    keyQualities: string[];
+    cautionTraits: string[];
+    practicalAdvice: string;
+  };
+  guidanceForMarriedNatives: {
+    focusAreas: string[];
+    relationshipStrengthening: string[];
+    conflictsToAvoid: string[];
+  };
   marriageTiming: {
     favorablePeriods: string[];
     challengingPeriods: string[];
     idealAgeRange: string;
+    idealTimeForYoungNatives: string;
     currentProspects: string;
   };
   compatibility: {
@@ -91,10 +108,13 @@ interface MarriageInput {
   ascSignIdx: number;
   charaKarakas: CharaKaraka[];
   gender: string;
+  birthDate?: Date;
+  generatedAt?: Date;
+  maritalStatus?: "single" | "married" | "unknown";
 }
 
 export async function generateMarriagePrediction(input: MarriageInput): Promise<AgentResponse<MarriagePrediction>> {
-  const { planets, ascSignIdx, charaKarakas, gender } = input;
+  const { planets, ascSignIdx, charaKarakas, gender, birthDate, generatedAt, maritalStatus = "unknown" } = input;
   
   const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
   
@@ -116,6 +136,10 @@ export async function generateMarriagePrediction(input: MarriageInput): Promise<
   
   // Mangal Dosha check (basic)
   const mangalDosha = mars && [1, 2, 4, 7, 8, 12].includes(mars.house);
+  const now = generatedAt || new Date();
+  const ageYears = birthDate
+    ? Math.max(0, Math.floor((now.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
+    : null;
 
   const userPrompt = `Provide comprehensive marriage analysis for a ${gender === "F" ? "female" : "male"} native:
 
@@ -147,12 +171,35 @@ export async function generateMarriagePrediction(input: MarriageInput): Promise<
 - House: ${mars?.house || "N/A"}
 - Mangal Dosha: ${mangalDosha ? "Present" : "Not Present"}
 
-Provide detailed marriage predictions with partner profile, timing, and relationship guidance.`;
+**Native Context:**
+- Approximate Age: ${ageYears ?? "Unknown"} years
+- Marital Status Input: ${maritalStatus}
+
+CRITICAL SAFETY RULES (MANDATORY):
+1) If marital status is "unknown", DO NOT suggest replacing spouse, extra-marital exploration, or "find a new partner" language.
+2) Provide clearly separated guidance:
+   - "If unmarried" partner profile/timing
+   - "If married" spouse-harmony and relationship-strengthening guidance
+3) Never produce advice that could destabilize an existing marriage.
+4) Keep partner profiling explicitly labeled as applicable to unmarried natives only.
+
+Also answer explicitly:
+- Ideal marriage timing for young natives
+- Ideal partner profile for unmarried natives`;
 
   const toolSchema = {
     type: "object",
     properties: {
-      overview: { type: "string", description: "3-4 paragraph marriage overview" },
+      overview: { type: "string", description: "5-6 paragraph comprehensive relationship narrative covering: the native's core emotional needs in partnership, love language and attachment style, what they seek in a partner, how they behave when in love, the quality and timing of their romantic journey, likely relationship patterns across life stages, and the spiritual dimension of love for this person" },
+      maritalSafety: {
+        type: "object",
+        properties: {
+          statusAssumption: { type: "string" },
+          safeguardPolicy: { type: "string" },
+          alreadyMarriedGuidance: { type: "string" }
+        },
+        required: ["statusAssumption", "safeguardPolicy", "alreadyMarriedGuidance"]
+      },
       fifthHouse: {
         type: "object",
         properties: {
@@ -213,15 +260,35 @@ Provide detailed marriage predictions with partner profile, timing, and relation
         },
         required: ["physicalTraits", "personality", "background", "direction", "meetingCircumstances"]
       },
+      idealPartnerForUnmarried: {
+        type: "object",
+        properties: {
+          whenApplicable: { type: "string" },
+          keyQualities: { type: "array", items: { type: "string" } },
+          cautionTraits: { type: "array", items: { type: "string" } },
+          practicalAdvice: { type: "string" }
+        },
+        required: ["whenApplicable", "keyQualities", "cautionTraits", "practicalAdvice"]
+      },
+      guidanceForMarriedNatives: {
+        type: "object",
+        properties: {
+          focusAreas: { type: "array", items: { type: "string" } },
+          relationshipStrengthening: { type: "array", items: { type: "string" } },
+          conflictsToAvoid: { type: "array", items: { type: "string" } }
+        },
+        required: ["focusAreas", "relationshipStrengthening", "conflictsToAvoid"]
+      },
       marriageTiming: {
         type: "object",
         properties: {
           favorablePeriods: { type: "array", items: { type: "string" } },
           challengingPeriods: { type: "array", items: { type: "string" } },
           idealAgeRange: { type: "string" },
+          idealTimeForYoungNatives: { type: "string" },
           currentProspects: { type: "string" }
         },
-        required: ["favorablePeriods", "challengingPeriods", "idealAgeRange", "currentProspects"]
+        required: ["favorablePeriods", "challengingPeriods", "idealAgeRange", "idealTimeForYoungNatives", "currentProspects"]
       },
       compatibility: {
         type: "object",
@@ -245,7 +312,7 @@ Provide detailed marriage predictions with partner profile, timing, and relation
       strengths: { type: "array", items: { type: "string" } },
       recommendations: { type: "array", items: { type: "string" } }
     },
-    required: ["overview", "fifthHouse", "seventhHouse", "venusAnalysis", "darakaraka", "partnerProfile", "marriageTiming", "compatibility", "mangalDosha", "challenges", "strengths", "recommendations"],
+    required: ["overview", "maritalSafety", "fifthHouse", "seventhHouse", "venusAnalysis", "darakaraka", "partnerProfile", "idealPartnerForUnmarried", "guidanceForMarriedNatives", "marriageTiming", "compatibility", "mangalDosha", "challenges", "strengths", "recommendations"],
     additionalProperties: false
   };
 

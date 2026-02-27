@@ -169,11 +169,11 @@ const styles = StyleSheet.create({
     padding: 0,
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     height: '100%',
     fontFamily: 'DejaVuSans',
-    backgroundColor: P.pageBg,
+    backgroundColor: '#160603',
   },
   dividerPage: {
     padding: 0,
@@ -186,63 +186,124 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   coverTitle: {
-    fontSize: 34,
+    fontSize: 54,
     fontWeight: 'bold',
-    color: P.primary,
-    marginBottom: 4,
+    color: '#ffffff',
+    marginBottom: 2,
     textAlign: 'center',
+    letterSpacing: 0.6,
   },
   coverSubtitle: {
-    fontSize: 13.5,
-    color: P.mutedText,
-    marginBottom: 26,
+    fontSize: 13,
+    color: '#fbbf24',
+    marginBottom: 16,
     textAlign: 'center',
+    letterSpacing: 0.9,
   },
   coverName: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: P.bodyText,
-    marginBottom: 8,
+    color: '#fff7ed',
+    marginBottom: 10,
     textAlign: 'center',
   },
   coverDetails: {
-    fontSize: 11.5,
-    color: P.mutedText,
+    fontSize: 10.2,
+    color: '#fde68a',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   coverKicker: {
-    fontSize: 10.5,
-    color: P.mutedText,
-    letterSpacing: 2.2,
+    fontSize: 24,
+    color: '#ffffff',
+    letterSpacing: 0.2,
     textAlign: 'center',
-    marginBottom: 12,
+    fontWeight: 'bold',
+    marginBottom: 2,
   },
   coverMark: {
-    fontSize: 12,
-    color: P.gold,
+    fontSize: 46,
+    color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    letterSpacing: 0.2,
   },
   coverMetaLabel: {
-    fontSize: 9,
-    color: '#92400e',
+    fontSize: 8.4,
+    color: '#f59e0b',
     textTransform: 'uppercase',
-    letterSpacing: 0.9,
+    letterSpacing: 1.1,
     marginBottom: 2,
   },
   coverFooterMeta: {
-    fontSize: 8.5,
-    color: P.mutedText,
+    fontSize: 11,
+    color: '#fff7ed',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
+    fontWeight: 'bold',
   },
   coverFooterBrand: {
-    fontSize: 9.2,
-    color: '#c2410c',
+    fontSize: 10.5,
+    color: '#fde68a',
     textAlign: 'center',
+    letterSpacing: 0.4,
+  },
+  coverBrandRow: {
+    marginTop: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverBrandBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#fde047',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverBrandDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#dc2626',
+  },
+  coverBrandText: {
+    fontSize: 24,
+    color: '#f3f4f6',
     fontWeight: 'bold',
-    letterSpacing: 0.3,
+  },
+  coverDividerRow: {
+    marginTop: 12,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  coverDividerLine: {
+    width: 145,
+    height: 1,
+    backgroundColor: '#fbbf24',
+    opacity: 0.7,
+  },
+  coverDividerCenter: {
+    color: '#fbbf24',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  coverIdentityCard: {
+    position: 'absolute',
+    bottom: 118,
+    left: 76,
+    right: 76,
+    backgroundColor: 'rgba(30, 12, 7, 0.82)',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.52)',
+    borderRadius: 14,
+    paddingTop: 14,
+    paddingBottom: 12,
+    paddingHorizontal: 18,
   },
   header: {
     fontSize: 16,
@@ -1086,70 +1147,97 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     <Document>
       {/* Cover Page */}
       <Page size="A4" style={styles.coverPage}>
-        {/* Outer decorative border */}
         <Svg width={595} height={842} style={{ position: 'absolute', top: 0, left: 0 }}>
-          {/* Outer gold frame */}
-          <Rect x={20} y={20} width={555} height={802} fill="none" stroke={P.gold} strokeWidth={2} />
-          {/* Inner frame */}
-          <Rect x={28} y={28} width={539} height={786} fill="none" stroke={P.goldLight} strokeWidth={0.8} />
-          {/* Corner ornaments - top left */}
-          <Path d="M20,20 L20,50 M20,20 L50,20" stroke={P.gold} strokeWidth={3} fill="none" />
-          {/* Corner ornaments - top right */}
-          <Path d="M575,20 L575,50 M575,20 L545,20" stroke={P.gold} strokeWidth={3} fill="none" />
-          {/* Corner ornaments - bottom left */}
-          <Path d="M20,822 L20,792 M20,822 L50,822" stroke={P.gold} strokeWidth={3} fill="none" />
-          {/* Corner ornaments - bottom right */}
-          <Path d="M575,822 L575,792 M575,822 L545,822" stroke={P.gold} strokeWidth={3} fill="none" />
-          {/* Decorative horizontal line below title area */}
-          <Line x1={80} y1={340} x2={515} y2={340} stroke={P.gold} strokeWidth={1} />
-          <Line x1={100} y1={345} x2={495} y2={345} stroke={P.goldLight} strokeWidth={0.6} />
-          {/* Decorative horizontal line above footer */}
-          <Line x1={80} y1={700} x2={515} y2={700} stroke={P.gold} strokeWidth={1} />
-          <Line x1={100} y1={705} x2={495} y2={705} stroke={P.goldLight} strokeWidth={0.6} />
+          <Defs>
+            <RadialGradient id="coverCore" cx="50%" cy="62%" r="60%">
+              <Stop offset="0%" stopColor="#f59e0b" stopOpacity={0.75} />
+              <Stop offset="48%" stopColor="#ea580c" stopOpacity={0.22} />
+              <Stop offset="100%" stopColor="#160603" stopOpacity={0} />
+            </RadialGradient>
+            <LinearGradient id="coverVignette" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#240b05" stopOpacity={0.96} />
+              <Stop offset="55%" stopColor="#1b0804" stopOpacity={0.92} />
+              <Stop offset="100%" stopColor="#110401" stopOpacity={0.98} />
+            </LinearGradient>
+          </Defs>
+
+          <Rect x={0} y={0} width={595} height={842} fill="#160603" />
+          <Rect x={0} y={0} width={595} height={842} fill="url(#coverVignette)" />
+          <Circle cx={297} cy={500} r={250} fill="url(#coverCore)" />
+
+          {/* star field */}
+          <Circle cx={78} cy={86} r={1.1} fill="#fcd34d" opacity={0.8} />
+          <Circle cx={132} cy={96} r={0.8} fill="#fde68a" opacity={0.7} />
+          <Circle cx={220} cy={70} r={1.2} fill="#fbbf24" opacity={0.9} />
+          <Circle cx={305} cy={120} r={1.0} fill="#fcd34d" opacity={0.8} />
+          <Circle cx={402} cy={92} r={0.9} fill="#fde68a" opacity={0.7} />
+          <Circle cx={515} cy={84} r={1.0} fill="#f59e0b" opacity={0.85} />
+          <Circle cx={540} cy={210} r={0.8} fill="#fcd34d" opacity={0.65} />
+          <Circle cx={68} cy={230} r={0.9} fill="#fde68a" opacity={0.7} />
+          <Circle cx={90} cy={332} r={0.7} fill="#fbbf24" opacity={0.72} />
+          <Circle cx={498} cy={334} r={1.1} fill="#fcd34d" opacity={0.8} />
+
+          {/* wheel */}
+          <Circle cx={297} cy={455} r={188} fill="none" stroke="#f59e0b" strokeWidth={2} opacity={0.62} />
+          <Circle cx={297} cy={455} r={150} fill="none" stroke="#fbbf24" strokeWidth={1.6} opacity={0.58} />
+          <Circle cx={297} cy={455} r={114} fill="none" stroke="#fcd34d" strokeWidth={1.2} opacity={0.55} />
+          {Array.from({ length: 12 }).map((_, idx) => {
+            const angle = (idx * 30 - 90) * Math.PI / 180;
+            const x1 = 297 + Math.cos(angle) * 114;
+            const y1 = 455 + Math.sin(angle) * 114;
+            const x2 = 297 + Math.cos(angle) * 188;
+            const y2 = 455 + Math.sin(angle) * 188;
+            return <Line key={`wheel-ray-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f59e0b" strokeWidth={1.1} opacity={0.52} />;
+          })}
+
+          {/* silhouette */}
+          <Circle cx={297} cy={460} r={58} fill="#2a0d07" opacity={0.95} />
+          <Ellipse cx={297} cy={598} rx={108} ry={150} fill="#2a0d07" opacity={0.95} />
+          <Path d="M205 565 L295 630 L242 667 L172 610 Z" fill="#2a0d07" opacity={0.96} />
+          <Path d="M389 565 L299 630 L352 667 L422 610 Z" fill="#2a0d07" opacity={0.96} />
+          <Path d="M286 612 L308 612 L323 690 L271 690 Z" fill="#2a0d07" opacity={0.98} />
+          <Circle cx={297} cy={602} r={88} fill="none" stroke="#fbbf24" strokeWidth={1.2} opacity={0.45} />
+          <Circle cx={297} cy={602} r={56} fill="none" stroke="#fcd34d" strokeWidth={1.1} opacity={0.55} />
         </Svg>
 
-        {/* Header area */}
-        <View style={{ marginTop: 80, alignItems: 'center', width: '100%' }}>
-          <Text style={styles.coverKicker}>SRI MANDIR</Text>
-          <Text style={styles.coverMark}>Om Tat Sat</Text>
-          <Text style={styles.coverTitle}>Kundli Report</Text>
-          <Text style={{ fontSize: 13, color: P.gold, textAlign: 'center', marginTop: 8, marginBottom: 6 }}>
-            ~ Vedic Astrology ~
-          </Text>
-          <Text style={styles.coverSubtitle}>A Comprehensive Planetary Blueprint</Text>
-        </View>
-
-        {/* Decorative divider with diamond */}
-        <View style={{ alignItems: 'center', marginVertical: 20 }}>
-          <Text style={{ color: P.gold, fontSize: 18 }}>- - - * - - -</Text>
-        </View>
-
-        {/* Name and birth details block */}
-        <View style={{
-          alignItems: 'center',
-          paddingVertical: 24,
-          paddingHorizontal: 60,
-          width: '100%',
-        }}>
-          <Text style={[styles.coverName, { marginBottom: 16 }]}>{report.birthDetails.name}</Text>
-          <View style={{ width: '60%', borderTopWidth: 1, borderTopColor: P.goldLight, marginBottom: 16 }} />
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.coverMetaLabel}>Date of Birth</Text>
-            <Text style={[styles.coverDetails, { marginBottom: 8 }]}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
-            <Text style={styles.coverMetaLabel}>Time of Birth</Text>
-            <Text style={[styles.coverDetails, { marginBottom: 8 }]}>{report.birthDetails.timeOfBirth}</Text>
-            <Text style={styles.coverMetaLabel}>Place of Birth</Text>
-            <Text style={[styles.coverDetails, { marginBottom: 8 }]}>{report.birthDetails.placeOfBirth}</Text>
+        <View style={styles.coverBrandRow}>
+          <View style={styles.coverBrandBadge}>
+            <View style={styles.coverBrandDot} />
           </View>
+          <Text style={[styles.coverBrandText, { marginLeft: 10 }]}>Sri Mandir</Text>
         </View>
 
-        {/* Footer area */}
-        <View style={{ position: 'absolute', bottom: 60, left: 0, right: 0, alignItems: 'center' }}>
+        <View style={{ marginTop: 22, alignItems: 'center', width: '100%' }}>
+          <Text style={styles.coverKicker}>YOUR</Text>
+          <Text style={styles.coverMark}>KUNDLI REPORT</Text>
+          <Text style={styles.coverSubtitle}>A Personalized Vedic Astrology Blueprint</Text>
+        </View>
+
+        <View style={styles.coverDividerRow}>
+          <View style={styles.coverDividerLine} />
+          <Text style={[styles.coverDividerCenter, { marginHorizontal: 12 }]}>✦</Text>
+          <View style={styles.coverDividerLine} />
+        </View>
+
+        <View style={styles.coverIdentityCard}>
+          <Text style={styles.coverName}>{report.birthDetails.name}</Text>
+          <Text style={styles.coverMetaLabel}>Date of Birth</Text>
+          <Text style={styles.coverDetails}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
+          <Text style={styles.coverMetaLabel}>Time of Birth</Text>
+          <Text style={styles.coverDetails}>{report.birthDetails.timeOfBirth}</Text>
+          <Text style={styles.coverMetaLabel}>Place of Birth</Text>
+          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{report.birthDetails.placeOfBirth}</Text>
+        </View>
+
+        <View style={{ position: 'absolute', bottom: 52, left: 0, right: 0, alignItems: 'center' }}>
           <Text style={styles.coverFooterMeta}>
-            Prepared on {formatDate(report.generatedAt)}
+            Created by expert astrologers
           </Text>
           <Text style={styles.coverFooterBrand}>
-            Sri Mandir — Dharma, Karma, Jyotish
+            www.srimandir.com
+          </Text>
+          <Text style={[styles.coverDetails, { marginTop: 8, color: '#fcd34d' }]}>
+            Prepared on {formatDate(report.generatedAt)}
           </Text>
         </View>
       </Page>
@@ -3350,52 +3438,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </ContentPage>
           ))}
 
-          {/* Further Reading */}
-          {report.glossary.furtherReading && report.glossary.furtherReading.length > 0 && (
-            <ContentPage sectionName="Further Reading">
-              <Section title="Recommended Reading & Classical Texts">
-                <Text style={styles.paragraph}>
-                  For deeper understanding of Vedic astrology, the following classical texts and resources are recommended:
-                </Text>
-                <BulletList items={report.glossary.furtherReading} />
-              </Section>
-            </ContentPage>
-          )}
         </>
       )}
-
-      {/* Final Page */}
-      <ContentPage sectionName="Report Summary">
-        <Section title="Report Summary">
-          <Text style={styles.paragraph}>
-            This comprehensive Kundli report has been generated using Vedic astrology principles and AI-powered analysis. 
-            The predictions and recommendations are based on your birth chart data and should be used as guidance for self-improvement and life planning.
-          </Text>
-
-          <SubSection title="Report Statistics">
-            <InfoRow label="Generated On" value={new Date(report.generatedAt).toLocaleString('en-IN')} />
-            <InfoRow label="Language" value={report.language === 'hi' ? 'Hindi' : 'English'} />
-            <InfoRow label="Planets Analyzed" value={String(report.planets?.length || 0)} />
-            <InfoRow label="Houses Analyzed" value={String(report.houses?.length || 0)} />
-          </SubSection>
-
-          {report.errors && report.errors.length > 0 && (
-            <SubSection title="Notes">
-              <Text style={styles.paragraph}>
-                Some sections could not be fully generated. The following areas had issues:
-              </Text>
-              <BulletList items={report.errors} />
-            </SubSection>
-          )}
-
-          <View style={{ marginTop: 40, textAlign: 'center' }}>
-            <Text style={{ fontSize: 14, color: '#c2410c', fontWeight: 'bold' }}>May the stars guide your path</Text>
-            <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 10 }}>
-              For personalized puja recommendations and remedies, consult with Sri Mandir experts.
-            </Text>
-          </View>
-        </Section>
-      </ContentPage>
     </Document>
   );
 };

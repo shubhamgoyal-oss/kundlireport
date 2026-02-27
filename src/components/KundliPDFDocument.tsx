@@ -670,6 +670,14 @@ const styles = StyleSheet.create({
     marginRight: '2%',
     marginBottom: 6,
   },
+  stableTwoCol: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  stableCol: {
+    width: '48%',
+  },
   section: {
     marginBottom: 10,
   },
@@ -1825,8 +1833,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       <ContentPage sectionName="Birth Details & Planetary Positions">
         <Section title="Birth Details">
           <View style={styles.card}>
-            <View style={styles.grid2}>
-              <View style={styles.gridItem}>
+            <View style={styles.stableTwoCol}>
+              <View style={styles.stableCol}>
                 <InfoRow label="Name" value={birthDetails.name || 'N/A'} />
                 <InfoRow label="Sex" value={sex} />
                 <InfoRow label="Date of Birth" value={formatBirthDate(birthDateValue) || birthDateValue || 'N/A'} />
@@ -1838,7 +1846,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Country" value={placeDetails.country} />
               </View>
 
-              <View style={styles.gridItem}>
+              <View style={styles.stableCol}>
                 <InfoRow label="Latitude" value={formatCoordinate(birthDetails.latitude, 'lat')} />
                 <InfoRow label="Longitude" value={formatCoordinate(birthDetails.longitude, 'lon')} />
                 <InfoRow label="Timezone" value={timezoneText} />
@@ -1880,16 +1888,16 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
         </Section>
 
-        <Section title="Detailed Planetary Snapshot" wrap={false}>
+        <Section title="Detailed Planetary Snapshot">
           <View style={styles.card}>
-            <View style={styles.grid2}>
-              <View style={styles.gridItem}>
+            <View style={styles.stableTwoCol}>
+              <View style={styles.stableCol}>
                 <InfoRow label="Lahiri Ayanamsha" value={ayanamshaText} />
                 <InfoRow label="Ishta (if available)" value={pickAstroValue('ishta', 'ishta_kaal', 'ishtkaal', 'isht')} />
                 <InfoRow label="Sunrise (if available)" value={pickAstroValue('sunrise', 'sun_rise')} />
                 <InfoRow label="Sunset (if available)" value={pickAstroValue('sunset', 'sun_set')} />
               </View>
-              <View style={styles.gridItem}>
+              <View style={styles.stableCol}>
                 <InfoRow label="Local Mean Time (if available)" value={pickAstroValue('local_mean_time', 'lmt')} />
                 <InfoRow label="Sidereal Time (if available)" value={pickAstroValue('sidereal_time', 'lst')} />
                 <InfoRow label="Tithi Ending Time (if available)" value={pickAstroValue('tithi_ending_time', 'tithi_end_time')} />

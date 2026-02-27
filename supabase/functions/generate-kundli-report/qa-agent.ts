@@ -45,6 +45,16 @@ const SENSITIVE_TOPICS = [
   "terrorism",
 ];
 
+const VAGUE_PATTERNS = [
+  /meaningful shift in priorities/i,
+  /structured action/i,
+  /disciplined follow-?through/i,
+  /realistic expectations/i,
+  /work with sequence and timing/i,
+  /things will improve/i,
+  /with effort.*improve/i,
+];
+
 // Pre-filter check for sensitive content
 function containsSensitiveContent(text: string): string[] {
   const found: string[] = [];
@@ -76,6 +86,82 @@ function sanitizeText(text: string): string {
   sanitized = sanitized.replace(/suicide|self-harm/gi, "mental health challenges");
   
   return sanitized;
+}
+
+function isWeakNarrative(text: unknown, minLength: number): boolean {
+  const t = typeof text === "string" ? text.trim() : "";
+  if (t.length < minLength) return true;
+  return VAGUE_PATTERNS.some((rx) => rx.test(t));
+}
+
+function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIssue[] {
+  const issues: QAIssue[] = [];
+
+  const sade = reportContent.sadeSati;
+  if (sade) {
+    if (isWeakNarrative(sade.overview, 140)) {
+      issues.push({
+        section: "sadeSati.overview",
+        issueType: "clarity",
+        severity: "warning",
+        description: "Sade Sati overview is short/generic and lacks concrete transit-linked interpretation.",
+        suggestedFix: "Add a detailed paragraph tied to Moon sign, Saturn transit sign, and current phase.",
+      });
+    }
+    if (isWeakNarrative(sade.moonSaturnRelationship, 100)) {
+      issues.push({
+        section: "sadeSati.moonSaturnRelationship",
+        issueType: "clarity",
+        severity: "warning",
+        description: "Moon-Saturn relationship explanation is weak or missing.",
+        suggestedFix: "Explain Moon sign and transit Saturn relation with practical implications.",
+      });
+    }
+  }
+
+  const dasha = reportContent.dasha;
+  if (dasha?.upcomingMahadashaAntardashaPredictions && Array.isArray(dasha.upcomingMahadashaAntardashaPredictions)) {
+    let weakCount = 0;
+    for (const md of dasha.upcomingMahadashaAntardashaPredictions) {
+      const antardashas = Array.isArray(md?.antardashas) ? md.antardashas : [];
+      for (const ad of antardashas) {
+        if (isWeakNarrative(ad?.interpretation, 100)) weakCount++;
+      }
+    }
+    if (weakCount > 0) {
+      issues.push({
+        section: "dasha.upcomingMahadashaAntardashaPredictions",
+        issueType: "clarity",
+        severity: weakCount > 3 ? "critical" : "warning",
+        description: `${weakCount} upcoming Antardasha interpretation(s) appear too short or generic.`,
+        suggestedFix: "Regenerate those Antardasha narratives with chart-specific, paragraph-style interpretation.",
+      });
+    }
+  }
+
+  const careerOverview = reportContent.career?.overview;
+  if (isWeakNarrative(careerOverview, 180)) {
+    issues.push({
+      section: "career.overview",
+      issueType: "clarity",
+      severity: "warning",
+      description: "Career overview appears vague/under-detailed.",
+      suggestedFix: "Tie guidance explicitly to 10th house, Sun/Saturn placement, and timing windows.",
+    });
+  }
+
+  const marriageOverview = reportContent.marriage?.overview;
+  if (isWeakNarrative(marriageOverview, 180)) {
+    issues.push({
+      section: "marriage.overview",
+      issueType: "clarity",
+      severity: "warning",
+      description: "Marriage overview appears vague/under-detailed.",
+      suggestedFix: "Strengthen with 7th/5th house evidence and clear unmarried vs married applicability.",
+    });
+  }
+
+  return issues;
 }
 
 const QA_SYSTEM_PROMPT = `You are a rigorous Quality Assurance expert for Vedic astrology reports. Your job is to ensure:
@@ -286,6 +372,18 @@ Perform thorough QA validation and provide structured feedback.`;
         description: `Sensitive content detected: ${sensitiveFound.join(", ")}`,
         suggestedFix: "Content has been pre-filtered and sanitized"
       });
+    }
+
+    const deterministicIssues = runDeterministicQualityChecks(reportContent);
+    if (deterministicIssues.length > 0) {
+      qaResult.issues.push(...deterministicIssues);
+      const hasCriticalDeterministic = deterministicIssues.some((i) => i.severity === "critical");
+      if (hasCriticalDeterministic) {
+        qaResult.approved = false;
+        qaResult.overallScore = Math.min(qaResult.overallScore, 6);
+      } else {
+        qaResult.overallScore = Math.min(qaResult.overallScore, 8);
+      }
     }
 
     console.log(`[QA] Validation complete. Score: ${qaResult.overallScore}/10, Approved: ${qaResult.approved}, Issues: ${qaResult.issues.length}`);

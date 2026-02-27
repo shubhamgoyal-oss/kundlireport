@@ -557,7 +557,8 @@ const styles = StyleSheet.create({
     backgroundColor: P.tableAlt,
   },
   advancedCellText: {
-    fontSize: 8,
+    fontSize: 7.6,
+    lineHeight: 1.2,
     color: P.bodyText,
     textAlign: 'center',
     paddingHorizontal: 3,
@@ -1613,18 +1614,23 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         : false;
       const signLord = signIdx !== undefined ? SIGN_LORDS[signIdx] : 'N/A';
       const nakLord = profile?.nakshatraLord || nak.lord;
+      const compactCellValue = (value: unknown): string => {
+        const text = sanitizeText(String(value || ''));
+        if (!text) return 'N/A';
+        return text.split('(')[0].trim() || 'N/A';
+      };
       return {
         name,
         signShort: SIGN_SHORT[sign] || sign || 'N/A',
         degreeText: formatDmsFromSignDegree(Math.max(0, degreeInSign)),
         speed: resolveSpeed(name),
-        nakshatra: profile?.nakshatra || nak.name,
+        nakshatra: compactCellValue(profile?.nakshatra || nak.name),
         pada: nak.pada,
         nakNo: nak.number,
         rashiLord: signLord || 'N/A',
         nakLord: nakLord || 'N/A',
         subLord: getKpSubLord(nak.lord, nak.degreeInNakshatra),
-        dignity: profile?.dignity || (signIdx !== undefined ? getDignityLabel(name, signIdx) : 'N/A'),
+        dignity: compactCellValue(profile?.dignity || (signIdx !== undefined ? getDignityLabel(name, signIdx) : 'N/A')),
         retro: isRetro ? 'R' : '',
         combust: isCombust ? 'C' : '',
       };
@@ -1834,7 +1840,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       )}
       {/* Birth Details & Planetary Positions */}
       <ContentPage sectionName="Birth Details & Planetary Positions">
-        <Section title="Birth Details">
+        <Section title="Birth Details" wrap={false}>
           <View style={styles.card}>
             <View style={styles.stableTwoCol}>
               <View style={styles.stableCol}>
@@ -1870,7 +1876,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
         </Section>
 
-        <Section title="Planetary Positions">
+        <Section title="Planetary Positions" wrap={false}>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={styles.tableHeaderCell}>Planet</Text>
@@ -1892,7 +1898,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Section>
 
         <Section title="Detailed Planetary Snapshot">
-          <View style={styles.card}>
+          <View style={styles.card} wrap={false}>
             <View style={styles.stableTwoCol}>
               <View style={styles.stableCol}>
                 <InfoRow label="Lahiri Ayanamsha" value={ayanamshaText} />
@@ -1907,7 +1913,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Nakshatra Ending Time (if available)" value={pickAstroValue('nakshatra_ending_time', 'nakshatra_end_time')} />
               </View>
             </View>
+          </View>
 
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Planetary Degree Matrix</Text>
             <View style={styles.advancedTable}>
               <View style={styles.advancedTableHeader}>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Pl</Text>
@@ -1925,7 +1934,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>Dignity</Text>
               </View>
               {detailedPlanetRows.map((row: any, idx: number) => (
-                <View key={`${row.name}-${idx}`} style={idx % 2 === 0 ? styles.advancedTableRow : styles.advancedTableRowAlt}>
+                <View
+                  key={`${row.name}-${idx}`}
+                  style={idx % 2 === 0 ? styles.advancedTableRow : styles.advancedTableRowAlt}
+                  wrap={false}
+                >
                   <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.name}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.retro}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.combust}</Text>
@@ -1948,7 +1961,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
         </Section>
 
-        <Section title="Chara Karakas (Jaimini)">
+        <Section title="Chara Karakas (Jaimini)" wrap={false}>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={styles.tableHeaderCell}>Karaka</Text>

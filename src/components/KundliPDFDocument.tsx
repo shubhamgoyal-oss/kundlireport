@@ -168,9 +168,23 @@ const sanitizeText = (text: string | null | undefined): string => {
   const str = String(text);
   // Remove Devanagari and extended Devanagari ranges, and other Indic scripts
   // eslint-disable-next-line no-control-regex
-  const cleaned = str.replace(/[\u0900-\u097F\uA8E0-\uA8FF\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/g, '');
-  // Clean up artifacts: multiple spaces, leading/trailing parens with nothing inside
-  return cleaned.replace(/\s+/g, ' ').replace(/^\s*\(\s*\)\s*$/, '').replace(/^\s*\(\s*/, '(').replace(/\s*\)\s*$/, ')').replace(/^\s*-?\s*$/, '').trim();
+  let cleaned = str.replace(/[\u0900-\u097F\uA8E0-\uA8FF\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/g, '');
+  cleaned = cleaned.replace(/\(([^)]*)\)/g, (_m, inner) => {
+    const token = String(inner || '').trim();
+    if (!token) return '';
+    // Keep meaningful transliterations like "(Budh)", remove noisy tokens like "(6AM0)", "(G$A)".
+    if (/[a-z]/.test(token)) return `(${token})`;
+    if (/^[A-Za-z ]{3,}$/.test(token)) return `(${token})`;
+    return '';
+  });
+  cleaned = cleaned
+    .replace(/\(\s*[^)]*$/g, '')    // strip dangling "(" fragments
+    .replace(/\s+,/g, ',')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^\s*-?\s*$/g, '')
+    .trim();
+  return cleaned;
 };
 
 const SATURN_TRANSIT_FALLBACK_SIGN = 'Pisces';
@@ -2233,15 +2247,25 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <Text style={styles.tableHeaderCell}>Lord in</Text>
                   <Text style={styles.tableHeaderCell}>Occupants</Text>
                 </View>
-                {report.houses.map((house: any, idx: number) => (
-                  <View key={idx} style={styles.tableRow}>
-                    <Text style={styles.tableCell}>{house.house}</Text>
-                    <Text style={styles.tableCell}>{house.sign}</Text>
-                    <Text style={styles.tableCell}>{house.lord}</Text>
-                    <Text style={styles.tableCell}>H{house.lordHouse}</Text>
-                    <Text style={styles.tableCell}>{house.occupants?.join(', ') || 'Empty'}</Text>
-                  </View>
-                ))}
+                {report.houses.map((house: any, idx: number) => {
+                  const houseSign = sanitizeText(String(house.sign || 'N/A')) || 'N/A';
+                  const houseLord = sanitizeText(String(house.lord || 'N/A')) || 'N/A';
+                  const occupantsText = Array.isArray(house.occupants)
+                    ? house.occupants
+                        .map((o: any) => sanitizeText(String(o || '')).trim())
+                        .filter(Boolean)
+                        .join(', ')
+                    : '';
+                  return (
+                    <View key={idx} style={styles.tableRow}>
+                      <Text style={styles.tableCell}>{house.house}</Text>
+                      <Text style={styles.tableCell}>{houseSign}</Text>
+                      <Text style={styles.tableCell}>{houseLord}</Text>
+                      <Text style={styles.tableCell}>H{house.lordHouse}</Text>
+                      <Text style={styles.tableCell}>{occupantsText || 'Empty'}</Text>
+                    </View>
+                  );
+                })}
               </View>
             </Section>
           </ContentPage>
@@ -2250,9 +2274,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage key={idx} sectionName={`House ${house.house}`}>
               <Section title={`House ${house.house}${house.houseHindi ? ' - ' + sanitizeText(house.houseHindi) : ''}`}>
                 <InfoStrip items={[
-                  { label: 'Sign', value: house.sign || 'N/A' },
-                  { label: 'Lord', value: house.lord || 'N/A' },
-                  { label: 'Nature', value: house.houseNature || 'N/A' },
+                  { label: 'Sign', value: sanitizeText(String(house.sign || 'N/A')) || 'N/A' },
+                  { label: 'Lord', value: sanitizeText(String(house.lord || 'N/A')) || 'N/A' },
+                  { label: 'Nature', value: sanitizeText(String(house.houseNature || 'N/A')) || 'N/A' },
                 ]} />
 
                 <SubSection title="Significance">

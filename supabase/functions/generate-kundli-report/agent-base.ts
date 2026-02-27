@@ -33,6 +33,93 @@ export interface AgentResponse<T> {
   tokensUsed?: number;
 }
 
+function extractJsonObjectFromText(text: string): string | null {
+  const trimmed = (text || "").trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed;
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) return null;
+  return trimmed.slice(start, end + 1);
+}
+
+function extractToolPayload<T>(result: any, toolName: string): T | null {
+  const toolCalls = result?.choices?.[0]?.message?.tool_calls;
+  if (Array.isArray(toolCalls)) {
+    const matching = toolCalls.find((tc: any) => tc?.function?.name === toolName);
+    if (matching?.function?.arguments) {
+      try {
+        return JSON.parse(matching.function.arguments) as T;
+      } catch (err) {
+        console.error("[AGENT] Failed to parse tool-call arguments:", err);
+      }
+    }
+  }
+
+  const rawContent = result?.choices?.[0]?.message?.content;
+  const contentText = typeof rawContent === "string"
+    ? rawContent
+    : Array.isArray(rawContent)
+      ? rawContent.map((c: any) => (typeof c?.text === "string" ? c.text : "")).join("\n")
+      : "";
+  const jsonCandidate = extractJsonObjectFromText(contentText);
+  if (jsonCandidate) {
+    try {
+      return JSON.parse(jsonCandidate) as T;
+    } catch (err) {
+      console.error("[AGENT] Failed to parse content JSON fallback:", err);
+    }
+  }
+
+  return null;
+}
+
+async function runToolCallRequest(
+  apiKey: string,
+  enhancedSystemPrompt: string,
+  userPrompt: string,
+  toolName: string,
+  toolDescription: string,
+  toolSchema: Record<string, any>,
+): Promise<{ ok: boolean; status?: number; errorText?: string; result?: any }> {
+  const response = await fetch(LOVABLE_AI_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      messages: [
+        { role: "system", content: enhancedSystemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: toolName,
+            description: toolDescription,
+            parameters: toolSchema
+          }
+        }
+      ],
+      tool_choice: { type: "function", function: { name: toolName } }
+    }),
+  });
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: response.status,
+      errorText: await response.text(),
+    };
+  }
+
+  const result = await response.json();
+  return { ok: true, result };
+}
+
 export async function callAgent<T>(
   systemPrompt: string,
   userPrompt: string,
@@ -49,57 +136,61 @@ export async function callAgent<T>(
   const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES;
 
   try {
-    const response = await fetch(LOVABLE_AI_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: enhancedSystemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: toolName,
-              description: toolDescription,
-              parameters: toolSchema
-            }
-          }
-        ],
-        tool_choice: { type: "function", function: { name: toolName } }
-      }),
-    });
+    let tokensUsed = 0;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[AGENT] AI call failed: ${response.status}`, errorText);
-      
-      if (response.status === 429) {
+    const first = await runToolCallRequest(
+      LOVABLE_API_KEY,
+      enhancedSystemPrompt,
+      userPrompt,
+      toolName,
+      toolDescription,
+      toolSchema,
+    );
+
+    if (!first.ok) {
+      console.error(`[AGENT] AI call failed: ${first.status}`, first.errorText || "");
+      if (first.status === 429) {
         return { success: false, error: "Rate limit exceeded. Please try again later." };
       }
-      if (response.status === 402) {
+      if (first.status === 402) {
         return { success: false, error: "AI credits exhausted. Please add funds." };
       }
-      return { success: false, error: `AI call failed: ${response.status}` };
+      return { success: false, error: `AI call failed: ${first.status}` };
     }
 
-    const result = await response.json();
-    const tokensUsed = result.usage?.total_tokens || 0;
-
-    // Extract tool call arguments
-    const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall || toolCall.function.name !== toolName) {
-      console.error("[AGENT] No valid tool call in response");
-      return { success: false, error: "Invalid AI response structure" };
+    tokensUsed += first.result?.usage?.total_tokens || 0;
+    const firstPayload = extractToolPayload<T>(first.result, toolName);
+    if (firstPayload !== null) {
+      return { success: true, data: firstPayload, tokensUsed };
     }
 
-    const data = JSON.parse(toolCall.function.arguments) as T;
-    return { success: true, data, tokensUsed };
+    const retryPrompt = `${userPrompt}
+
+CRITICAL RESPONSE FORMAT:
+- You MUST respond via function call "${toolName}" only.
+- Do NOT return plain text narrative outside function arguments.
+- Ensure arguments are valid JSON matching the function schema exactly.`;
+
+    const second = await runToolCallRequest(
+      LOVABLE_API_KEY,
+      enhancedSystemPrompt,
+      retryPrompt,
+      toolName,
+      toolDescription,
+      toolSchema,
+    );
+    if (!second.ok) {
+      console.error(`[AGENT] Retry AI call failed: ${second.status}`, second.errorText || "");
+      return { success: false, error: `AI retry failed: ${second.status}` };
+    }
+    tokensUsed += second.result?.usage?.total_tokens || 0;
+    const secondPayload = extractToolPayload<T>(second.result, toolName);
+    if (secondPayload !== null) {
+      return { success: true, data: secondPayload, tokensUsed };
+    }
+
+    console.error("[AGENT] No valid tool payload after retry");
+    return { success: false, error: "Invalid AI response structure", tokensUsed };
 
   } catch (error) {
     console.error("[AGENT] Error calling AI:", error);

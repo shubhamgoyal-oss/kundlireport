@@ -51,7 +51,7 @@ const Index = () => {
                     className="h-12 sm:h-16 w-auto mx-auto"
                     width="277"
                     height="84"
-                    fetchPriority="high"
+                    fetchpriority="high"
                     decoding="sync"
                   />
                   <div className="text-[10px] sm:text-xs text-muted-foreground font-medium space-y-0.5">

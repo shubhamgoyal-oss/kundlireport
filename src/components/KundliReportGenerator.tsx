@@ -105,7 +105,7 @@ const KundliReportGenerator = () => {
       await searchPlaces(searchTerm);
       setShowPlaceResults(true);
       setSelectedPlaceIndex(-1);
-    }, 150); // Faster since it's local search
+    }, 150);
 
     setSearchTimer(timer);
   };
@@ -117,7 +117,7 @@ const KundliReportGenerator = () => {
       setValue('place', details.display_name);
       setValue('lat', details.lat);
       setValue('lon', details.lng);
-      setValue('tz', 'Asia/Kolkata'); // All Indian cities use IST
+      setValue('tz', 'Asia/Kolkata');
       toast.success(isHindi ? 'स्थान चुना गया' : 'Location selected');
     } else {
       setValue('place', displayName);
@@ -160,15 +160,14 @@ const KundliReportGenerator = () => {
       metadata: {
         hasTime: !data.unknownTime,
         place: data.place,
-        date: data.date
+        date: data.date,
       }
     });
     
     setIsGenerating(true);
     
     try {
-      // Calculate timezone offset
-      let tzOffset = 5.5; // Default to IST
+      let tzOffset = 5.5;
       if (data.tz) {
         try {
           const now = new Date();
@@ -180,29 +179,43 @@ const KundliReportGenerator = () => {
         }
       }
 
-      // Get visitor/session IDs from localStorage (same pattern as analytics)
       const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
       const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
       
       if (!localStorage.getItem('visitor_id')) localStorage.setItem('visitor_id', visitorId);
       if (!localStorage.getItem('session_id')) localStorage.setItem('session_id', sessionId);
 
-      // Start async job instead of waiting for full report
-      const { data: jobData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
-        body: {
-          name: data.name.trim(),
-          dateOfBirth: data.date,
-          timeOfBirth: data.time || '12:00',
-          placeOfBirth: data.place,
-          latitude: data.lat || 0,
-          longitude: data.lon || 0,
-          timezone: tzOffset,
-          language: isHindi ? 'hi' : 'en',
-          gender: data.gender,
-          visitorId,
-          sessionId,
-        },
-      });
+      let jobData: any = null;
+      let startError: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await supabase.functions.invoke('start-kundli-job', {
+          body: {
+            name: data.name.trim(),
+            dateOfBirth: data.date,
+            timeOfBirth: data.time || '12:00',
+            placeOfBirth: data.place,
+            latitude: data.lat || 0,
+            longitude: data.lon || 0,
+            timezone: tzOffset,
+            language: isHindi ? 'hi' : 'en',
+            gender: data.gender,
+            visitorId,
+            sessionId,
+          },
+        });
+
+        if (!result.error) {
+          jobData = result.data;
+          startError = null;
+          break;
+        }
+
+        startError = result.error;
+        console.warn(`[KundliReportGenerator] Start job attempt ${attempt + 1} failed:`, result.error.message);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+        }
+      }
 
       if (startError) {
         throw new Error(startError.message || 'Failed to start report generation');
@@ -215,15 +228,15 @@ const KundliReportGenerator = () => {
 
       console.log('[KundliReportGenerator] Job started:', jobId);
       
-      // Poll for job completion
-      const pollInterval = 3000; // 3 seconds
-      const maxPolls = 120; // 6 minutes max
+      const pollInterval = 3000;
+      const maxPolls = 240;
       let pollCount = 0;
+      let consecutiveErrors = 0;
+      const maxConsecutiveErrors = 5;
 
       const pollJob = async (): Promise<any> => {
         pollCount++;
         
-        // Use fetch directly since invoke doesn't support query params well
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
           {
@@ -235,13 +248,19 @@ const KundliReportGenerator = () => {
         );
         
         if (!response.ok) {
-          throw new Error('Failed to check job status');
+          consecutiveErrors++;
+          console.warn(`[KundliReportGenerator] Poll error (${consecutiveErrors}/${maxConsecutiveErrors}):`, response.status);
+          if (consecutiveErrors >= maxConsecutiveErrors) {
+            throw new Error('Failed to check job status after multiple retries');
+          }
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          return pollJob();
         }
-        
+
+        consecutiveErrors = 0;
         const jobStatus = await response.json();
         console.log('[KundliReportGenerator] Job status:', jobStatus.status, jobStatus.progressPercent + '%');
         
-        // Update progress state for UI
         setJobProgress(jobStatus.progressPercent || 0);
         setJobPhase(jobStatus.currentPhase || '');
 
@@ -259,7 +278,6 @@ const KundliReportGenerator = () => {
           throw new Error('Report generation timed out. Please try again.');
         }
 
-        // Wait and poll again
         await new Promise(resolve => setTimeout(resolve, pollInterval));
         return pollJob();
       };
@@ -495,12 +513,6 @@ const KundliReportGenerator = () => {
       )}
 
       {/* Report Viewer */}
-      {kundliReport && !isGenerating && (
-        <div className="mt-6">
-          <KundliReportViewer report={kundliReport} />
-        </div>
-      )}
-
       {kundliReport && !isGenerating && (
         <div className="mt-6">
           <KundliReportViewer report={kundliReport} />

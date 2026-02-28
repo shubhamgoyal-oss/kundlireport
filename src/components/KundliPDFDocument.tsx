@@ -1689,7 +1689,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       const degreeAbs = Number(p.degree);
       const degreeInSign = signIdx !== undefined ? normalizeDegree360(degreeAbs) - signIdx * 30 : degreeAbs % 30;
       const nak = getNakshatraMeta(degreeAbs);
-      const profile = planetProfileMap.get(name);
+      const profile: any = planetProfileMap.get(name);
       const isRetro = Boolean(p.isRetro || profile?.isRetrograde);
       const isCombust = Number.isFinite(sunDegreeAbsolute)
         ? getCombustFlag(name, degreeAbs, sunDegreeAbsolute)

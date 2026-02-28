@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Tspan } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Tspan, Image } from '@react-pdf/renderer';
 import React from 'react';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Disable hyphenation to prevent character substitution issues
@@ -1214,6 +1214,7 @@ interface ChartData {
   nameHindi: string;
   purpose: string;
   svg: string;
+  dataUrl?: string; // PNG data URL - use instead of SVG to avoid react-pdf path parser bug
 }
 
 interface KundliPDFProps {
@@ -1929,7 +1930,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    <SVGRenderer svgString={chart.svg} />
+                    {chart.dataUrl
+                      ? <Image src={chart.dataUrl} style={{ width: '100%', height: 'auto' }} />
+                      : <SVGRenderer svgString={chart.svg} />}
                   </View>
                   <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                 </View>
@@ -1948,7 +1951,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    <SVGRenderer svgString={chart.svg} />
+                    {chart.dataUrl
+                      ? <Image src={chart.dataUrl} style={{ width: '100%', height: 'auto' }} />
+                      : <SVGRenderer svgString={chart.svg} />}
                   </View>
                   <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                 </View>
@@ -1960,7 +1965,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View key={idx} style={styles.chartItem}>
                     <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                     <View style={styles.chartContainer}>
-                      <SVGRenderer svgString={chart.svg} />
+                      {chart.dataUrl
+                      ? <Image src={chart.dataUrl} style={{ width: '100%', height: 'auto' }} />
+                      : <SVGRenderer svgString={chart.svg} />}
                     </View>
                     <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                   </View>

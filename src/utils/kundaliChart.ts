@@ -200,6 +200,7 @@ export interface ChartData {
   nameHindi: string;
   purpose: string;
   svg: string;
+  dataUrl?: string; // PNG data URL for PDF embedding (bypasses react-pdf SVG parser)
 }
 
 /**

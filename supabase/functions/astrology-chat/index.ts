@@ -6,6 +6,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const AI_OPENAI_URL = Deno.env.get("AI_OPENAI_URL")
+  || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = Deno.env.get("AI_MODEL") || "gemini-2.5-flash";
+
 // Simple in-memory rate limiting (10 requests per minute per IP)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT = 10;
@@ -108,10 +112,12 @@ serve(async (req) => {
     }
     
     const { messages, doshaContext } = validationResult.data;
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const API_KEY = Deno.env.get("GEMINI_API_KEY")
+      || Deno.env.get("GOOGLE_API_KEY")
+      || Deno.env.get("LOVABLE_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     // System prompt with comprehensive astrology and Sri Mandir knowledge
@@ -204,14 +210,14 @@ TONE & STYLE:
 - Respectful of all faiths while focused on Sanatan Dharma services
 - If user becomes offensive: warn once respectfully, then disengage if continues`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(AI_OPENAI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: AI_MODEL,
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,

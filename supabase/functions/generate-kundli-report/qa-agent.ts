@@ -1,7 +1,8 @@
 // QA Agent - Validates and sanitizes all report content before PDF generation
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const AI_MODEL = "google/gemini-3-flash-preview";
+const AI_OPENAI_URL = Deno.env.get("AI_OPENAI_URL")
+  || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = Deno.env.get("AI_MODEL") || "gemini-2.5-flash";
 
 export interface QAIssue {
   section: string;
@@ -247,10 +248,12 @@ Score the report 1-10 where:
 - 1-3: Critical issues, should not be delivered`;
 
 export async function runQAValidation(reportContent: Record<string, any>): Promise<QAResult> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const API_KEY = Deno.env.get("GEMINI_API_KEY")
+    || Deno.env.get("GOOGLE_API_KEY")
+    || Deno.env.get("LOVABLE_API_KEY");
   
-  if (!LOVABLE_API_KEY) {
-    console.error("[QA] LOVABLE_API_KEY not configured");
+  if (!API_KEY) {
+    console.error("[QA] GEMINI_API_KEY not configured");
     return {
       approved: false,
       overallScore: 0,
@@ -259,7 +262,7 @@ export async function runQAValidation(reportContent: Record<string, any>): Promi
         issueType: "accuracy", 
         severity: "critical", 
         description: "QA system not configured",
-        suggestedFix: "Configure LOVABLE_API_KEY"
+        suggestedFix: "Configure GEMINI_API_KEY"
       }],
       sanitizedSections: {},
       blockedContent: [],
@@ -353,10 +356,10 @@ Perform thorough QA validation and provide structured feedback.`;
   };
 
   try {
-    const response = await fetch(LOVABLE_AI_URL, {
+    const response = await fetch(AI_OPENAI_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

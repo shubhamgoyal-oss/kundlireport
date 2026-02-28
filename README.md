@@ -1,73 +1,40 @@
-# Welcome to your Lovable project
+# Kundli Report System
 
-## Project info
+Self-hosted Kundli generation app (frontend + Supabase edge functions).
 
-**URL**: https://lovable.dev/projects/4041e2d4-fff1-402e-8bd6-098b1305c464
+## Stack
+- Vite + React frontend
+- Supabase (DB + Edge Functions)
+- Gemini API for AI generation
 
-## How can I edit this code?
+## Local setup
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/4041e2d4-fff1-402e-8bd6-098b1305c464) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Frontend env:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+VITE_SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<SUPABASE_ANON_KEY>
+```
 
-**Use GitHub Codespaces**
+## Backend (Supabase)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Set function secrets:
 
-## What technologies are used for this project?
+```bash
+supabase secrets set GEMINI_API_KEY="<YOUR_GEMINI_KEY>" --project-ref <PROJECT_REF>
+supabase secrets set AI_MODEL="gemini-3-flash-preview" --project-ref <PROJECT_REF>
+supabase secrets set AI_OPENAI_URL="https://generativelanguage.googleapis.com/v1beta/openai/chat/completions" --project-ref <PROJECT_REF>
+```
 
-This project is built with:
+Deploy:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+npx supabase functions deploy start-kundli-job process-kundli-job generate-kundli-report get-kundli-job astrology-chat generate-impact translate-dosha --project-ref <PROJECT_REF>
+```
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/4041e2d4-fff1-402e-8bd6-098b1305c464) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+More details: [`docs/SELF_HOSTING_GEMINI.md`](docs/SELF_HOSTING_GEMINI.md)

@@ -5,6 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const AI_OPENAI_URL = Deno.env.get('AI_OPENAI_URL')
+  || 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+const AI_MODEL = Deno.env.get('AI_MODEL') || 'gemini-2.5-flash';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -24,9 +28,11 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('[GENERATE-IMPACT] LOVABLE_API_KEY not configured');
+    const API_KEY = Deno.env.get('GEMINI_API_KEY')
+      || Deno.env.get('GOOGLE_API_KEY')
+      || Deno.env.get('LOVABLE_API_KEY');
+    if (!API_KEY) {
+      console.error('[GENERATE-IMPACT] GEMINI_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'AI not available' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -135,14 +141,14 @@ Respond in JSON only.`;
     console.log('[GENERATE-IMPACT] Calling AI API...');
     const apiStartTime = Date.now();
     
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch(AI_OPENAI_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash', // Use faster model
+        model: AI_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }

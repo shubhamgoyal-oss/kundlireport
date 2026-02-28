@@ -1,7 +1,8 @@
 // Shared AI calling logic for all prediction agents
 
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const AI_MODEL = "google/gemini-3-flash-preview";
+const AI_OPENAI_URL = Deno.env.get("AI_OPENAI_URL")
+  || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = Deno.env.get("AI_MODEL") || "gemini-2.5-flash";
 
 // Core honesty guidelines added to ALL agent prompts
 export const HONESTY_GUIDELINES = `
@@ -82,7 +83,7 @@ async function runToolCallRequest(
   toolDescription: string,
   toolSchema: Record<string, any>,
 ): Promise<{ ok: boolean; status?: number; errorText?: string; result?: any }> {
-  const response = await fetch(LOVABLE_AI_URL, {
+  const response = await fetch(AI_OPENAI_URL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -127,9 +128,11 @@ export async function callAgent<T>(
   toolDescription: string,
   toolSchema: Record<string, any>
 ): Promise<AgentResponse<T>> {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    return { success: false, error: "LOVABLE_API_KEY is not configured" };
+  const API_KEY = Deno.env.get("GEMINI_API_KEY")
+    || Deno.env.get("GOOGLE_API_KEY")
+    || Deno.env.get("LOVABLE_API_KEY");
+  if (!API_KEY) {
+    return { success: false, error: "GEMINI_API_KEY is not configured" };
   }
 
   // Add honesty guidelines to system prompt
@@ -139,7 +142,7 @@ export async function callAgent<T>(
     let tokensUsed = 0;
 
     const first = await runToolCallRequest(
-      LOVABLE_API_KEY,
+      API_KEY,
       enhancedSystemPrompt,
       userPrompt,
       toolName,
@@ -172,7 +175,7 @@ CRITICAL RESPONSE FORMAT:
 - Ensure arguments are valid JSON matching the function schema exactly.`;
 
     const second = await runToolCallRequest(
-      LOVABLE_API_KEY,
+      API_KEY,
       enhancedSystemPrompt,
       retryPrompt,
       toolName,

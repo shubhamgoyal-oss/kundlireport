@@ -6,6 +6,65 @@ import { useTranslation } from 'react-i18next';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
 import { fetchMultipleCharts, PDF_CHARTS, ChartData, BirthDetails } from '@/utils/kundaliChart';
+import { toast } from 'sonner';
+
+const PDF_SETTINGS_DB = 'kundli_pdf_settings';
+const PDF_SETTINGS_STORE = 'kv';
+const PDF_FOLDER_HANDLE_KEY = 'pdf_folder_handle';
+
+const hasLocalFolderSupport = (): boolean =>
+  typeof window !== 'undefined' && 'showDirectoryPicker' in window && 'indexedDB' in window;
+
+const openPdfSettingsDb = (): Promise<IDBDatabase> =>
+  new Promise((resolve, reject) => {
+    const request = indexedDB.open(PDF_SETTINGS_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(PDF_SETTINGS_STORE)) {
+        db.createObjectStore(PDF_SETTINGS_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+
+const saveFolderHandleToDb = async (handle: any): Promise<void> => {
+  if (!hasLocalFolderSupport()) return;
+  const db = await openPdfSettingsDb();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(PDF_SETTINGS_STORE, 'readwrite');
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.objectStore(PDF_SETTINGS_STORE).put(handle, PDF_FOLDER_HANDLE_KEY);
+  });
+  db.close();
+};
+
+const getFolderHandleFromDb = async (): Promise<any | null> => {
+  if (!hasLocalFolderSupport()) return null;
+  const db = await openPdfSettingsDb();
+  const handle = await new Promise<any | null>((resolve, reject) => {
+    const tx = db.transaction(PDF_SETTINGS_STORE, 'readonly');
+    const req = tx.objectStore(PDF_SETTINGS_STORE).get(PDF_FOLDER_HANDLE_KEY);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+  db.close();
+  return handle;
+};
+
+const ensureReadWritePermission = async (handle: any): Promise<boolean> => {
+  if (!handle) return false;
+  if (typeof handle.queryPermission === 'function') {
+    const current = await handle.queryPermission({ mode: 'readwrite' });
+    if (current === 'granted') return true;
+  }
+  if (typeof handle.requestPermission === 'function') {
+    const requested = await handle.requestPermission({ mode: 'readwrite' });
+    return requested === 'granted';
+  }
+  return false;
+};
 
 interface KundliReport {
   birthDetails: {
@@ -55,16 +114,84 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isSavingToFolder, setIsSavingToFolder] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
   const [charts, setCharts] = useState<ChartData[]>([]);
   const [isFetchingCharts, setIsFetchingCharts] = useState(false);
+  const [pdfFolderHandle, setPdfFolderHandle] = useState<any | null>(null);
   const pdfBlobUrlRef = useRef<string | null>(null);
   const chartsFetchedRef = useRef(false);
   const isHindi = i18n.language?.toLowerCase().startsWith('hi');
+  const supportsFolderSave = hasLocalFolderSupport();
+
+  const buildPdfFileName = useCallback(() => {
+    const safeName = String(report.birthDetails.name || 'Kundli')
+      .trim()
+      .replace(/[^a-zA-Z0-9_-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    const timestamp = new Date(report.generatedAt || Date.now())
+      .toISOString()
+      .replace(/[:.]/g, '-');
+    return `Kundli_Report_${safeName || 'Kundli'}_${timestamp}.pdf`;
+  }, [report.birthDetails.name, report.generatedAt]);
+
+  const createPdfBlob = useCallback(async () => {
+    const reportWithCharts = { ...report, charts };
+    return pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
+  }, [report, charts]);
+
+  const saveBlobToConfiguredFolder = useCallback(async (blob: Blob, fileName: string) => {
+    if (!pdfFolderHandle) return false;
+    const permitted = await ensureReadWritePermission(pdfFolderHandle);
+    if (!permitted) {
+      throw new Error('Folder write permission was not granted.');
+    }
+    const fileHandle = await pdfFolderHandle.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return true;
+  }, [pdfFolderHandle]);
+
+  const handleSelectSaveFolder = useCallback(async () => {
+    if (!supportsFolderSave) {
+      toast.error(isHindi ? 'आपका ब्राउज़र फ़ोल्डर सेविंग सपोर्ट नहीं करता।' : 'Your browser does not support folder saving.');
+      return;
+    }
+    try {
+      const handle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+      setPdfFolderHandle(handle);
+      await saveFolderHandleToDb(handle);
+      toast.success(isHindi ? 'PDF सेव फ़ोल्डर सेट हो गया।' : 'PDF save folder is configured.');
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      console.error('[KundliReportViewer] Failed selecting folder:', error);
+      toast.error(isHindi ? 'फ़ोल्डर चुनने में समस्या हुई।' : 'Failed to select save folder.');
+    }
+  }, [isHindi, supportsFolderSave]);
 
   useEffect(() => {
     pdfBlobUrlRef.current = pdfBlobUrl;
   }, [pdfBlobUrl]);
+
+  useEffect(() => {
+    if (!supportsFolderSave) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const storedHandle = await getFolderHandleFromDb();
+        if (!cancelled && storedHandle) {
+          setPdfFolderHandle(storedHandle);
+        }
+      } catch (error) {
+        console.warn('[KundliReportViewer] Could not load stored folder handle:', error);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supportsFolderSave]);
 
   // Fetch charts after report is ready
   useEffect(() => {
@@ -114,22 +241,43 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     setIsGeneratingPdf(true);
     setPdfError(null);
     try {
-      // Include charts in the report
-      const reportWithCharts = { ...report, charts };
       console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name, 'and', charts.length, 'charts');
-      const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
+      const blob = await createPdfBlob();
       console.log('[KundliReportViewer] PDF blob created, size:', blob.size);
       const url = URL.createObjectURL(blob);
       console.log('[KundliReportViewer] Blob URL created:', url);
       pdfBlobUrlRef.current = url;
       setPdfBlobUrl(url);
+      if (pdfFolderHandle) {
+        const fileName = buildPdfFileName();
+        setIsSavingToFolder(true);
+        try {
+          const saved = await saveBlobToConfiguredFolder(blob, fileName);
+          if (saved) {
+            toast.success(
+              isHindi
+                ? `PDF लोकल फ़ोल्डर में सेव हो गई: ${fileName}`
+                : `PDF saved to local folder: ${fileName}`,
+            );
+          }
+        } catch (error) {
+          console.error('[KundliReportViewer] Auto-save to folder failed:', error);
+          toast.error(
+            isHindi
+              ? 'PDF ऑटो-सेव नहीं हो पाई। फ़ोल्डर परमिशन दोबारा दें।'
+              : 'Could not auto-save PDF to folder. Please re-grant folder permission.',
+          );
+        } finally {
+          setIsSavingToFolder(false);
+        }
+      }
     } catch (error) {
       console.error('[KundliReportViewer] Failed to generate PDF:', error);
       setPdfError(error instanceof Error ? error.message : 'Failed to generate PDF preview');
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [report, charts]);
+  }, [buildPdfFileName, charts.length, createPdfBlob, isHindi, pdfFolderHandle, report?.birthDetails?.name, saveBlobToConfiguredFolder]);
 
   // Cleanup blob URL
   useEffect(() => {
@@ -143,12 +291,22 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     console.log('[KundliReportViewer] Download clicked');
     setIsDownloading(true);
     try {
-      const reportWithCharts = { ...report, charts };
-      const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
+      const blob = await createPdfBlob();
+      const fileName = buildPdfFileName();
+      if (pdfFolderHandle) {
+        setIsSavingToFolder(true);
+        try {
+          await saveBlobToConfiguredFolder(blob, fileName);
+        } catch (error) {
+          console.error('[KundliReportViewer] Save-to-folder during download failed:', error);
+        } finally {
+          setIsSavingToFolder(false);
+        }
+      }
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Kundli_Report_${report.birthDetails.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -255,6 +413,17 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
             </div>
           </div>
           <div className="flex gap-2">
+            {supportsFolderSave && (
+              <Button
+                onClick={handleSelectSaveFolder}
+                variant="outline"
+                className="min-h-[44px]"
+              >
+                {pdfFolderHandle
+                  ? (isHindi ? 'सेव फ़ोल्डर बदलें' : 'Change Save Folder')
+                  : (isHindi ? 'सेव फ़ोल्डर चुनें' : 'Select Save Folder')}
+              </Button>
+            )}
             {!pdfBlobUrl && (
               <Button
                 onClick={generatePdfBlob}
@@ -272,7 +441,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
             )}
             <Button
               onClick={handleDownloadPdf}
-              disabled={isDownloading}
+              disabled={isDownloading || isSavingToFolder}
               className="min-h-[44px]"
             >
               {isDownloading ? (
@@ -283,6 +452,15 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
               {isHindi ? 'PDF डाउनलोड करें' : 'Download PDF'}
             </Button>
           </div>
+        </div>
+        <div className="mt-3 text-xs text-muted-foreground">
+          {supportsFolderSave
+            ? (
+              pdfFolderHandle
+                ? (isHindi ? 'लोकल ऑटो-सेव: चालू (हर नई PDF चुने हुए फ़ोल्डर में सेव होगी)' : 'Local auto-save: enabled (every newly generated PDF will be saved to selected folder)')
+                : (isHindi ? 'लोकल ऑटो-सेव: बंद (फ़ोल्डर चुनें)' : 'Local auto-save: disabled (select a folder)')
+            )
+            : (isHindi ? 'लोकल फ़ोल्डर ऑटो-सेव इस ब्राउज़र में उपलब्ध नहीं है।' : 'Local folder auto-save is not available in this browser.')}
         </div>
       </CardHeader>
 

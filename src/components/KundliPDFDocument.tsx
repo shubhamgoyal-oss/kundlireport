@@ -2740,7 +2740,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Text style={styles.coverMetaLabel}>{localizePdfUiText('Time of Birth')}</Text>
           <Text style={styles.coverDetails}>{report.birthDetails.timeOfBirth}</Text>
           <Text style={styles.coverMetaLabel}>{localizePdfUiText('Place of Birth')}</Text>
-          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{report.birthDetails.placeOfBirth}</Text>
+          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{placeDetails.city || report.birthDetails.placeOfBirth || 'N/A'}</Text>
         </View>
 
         <View style={styles.coverFooterWrap}>

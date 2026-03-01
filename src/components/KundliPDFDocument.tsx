@@ -2165,14 +2165,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chartContainer: {
-    width: 230,
-    height: 230,
-    marginVertical: 5,
+    width: '100%',
+    height: 240,
     backgroundColor: P.cardBg,
     borderWidth: 1,
     borderColor: P.lightBorder,
     borderRadius: 3,
     overflow: 'hidden',
+    padding: 4,
   },
   chartGrid: {
     flexDirection: 'row',
@@ -2181,21 +2181,24 @@ const styles = StyleSheet.create({
   },
   chartItem: {
     width: '48%',
-    marginBottom: 10,
+    marginBottom: 14,
     alignItems: 'center',
   },
   chartTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: P.primary,
     marginBottom: 4,
     textAlign: 'center',
+    width: '100%',
   },
   chartPurpose: {
-    fontSize: 9,
+    fontSize: 8,
     color: P.mutedText,
     textAlign: 'center',
     marginTop: 3,
+    width: '100%',
+    maxLines: 2,
   },
   divider: {
     borderBottomWidth: 1,
@@ -2640,7 +2643,7 @@ const parseSvgElement = (element: Element, key: number): React.ReactNode | null 
   }
 };
 
-const SVGRenderer = ({ svgString, width = 200, height = 200 }: { svgString: string; width?: number; height?: number }) => {
+const SVGRenderer = ({ svgString, width = 232, height = 232 }: { svgString: string; width?: number; height?: number }) => {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(svgString, 'image/svg+xml');
@@ -2671,6 +2674,7 @@ interface ChartData {
   type: string;
   name: string;
   nameHindi: string;
+  nameTelugu?: string;
   purpose: string;
   svg: string;
   dataUrl?: string | null;
@@ -3606,83 +3610,55 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </Section>
       </ContentPage>
 
-      {/* Kundali Charts Section */}
-      {charts.length > 0 && (
-        <ContentPage sectionName="Kundali Charts">
-          <Section title="Kundali Charts (Divisional Charts)" keepWithNext={260}>
-            <Text style={styles.paragraph}>
-              {localizePdfUiText('These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.')}
-            </Text>
-            <View style={styles.chartGrid}>
-              {charts.slice(0, 2).map((chart, idx) => (
-                <View key={idx} style={styles.chartItem}>
-                  <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
-                  <View style={styles.chartContainer}>
-                    {chart.dataUrl ? (
-                      <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    ) : chart.svg ? (
-                      <SVGRenderer svgString={chart.svg} />
-                    ) : (
-                      <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
-                        Chart image unavailable for this section.
-                      </Text>
-                    )}
-                  </View>
-                  <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
-                </View>
-              ))}
-            </View>
-          </Section>
-        </ContentPage>
-      )}
+      {/* Kundali Charts — 4 per page in a 2×2 grid */}
+      {charts.length > 0 && (() => {
+        const CHARTS_PER_PAGE = 4;
+        const chartPages: ChartData[][] = [];
+        for (let i = 0; i < charts.length; i += CHARTS_PER_PAGE) {
+          chartPages.push(charts.slice(i, i + CHARTS_PER_PAGE));
+        }
 
-      {/* Additional Charts Page */}
-      {charts.length > 2 && (
-        <ContentPage sectionName="Kundali Charts">
-          <Section title="Additional Divisional Charts" keepWithNext={260}>
-            <View style={styles.chartGrid}>
-              {charts.slice(2, 4).map((chart, idx) => (
-                <View key={idx} style={styles.chartItem}>
-                  <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
-                  <View style={styles.chartContainer}>
-                    {chart.dataUrl ? (
-                      <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    ) : chart.svg ? (
-                      <SVGRenderer svgString={chart.svg} />
-                    ) : (
-                      <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
-                        Chart image unavailable for this section.
-                      </Text>
-                    )}
-                  </View>
-                  <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
-                </View>
-              ))}
+        const chartName = (c: ChartData) =>
+          ACTIVE_PDF_LANGUAGE === 'hi' && c.nameHindi ? c.nameHindi
+          : ACTIVE_PDF_LANGUAGE === 'te' && c.nameTelugu ? c.nameTelugu
+          : c.name;
+
+        const renderChartCell = (chart: ChartData, idx: number) => (
+          <View key={idx} style={styles.chartItem} wrap={false}>
+            <Text style={styles.chartTitle}>{chart.type}: {chartName(chart)}</Text>
+            <View style={styles.chartContainer}>
+              {chart.dataUrl ? (
+                <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : chart.svg ? (
+                <SVGRenderer svgString={chart.svg} />
+              ) : (
+                <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
+                  Chart image unavailable for this section.
+                </Text>
+              )}
             </View>
-            {charts.length > 4 && (
+            <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
+          </View>
+        );
+
+        return chartPages.map((page, pageIdx) => (
+          <ContentPage key={`chart-pg-${pageIdx}`} sectionName="Kundali Charts">
+            <Section
+              title={pageIdx === 0 ? 'Kundali Charts (Divisional Charts)' : 'Divisional Charts (cont.)'}
+              keepWithNext={260}
+            >
+              {pageIdx === 0 && (
+                <Text style={styles.paragraph}>
+                  {localizePdfUiText('These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.')}
+                </Text>
+              )}
               <View style={styles.chartGrid}>
-                {charts.slice(4).map((chart, idx) => (
-                  <View key={idx} style={styles.chartItem}>
-                    <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
-                    <View style={styles.chartContainer}>
-                      {chart.dataUrl ? (
-                        <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                      ) : chart.svg ? (
-                        <SVGRenderer svgString={chart.svg} />
-                      ) : (
-                        <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
-                          Chart image unavailable for this section.
-                        </Text>
-                      )}
-                    </View>
-                    <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
-                  </View>
-                ))}
+                {page.map((chart, idx) => renderChartCell(chart, idx))}
               </View>
-            )}
-          </Section>
-        </ContentPage>
-      )}
+            </Section>
+          </ContentPage>
+        ));
+      })()}
       {/* Birth Details & Planetary Positions */}
       <ContentPage sectionName="Birth Details & Planetary Positions">
         <Section title="Birth Details" wrap={false}>

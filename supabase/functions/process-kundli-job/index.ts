@@ -482,6 +482,54 @@ async function runQaWithTimeout(report: Record<string, any>, timeoutMs = 60000):
   }
 }
 
+/**
+ * Wrap an AgentResponse-shaped call with a timeout.
+ * Returns { success: false, error: "..." } on timeout instead of hanging.
+ */
+function withAgentTimeout<T>(
+  agentName: string,
+  promise: Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }>,
+  timeoutMs = 180_000,
+): Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }> {
+  const guarded = promise.catch((err) => {
+    console.error(`💥 [PROCESS-JOB] Agent "${agentName}" crashed:`, err);
+    return { success: false as const, error: `Agent ${agentName} crashed: ${err?.message || err}` };
+  });
+  return Promise.race([
+    guarded,
+    new Promise<{ success: false; error: string }>((resolve) => {
+      setTimeout(() => {
+        console.error(`⏰ [PROCESS-JOB] Agent "${agentName}" timed out after ${timeoutMs}ms`);
+        resolve({ success: false, error: `Agent ${agentName} timed out after ${timeoutMs / 1000}s` });
+      }, timeoutMs);
+    }),
+  ]);
+}
+
+/**
+ * Wrap an array-returning agent with a timeout.
+ * Returns empty array on timeout/crash instead of hanging.
+ */
+function withArrayAgentTimeout<T>(
+  agentName: string,
+  promise: Promise<T[]>,
+  timeoutMs = 180_000,
+): Promise<T[]> {
+  const guarded = promise.catch((err) => {
+    console.error(`💥 [PROCESS-JOB] Agent "${agentName}" crashed:`, err);
+    return [] as T[];
+  });
+  return Promise.race([
+    guarded,
+    new Promise<T[]>((resolve) => {
+      setTimeout(() => {
+        console.error(`⏰ [PROCESS-JOB] Agent "${agentName}" timed out after ${timeoutMs}ms`);
+        resolve([]);
+      }, timeoutMs);
+    }),
+  ]);
+}
+
 // ─── Chart SVG fetching ──────────────────────────────────────────────────────
 
 /**
@@ -787,6 +835,8 @@ serve(async (req) => {
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Analyzing chart & generating predictions", 20, "progress");
     console.log("🤖 [PROCESS-JOB] Launching ALL agents in parallel...");
 
+    const AGENT_TIMEOUT_MS = 180_000; // 3 minutes per agent
+
     const [
       panchangResult, pillarsResult, numerologyResult,
       planetProfiles, houseAnalyses,
@@ -795,7 +845,7 @@ serve(async (req) => {
       rajYogsResult, sadeSatiResult, doshasResult,
     ] = await Promise.all([
       // Core
-      generatePanchangPrediction({
+      withAgentTimeout("Panchang", generatePanchangPrediction({
         birthDate,
         moonDegree: moon?.deg || 0,
         sunDegree: sun?.deg || 0,
@@ -803,8 +853,8 @@ serve(async (req) => {
         tithiNumber,
         karanaName: "Bava",
         yogaName: "Siddhi",
-      }),
-      generatePillarsPrediction({
+      }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Pillars", generatePillarsPrediction({
         moonSignIdx: moon?.signIdx || 0,
         moonDegree: moon?.deg || 0,
         moonHouse: moon?.house || 1,
@@ -812,20 +862,20 @@ serve(async (req) => {
         ascDegree: kundli.asc.deg,
         ascLordHouse: ascLordPlanet?.house || 1,
         ascLordSign: ascLordPlanet?.sign || "Aries",
-      }),
-      generateNumerologyPrediction({ name, dateOfBirth: date_of_birth }),
+      }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Numerology", generateNumerologyPrediction({ name, dateOfBirth: date_of_birth }), AGENT_TIMEOUT_MS),
       // Planets (9 internal parallel) + Houses (12 internal parallel)
-      generateAllPlanetProfiles(kundli.planets, kundli.asc),
-      generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx),
+      withArrayAgentTimeout("Planets", generateAllPlanetProfiles(kundli.planets, kundli.asc), AGENT_TIMEOUT_MS),
+      withArrayAgentTimeout("Houses", generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx), AGENT_TIMEOUT_MS),
       // Life Areas
-      generateCareerPrediction({
+      withAgentTimeout("Career", generateCareerPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
         birthDate,
         generatedAt: reportGeneratedAt,
-      }),
-      generateMarriagePrediction({
+      }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Marriage", generateMarriagePrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
@@ -833,22 +883,22 @@ serve(async (req) => {
         birthDate,
         generatedAt: reportGeneratedAt,
         maritalStatus: normalizedMaritalStatus,
-      }),
-      generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }),
-      generateRahuKetuPrediction({ planets: kundli.planets }),
+      }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Dasha", generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("RahuKetu", generateRahuKetuPrediction({ planets: kundli.planets }), AGENT_TIMEOUT_MS),
       // Remedies, Spiritual, etc.
-      generateRemediesPrediction({
+      withAgentTimeout("Remedies", generateRemediesPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         birthDate,
         generatedAt: reportGeneratedAt,
-      }),
-      generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }),
-      generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }),
-      generateGlossaryPrediction(),
-      generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }),
-      generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year }),
-      generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }),
+      }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Spiritual", generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("CharaKarakas", generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Glossary", generateGlossaryPrediction(), AGENT_TIMEOUT_MS),
+      withAgentTimeout("RajYogs", generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("SadeSati", generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year }), AGENT_TIMEOUT_MS),
+      withAgentTimeout("Doshas", generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }), AGENT_TIMEOUT_MS),
     ]);
 
     console.log("✅ [PROCESS-JOB] All agents completed");

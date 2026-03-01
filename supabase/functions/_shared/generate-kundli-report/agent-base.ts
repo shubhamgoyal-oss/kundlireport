@@ -120,31 +120,46 @@ async function runToolCallRequest(
   toolDescription: string,
   toolSchema: Record<string, any>,
 ): Promise<{ ok: boolean; status?: number; errorText?: string; result?: any }> {
-  const response = await fetch(AI_OPENAI_URL, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: AI_MODEL,
-      messages: [
-        { role: "system", content: enhancedSystemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: toolName,
-            description: toolDescription,
-            parameters: toolSchema
+  // 2-minute timeout per API call to prevent indefinite hangs
+  const controller = new AbortController();
+  const fetchTimeout = setTimeout(() => controller.abort(), 120_000);
+
+  let response: Response;
+  try {
+    response = await fetch(AI_OPENAI_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          { role: "system", content: enhancedSystemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: toolName,
+              description: toolDescription,
+              parameters: toolSchema
+            }
           }
-        }
-      ],
-      tool_choice: { type: "function", function: { name: toolName } }
-    }),
-  });
+        ],
+        tool_choice: { type: "function", function: { name: toolName } }
+      }),
+    });
+  } catch (err: any) {
+    clearTimeout(fetchTimeout);
+    if (err?.name === "AbortError") {
+      return { ok: false, status: 408, errorText: "AI API request timed out after 120s" };
+    }
+    throw err;
+  }
+  clearTimeout(fetchTimeout);
 
   if (!response.ok) {
     return {

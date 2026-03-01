@@ -26,6 +26,7 @@ import { runLanguageQc } from "../_shared/language-qc.ts";
 import type { SupportedLanguage } from "../_shared/language-packs/types.ts";
 import { createJobEvent, touchJobHeartbeat } from "../_shared/job-events.ts";
 import { localizeStructuredReportTerms } from "../_shared/language-localize.ts";
+import { runTranslationSweep } from "../_shared/generate-kundli-report/translation-agent.ts";
 import { insertKundliApiCall, insertKundliApiCalls, upsertKundliGeneratedReport } from "../_shared/kundli-audit.ts";
 
 import { calculateCharaKarakas } from "../_shared/generate-kundli-report/utils/chara-karakas.ts";
@@ -1043,8 +1044,38 @@ serve(async (req) => {
 
     report = enforceGlobalPredictionSafety(report, birthDate, reportGeneratedAt, normalizedMaritalStatus);
 
-    // Phase 7
-    await updateJobStatus(supabaseAdmin, jobId, "processing", "Running quality checks", 95, "progress");
+    // ── Translation Sweep (Hindi/Telugu only) ────────────────────────────────
+    // Runs AFTER all agents + truth guard + safety enforcement, BEFORE QC.
+    // Walks the entire report JSON, detects any remaining English strings,
+    // and batch-translates them via Gemini. This eliminates English leakage
+    // from dynamic AI output, fallback templates, and edge cases.
+    if (effectiveGenerationLanguage !== "en") {
+      await updateJobStatus(supabaseAdmin, jobId, "processing", "Translating remaining content", 85, "progress");
+      try {
+        const translationStats = await runTranslationSweep(report, effectiveGenerationLanguage);
+        console.log(`🌐 [PROCESS-JOB] Translation sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings translated in ${translationStats.batchesSent} batches`);
+        if (translationStats.errors.length > 0) {
+          report.errors = [...(report.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
+        }
+        report.computationMeta = {
+          ...(report.computationMeta || {}),
+          translationSweep: {
+            stringsFound: translationStats.stringsFound,
+            stringsTranslated: translationStats.stringsTranslated,
+            batchesSent: translationStats.batchesSent,
+            errorCount: translationStats.errors.length,
+          },
+        };
+        totalTokens += translationStats.tokensUsed || 0;
+      } catch (translationErr: any) {
+        console.warn(`⚠️ [PROCESS-JOB] Translation sweep failed (non-fatal):`, translationErr?.message || translationErr);
+        report.errors = [...(report.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
+      }
+      await touchJobHeartbeat(supabaseAdmin, jobId);
+    }
+
+    // Phase 7: QA
+    await updateJobStatus(supabaseAdmin, jobId, "processing", "Running quality checks", 92, "progress");
 
     const qaResult = await runQaWithTimeout(report);
     if (qaResult.blockedContent.length > 0 || qaResult.issues.some((i: any) => i.severity === "critical")) {
@@ -1096,7 +1127,7 @@ serve(async (req) => {
 
     // Fetch chart SVGs server-side so they're bundled with report_data (no separate client call needed)
     try {
-      await updateJobStatus(supabaseAdmin, jobId, "processing", "Fetching Kundali charts", 98, "progress");
+      await updateJobStatus(supabaseAdmin, jobId, "processing", "Fetching Kundali charts", 97, "progress");
       const charts = await fetchKundaliCharts(day, month, year, hour, min, latitude, longitude, timezone, requestedLanguage);
       report.charts = charts;
     } catch (chartErr) {

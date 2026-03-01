@@ -2506,9 +2506,14 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     // Build a lat/lon fallback when no place text is available
     const lat = fallback?.latitude;
     const lon = fallback?.longitude;
-    const latLonFallback = (lat != null && lon != null && (lat !== 0 || lon !== 0))
-      ? `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`
-      : 'N/A';
+    const hasCoords = lat != null && lon != null && (lat !== 0 || lon !== 0);
+    const latNum = Number(lat);
+    const lonNum = Number(lon);
+    const latDir = latNum >= 0 ? 'N' : 'S';
+    const lonDir = lonNum >= 0 ? 'E' : 'W';
+    const latLonFallback = hasCoords
+      ? `${Math.abs(latNum).toFixed(4)}°${latDir}, ${Math.abs(lonNum).toFixed(4)}°${lonDir}`
+      : (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A');
     const city = String(fallback?.city || parts[0] || latLonFallback);
     const state = String(fallback?.state || parts[1] || '');
     const country = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : ''));
@@ -3106,7 +3111,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Text style={styles.coverMetaLabel}>{localizePdfUiText('Time of Birth')}</Text>
           <Text style={styles.coverDetails}>{report.birthDetails.timeOfBirth}</Text>
           <Text style={styles.coverMetaLabel}>{localizePdfUiText('Place of Birth')}</Text>
-          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{placeDetails.city || report.birthDetails.placeOfBirth || 'N/A'}</Text>
+          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{placeDetails.city || report.birthDetails.placeOfBirth || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')}</Text>
         </View>
 
         <View style={styles.coverFooterWrap}>
@@ -3235,7 +3240,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Date of Birth" value={formatBirthDate(birthDateValue) || birthDateValue || 'N/A'} />
                 <InfoRow label="Day" value={report?.panchang?.vaar?.day || getWeekday(birthDateValue)} />
                 <InfoRow label="Time of Birth" value={birthDetails.timeOfBirth || 'N/A'} />
-                <InfoRow label="Place of Birth" value={birthDetails.placeOfBirth || 'N/A'} />
+                <InfoRow label="Place of Birth" value={birthDetails.placeOfBirth || placeDetails.city || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')} />
                 <InfoRow label="City" value={placeDetails.city} />
                 <InfoRow label="State" value={placeDetails.state} />
                 <InfoRow label="Country" value={placeDetails.country} />

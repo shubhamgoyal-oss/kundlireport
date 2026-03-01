@@ -1877,10 +1877,12 @@ const styles = StyleSheet.create({
   coverInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 3,
+    width: '100%',
   },
   coverInfoLabel: {
-    width: 140,
+    width: 120,
     fontSize: 8.4,
     color: '#f59e0b',
     textTransform: 'uppercase',
@@ -1889,7 +1891,7 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
   coverInfoValue: {
-    flex: 1,
+    width: 190,
     fontSize: 10.2,
     color: '#fde68a',
     textAlign: 'left',

@@ -366,6 +366,22 @@ const KundliReportGenerator = () => {
                   )}
                 </div>
 
+                {/* Report Language */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm sm:text-base font-medium">
+                    {isHindi ? 'रिपोर्ट भाषा' : 'Report Language'} <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    onChange={(e) => i18n.changeLanguage(e.target.value)}
+                    defaultValue={i18n.language || 'en'}
+                    className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+                  >
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="te">తెలుగు (Telugu)</option>
+                  </select>
+                </div>
+
                 {/* Gender Selection */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-sm sm:text-base font-medium">

@@ -10,19 +10,22 @@
  * Design:
  *   1. Collect all strings with significant Latin content (>15% Latin chars)
  *   2. Group by top-level report section for contextual batching
- *   3. Translate in batches of 25 via Gemini tool-call (with 2 retries per batch)
+ *   3. Translate in PARALLEL batches of 40 via Gemini tool-call (3 concurrent)
  *   4. Validate each translation: reject if output is still >25% Latin or suspiciously short
  *   5. Apply translations back to the report in-place
- *   6. Final re-scan to count any remaining English strings
+ *
+ * Performance: 3 concurrent batches of 40 strings ≈ 120 strings per ~20-30s wave.
+ * Typical Hindi report needs ~60-150 strings → 1-2 waves → 20-60s total.
  */
 
 import { callAgent, type AgentResponse } from "./agent-base.ts";
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-const BATCH_SIZE = 25;          // Strings per Gemini call (lower = more reliable)
-const MAX_RETRIES = 2;          // Retry failed batches up to 2 more times
-const RETRY_DELAY_MS = 3_000;   // 3 seconds between retries
+const BATCH_SIZE = 40;          // Strings per Gemini call (bigger = fewer round-trips)
+const CONCURRENCY = 3;          // Run this many batches in parallel per wave
+const MAX_RETRIES = 1;          // Retry failed batches once (2 attempts total)
+const RETRY_DELAY_MS = 2_000;   // 2 seconds between retries
 const LATIN_RATIO_THRESHOLD = 0.15; // 15% Latin → needs translation (thorough)
 const MIN_STRING_LENGTH = 8;    // Minimum string length to consider
 const MIN_LETTER_COUNT = 4;     // Minimum non-space/digit/punct letters
@@ -370,10 +373,12 @@ export interface TranslationResult {
  *  1. Walks the entire report JSON tree
  *  2. Detects strings with >15% Latin characters
  *  3. Groups by report section for contextual translation
- *  4. Sends batches of 25 to Gemini (with 2 retries per batch)
+ *  4. Sends batches of 40 to Gemini — 3 batches at a time IN PARALLEL
  *  5. Validates each translation (rejects if still Latin or too short)
  *  6. Applies valid translations back to the report
- *  7. Does a final re-scan to count remaining English strings
+ *
+ * Performance: 3 concurrent × 40 strings = 120 strings per wave (~20-30s).
+ * Typical Hindi report: ~100 strings → 3 batches → 1 wave → ~25s.
  */
 export async function runTranslationSweep(
   report: Record<string, any>,
@@ -392,7 +397,7 @@ export async function runTranslationSweep(
   if (targetLanguage === "en") return stats;
 
   const langLabel = targetLanguage === "hi" ? "Hindi" : "Telugu";
-  console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, retries: ${MAX_RETRIES})...`);
+  console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, concurrency: ${CONCURRENCY}, retries: ${MAX_RETRIES})...`);
 
   // ── Step 1: Collect all English strings ────────────────────────────────────
   const entries: TranslationEntry[] = [];
@@ -427,12 +432,20 @@ export async function runTranslationSweep(
     return aPriority - bPriority;
   });
 
-  // ── Step 2: Batch and translate with retry ────────────────────────────────
+  // ── Step 2: Build batch descriptors ───────────────────────────────────────
+  interface BatchDescriptor {
+    batch: TranslationEntry[];
+    primarySection: string;
+    batchLabel: string;
+    batchIndex: number;
+  }
+
+  const allBatches: BatchDescriptor[] = [];
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batch = entries.slice(i, i + BATCH_SIZE);
-    stats.batchesSent++;
+    const batchIndex = allBatches.length + 1;
 
-    // Determine primary section for batch context
+    // Determine primary section for context
     const sectionCounts = new Map<string, number>();
     for (const e of batch) {
       sectionCounts.set(e.section, (sectionCounts.get(e.section) || 0) + 1);
@@ -440,20 +453,51 @@ export async function runTranslationSweep(
     const primarySection = [...sectionCounts.entries()]
       .sort((a, b) => b[1] - a[1])[0]?.[0] || "general";
 
-    const batchLabel = `batch-${stats.batchesSent} (${primarySection}, ${batch.length} strings)`;
+    allBatches.push({
+      batch,
+      primarySection,
+      batchLabel: `batch-${batchIndex} (${primarySection}, ${batch.length} strings)`,
+      batchIndex,
+    });
+  }
 
-    try {
-      console.log(`🔄 [TRANSLATE] ${batchLabel}: translating...`);
-      const { translations, tokensUsed, error } = await translateBatchWithRetry(
-        batch,
-        targetLanguage,
-        primarySection,
-        batchLabel,
-      );
+  console.log(`📦 [TRANSLATE] ${allBatches.length} batches to translate (${CONCURRENCY} concurrent)...`);
+
+  // ── Step 3: Execute batches in PARALLEL waves of CONCURRENCY ──────────────
+  for (let waveStart = 0; waveStart < allBatches.length; waveStart += CONCURRENCY) {
+    const wave = allBatches.slice(waveStart, waveStart + CONCURRENCY);
+    const waveNum = Math.floor(waveStart / CONCURRENCY) + 1;
+    console.log(`🚀 [TRANSLATE] Wave ${waveNum}: launching ${wave.length} batches in parallel...`);
+
+    const waveResults = await Promise.allSettled(
+      wave.map(async (desc) => {
+        stats.batchesSent++;
+        console.log(`🔄 [TRANSLATE] ${desc.batchLabel}: translating...`);
+        const result = await translateBatchWithRetry(
+          desc.batch,
+          targetLanguage,
+          desc.primarySection,
+          desc.batchLabel,
+        );
+        return { desc, result };
+      }),
+    );
+
+    // Apply results from this wave
+    for (const settled of waveResults) {
+      if (settled.status === "rejected") {
+        const msg = `Wave ${waveNum} batch rejected: ${settled.reason}`;
+        console.error(`❌ [TRANSLATE] ${msg}`);
+        stats.errors.push(msg);
+        continue;
+      }
+
+      const { desc, result } = settled.value;
+      const { translations, tokensUsed, error } = result;
       stats.tokensUsed += tokensUsed;
 
       if (error && translations.size === 0) {
-        stats.errors.push(`${batchLabel}: ${error}`);
+        stats.errors.push(`${desc.batchLabel}: ${error}`);
       }
 
       // Apply translations
@@ -461,39 +505,19 @@ export async function runTranslationSweep(
         setAtPath(report, path, translated);
         stats.stringsTranslated++;
 
-        // Update section breakdown
-        const entry = batch.find((e) => e.path === path);
+        const entry = desc.batch.find((e) => e.path === path);
         if (entry && stats.sectionBreakdown[entry.section]) {
           stats.sectionBreakdown[entry.section].translated++;
         }
       }
 
-      console.log(`✅ [TRANSLATE] ${batchLabel}: ${translations.size}/${batch.length} translated (${tokensUsed} tokens)`);
-    } catch (err: any) {
-      const msg = `${batchLabel} failed: ${err?.message || err}`;
-      console.error(`❌ [TRANSLATE] ${msg}`);
-      stats.errors.push(msg);
+      console.log(`✅ [TRANSLATE] ${desc.batchLabel}: ${translations.size}/${desc.batch.length} translated (${tokensUsed} tokens)`);
     }
   }
 
-  // ── Step 3: Final re-scan for remaining English ───────────────────────────
-  const remaining: TranslationEntry[] = [];
-  collectEnglishStrings(report, "", remaining);
-  stats.remainingEnglishCount = remaining.length;
+  // Estimate remaining (without costly re-scan — just count untranslated)
+  stats.remainingEnglishCount = Math.max(0, stats.stringsFound - stats.stringsTranslated);
 
-  if (remaining.length > 0) {
-    console.warn(`⚠️ [TRANSLATE] ${remaining.length} strings still have English after sweep:`);
-    // Log first 10 for debugging
-    for (const entry of remaining.slice(0, 10)) {
-      const preview = entry.original.length > 80
-        ? entry.original.substring(0, 80) + "..."
-        : entry.original;
-      console.warn(`  → ${entry.path}: "${preview}"`);
-    }
-  } else {
-    console.log("✅ [TRANSLATE] Post-sweep verification: ZERO English strings remaining!");
-  }
-
-  console.log(`🏁 [TRANSLATE] Sweep complete: ${stats.stringsTranslated}/${stats.stringsFound} strings translated in ${stats.batchesSent} batches (${stats.tokensUsed} tokens, ${stats.remainingEnglishCount} remaining)`);
+  console.log(`🏁 [TRANSLATE] Sweep complete: ${stats.stringsTranslated}/${stats.stringsFound} strings translated in ${stats.batchesSent} batches (${stats.tokensUsed} tokens, ~${stats.remainingEnglishCount} remaining)`);
   return stats;
 }

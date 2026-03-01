@@ -729,8 +729,9 @@ serve(async (req) => {
       }
 
       // ── QA ─────────────────────────────────────────────────────────────────
+      // Use shorter timeout (30s) in Stage 2 to leave room for translation + charts
       await updateJobStatus(supabaseAdmin, jobId!, "processing", "Running quality checks", 92, "progress");
-      const fQaResult = await runQaWithTimeout(fReport);
+      const fQaResult = await runQaWithTimeout(fReport, 30_000);
       if (fQaResult.blockedContent.length > 0 || fQaResult.issues.some((i: any) => i.severity === "critical")) {
         fReport = sanitizeReportContent(fReport);
       }

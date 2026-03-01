@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Hindi QA Postfix 1",
+    "lang": "hi",
+    "jobId": "0b61d8de-9756-4ab2-b2cb-d31d1f29386b",
+    "status": "failed",
+    "progress": 95,
+    "phase": "Running quality checks",
+    "durationSec": 136,
+    "languageQcPassed": null,
+    "qaScore": null,
+    "qaApproved": null,
+    "errorCount": 0,
+    "missing": [],
+    "latinRatio": null,
+    "latinSample": [],
+    "error": "LANGUAGE_QC_FAILED: sadeSati:script=72.5%,latin=27.5%"
+  },
+  {
+    "name": "Hindi QA Postfix 2",
+    "lang": "hi",
+    "jobId": "15b1a433-75b2-4146-ac63-7dbe5a97213a",
+    "status": "failed",
+    "progress": 95,
+    "phase": "Running quality checks",
+    "durationSec": 118,
+    "languageQcPassed": null,
+    "qaScore": null,
+    "qaApproved": null,
+    "errorCount": 0,
+    "missing": [],
+    "latinRatio": null,
+    "latinSample": [],
+    "error": "LANGUAGE_QC_FAILED: sadeSati:script=70.8%,latin=29.2%"
+  },
+  {
+    "name": "Telugu QA Postfix 1",
+    "lang": "te",
+    "jobId": "3dc33d32-e175-4f64-9640-148692668b42",
+    "status": "failed",
+    "progress": 95,
+    "phase": "Running quality checks",
+    "durationSec": 128,
+    "languageQcPassed": null,
+    "qaScore": null,
+    "qaApproved": null,
+    "errorCount": 0,
+    "missing": [],
+    "latinRatio": null,
+    "latinSample": [],
+    "error": "LANGUAGE_QC_FAILED: sadeSati:script=71.2%,latin=28.8%"
+  }
+]

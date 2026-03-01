@@ -1,0 +1,20 @@
+[
+  {
+    "jobId": "07f42c49-65cf-4700-96bd-e6dae6249dcd",
+    "status": "completed",
+    "phase": "Complete",
+    "progress": 100,
+    "error": null,
+    "qaScore": 5,
+    "latinRatio": 0.0014
+  },
+  {
+    "jobId": "63aa635a-315e-4809-b4f2-9a60bcd6d916",
+    "status": "completed",
+    "phase": "Complete",
+    "progress": 100,
+    "error": null,
+    "qaScore": 5,
+    "latinRatio": 0.0017
+  }
+]

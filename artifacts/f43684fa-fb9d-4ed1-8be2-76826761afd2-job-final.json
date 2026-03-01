@@ -1,0 +1,1 @@
+{"jobId":"f43684fa-fb9d-4ed1-8be2-76826761afd2","status":"failed","currentPhase":"Running quality checks","progressPercent":95,"report":null,"error":"LANGUAGE_QC_FAILED: localized output validation did not pass","createdAt":"2026-02-28T14:24:05.684636+00:00","completedAt":null,"name":"Hindi Smoke 5"}

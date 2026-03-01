@@ -1,0 +1,37 @@
+diff --git a/node_modules/fontkit/dist/browser-module.mjs b/node_modules/fontkit/dist/browser-module.mjs
+index 4d0a389..eb27237 100644
+--- a/node_modules/fontkit/dist/browser-module.mjs
++++ b/node_modules/fontkit/dist/browser-module.mjs
+@@ -9947,6 +9947,7 @@ class $c96c93587d49c14d$export$2e2bcd8739ae039 extends (0, $a83b9c36aaa94fd3$exp
+         this.glyphIterator.cur.markAttachment = baseGlyphIndex;
+     }
+     getAnchor(anchor) {
++        if (!anchor) return { x: 0, y: 0 };
+         // TODO: contour point, device tables
+         let x = anchor.xCoordinate;
+         let y = anchor.yCoordinate;
+diff --git a/node_modules/fontkit/dist/main.cjs b/node_modules/fontkit/dist/main.cjs
+index 851b2d2..de3dd1e 100644
+--- a/node_modules/fontkit/dist/main.cjs
++++ b/node_modules/fontkit/dist/main.cjs
+@@ -9985,6 +9985,7 @@ class $79ea6270f0a90256$export$2e2bcd8739ae039 extends (0, $7b226e6bbeadedeb$exp
+         this.glyphIterator.cur.markAttachment = baseGlyphIndex;
+     }
+     getAnchor(anchor) {
++        if (!anchor) return { x: 0, y: 0 };
+         // TODO: contour point, device tables
+         let x = anchor.xCoordinate;
+         let y = anchor.yCoordinate;
+diff --git a/node_modules/fontkit/src/opentype/GPOSProcessor.js b/node_modules/fontkit/src/opentype/GPOSProcessor.js
+index 6a2c1f9..a6e9276 100644
+--- a/node_modules/fontkit/src/opentype/GPOSProcessor.js
++++ b/node_modules/fontkit/src/opentype/GPOSProcessor.js
+@@ -285,6 +285,8 @@ export default class GPOSProcessor extends OTProcessor {
+   }
+ 
+   getAnchor(anchor) {
++    // Guard against null anchors (can occur in NotoSans-family fonts with sparse mark classes)
++    if (!anchor) return { x: 0, y: 0 };
+     // TODO: contour point, device tables
+     let x = anchor.xCoordinate;
+     let y = anchor.yCoordinate;

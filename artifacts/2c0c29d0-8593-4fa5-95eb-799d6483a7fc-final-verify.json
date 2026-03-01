@@ -1,0 +1,1 @@
+{"jobId":"2c0c29d0-8593-4fa5-95eb-799d6483a7fc","status":"failed","currentPhase":"Running quality checks","progressPercent":95,"report":null,"error":"LANGUAGE_QC_FAILED: sadeSati:script=62.1%,latin=37.9%","createdAt":"2026-02-28T15:44:01.693778+00:00","completedAt":null,"name":"Hindi Final Verify"}

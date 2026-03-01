@@ -1,0 +1,1 @@
+{"jobId":"15b1a433-75b2-4146-ac63-7dbe5a97213a","status":"failed","currentPhase":"Running quality checks","progressPercent":95,"report":null,"error":"LANGUAGE_QC_FAILED: sadeSati:script=70.8%,latin=29.2%","createdAt":"2026-02-28T15:35:30.085125+00:00","completedAt":null,"name":"Hindi QA Postfix 2"}

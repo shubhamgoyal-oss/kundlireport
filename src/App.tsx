@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CategoryPujas from "./pages/CategoryPujas";
+import Kundli from "./pages/Kundli";
 import ExperimentAdmin from "./pages/ExperimentAdmin";
 import AdminLogin from "./pages/AdminLogin";
 import LanguageToggle from "./components/LanguageToggle";
@@ -67,16 +68,17 @@ const App = () => {
             <Routes>
               {/* Redirect root to /hi by default */}
               <Route path="/" element={<Navigate to="/hi" replace />} />
-              
+
               {/* Language-specific routes */}
               <Route path="/:lang" element={<LanguageWrapper />}>
                 <Route index element={<Index />} />
                 <Route path="category/:category" element={<CategoryPujas />} />
+                <Route path="kundli" element={<Kundli />} />
               </Route>
-              
+
               {/* Admin login route */}
               <Route path="/admin/login" element={<AdminLogin />} />
-              
+
               {/* Protected admin routes */}
               <Route
                 path="/admin/experiments"
@@ -86,7 +88,7 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

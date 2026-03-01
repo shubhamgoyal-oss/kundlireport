@@ -120,11 +120,13 @@ async function runToolCallRequest(
   toolDescription: string,
   toolSchema: Record<string, any>,
 ): Promise<{ ok: boolean; status?: number; errorText?: string; result?: any }> {
-  // 5-minute timeout per API call to prevent indefinite hangs.
-  // The Dasha agent generates 10k+ tokens of structured JSON (especially in Hindi)
-  // and legitimately needs 2-4 minutes. The retry wrapper handles true failures.
+  // 90-second timeout per API call to prevent indefinite hangs.
+  // Most agents complete in 30-60s. The Dasha agent (heaviest, 10k+ tokens in Hindi)
+  // typically finishes in 60-80s. The retry wrapper handles true failures.
+  // IMPORTANT: Supabase Edge Functions have a wall_clock_limit (default 150s, max 400s
+  // on Pro). Keep this timeout well below that to leave room for retries + post-processing.
   const controller = new AbortController();
-  const fetchTimeout = setTimeout(() => controller.abort(), 300_000);
+  const fetchTimeout = setTimeout(() => controller.abort(), 90_000);
 
   let response: Response;
   try {
@@ -157,7 +159,7 @@ async function runToolCallRequest(
   } catch (err: any) {
     clearTimeout(fetchTimeout);
     if (err?.name === "AbortError") {
-      return { ok: false, status: 408, errorText: "AI API request timed out after 300s" };
+      return { ok: false, status: 408, errorText: "AI API request timed out after 90s" };
     }
     throw err;
   }

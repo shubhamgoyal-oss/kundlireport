@@ -485,13 +485,19 @@ async function runQaWithTimeout(report: Record<string, any>, timeoutMs = 60000):
 
 /**
  * Run an AgentResponse-shaped call with automatic retry on failure.
- * Retries up to `maxRetries` times with increasing delay.
+ * Retries up to `maxRetries` times with a short delay.
  * Every agent MUST deliver — we never skip a section.
+ *
+ * TIMING: With 90s per Gemini call and 1 retry (3s delay), worst case
+ * per agent slot is 90+3+90=183s. Since agents run in PARALLEL,
+ * the total Promise.all time ≈ slowest agent ≈ 90-183s.
+ * This runs in Stage 1 of the 2-stage pipeline, which must fit within
+ * the Supabase Edge Function wall_clock_limit (Free: 150s, Pro: 400s).
  */
 async function runAgentWithRetry<T>(
   agentName: string,
   factory: () => Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }>,
-  maxRetries = 2,
+  maxRetries = 1,
 ): Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }> {
   let lastResult: { success: boolean; data?: T; error?: string; tokensUsed?: number } | undefined;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -508,7 +514,7 @@ async function runAgentWithRetry<T>(
       console.error(`💥 [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} crashed:`, err?.message || err);
     }
     if (attempt < maxRetries) {
-      const delayMs = 5_000 * (attempt + 1); // 5s, 10s
+      const delayMs = 3_000; // 3s flat delay
       console.log(`🔄 [RETRY] Retrying "${agentName}" in ${delayMs / 1000}s...`);
       await new Promise((r) => setTimeout(r, delayMs));
     }
@@ -524,7 +530,7 @@ async function runAgentWithRetry<T>(
 async function runArrayAgentWithRetry<T>(
   agentName: string,
   factory: () => Promise<T[]>,
-  maxRetries = 2,
+  maxRetries = 1,
 ): Promise<T[]> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -538,7 +544,7 @@ async function runArrayAgentWithRetry<T>(
       console.error(`💥 [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} crashed:`, err?.message || err);
     }
     if (attempt < maxRetries) {
-      const delayMs = 5_000 * (attempt + 1);
+      const delayMs = 3_000; // 3s flat delay
       console.log(`🔄 [RETRY] Retrying "${agentName}" in ${delayMs / 1000}s...`);
       await new Promise((r) => setTimeout(r, delayMs));
     }
@@ -657,7 +663,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     jobId = body.jobId;
-    console.log("🔄 [PROCESS-JOB] Starting job:", jobId);
+    const stage = body.stage || "generate";
+    console.log(`🔄 [PROCESS-JOB] Starting job: ${jobId}, stage: ${stage}`);
 
     const { data: job, error: fetchError } = await supabaseAdmin
       .from("kundli_report_jobs")
@@ -670,6 +677,174 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Job not found" }), { status: 404 });
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // STAGE 2: Finalize — translation, QA, charts, save
+    // Runs as a SEPARATE function invocation so it gets its own wall_clock_limit.
+    // Supabase Free plan = 150s per invocation. By splitting generate vs finalize,
+    // each stage fits comfortably within 150s.
+    // ──────────────────────────────────────────────────────────────────────────
+    if (stage === "finalize") {
+      console.log(`🔄 [PROCESS-JOB] Stage 2 (finalize) for job: ${jobId}`);
+
+      // Reconstruct context from job record
+      const fRequestedLanguage = normalizeLanguage(job.language || "en");
+      const fUseLanguagePipelineV2 = isLanguagePipelineV2Enabled(fRequestedLanguage);
+      const fEffectiveGenLang: SupportedLanguage = fUseLanguagePipelineV2 ? fRequestedLanguage : "en";
+      const fActiveLanguagePack = getLanguagePack(fRequestedLanguage);
+      setAgentLanguageContext(fEffectiveGenLang);
+
+      let fReport = job.report_data as Record<string, any>;
+      if (!fReport) throw new Error("No report_data found for finalize stage");
+
+      let fTotalTokens = fReport.tokensUsed || 0;
+      const [fYear, fMonth, fDay] = String(job.date_of_birth).split("-").map(Number);
+      const { hour: fHour, min: fMin } = parseBirthTime(String(job.time_of_birth));
+
+      // ── Translation Sweep (Hindi/Telugu only) ──────────────────────────────
+      if (fEffectiveGenLang !== "en") {
+        await updateJobStatus(supabaseAdmin, jobId!, "processing", "Translating remaining content", 85, "progress");
+        try {
+          const translationStats = await runTranslationSweep(fReport, fEffectiveGenLang);
+          console.log(`🌐 [PROCESS-JOB] Translation sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings in ${translationStats.batchesSent} batches`);
+          if (translationStats.errors.length > 0) {
+            fReport.errors = [...(fReport.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
+          }
+          fReport.computationMeta = {
+            ...(fReport.computationMeta || {}),
+            translationSweep: {
+              stringsFound: translationStats.stringsFound,
+              stringsTranslated: translationStats.stringsTranslated,
+              batchesSent: translationStats.batchesSent,
+              errorCount: translationStats.errors.length,
+              remainingEnglish: translationStats.remainingEnglishCount,
+              sectionBreakdown: translationStats.sectionBreakdown,
+            },
+          };
+          fTotalTokens += translationStats.tokensUsed || 0;
+        } catch (translationErr: any) {
+          console.warn(`⚠️ [PROCESS-JOB] Translation sweep failed (non-fatal):`, translationErr?.message || translationErr);
+          fReport.errors = [...(fReport.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
+        }
+        await touchJobHeartbeat(supabaseAdmin, jobId!);
+      }
+
+      // ── QA ─────────────────────────────────────────────────────────────────
+      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Running quality checks", 92, "progress");
+      const fQaResult = await runQaWithTimeout(fReport);
+      if (fQaResult.blockedContent.length > 0 || fQaResult.issues.some((i: any) => i.severity === "critical")) {
+        fReport = sanitizeReportContent(fReport);
+      }
+      fReport.qa = fQaResult;
+      fReport = localizeStructuredReportTerms(fReport, fRequestedLanguage);
+      fReport.language = fRequestedLanguage;
+      fReport = stripAiDisclosure(fReport);
+
+      // ── Language QC ────────────────────────────────────────────────────────
+      const fLanguageQc = fUseLanguagePipelineV2
+        ? runLanguageQc(fReport, fRequestedLanguage)
+        : {
+            language: fRequestedLanguage,
+            packVersion: fActiveLanguagePack.version,
+            generationMode: "native" as const,
+            passed: true,
+            summary: { sectionsChecked: 0, sectionsPassed: 0, totalScriptChars: 0, totalLetters: 0, overallScriptRatio: 0, overallLatinRatio: 0 },
+            sections: [],
+            leakSamples: [],
+          };
+      fReport.languageQc = fLanguageQc;
+      fReport.languageQcPassed = fLanguageQc.passed;
+      fReport.failureCode = fLanguageQc.passed ? null : "LANGUAGE_QC_FAILED";
+      if (!fLanguageQc.passed) {
+        const leakSummary = fLanguageQc.leakSamples.slice(0, 5).map((s) => `${s.section}:${s.token}`).join(", ");
+        const ratioSummary = (fLanguageQc.sections || [])
+          .filter((s: any) => !s.passed).slice(0, 5)
+          .map((s: any) => `${s.section}:script=${(Number(s.scriptRatio || 0) * 100).toFixed(1)}%,latin=${(Number(s.latinRatio || 0) * 100).toFixed(1)}%`)
+          .join(", ");
+        console.warn(`⚠️ [PROCESS-JOB] LANGUAGE_QC_FAILED (non-fatal): ${leakSummary || ratioSummary || "localized output validation did not pass"}`);
+        fReport.errors = [...(fReport.errors || []), `LANGUAGE_QC_FAILED: ${leakSummary || ratioSummary || "localized output validation did not pass"}`];
+      }
+
+      // ── Charts ─────────────────────────────────────────────────────────────
+      try {
+        await updateJobStatus(supabaseAdmin, jobId!, "processing", "Fetching Kundali charts", 97, "progress");
+        const charts = await fetchKundaliCharts(fDay, fMonth, fYear, fHour, fMin, job.latitude, job.longitude, job.timezone, fRequestedLanguage);
+        fReport.charts = charts;
+      } catch (chartErr) {
+        console.warn("⚠️ [PROCESS-JOB] Chart fetch failed (non-fatal):", chartErr);
+        fReport.charts = [];
+      }
+
+      // ── Save completed report ──────────────────────────────────────────────
+      fReport.tokensUsed = fTotalTokens;
+      const fExtCompletion = await supabaseAdmin
+        .from("kundli_report_jobs")
+        .update({
+          status: "completed",
+          current_phase: "Complete",
+          progress_percent: 100,
+          report_data: fReport,
+          generation_language_mode: fUseLanguagePipelineV2 ? "native" : "legacy",
+          language_qc: fReport.languageQc || null,
+          debug_summary: {
+            languagePackVersion: fActiveLanguagePack.version,
+            requestedLanguage: fRequestedLanguage,
+            effectiveGenerationLanguage: fEffectiveGenLang,
+            generationMode: fUseLanguagePipelineV2 ? "native" : "legacy",
+            tokensUsed: fTotalTokens,
+            qaScore: fReport.qa?.overallScore || null,
+          },
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+      if (fExtCompletion.error) {
+        console.warn("[PROCESS-JOB] Extended completion update failed, using legacy payload:", fExtCompletion.error);
+        await supabaseAdmin
+          .from("kundli_report_jobs")
+          .update({
+            status: "completed",
+            current_phase: "Complete",
+            progress_percent: 100,
+            report_data: fReport,
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", jobId);
+      }
+
+      await createJobEvent(supabaseAdmin, {
+        jobId: jobId!,
+        phase: "Complete",
+        eventType: "success",
+        message: "Report generation completed",
+        metrics: { progress: 100, tokensUsed: fTotalTokens },
+      });
+      await upsertKundliGeneratedReport(supabaseAdmin, {
+        jobId: jobId!,
+        language: fRequestedLanguage,
+        generationMode: fUseLanguagePipelineV2 ? "native" : "legacy",
+        status: "completed",
+        reportSummary: {
+          tokensUsed: fTotalTokens,
+          qaScore: fReport.qa?.overallScore || null,
+          errorCount: Array.isArray(fReport.errors) ? fReport.errors.length : 0,
+          sections: {
+            planets: Array.isArray(fReport.planets) ? fReport.planets.length : 0,
+            houses: Array.isArray(fReport.houses) ? fReport.houses.length : 0,
+          },
+        },
+      });
+
+      console.log("✅ [PROCESS-JOB] Stage 2 (finalize) completed successfully");
+      return new Response(
+        JSON.stringify({ success: true, jobId }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // STAGE 1: Generate — Seer API, all 16 agents, safety enforcement
+    // Saves partial report to DB and triggers Stage 2 (finalize) as a
+    // SEPARATE function invocation, giving each stage its own wall_clock_limit.
+    // ──────────────────────────────────────────────────────────────────────────
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Initializing", 5, "start");
 
     const {
@@ -1044,160 +1219,47 @@ serve(async (req) => {
 
     report = enforceGlobalPredictionSafety(report, birthDate, reportGeneratedAt, normalizedMaritalStatus);
 
-    // ── Translation Sweep (Hindi/Telugu only) ────────────────────────────────
-    // Runs AFTER all agents + truth guard + safety enforcement, BEFORE QC.
-    // Walks the entire report JSON, detects any remaining English strings,
-    // and batch-translates them via Gemini. This eliminates English leakage
-    // from dynamic AI output, fallback templates, and edge cases.
-    if (effectiveGenerationLanguage !== "en") {
-      await updateJobStatus(supabaseAdmin, jobId, "processing", "Translating remaining content", 85, "progress");
-      try {
-        const translationStats = await runTranslationSweep(report, effectiveGenerationLanguage);
-        console.log(`🌐 [PROCESS-JOB] Translation sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings translated in ${translationStats.batchesSent} batches`);
-        if (translationStats.errors.length > 0) {
-          report.errors = [...(report.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
-        }
-        report.computationMeta = {
-          ...(report.computationMeta || {}),
-          translationSweep: {
-            stringsFound: translationStats.stringsFound,
-            stringsTranslated: translationStats.stringsTranslated,
-            batchesSent: translationStats.batchesSent,
-            errorCount: translationStats.errors.length,
-            remainingEnglish: translationStats.remainingEnglishCount,
-            sectionBreakdown: translationStats.sectionBreakdown,
-          },
-        };
-        totalTokens += translationStats.tokensUsed || 0;
-      } catch (translationErr: any) {
-        console.warn(`⚠️ [PROCESS-JOB] Translation sweep failed (non-fatal):`, translationErr?.message || translationErr);
-        report.errors = [...(report.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
-      }
-      await touchJobHeartbeat(supabaseAdmin, jobId);
-    }
+    // ── Stage 1 complete: save partial report and trigger Stage 2 ─────────
+    // The report now has all agent data + safety enforcement applied.
+    // Save it to DB and trigger a SEPARATE function invocation for finalization
+    // (translation, QA, charts, save). This gives Stage 2 its own wall_clock_limit.
+    report.tokensUsed = totalTokens;
+    console.log(`📦 [PROCESS-JOB] Stage 1 done. Saving partial report and triggering Stage 2...`);
 
-    // Phase 7: QA
-    await updateJobStatus(supabaseAdmin, jobId, "processing", "Running quality checks", 92, "progress");
-
-    const qaResult = await runQaWithTimeout(report);
-    if (qaResult.blockedContent.length > 0 || qaResult.issues.some((i: any) => i.severity === "critical")) {
-      report = sanitizeReportContent(report);
-    }
-    report.qa = qaResult;
-    report = localizeStructuredReportTerms(report, requestedLanguage);
-    // Guardrail: localization must never mutate report language metadata.
-    report.language = requestedLanguage;
-    report = stripAiDisclosure(report);
-
-    const languageQc = useLanguagePipelineV2
-      ? runLanguageQc(report, requestedLanguage)
-      : {
-          language: requestedLanguage,
-          packVersion: activeLanguagePack.version,
-          generationMode: "native" as const,
-          passed: true,
-          summary: {
-            sectionsChecked: 0,
-            sectionsPassed: 0,
-            totalScriptChars: 0,
-            totalLetters: 0,
-            overallScriptRatio: 0,
-            overallLatinRatio: 0,
-          },
-          sections: [],
-          leakSamples: [],
-        };
-
-    report.languageQc = languageQc;
-    report.languageQcPassed = languageQc.passed;
-    report.failureCode = languageQc.passed ? null : "LANGUAGE_QC_FAILED";
-
-    if (!languageQc.passed) {
-      const leakSummary = languageQc.leakSamples
-        .slice(0, 5)
-        .map((s) => `${s.section}:${s.token}`)
-        .join(", ");
-      const ratioSummary = (languageQc.sections || [])
-        .filter((s: any) => !s.passed)
-        .slice(0, 5)
-        .map((s: any) => `${s.section}:script=${(Number(s.scriptRatio || 0) * 100).toFixed(1)}%,latin=${(Number(s.latinRatio || 0) * 100).toFixed(1)}%`)
-        .join(", ");
-      // Downgraded from throw: save the report with QC warning rather than failing the job.
-      console.warn(`⚠️ [PROCESS-JOB] LANGUAGE_QC_FAILED (non-fatal): ${leakSummary || ratioSummary || "localized output validation did not pass"}`);
-      report.errors = [...(report.errors || []), `LANGUAGE_QC_FAILED: ${leakSummary || ratioSummary || "localized output validation did not pass"}`];
-    }
-
-    // Fetch chart SVGs server-side so they're bundled with report_data (no separate client call needed)
-    try {
-      await updateJobStatus(supabaseAdmin, jobId, "processing", "Fetching Kundali charts", 97, "progress");
-      const charts = await fetchKundaliCharts(day, month, year, hour, min, latitude, longitude, timezone, requestedLanguage);
-      report.charts = charts;
-    } catch (chartErr) {
-      console.warn("⚠️ [PROCESS-JOB] Chart fetch failed (non-fatal):", chartErr);
-      report.charts = [];
-    }
-
-    // Complete
-    const extendedCompletion = await supabaseAdmin
+    await supabaseAdmin
       .from("kundli_report_jobs")
       .update({
-        status: "completed",
-        current_phase: "Complete",
-        progress_percent: 100,
+        status: "processing",
+        current_phase: "Agents complete — starting finalization",
+        progress_percent: 80,
         report_data: report,
-        generation_language_mode: useLanguagePipelineV2 ? "native" : "legacy",
-        language_qc: report.languageQc || null,
-        debug_summary: {
-          languagePackVersion: activeLanguagePack.version,
-          requestedLanguage,
-          effectiveGenerationLanguage,
-          generationMode: useLanguagePipelineV2 ? "native" : "legacy",
-          tokensUsed: totalTokens,
-          qaScore: report.qa?.overallScore || null,
-        },
-        completed_at: new Date().toISOString(),
+        heartbeat_at: new Date().toISOString(),
       })
       .eq("id", jobId);
-    // Backward compatibility if latest migration is not yet applied.
-    if (extendedCompletion.error) {
-      console.warn("[PROCESS-JOB] Extended completion update failed, using legacy payload:", extendedCompletion.error);
-      await supabaseAdmin
-        .from("kundli_report_jobs")
-        .update({
-          status: "completed",
-          current_phase: "Complete",
-          progress_percent: 100,
-          report_data: report,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", jobId);
+
+    // Trigger Stage 2 as a SEPARATE function invocation (gets its own 150s wall_clock_limit)
+    const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-kundli-job`;
+    const stage2Promise = fetch(stage2Url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ jobId, stage: "finalize" }),
+    }).catch(err => {
+      console.error("⚠️ [PROCESS-JOB] Failed to trigger Stage 2:", err);
+    });
+
+    // EdgeRuntime.waitUntil keeps the worker alive for the background fetch
+    // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(stage2Promise);
     }
 
-    await createJobEvent(supabaseAdmin, {
-      jobId,
-      phase: "Complete",
-      eventType: "success",
-      message: "Report generation completed",
-      metrics: { progress: 100, tokensUsed: totalTokens },
-    });
-    await upsertKundliGeneratedReport(supabaseAdmin, {
-      jobId,
-      language: requestedLanguage,
-      generationMode: useLanguagePipelineV2 ? "native" : "legacy",
-      status: "completed",
-      reportSummary: {
-        tokensUsed: totalTokens,
-        qaScore: report.qa?.overallScore || null,
-        errorCount: Array.isArray(report.errors) ? report.errors.length : 0,
-        sections: {
-          planets: Array.isArray(report.planets) ? report.planets.length : 0,
-          houses: Array.isArray(report.houses) ? report.houses.length : 0,
-        },
-      },
-    });
-
+    console.log("✅ [PROCESS-JOB] Stage 1 complete, Stage 2 triggered");
     return new Response(
-      JSON.stringify({ success: true, jobId }),
+      JSON.stringify({ success: true, jobId, stage: "generate_complete" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

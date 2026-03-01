@@ -77,21 +77,36 @@ const svgToDataUrl = (svgString: string, size = 800): Promise<string> =>
     const ctx = canvas.getContext('2d');
     if (!ctx) { reject(new Error('Canvas unavailable')); return; }
 
-    // Ensure the SVG has explicit width/height for off-screen rendering
-    // (percentage-based styles like width:100% don't work in Image/canvas context)
+    // Fix the SVG for proper canvas rendering:
+    // 1. Preserve original viewBox so coordinate system maps correctly
+    // 2. Set explicit width/height to canvas size
+    // 3. Remove percentage-based styles that don't work off-screen
     let fixedSvg = svgString;
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(svgString, 'image/svg+xml');
       const svg = doc.querySelector('svg');
       if (svg) {
+        // Capture original dimensions BEFORE overwriting
+        const origW = parseFloat(svg.getAttribute('width') || '0');
+        const origH = parseFloat(svg.getAttribute('height') || '0');
+        const existingVB = svg.getAttribute('viewBox');
+
+        // If no viewBox exists, create one from original width/height
+        // so the internal coordinate system is preserved when we resize
+        if (!existingVB && origW > 0 && origH > 0) {
+          svg.setAttribute('viewBox', `0 0 ${origW} ${origH}`);
+        }
+
+        // Set render size to canvas dimensions
         svg.setAttribute('width', String(size));
         svg.setAttribute('height', String(size));
-        // Remove percentage-based inline styles that break canvas rendering
-        const style = svg.getAttribute('style') || '';
-        if (style.includes('width:100%')) {
-          svg.removeAttribute('style');
-        }
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        // Remove all inline styles — percentage and fixed styles both
+        // can conflict with our explicit width/height attributes
+        svg.removeAttribute('style');
+
         fixedSvg = new XMLSerializer().serializeToString(doc);
       }
     } catch { /* use original string */ }

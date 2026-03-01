@@ -1550,15 +1550,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chartContainer: {
-    width: 200,
-    height: 200,
+    width: 230,
+    height: 230,
     marginVertical: 5,
     backgroundColor: P.cardBg,
     borderWidth: 1,
     borderColor: P.lightBorder,
     borderRadius: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   chartGrid: {
     flexDirection: 'row',
@@ -3968,7 +3967,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               <SubSection title="Major Doshas">
                 {majorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${dosha.name}${dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${dosha.name}${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
                       { label: 'Severity', value: dosha.severity?.toUpperCase() || 'N/A' },
@@ -4012,7 +4011,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Minor Doshas">
               <Section title="Minor Doshas">
                 {minorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${dosha.name}${dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${dosha.name}${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
                     ]} />
@@ -4105,7 +4104,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               <SubSection title="Raja Yogas (Power & Success)">
                 {(report.rajYogs.rajYogas || []).filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                       { label: 'Activation', value: yoga.activationPeriod || 'N/A' },
@@ -4136,7 +4135,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Dhana Yogas">
               <Section title="Dhana Yogas (Wealth Combinations)">
                 {report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                     ]} />
@@ -4217,7 +4216,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.
                 </Text>
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
                     <Text style={styles.subSubHeader}>In Your Chart</Text>
                     <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
@@ -4245,7 +4244,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View style={styles.row}>
                     <Text style={styles.label}>{localizePdfUiText('Moon Sign')}</Text>
                     <Text style={[styles.value, { fontWeight: 'bold' }]}>
-                      {sadeSatiMoonSign || 'N/A'}{report.sadeSati.moonSignHindi ? ` (${sanitizeText(report.sadeSati.moonSignHindi)})` : ''}
+                      {sadeSatiMoonSign || 'N/A'}{ACTIVE_PDF_LANGUAGE !== 'en' && report.sadeSati.moonSignHindi ? ` (${sanitizeText(report.sadeSati.moonSignHindi)})` : ''}
                     </Text>
                   </View>
                   <View style={styles.row}>

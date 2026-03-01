@@ -4,6 +4,39 @@ const AI_OPENAI_URL = Deno.env.get("AI_OPENAI_URL")
   || "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 const AI_MODEL = Deno.env.get("AI_MODEL") || "gemini-2.5-flash";
 
+// ─── Language context for multi-language generation ────────────────────────
+let _agentLanguage = "en";
+
+export function setAgentLanguageContext(language: string): void {
+  _agentLanguage = (language || "en").toLowerCase();
+  console.log(`[AGENT] Language context set to: ${_agentLanguage}`);
+}
+
+function getLanguageInstruction(): string {
+  if (_agentLanguage === "hi") {
+    return `
+
+CRITICAL LANGUAGE REQUIREMENT — HINDI (हिन्दी):
+You MUST write ALL text content in Hindi using Devanagari script (हिन्दी).
+Every string value in your JSON response — descriptions, interpretations, predictions,
+effects, causes, benefits, remedies, recommendations — MUST be in Hindi.
+Technical Vedic terms (planet names, dosha names, yoga names) should appear in
+both Hindi and transliterated form where natural, e.g. "शनि (Saturn)".
+DO NOT write English sentences. The entire report is for a Hindi-speaking audience.`;
+  }
+  if (_agentLanguage === "te") {
+    return `
+
+CRITICAL LANGUAGE REQUIREMENT — TELUGU (తెలుగు):
+You MUST write ALL text content in Telugu using Telugu script (తెలుగు).
+Every string value in your JSON response — descriptions, interpretations, predictions,
+effects, causes, benefits, remedies, recommendations — MUST be in Telugu.
+Technical Vedic terms may appear in both Telugu and transliterated form.
+DO NOT write English sentences. The entire report is for a Telugu-speaking audience.`;
+  }
+  return "";
+}
+
 // Core honesty guidelines added to ALL agent prompts
 export const HONESTY_GUIDELINES = `
 
@@ -135,8 +168,8 @@ export async function callAgent<T>(
     return { success: false, error: "GEMINI_API_KEY is not configured" };
   }
 
-  // Add honesty guidelines to system prompt
-  const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES;
+  // Add honesty guidelines + language instruction to system prompt
+  const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES + getLanguageInstruction();
 
   try {
     let tokensUsed = 0;

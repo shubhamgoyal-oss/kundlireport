@@ -483,6 +483,97 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Challenges to Navigate': 'नेविगेट करने के लिए चुनौतियां',
     'Attributes': 'विशेषताएं',
     'Impact': 'प्रभाव',
+    // ── Antardasha / Dasha inline labels ────────────────────────────────────
+    'Focus Areas': 'मुख्य क्षेत्र',
+    'Life Themes': 'जीवन विषय',
+    'Key Events to Watch': 'ध्यान देने योग्य घटनाएं',
+    'Advice': 'परामर्श',
+    'Associated Planet': 'संबंधित ग्रह',
+    'Duration': 'अवधि',
+    'Mahadasha Period': 'महादशा अवधि',
+    'Current Yogini': 'वर्तमान योगिनी',
+    // ── Dosha section inline labels ─────────────────────────────────────────
+    'Cause': 'कारण',
+    'Effects': 'प्रभाव',
+    'Status': 'स्थिति',
+    'Severity': 'गंभीरता',
+    'Affected Areas': 'प्रभावित क्षेत्र',
+    'Total Doshas Detected': 'कुल दोष पाए गए',
+    'Nullified': 'निष्प्रभावी',
+    'Immediate (Start Now)': 'तुरंत (अभी शुरू करें)',
+    'Short-Term (1-3 Months)': 'अल्पकालिक (1-3 महीने)',
+    'Long-Term (Ongoing)': 'दीर्घकालिक (निरंतर)',
+    'Procedure': 'विधि',
+    'Expected Benefits': 'अपेक्षित लाभ',
+    'Mantras': 'मंत्र',
+    'Primary Remedy': 'प्रमुख उपाय',
+    'Remedies for': 'उपाय —',
+    'Deity': 'देवता',
+    'Count': 'संख्या',
+    // ── Rahu-Ketu inline labels ─────────────────────────────────────────────
+    'Life Lesson': 'जीवन पाठ',
+    'Desires': 'इच्छाएं',
+    'Growth Areas': 'विकास क्षेत्र',
+    'Natural Talents': 'प्राकृतिक प्रतिभाएं',
+    'Spiritual Gifts': 'आध्यात्मिक वरदान',
+    'Type': 'प्रकार',
+    // ── Chara Karaka table & section labels ──────────────────────────────────
+    'Karaka': 'कारक',
+    'Planet': 'ग्रह',
+    'Sign': 'राशि',
+    'House': 'भाव',
+    'Signification': 'कारकत्व',
+    'Soul Significator': 'आत्मा कारक',
+    'Spouse Significator': 'जीवनसाथी कारक',
+    'Career Significator': 'करियर कारक',
+    'Effect': 'प्रभाव',
+    // ── Yogini table headers ────────────────────────────────────────────────
+    'Yogini': 'योगिनी',
+    'Years': 'वर्ष',
+    'Nature': 'स्वभाव',
+    // ── Section divider translations ────────────────────────────────────────
+    'Doshas, Yogas & Karma': 'दोष, योग और कर्म',
+    'Karmic imbalances, auspicious combinations, and the Rahu-Ketu axis that defines your soul\'s evolutionary mission': 'कर्म असंतुलन, शुभ संयोजन, और राहु-केतु अक्ष जो आपकी आत्मा के विकास मार्ग को परिभाषित करता है',
+    'Life Predictions': 'जीवन भविष्यवाणी',
+    'Career, marriage, wealth, health — what the stars reveal about every major chapter of your life': 'करियर, विवाह, धन, स्वास्थ्य — ग्रह आपके जीवन के हर अध्याय के बारे में क्या बताते हैं',
+    'Your Dasha Timeline': 'आपकी दशा समयरेखा',
+    'The planetary periods that govern each phase of your life — your cosmic roadmap from birth to liberation': 'आपके जीवन के हर चरण को नियंत्रित करने वाली ग्रह अवधियां — जन्म से मोक्ष तक की ब्रह्मांडीय रूपरेखा',
+    'Numerology & Spiritual Potential': 'अंक ज्योतिष और आध्यात्मिक क्षमता',
+    'Sacred numbers, your soul\'s purpose, and the spiritual path written in your chart': 'पवित्र अंक, आपकी आत्मा का उद्देश्य, और कुंडली में लिखा आध्यात्मिक मार्ग',
+    'Gemstones, mantras, rituals, fasting, and lifestyle practices to harmonize your planetary energies': 'रत्न, मंत्र, अनुष्ठान, व्रत और जीवनशैली — ग्रह ऊर्जा को संतुलित करने के उपाय',
+    // ── Atmakaraka special labels ───────────────────────────────────────────
+    'The Atmakaraka is the most important planet in Jaimini astrology, representing your soul\'s purpose.': 'आत्मकारक जैमिनी ज्योतिष में सबसे महत्वपूर्ण ग्रह है, जो आपकी आत्मा के उद्देश्य का प्रतिनिधित्व करता है।',
+    // ── Static paragraph text ───────────────────────────────────────────────
+    'The following are the current and upcoming sub-periods (Antardashas) within your current Mahadasha. Completed past Antardashas are intentionally excluded so this section stays forward-looking and actionable.': 'निम्नलिखित आपकी वर्तमान महादशा के भीतर वर्तमान और आगामी अंतर्दशाएं हैं। पूर्ण हो चुकी अंतर्दशाओं को जानबूझकर हटाया गया है ताकि यह खंड भविष्योन्मुखी और क्रियाशील रहे।',
+    'Sade Sati cards are intentionally removed from Dosha pages and handled only in the dedicated Sade Sati section to prevent conflicting status.': 'साढ़ेसाती कार्ड जानबूझकर दोष पृष्ठों से हटाए गए हैं और विरोधाभासी स्थिति से बचने के लिए केवल समर्पित साढ़ेसाती खंड में शामिल हैं।',
+    // ── Dasha table headers ─────────────────────────────────────────────────
+    'Life Focus': 'जीवन केंद्र',
+    'Approximate Period': 'अनुमानित अवधि',
+    'Focus': 'केंद्र',
+    'Mahadasha': 'महादशा',
+    'Antardasha': 'अंतर्दशा',
+    // ── Chart purpose translations ──────────────────────────────────────────
+    'Overall life assessment': 'संपूर्ण जीवन आकलन',
+    'Wealth and finances': 'धन और वित्त',
+    'Siblings and courage': 'भाई-बहन और साहस',
+    'Fortune and property': 'भाग्य और संपत्ति',
+    'Children and progeny': 'संतान और वंश',
+    'Marriage and spouse': 'विवाह और जीवनसाथी',
+    'Career and profession': 'करियर और पेशा',
+    'Parents and ancestry': 'माता-पिता और वंश',
+    'Spiritual progress': 'आध्यात्मिक प्रगति',
+    'Education and learning': 'शिक्षा और ज्ञान',
+    'Strength and weakness': 'शक्ति और दुर्बलता',
+    'Past life karma': 'पूर्वजन्म कर्म',
+    // ── Atmakaraka/Darakaraka/Amatyakaraka ──────────────────────────────────
+    'Atmakaraka': 'आत्मकारक',
+    'Darakaraka': 'दारकारक',
+    'Amatyakaraka': 'अमात्यकारक',
+    'Term': 'शब्द',
+    'Definition': 'परिभाषा',
+    'Degree': 'अंश',
+    'Lord': 'स्वामी',
+    'Occupants': 'स्थित ग्रह',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
@@ -753,6 +844,92 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Challenges to Navigate': 'నావిగేట్ చేయడానికి సవాళ్లు',
     'Attributes': 'లక్షణాలు',
     'Impact': 'ప్రభావం',
+    // ── Antardasha / Dasha inline labels ────────────────────────────────────
+    'Focus Areas': 'ముఖ్య రంగాలు',
+    'Life Themes': 'జీవిత అంశాలు',
+    'Key Events to Watch': 'గమనించాల్సిన ముఖ్య సంఘటనలు',
+    'Advice': 'సలహా',
+    'Associated Planet': 'సంబంధిత గ్రహం',
+    'Duration': 'వ్యవధి',
+    'Mahadasha Period': 'మహాదశ కాలం',
+    'Current Yogini': 'ప్రస్తుత యోగిని',
+    // ── Dosha section inline labels ─────────────────────────────────────────
+    'Cause': 'కారణం',
+    'Effects': 'ప్రభావాలు',
+    'Status': 'స్థితి',
+    'Severity': 'తీవ్రత',
+    'Affected Areas': 'ప్రభావిత రంగాలు',
+    'Total Doshas Detected': 'మొత్తం దోషాలు కనుగొనబడ్డాయి',
+    'Nullified': 'నిర్వీర్యం',
+    'Immediate (Start Now)': 'తక్షణం (ఇప్పుడే ప్రారంభించండి)',
+    'Short-Term (1-3 Months)': 'స్వల్పకాలిక (1-3 నెలలు)',
+    'Long-Term (Ongoing)': 'దీర్ఘకాలిక (నిరంతరం)',
+    'Procedure': 'విధానం',
+    'Expected Benefits': 'ఆశించిన ప్రయోజనాలు',
+    'Mantras': 'మంత్రాలు',
+    'Primary Remedy': 'ప్రాథమిక పరిహారం',
+    'Remedies for': 'పరిహారాలు —',
+    'Deity': 'దేవత',
+    'Count': 'సంఖ్య',
+    // ── Rahu-Ketu inline labels ─────────────────────────────────────────────
+    'Life Lesson': 'జీవిత పాఠం',
+    'Desires': 'కోరికలు',
+    'Growth Areas': 'అభివృద్ధి రంగాలు',
+    'Natural Talents': 'సహజ ప్రతిభలు',
+    'Spiritual Gifts': 'ఆధ్యాత్మిక వరాలు',
+    'Type': 'రకం',
+    // ── Chara Karaka table & section labels ──────────────────────────────────
+    'Karaka': 'కారకం',
+    'Planet': 'గ్రహం',
+    'Sign': 'రాశి',
+    'House': 'భావం',
+    'Signification': 'కారకత్వం',
+    'Soul Significator': 'ఆత్మ కారకం',
+    'Spouse Significator': 'జీవిత భాగస్వామి కారకం',
+    'Career Significator': 'వృత్తి కారకం',
+    'Effect': 'ప్రభావం',
+    // ── Yogini table headers ────────────────────────────────────────────────
+    'Yogini': 'యోగిని',
+    'Years': 'సంవత్సరాలు',
+    'Nature': 'స్వభావం',
+    // ── Section divider translations ────────────────────────────────────────
+    'Doshas, Yogas & Karma': 'దోషాలు, యోగాలు & కర్మ',
+    'Karmic imbalances, auspicious combinations, and the Rahu-Ketu axis that defines your soul\'s evolutionary mission': 'కర్మ అసమతుల్యతలు, శుభ సంయోగాలు, మరియు మీ ఆత్మ పరిణామ మిషన్‌ను నిర్వచించే రాహు-కేతు అక్షం',
+    'Life Predictions': 'జీవిత అంచనాలు',
+    'Career, marriage, wealth, health — what the stars reveal about every major chapter of your life': 'వృత్తి, వివాహం, సంపద, ఆరోగ్యం — నక్షత్రాలు మీ జీవితంలోని ప్రతి ముఖ్య అధ్యాయం గురించి ఏమి వెల్లడిస్తాయి',
+    'Your Dasha Timeline': 'మీ దశా కాలరేఖ',
+    'The planetary periods that govern each phase of your life — your cosmic roadmap from birth to liberation': 'మీ జీవితంలోని ప్రతి దశను నియంత్రించే గ్రహ కాలాలు — జన్మ నుండి మోక్షం వరకు మీ విశ్వ మార్గ చిత్రం',
+    'Numerology & Spiritual Potential': 'సంఖ్యా శాస్త్రం & ఆధ్యాత్మిక సామర్థ్యం',
+    'Sacred numbers, your soul\'s purpose, and the spiritual path written in your chart': 'పవిత్ర సంఖ్యలు, మీ ఆత్మ ఉద్దేశ్యం, మరియు మీ చార్ట్‌లో వ్రాయబడిన ఆధ్యాత్మిక మార్గం',
+    'Gemstones, mantras, rituals, fasting, and lifestyle practices to harmonize your planetary energies': 'రత్నాలు, మంత్రాలు, ఆచారాలు, ఉపవాసం, మరియు మీ గ్రహ శక్తులను సమన్వయం చేయడానికి జీవనశైలి అభ్యాసాలు',
+    'The Atmakaraka is the most important planet in Jaimini astrology, representing your soul\'s purpose.': 'ఆత్మకారకం జైమిని జ్యోతిష్యంలో అత్యంత ముఖ్యమైన గ్రహం, ఇది మీ ఆత్మ ఉద్దేశ్యాన్ని సూచిస్తుంది.',
+    'The following are the current and upcoming sub-periods (Antardashas) within your current Mahadasha. Completed past Antardashas are intentionally excluded so this section stays forward-looking and actionable.': 'ఈ క్రింది వాటిలో మీ ప్రస్తుత మహాదశలోని ప్రస్తుత మరియు రాబోయే ఉప-కాలాలు (అంతర్దశలు) ఉన్నాయి.',
+    'Life Focus': 'జీవిత కేంద్రం',
+    'Approximate Period': 'అంచనా కాలం',
+    'Focus': 'కేంద్రం',
+    'Mahadasha': 'మహాదశ',
+    'Antardasha': 'అంతర్దశ',
+    // ── Chart purpose translations ──────────────────────────────────────────
+    'Overall life assessment': 'సమగ్ర జీవిత అంచనా',
+    'Wealth and finances': 'సంపద మరియు ఆర్థిక',
+    'Siblings and courage': 'తోబుట్టువులు మరియు ధైర్యం',
+    'Fortune and property': 'అదృష్టం మరియు ఆస్తి',
+    'Children and progeny': 'సంతానం',
+    'Marriage and spouse': 'వివాహం మరియు జీవిత భాగస్వామి',
+    'Career and profession': 'వృత్తి మరియు ఉద్యోగం',
+    'Parents and ancestry': 'తల్లిదండ్రులు మరియు వంశం',
+    'Spiritual progress': 'ఆధ్యాత్మిక పురోగతి',
+    'Education and learning': 'విద్య మరియు అభ్యాసం',
+    'Strength and weakness': 'బలం మరియు బలహీనత',
+    'Past life karma': 'పూర్వజన్మ కర్మ',
+    'Atmakaraka': 'ఆత్మకారకం',
+    'Darakaraka': 'దారకారకం',
+    'Amatyakaraka': 'అమాత్యకారకం',
+    'Term': 'పదం',
+    'Definition': 'నిర్వచనం',
+    'Degree': 'అంశం',
+    'Lord': 'అధిపతి',
+    'Occupants': 'ఉన్న గ్రహాలు',
   },
 };
 
@@ -2790,7 +2967,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <View style={styles.chartGrid}>
               {charts.slice(0, 2).map((chart, idx) => (
                 <View key={idx} style={styles.chartItem}>
-                  <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                  <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
                   <View style={styles.chartContainer}>
                     {chart.dataUrl ? (
                       <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -2802,7 +2979,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
+                  <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
                 </View>
               ))}
             </View>
@@ -2817,7 +2994,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <View style={styles.chartGrid}>
               {charts.slice(2, 4).map((chart, idx) => (
                 <View key={idx} style={styles.chartItem}>
-                  <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                  <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
                   <View style={styles.chartContainer}>
                     {chart.dataUrl ? (
                       <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -2829,7 +3006,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
+                  <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
                 </View>
               ))}
             </View>
@@ -2837,7 +3014,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <View style={styles.chartGrid}>
                 {charts.slice(4).map((chart, idx) => (
                   <View key={idx} style={styles.chartItem}>
-                    <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
+                    <Text style={styles.chartTitle}>{chart.type}: {ACTIVE_PDF_LANGUAGE === 'hi' && chart.nameHindi ? chart.nameHindi : ACTIVE_PDF_LANGUAGE === 'te' && chart.nameTelugu ? chart.nameTelugu : chart.name}</Text>
                     <View style={styles.chartContainer}>
                       {chart.dataUrl ? (
                         <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
@@ -2849,7 +3026,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
+                    <Text style={styles.chartPurpose}>{localizePdfUiText(chart.purpose)}</Text>
                   </View>
                 ))}
               </View>
@@ -3405,7 +3582,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Guidance If Married">
                 {report.marriage.guidanceForMarriedNatives.focusAreas && report.marriage.guidanceForMarriedNatives.focusAreas.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Focus Areas</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Focus Areas')}</Text>
                     <BulletList items={report.marriage.guidanceForMarriedNatives.focusAreas} />
                   </>
                 )}
@@ -3551,7 +3728,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               
               {report.dasha.currentMahadasha?.majorThemes && report.dasha.currentMahadasha.majorThemes.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Major Themes</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Life Themes')}</Text>
                   <BulletList items={report.dasha.currentMahadasha.majorThemes} />
                 </>
               )}
@@ -3572,7 +3749,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               {report.dasha.currentMahadasha?.advice && (
                 <View style={styles.highlight}>
-                  <Text style={styles.boldLabel}>Advice: </Text>
+                  <Text style={styles.boldLabel}>{localizePdfUiText('Advice')}: </Text>
                   <Text style={styles.bodyText}>{report.dasha.currentMahadasha.advice}</Text>
                 </View>
               )}
@@ -3589,7 +3766,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               
               {report.dasha.currentAntardasha?.keyEvents && report.dasha.currentAntardasha.keyEvents.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Key Events to Watch</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Key Events to Watch')}</Text>
                   <BulletList items={report.dasha.currentAntardasha.keyEvents} />
                 </>
               )}
@@ -3680,8 +3857,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Antardasha Predictions">
           <Section title="Antardasha Predictions (Current Mahadasha)">
             <Text style={styles.paragraph}>
-              The following are the current and upcoming sub-periods (Antardashas) within your current Mahadasha.
-              Completed past Antardashas are intentionally excluded so this section stays forward-looking and actionable.
+              {localizePdfUiText('The following are the current and upcoming sub-periods (Antardashas) within your current Mahadasha. Completed past Antardashas are intentionally excluded so this section stays forward-looking and actionable.')}
             </Text>
             
             {report.dasha.antardashaPredictions.map((ad: any, idx: number) => (
@@ -3694,14 +3870,14 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 
                 {ad.focusAreas && ad.focusAreas.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Focus Areas</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Focus Areas')}</Text>
                     <BulletList items={ad.focusAreas} />
                   </>
                 )}
                 
                 {ad.predictions && ad.predictions.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Predictions</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Predictions')}</Text>
                     <BulletList items={ad.predictions} />
                   </>
                 )}
@@ -3735,7 +3911,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
                     {ad.focusAreas && ad.focusAreas.length > 0 && (
                       <>
-                        <Text style={styles.subSubHeader}>Focus Areas</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Focus Areas')}</Text>
                         <BulletList items={ad.focusAreas} />
                       </>
                     )}
@@ -3770,7 +3946,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               
               {report.dasha.yoginiDasha.currentYogini?.lifeThemes && report.dasha.yoginiDasha.currentYogini.lifeThemes.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Life Themes</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Life Themes')}</Text>
                   <BulletList items={report.dasha.yoginiDasha.currentYogini.lifeThemes} />
                 </>
               )}
@@ -3781,10 +3957,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <SubSection title="Upcoming Yogini Periods">
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderCell}>Yogini</Text>
-                  <Text style={styles.tableHeaderCell}>Planet</Text>
-                  <Text style={styles.tableHeaderCell}>Years</Text>
-                  <Text style={styles.tableHeaderCell}>Period</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Yogini')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Years')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Period')}</Text>
                 </View>
                 {(report.dasha.yoginiDasha.upcomingYoginis || []).map((y: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
@@ -3806,10 +3982,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <SubSection title="Complete Yogini Dasha Cycle (36 Years)">
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderCell}>Yogini</Text>
-                  <Text style={styles.tableHeaderCell}>Planet</Text>
-                  <Text style={styles.tableHeaderCell}>Years</Text>
-                  <Text style={styles.tableHeaderCell}>Nature</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Yogini')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Years')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Nature')}</Text>
                 </View>
                 {(report.dasha.yoginiDasha.yoginiSequence || []).map((y: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
@@ -3834,10 +4010,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Upcoming Periods">
                 <View style={styles.table}>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.tableHeaderCell}>Type</Text>
-                    <Text style={styles.tableHeaderCell}>Planet</Text>
-                    <Text style={styles.tableHeaderCell}>Period</Text>
-                    <Text style={styles.tableHeaderCell}>Focus</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Type')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Period')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Focus')}</Text>
                   </View>
                   {report.dasha.upcomingDashas.map((dasha: any, idx: number) => (
                     <View key={idx} style={styles.tableRow}>
@@ -3854,10 +4030,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <SubSection title="Complete Dasha Sequence (Vimshottari 120-Year Cycle)">
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderCell}>Planet</Text>
-                  <Text style={styles.tableHeaderCell}>Years</Text>
-                  <Text style={styles.tableHeaderCell}>Approximate Period</Text>
-                  <Text style={styles.tableHeaderCell}>Life Focus</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Years')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Approximate Period')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Life Focus')}</Text>
                 </View>
                 {(report.dasha.dashaSequence || []).map((dasha: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
@@ -3911,7 +4087,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <InfoRow label="Ketu" value={`${report.rahuKetu.karmicAxis?.ketuSign || ''} (House ${report.rahuKetu.karmicAxis?.ketuHouse || ''})`} />
               <Text style={styles.paragraph}>{report.rahuKetu.karmicAxis?.axisInterpretation || ''}</Text>
               <View style={styles.highlight}>
-                <Text style={styles.boldLabel}>Life Lesson: </Text>
+                <Text style={styles.boldLabel}>{localizePdfUiText('Life Lesson')}: </Text>
                 <Text style={styles.bodyText}>{report.rahuKetu.karmicAxis?.lifeLesson || ''}</Text>
               </View>
             </SubSection>
@@ -3931,11 +4107,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             {report.rahuKetu.kaalSarpYoga?.present && (
               <SubSection title="Kaal Sarp Yoga">
                 <View style={styles.highlight}>
-                  <Text style={styles.boldLabel}>Type: {report.rahuKetu.kaalSarpYoga.type}</Text>
-                  <Text style={styles.bodyText}>Severity: {report.rahuKetu.kaalSarpYoga.severity}</Text>
+                  <Text style={styles.boldLabel}>{localizePdfUiText('Type')}: {report.rahuKetu.kaalSarpYoga.type}</Text>
+                  <Text style={styles.bodyText}>{localizePdfUiText('Severity')}: {report.rahuKetu.kaalSarpYoga.severity}</Text>
                 </View>
                 <Text style={styles.paragraph}>{report.rahuKetu.kaalSarpYoga.effects || ''}</Text>
-                <Text style={styles.subSubHeader}>Remedies</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Remedies')}</Text>
                 <BulletList items={report.rahuKetu.kaalSarpYoga.remedies || []} />
               </SubSection>
             )}
@@ -3955,12 +4131,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <Text style={styles.paragraph}>{report.doshas.overview || ''}</Text>
               
               <View style={styles.highlight}>
-                <Text style={styles.boldLabel}>Total Doshas Detected: {doshaDisplayTotal}</Text>
+                <Text style={styles.boldLabel}>{localizePdfUiText('Total Doshas Detected')}: {doshaDisplayTotal}</Text>
               </View>
               {removedSadeSatiDoshaCount > 0 && (
                 <View style={styles.infoBox}>
                   <Text style={styles.bodyText}>
-                    Sade Sati cards are intentionally removed from Dosha pages and handled only in the dedicated Sade Sati section to prevent conflicting status.
+                    {localizePdfUiText('Sade Sati cards are intentionally removed from Dosha pages and handled only in the dedicated Sade Sati section to prevent conflicting status.')}
                   </Text>
                 </View>
               )}
@@ -3977,14 +4153,14 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     
                     {dosha.cause && (
                       <>
-                        <Text style={styles.subSubHeader}>Cause</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Cause')}</Text>
                         <Text style={styles.bodyText}>{dosha.cause}</Text>
                       </>
                     )}
                     
                     {dosha.effects && dosha.effects.length > 0 && (
                       <>
-                        <Text style={styles.subSubHeader}>Effects</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Effects')}</Text>
                         <BulletList items={dosha.effects} />
                       </>
                     )}
@@ -3995,7 +4171,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     
                     {dosha.nullificationReason && (
                       <View style={styles.highlight}>
-                        <Text style={styles.successText}>Nullified: {dosha.nullificationReason}</Text>
+                        <Text style={styles.successText}>{localizePdfUiText('Nullified')}: {dosha.nullificationReason}</Text>
                       </View>
                     )}
                     
@@ -4016,7 +4192,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
                     ]} />
                     <Text style={styles.paragraph}>{dosha.description}</Text>
-                    {dosha.cause && <Text style={styles.bodyText}>Cause: {dosha.cause}</Text>}
+                    {dosha.cause && <Text style={styles.bodyText}>{localizePdfUiText('Cause')}: {dosha.cause}</Text>}
                     {dosha.effects && dosha.effects.length > 0 && <BulletList items={dosha.effects} />}
                   </Card>
                 ))}
@@ -4031,32 +4207,32 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <SubSection title="Priority Remedies">
                   {report.doshas.priorityRemedies && (
                     <>
-                      <Text style={styles.subSubHeader}>Immediate (Start Now)</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Immediate (Start Now)')}</Text>
                       <BulletList items={report.doshas.priorityRemedies.immediate || []} />
-                      
-                      <Text style={styles.subSubHeader}>Short-Term (1-3 Months)</Text>
+
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Short-Term (1-3 Months)')}</Text>
                       <BulletList items={report.doshas.priorityRemedies.shortTerm || []} />
-                      
-                      <Text style={styles.subSubHeader}>Long-Term (Ongoing)</Text>
+
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Long-Term (Ongoing)')}</Text>
                       <BulletList items={report.doshas.priorityRemedies.longTerm || []} />
                     </>
                   )}
                 </SubSection>
 
                 {doshaRemediesFiltered.map((remedy: any, idx: number) => (
-                  <Card key={idx} title={`Remedies for ${remedy.doshaName}`}>
-                    <Text style={styles.subSubHeader}>Primary Remedy: {remedy.primaryRemedy?.name}</Text>
+                  <Card key={idx} title={`${localizePdfUiText('Remedies for')} ${remedy.doshaName}`}>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Primary Remedy')}: {remedy.primaryRemedy?.name}</Text>
                     <InfoRow label="Type" value={remedy.primaryRemedy?.type || 'N/A'} />
                     <Text style={styles.bodyText}>{remedy.primaryRemedy?.description}</Text>
-                    
-                    <Text style={styles.subSubHeader}>Procedure</Text>
+
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Procedure')}</Text>
                     <Text style={styles.bodyText}>{remedy.primaryRemedy?.procedure}</Text>
-                    
+
                     <InfoRow label="Timing" value={remedy.primaryRemedy?.timing || 'N/A'} />
-                    
+
                     {remedy.primaryRemedy?.expectedBenefits && (
                       <>
-                        <Text style={styles.subSubHeader}>Expected Benefits</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Expected Benefits')}</Text>
                         <BulletList items={remedy.primaryRemedy.expectedBenefits} />
                       </>
                     )}
@@ -4065,11 +4241,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     
                     {remedy.mantras && remedy.mantras.length > 0 && (
                       <>
-                        <Text style={styles.subSubHeader}>Mantras</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Mantras')}</Text>
                         {remedy.mantras.map((m: any, mIdx: number) => (
                           <View key={mIdx} style={{ marginBottom: 5 }}>
                             <Text style={[styles.boldLabel, { color: '#c2410c' }]}>{m.mantra}</Text>
-                            <Text style={styles.bodyText}>Deity: {m.deity} | Count: {m.japaCount} | Timing: {m.timing}</Text>
+                            <Text style={styles.bodyText}>{localizePdfUiText('Deity')}: {m.deity} | {localizePdfUiText('Count')}: {m.japaCount} | {localizePdfUiText('Timing')}: {m.timing}</Text>
                           </View>
                         ))}
                       </>
@@ -4220,7 +4396,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
                     <Text style={styles.subSubHeader}>In Your Chart</Text>
                     <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
-                    <Text style={styles.subSubHeader}>Effects</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Effects')}</Text>
                     <BulletList items={yoga.benefits || []} />
                   </Card>
                 ))}
@@ -4858,11 +5034,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Your Chara Karakas">
                 <View style={styles.table}>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.tableHeaderCell}>Karaka</Text>
-                    <Text style={styles.tableHeaderCell}>Planet</Text>
-                    <Text style={styles.tableHeaderCell}>Sign</Text>
-                    <Text style={styles.tableHeaderCell}>House</Text>
-                    <Text style={styles.tableHeaderCell}>Signification</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Karaka')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Sign')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('House')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Signification')}</Text>
                   </View>
                   {(report.charaKarakasDetailed.karakaInterpretations || []).map((k: any, idx: number) => (
                     <View key={idx} style={styles.tableRow}>
@@ -4881,10 +5057,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           {/* Atmakaraka Special Analysis */}
           {report.charaKarakasDetailed.atmakarakaSpecial && (
             <ContentPage sectionName="Atmakaraka Analysis">
-              <Section title={`Atmakaraka: ${report.charaKarakasDetailed.atmakarakaSpecial.planet} - Soul Significator`}>
+              <Section title={`${localizePdfUiText('Atmakaraka')}: ${report.charaKarakasDetailed.atmakarakaSpecial.planet} - ${localizePdfUiText('Soul Significator')}`}>
                 <View style={styles.card}>
                   <Text style={[styles.boldLabel, { color: '#c2410c', marginBottom: 4 }]}>
-                    The Atmakaraka is the most important planet in Jaimini astrology, representing your soul's purpose.
+                    {localizePdfUiText('The Atmakaraka is the most important planet in Jaimini astrology, representing your soul\'s purpose.')}
                   </Text>
                 </View>
 
@@ -4905,7 +5081,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               {/* Darakaraka Special Analysis */}
               {report.charaKarakasDetailed.darakarakaSpecial && (
-                <Section title={`Darakaraka: ${report.charaKarakasDetailed.darakarakaSpecial.planet} - Spouse Significator`}>
+                <Section title={`${localizePdfUiText('Darakaraka')}: ${report.charaKarakasDetailed.darakarakaSpecial.planet} - ${localizePdfUiText('Spouse Significator')}`}>
                   <SubSection title="Spouse Characteristics">
                     <Text style={styles.paragraph}>{report.charaKarakasDetailed.darakarakaSpecial.spouseCharacteristics || ''}</Text>
                   </SubSection>
@@ -4927,7 +5103,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           {/* Amatyakaraka and Karaka Details */}
           <ContentPage sectionName="Amatyakaraka Analysis">
             {report.charaKarakasDetailed.amatyakarakaSpecial && (
-              <Section title={`Amatyakaraka: ${report.charaKarakasDetailed.amatyakarakaSpecial.planet} - Career Significator`}>
+              <Section title={`${localizePdfUiText('Amatyakaraka')}: ${report.charaKarakasDetailed.amatyakarakaSpecial.planet} - ${localizePdfUiText('Career Significator')}`}>
                 <SubSection title="Career Direction">
                   <Text style={styles.paragraph}>{report.charaKarakasDetailed.amatyakarakaSpecial.careerDirection || ''}</Text>
                 </SubSection>
@@ -4952,7 +5128,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <Card key={idx} title={interaction.karakas?.join(' + ') || ''}>
                     <Text style={styles.paragraph}>{interaction.interaction}</Text>
                     <View style={styles.highlight}>
-                      <Text style={styles.bodyText}>Effect: {interaction.effect}</Text>
+                      <Text style={styles.bodyText}>{localizePdfUiText('Effect')}: {interaction.effect}</Text>
                     </View>
                   </Card>
                 ))}
@@ -5032,8 +5208,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Quick Reference">
                 <View style={styles.table}>
                   <View style={styles.tableHeader}>
-                    <Text style={styles.tableHeaderCell}>Term</Text>
-                    <Text style={styles.tableHeaderCell}>Definition</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Term')}</Text>
+                    <Text style={styles.tableHeaderCell}>{localizePdfUiText('Definition')}</Text>
                   </View>
                   {(report.glossary.quickReference || []).slice(0, 15).map((term: any, idx: number) => (
                     <View key={idx} style={styles.tableRow}>

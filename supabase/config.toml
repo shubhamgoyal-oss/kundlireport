@@ -30,6 +30,12 @@ verify_jwt = false
 [functions.process-kundli-job]
 verify_jwt = false
 
+[functions.translate-kundli-report]
+verify_jwt = false
+
+[functions.finalize-kundli-report]
+verify_jwt = false
+
 [functions.get-kundali-chart]
 verify_jwt = false
 

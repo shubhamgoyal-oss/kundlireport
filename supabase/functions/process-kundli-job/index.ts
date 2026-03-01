@@ -18,16 +18,12 @@ import { generateGlossaryPrediction } from "../_shared/generate-kundli-report/gl
 import { generateDoshasPrediction } from "../_shared/generate-kundli-report/doshas-agent.ts";
 import { generateRajYogsPrediction } from "../_shared/generate-kundli-report/raj-yogs-agent.ts";
 import { generateSadeSatiPrediction } from "../_shared/generate-kundli-report/sade-sati-agent.ts";
-import { runQAValidation, sanitizeReportContent } from "../_shared/generate-kundli-report/qa-agent.ts";
 import { enforceAstrologyTruth } from "../_shared/generate-kundli-report/truth-guard.ts";
 import { setAgentLanguageContext } from "../_shared/generate-kundli-report/agent-base.ts";
 import { getLanguagePack, normalizeLanguage } from "../_shared/language-packs/index.ts";
-import { runLanguageQc } from "../_shared/language-qc.ts";
 import type { SupportedLanguage } from "../_shared/language-packs/types.ts";
 import { createJobEvent, touchJobHeartbeat } from "../_shared/job-events.ts";
-import { localizeStructuredReportTerms } from "../_shared/language-localize.ts";
-import { runTranslationSweep } from "../_shared/generate-kundli-report/translation-agent.ts";
-import { insertKundliApiCall, insertKundliApiCalls, upsertKundliGeneratedReport } from "../_shared/kundli-audit.ts";
+import { insertKundliApiCall, insertKundliApiCalls } from "../_shared/kundli-audit.ts";
 
 import { calculateCharaKarakas } from "../_shared/generate-kundli-report/utils/chara-karakas.ts";
 import { calculateAspects, getConjunctions } from "../_shared/generate-kundli-report/utils/aspects.ts";
@@ -663,8 +659,7 @@ serve(async (req) => {
   try {
     const body = await req.json();
     jobId = body.jobId;
-    const stage = body.stage || "generate";
-    console.log(`🔄 [PROCESS-JOB] Starting job: ${jobId}, stage: ${stage}`);
+    console.log(`🔄 [PROCESS-JOB] Starting job: ${jobId}`);
 
     const { data: job, error: fetchError } = await supabaseAdmin
       .from("kundli_report_jobs")
@@ -678,173 +673,10 @@ serve(async (req) => {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // STAGE 2: Finalize — translation, QA, charts, save
-    // Runs as a SEPARATE function invocation so it gets its own wall_clock_limit.
-    // Supabase Free plan = 150s per invocation. By splitting generate vs finalize,
-    // each stage fits comfortably within 150s.
-    // ──────────────────────────────────────────────────────────────────────────
-    if (stage === "finalize") {
-      console.log(`🔄 [PROCESS-JOB] Stage 2 (finalize) for job: ${jobId}`);
-
-      // Reconstruct context from job record
-      const fRequestedLanguage = normalizeLanguage(job.language || "en");
-      const fUseLanguagePipelineV2 = isLanguagePipelineV2Enabled(fRequestedLanguage);
-      const fEffectiveGenLang: SupportedLanguage = fUseLanguagePipelineV2 ? fRequestedLanguage : "en";
-      const fActiveLanguagePack = getLanguagePack(fRequestedLanguage);
-      setAgentLanguageContext(fEffectiveGenLang);
-
-      let fReport = job.report_data as Record<string, any>;
-      if (!fReport) throw new Error("No report_data found for finalize stage");
-
-      let fTotalTokens = fReport.tokensUsed || 0;
-      const [fYear, fMonth, fDay] = String(job.date_of_birth).split("-").map(Number);
-      const { hour: fHour, min: fMin } = parseBirthTime(String(job.time_of_birth));
-
-      // ── Translation Sweep (Hindi/Telugu only) ──────────────────────────────
-      if (fEffectiveGenLang !== "en") {
-        await updateJobStatus(supabaseAdmin, jobId!, "processing", "Translating remaining content", 85, "progress");
-        try {
-          const translationStats = await runTranslationSweep(fReport, fEffectiveGenLang);
-          console.log(`🌐 [PROCESS-JOB] Translation sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings in ${translationStats.batchesSent} batches`);
-          if (translationStats.errors.length > 0) {
-            fReport.errors = [...(fReport.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
-          }
-          fReport.computationMeta = {
-            ...(fReport.computationMeta || {}),
-            translationSweep: {
-              stringsFound: translationStats.stringsFound,
-              stringsTranslated: translationStats.stringsTranslated,
-              batchesSent: translationStats.batchesSent,
-              errorCount: translationStats.errors.length,
-              remainingEnglish: translationStats.remainingEnglishCount,
-              sectionBreakdown: translationStats.sectionBreakdown,
-            },
-          };
-          fTotalTokens += translationStats.tokensUsed || 0;
-        } catch (translationErr: any) {
-          console.warn(`⚠️ [PROCESS-JOB] Translation sweep failed (non-fatal):`, translationErr?.message || translationErr);
-          fReport.errors = [...(fReport.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
-        }
-        await touchJobHeartbeat(supabaseAdmin, jobId!);
-      }
-
-      // ── QA ─────────────────────────────────────────────────────────────────
-      // Use shorter timeout (30s) in Stage 2 to leave room for translation + charts
-      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Running quality checks", 92, "progress");
-      const fQaResult = await runQaWithTimeout(fReport, 30_000);
-      if (fQaResult.blockedContent.length > 0 || fQaResult.issues.some((i: any) => i.severity === "critical")) {
-        fReport = sanitizeReportContent(fReport);
-      }
-      fReport.qa = fQaResult;
-      fReport = localizeStructuredReportTerms(fReport, fRequestedLanguage);
-      fReport.language = fRequestedLanguage;
-      fReport = stripAiDisclosure(fReport);
-
-      // ── Language QC ────────────────────────────────────────────────────────
-      const fLanguageQc = fUseLanguagePipelineV2
-        ? runLanguageQc(fReport, fRequestedLanguage)
-        : {
-            language: fRequestedLanguage,
-            packVersion: fActiveLanguagePack.version,
-            generationMode: "native" as const,
-            passed: true,
-            summary: { sectionsChecked: 0, sectionsPassed: 0, totalScriptChars: 0, totalLetters: 0, overallScriptRatio: 0, overallLatinRatio: 0 },
-            sections: [],
-            leakSamples: [],
-          };
-      fReport.languageQc = fLanguageQc;
-      fReport.languageQcPassed = fLanguageQc.passed;
-      fReport.failureCode = fLanguageQc.passed ? null : "LANGUAGE_QC_FAILED";
-      if (!fLanguageQc.passed) {
-        const leakSummary = fLanguageQc.leakSamples.slice(0, 5).map((s) => `${s.section}:${s.token}`).join(", ");
-        const ratioSummary = (fLanguageQc.sections || [])
-          .filter((s: any) => !s.passed).slice(0, 5)
-          .map((s: any) => `${s.section}:script=${(Number(s.scriptRatio || 0) * 100).toFixed(1)}%,latin=${(Number(s.latinRatio || 0) * 100).toFixed(1)}%`)
-          .join(", ");
-        console.warn(`⚠️ [PROCESS-JOB] LANGUAGE_QC_FAILED (non-fatal): ${leakSummary || ratioSummary || "localized output validation did not pass"}`);
-        fReport.errors = [...(fReport.errors || []), `LANGUAGE_QC_FAILED: ${leakSummary || ratioSummary || "localized output validation did not pass"}`];
-      }
-
-      // ── Charts ─────────────────────────────────────────────────────────────
-      try {
-        await updateJobStatus(supabaseAdmin, jobId!, "processing", "Fetching Kundali charts", 97, "progress");
-        const charts = await fetchKundaliCharts(fDay, fMonth, fYear, fHour, fMin, job.latitude, job.longitude, job.timezone, fRequestedLanguage);
-        fReport.charts = charts;
-      } catch (chartErr) {
-        console.warn("⚠️ [PROCESS-JOB] Chart fetch failed (non-fatal):", chartErr);
-        fReport.charts = [];
-      }
-
-      // ── Save completed report ──────────────────────────────────────────────
-      fReport.tokensUsed = fTotalTokens;
-      const fExtCompletion = await supabaseAdmin
-        .from("kundli_report_jobs")
-        .update({
-          status: "completed",
-          current_phase: "Complete",
-          progress_percent: 100,
-          report_data: fReport,
-          generation_language_mode: fUseLanguagePipelineV2 ? "native" : "legacy",
-          language_qc: fReport.languageQc || null,
-          debug_summary: {
-            languagePackVersion: fActiveLanguagePack.version,
-            requestedLanguage: fRequestedLanguage,
-            effectiveGenerationLanguage: fEffectiveGenLang,
-            generationMode: fUseLanguagePipelineV2 ? "native" : "legacy",
-            tokensUsed: fTotalTokens,
-            qaScore: fReport.qa?.overallScore || null,
-          },
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", jobId);
-      if (fExtCompletion.error) {
-        console.warn("[PROCESS-JOB] Extended completion update failed, using legacy payload:", fExtCompletion.error);
-        await supabaseAdmin
-          .from("kundli_report_jobs")
-          .update({
-            status: "completed",
-            current_phase: "Complete",
-            progress_percent: 100,
-            report_data: fReport,
-            completed_at: new Date().toISOString(),
-          })
-          .eq("id", jobId);
-      }
-
-      await createJobEvent(supabaseAdmin, {
-        jobId: jobId!,
-        phase: "Complete",
-        eventType: "success",
-        message: "Report generation completed",
-        metrics: { progress: 100, tokensUsed: fTotalTokens },
-      });
-      await upsertKundliGeneratedReport(supabaseAdmin, {
-        jobId: jobId!,
-        language: fRequestedLanguage,
-        generationMode: fUseLanguagePipelineV2 ? "native" : "legacy",
-        status: "completed",
-        reportSummary: {
-          tokensUsed: fTotalTokens,
-          qaScore: fReport.qa?.overallScore || null,
-          errorCount: Array.isArray(fReport.errors) ? fReport.errors.length : 0,
-          sections: {
-            planets: Array.isArray(fReport.planets) ? fReport.planets.length : 0,
-            houses: Array.isArray(fReport.houses) ? fReport.houses.length : 0,
-          },
-        },
-      });
-
-      console.log("✅ [PROCESS-JOB] Stage 2 (finalize) completed successfully");
-      return new Response(
-        JSON.stringify({ success: true, jobId }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // STAGE 1: Generate — Seer API, all 16 agents, safety enforcement
-    // Saves partial report to DB and triggers Stage 2 (finalize) as a
-    // SEPARATE function invocation, giving each stage its own wall_clock_limit.
+    // Stage 1: Generate — Seer API, all 16 agents, safety enforcement.
+    // Saves partial report to DB, then triggers translate-kundli-report (Stage 2).
+    // The pipeline is: process-kundli-job → translate-kundli-report → finalize-kundli-report
+    // Each function gets its own 150s wall_clock_limit (Supabase Free tier).
     // ──────────────────────────────────────────────────────────────────────────
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Initializing", 5, "start");
 
@@ -1220,35 +1052,32 @@ serve(async (req) => {
 
     report = enforceGlobalPredictionSafety(report, birthDate, reportGeneratedAt, normalizedMaritalStatus);
 
-    // ── Stage 1 complete: save partial report and trigger Stage 2 ─────────
-    // The report now has all agent data + safety enforcement applied.
-    // Save it to DB and trigger a SEPARATE function invocation for finalization
-    // (translation, QA, charts, save). This gives Stage 2 its own wall_clock_limit.
+    // ── Stage 1 complete: save partial report → trigger translate-kundli-report
     report.tokensUsed = totalTokens;
-    console.log(`📦 [PROCESS-JOB] Stage 1 done. Saving partial report and triggering Stage 2...`);
+    console.log(`📦 [PROCESS-JOB] Stage 1 done. Saving partial report and triggering Stage 2 (translate)...`);
 
     await supabaseAdmin
       .from("kundli_report_jobs")
       .update({
         status: "processing",
-        current_phase: "Agents complete — starting finalization",
+        current_phase: "Agents complete — starting translation",
         progress_percent: 80,
         report_data: report,
         heartbeat_at: new Date().toISOString(),
       })
       .eq("id", jobId);
 
-    // Trigger Stage 2 as a SEPARATE function invocation (gets its own 150s wall_clock_limit)
-    const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-kundli-job`;
+    // Trigger Stage 2: translate-kundli-report (separate function, own 150s limit)
+    const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/translate-kundli-report`;
     const stage2Promise = fetch(stage2Url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
       },
-      body: JSON.stringify({ jobId, stage: "finalize" }),
+      body: JSON.stringify({ jobId }),
     }).catch(err => {
-      console.error("⚠️ [PROCESS-JOB] Failed to trigger Stage 2:", err);
+      console.error("⚠️ [PROCESS-JOB] Failed to trigger Stage 2 (translate):", err);
     });
 
     // EdgeRuntime.waitUntil keeps the worker alive for the background fetch
@@ -1258,7 +1087,7 @@ serve(async (req) => {
       EdgeRuntime.waitUntil(stage2Promise);
     }
 
-    console.log("✅ [PROCESS-JOB] Stage 1 complete, Stage 2 triggered");
+    console.log("✅ [PROCESS-JOB] Stage 1 complete, translate-kundli-report triggered");
     return new Response(
       JSON.stringify({ success: true, jobId, stage: "generate_complete" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

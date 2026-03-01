@@ -1874,27 +1874,26 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     paddingHorizontal: 18,
   },
+  coverInfoBlock: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 6,
+  },
   coverInfoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 3,
-    width: '100%',
+    alignItems: 'baseline',
+    marginBottom: 4,
   },
   coverInfoLabel: {
-    width: 120,
     fontSize: 8.4,
     color: '#f59e0b',
     textTransform: 'uppercase',
     letterSpacing: 1.1,
-    textAlign: 'right',
-    paddingRight: 10,
+    marginRight: 8,
   },
   coverInfoValue: {
-    width: 190,
     fontSize: 10.2,
     color: '#fde68a',
-    textAlign: 'left',
   },
   coverFooterWrap: {
     marginTop: 28,
@@ -3393,17 +3392,19 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
         <View style={styles.coverIdentityCard}>
           <Text style={styles.coverName}>{report.birthDetails.name}</Text>
-          <View style={styles.coverInfoRow}>
-            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Date of Birth')}</Text>
-            <Text style={styles.coverInfoValue}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
-          </View>
-          <View style={styles.coverInfoRow}>
-            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Time of Birth')}</Text>
-            <Text style={styles.coverInfoValue}>{report.birthDetails.timeOfBirth}</Text>
-          </View>
-          <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
-            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Place of Birth')}</Text>
-            <Text style={styles.coverInfoValue}>{placeDetails.city || report.birthDetails.placeOfBirth || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')}</Text>
+          <View style={styles.coverInfoBlock}>
+            <View style={styles.coverInfoRow}>
+              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Date of Birth')}</Text>
+              <Text style={styles.coverInfoValue}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
+            </View>
+            <View style={styles.coverInfoRow}>
+              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Time of Birth')}</Text>
+              <Text style={styles.coverInfoValue}>{report.birthDetails.timeOfBirth}</Text>
+            </View>
+            <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
+              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Place of Birth')}</Text>
+              <Text style={styles.coverInfoValue}>{placeDetails.city || report.birthDetails.placeOfBirth || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')}</Text>
+            </View>
           </View>
         </View>
 

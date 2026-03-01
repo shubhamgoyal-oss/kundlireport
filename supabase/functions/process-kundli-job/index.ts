@@ -484,6 +484,33 @@ async function runQaWithTimeout(report: Record<string, any>, timeoutMs = 60000):
 
 // ─── Chart SVG fetching ──────────────────────────────────────────────────────
 
+/**
+ * Replace Hindi planet abbreviations in chart SVGs with English shorthand.
+ * The Seer chart API always returns Hindi labels — this post-processes for English reports.
+ * Order matters: multi-char strings (शु, बु, मं, चं, सू, गु, रा, के) must come before
+ * the single-char श (Shani/Saturn) to avoid partial replacement.
+ */
+function localizeChartSvgText(svg: string, language: string): string {
+  if (language === "hi" || language === "te") return svg; // keep Hindi labels for non-English
+  // For English (and any other language), replace Hindi → English abbreviations
+  const replacements: [string, string][] = [
+    ["शु", "VE"],   // Shukra  → Venus
+    ["बु", "ME"],   // Budha   → Mercury
+    ["मं", "MA"],   // Mangal  → Mars
+    ["चं", "MO"],   // Chandra → Moon
+    ["सू", "SU"],   // Surya   → Sun
+    ["गु", "JU"],   // Guru    → Jupiter
+    ["रा", "RA"],   // Rahu
+    ["के", "KE"],   // Ketu
+    ["श",  "SA"],   // Shani   → Saturn (MUST be after शु)
+  ];
+  let result = svg;
+  for (const [hindi, eng] of replacements) {
+    result = result.replaceAll(hindi, eng);
+  }
+  return result;
+}
+
 const PDF_CHART_TYPES = ["D1","D2","D3","D4","D7","D9","D10","D12","D20","D24","D27","D60"] as const;
 
 const CHART_INFO: Record<string, { name: string; nameHindi: string; purpose: string }> = {
@@ -535,8 +562,9 @@ async function fetchKundaliCharts(
   const payload = { day, month, year, hour, minute, lat, lon, tzone, chartType: "North", image_type: "svg", language };
   const results = await Promise.allSettled(
     PDF_CHART_TYPES.map(async (ct) => {
-      const svg = await fetchOneChartSvg(ct, payload);
-      if (!svg) throw new Error("no svg");
+      const rawSvg = await fetchOneChartSvg(ct, payload);
+      if (!rawSvg) throw new Error("no svg");
+      const svg = localizeChartSvgText(rawSvg, language);
       return { type: ct, svg, ...CHART_INFO[ct] };
     })
   );

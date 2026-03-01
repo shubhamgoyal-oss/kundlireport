@@ -25,6 +25,9 @@ interface BulkRowState {
   name: string;
   place: string;
   status: BulkStatus;
+  gender: 'M' | 'F';
+  language: 'en' | 'hi' | 'te';
+  detectedGender?: string;
   jobId?: string;
   error?: string;
   source?: string;
@@ -38,6 +41,33 @@ interface BulkRowState {
 
 const DEFAULT_SHEET_URL =
   'https://docs.google.com/spreadsheets/d/19kP4JakQCH08mOk9Ky2ihYjaUs1rJtDd8_e7OoL3zDE/edit?gid=169692027#gid=169692027';
+
+// ── localStorage persistence keys ──────────────────────────────────────
+const LS_SHEET_URL = 'bulk_sheetUrl';
+const LS_START_ROW = 'bulk_startRow';
+const LS_END_ROW = 'bulk_endRow';
+const LS_LANGUAGE = 'bulk_language';
+const LS_ALL_ROWS = 'bulk_allRows';
+const LS_BULK_ROWS = 'bulk_rows';
+
+/** Strip non-serializable / transient fields before saving to localStorage */
+function serializableBulkRows(rows: BulkRowState[]): BulkRowState[] {
+  return rows.map((r) => {
+    const { downloadUrl, isPreparingPdf, ...rest } = r;
+    return rest as BulkRowState;
+  });
+}
+
+/** Reset in-flight statuses to 'pending' so they can be re-run after restore */
+function sanitizeRestoredRows(rows: BulkRowState[]): BulkRowState[] {
+  const IN_FLIGHT: BulkStatus[] = ['normalizing', 'geocoding', 'queued', 'processing'];
+  return rows.map((r) => ({
+    ...r,
+    downloadUrl: undefined,
+    isPreparingPdf: false,
+    status: IN_FLIGHT.includes(r.status) ? 'pending' : r.status,
+  }));
+}
 
 const STATUS_COLORS: Record<BulkStatus, string> = {
   pending: 'bg-muted text-muted-foreground',
@@ -67,14 +97,82 @@ export default function BulkKundliRunner() {
   const [isLoadingSheet, setIsLoadingSheet] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [bulkRows, setBulkRows] = useState<BulkRowState[]>([]);
+  const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te'>('en');
 
   const stopRequestedRef = useRef(false);
   const placeCacheRef = useRef<Map<string, { lat: number; lon: number; displayName: string }>>(new Map());
   const blobUrlsRef = useRef<string[]>([]);
+  const restoredRef = useRef(false);  // prevent double-restore
 
+  // ── Restore persisted state on mount ──────────────────────────────────
   useEffect(() => {
     preloadCityDatabase();
+
+    try {
+      const savedRows = localStorage.getItem(LS_BULK_ROWS);
+      const savedAllRows = localStorage.getItem(LS_ALL_ROWS);
+      const savedUrl = localStorage.getItem(LS_SHEET_URL);
+      const savedStart = localStorage.getItem(LS_START_ROW);
+      const savedEnd = localStorage.getItem(LS_END_ROW);
+      const savedLang = localStorage.getItem(LS_LANGUAGE);
+
+      if (savedRows) {
+        const parsed: BulkRowState[] = JSON.parse(savedRows);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const sanitized = sanitizeRestoredRows(parsed);
+          setBulkRows(sanitized);
+          restoredRef.current = true;
+
+          const completedCount = sanitized.filter((r) => r.status === 'completed').length;
+          const totalCount = sanitized.length;
+          toast.success(`Restored ${totalCount} rows (${completedCount} completed) from previous session`);
+        }
+      }
+
+      if (savedAllRows) {
+        const parsed: LoadedSheetRow[] = JSON.parse(savedAllRows);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAllRows(parsed);
+        }
+      }
+
+      if (savedUrl) setSheetUrl(savedUrl);
+      if (savedStart) setStartRow(savedStart);
+      if (savedEnd) setEndRow(savedEnd);
+      if (savedLang && ['en', 'hi', 'te'].includes(savedLang)) {
+        setBulkLanguage(savedLang as 'en' | 'hi' | 'te');
+      }
+    } catch (err) {
+      console.warn('[BulkKundliRunner] Failed to restore from localStorage:', err);
+    }
   }, []);
+
+  // ── Save bulkRows to localStorage on every change ─────────────────────
+  useEffect(() => {
+    // Skip the initial empty state (before restore)
+    if (!restoredRef.current && bulkRows.length === 0) return;
+    try {
+      localStorage.setItem(LS_BULK_ROWS, JSON.stringify(serializableBulkRows(bulkRows)));
+    } catch (err) {
+      console.warn('[BulkKundliRunner] Failed to save bulkRows:', err);
+    }
+  }, [bulkRows]);
+
+  // ── Save allRows to localStorage on change ────────────────────────────
+  useEffect(() => {
+    if (!restoredRef.current && allRows.length === 0) return;
+    try {
+      localStorage.setItem(LS_ALL_ROWS, JSON.stringify(allRows));
+    } catch (err) {
+      console.warn('[BulkKundliRunner] Failed to save allRows:', err);
+    }
+  }, [allRows]);
+
+  // ── Save settings to localStorage on change ───────────────────────────
+  useEffect(() => { localStorage.setItem(LS_SHEET_URL, sheetUrl); }, [sheetUrl]);
+  useEffect(() => { localStorage.setItem(LS_START_ROW, startRow); }, [startRow]);
+  useEffect(() => { localStorage.setItem(LS_END_ROW, endRow); }, [endRow]);
+  useEffect(() => { localStorage.setItem(LS_LANGUAGE, bulkLanguage); }, [bulkLanguage]);
 
   const startRowNum = Math.max(2, Number(startRow) || 2);
   const endRowNum = Math.max(startRowNum, Number(endRow) || startRowNum);
@@ -83,8 +181,15 @@ export default function BulkKundliRunner() {
     return allRows.filter((row) => row.rowNumber >= startRowNum && row.rowNumber <= endRowNum);
   }, [allRows, startRowNum, endRowNum]);
 
+  const clearPersistedData = () => {
+    [LS_BULK_ROWS, LS_ALL_ROWS].forEach((k) => localStorage.removeItem(k));
+  };
+
   const loadSheetRows = async () => {
     setIsLoadingSheet(true);
+    // Clear old persisted data — fresh start
+    clearPersistedData();
+    restoredRef.current = true; // allow saving the new data
     try {
       const { data, error } = await supabase.functions.invoke('load-kundli-sheet', {
         body: { sheetUrl },
@@ -103,7 +208,52 @@ export default function BulkKundliRunner() {
         : [];
 
       setAllRows(rows);
-      toast.success(`Loaded ${rows.length} rows from Google Sheet`);
+      // Pre-populate bulkRows for the selected range only
+      const sNum = Math.max(2, Number(startRow) || 2);
+      const eNum = Math.max(sNum, Number(endRow) || sNum);
+      const filteredRows = rows.filter((r) => r.rowNumber >= sNum && r.rowNumber <= eNum);
+      setBulkRows(
+        filteredRows.map((r) => ({
+          rowNumber: r.rowNumber,
+          name: r.normalized.offering_user_name || r.normalized.name || '',
+          place: r.normalized.place_of_birth || '',
+          status: 'pending' as BulkStatus,
+          gender: 'M' as const,
+          language: bulkLanguage,
+        })),
+      );
+      toast.success(`Loaded ${filteredRows.length} rows. Detecting gender…`);
+
+      // Decipher gender for each row in batches of 5
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < filteredRows.length; i += BATCH_SIZE) {
+        const batch = filteredRows.slice(i, i + BATCH_SIZE);
+        await Promise.allSettled(
+          batch.map(async (r) => {
+            try {
+              const { data: decoded, error: decErr } = await supabase.functions.invoke(
+                'decipher-kundli-input',
+                { body: { row: r.normalized } },
+              );
+              if (!decErr && decoded) {
+                const g: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
+                const name = String(decoded?.name || '').trim();
+                const place = String(decoded?.placeOfBirth || '').trim();
+                setBulkRows((prev) =>
+                  prev.map((br) =>
+                    br.rowNumber === r.rowNumber
+                      ? { ...br, gender: g, detectedGender: g, ...(name ? { name } : {}), ...(place ? { place } : {}) }
+                      : br,
+                  ),
+                );
+              }
+            } catch (err) {
+              console.warn(`[BulkKundliRunner] Gender detect failed for row ${r.rowNumber}:`, err);
+            }
+          }),
+        );
+      }
+      toast.success('Gender detection complete');
     } catch (err) {
       console.error('[BulkKundliRunner] Failed loading sheet:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to load Google Sheet');
@@ -123,13 +273,54 @@ export default function BulkKundliRunner() {
     };
   }, []);
 
-  const buildDownloadFileName = (name: string, rowNumber: number): string => {
+  const buildDownloadFileName = (name: string, _rowNumber?: number): string => {
     const safeName = String(name || 'Kundli')
       .trim()
-      .replace(/[^a-zA-Z0-9_-]+/g, '_')
+      .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
+      .replace(/\s+/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '');
-    return `Kundli_Report_${safeName || 'Kundli'}_row_${rowNumber}.pdf`;
+    return `Kundli_Report_${safeName || 'Kundli'}.pdf`;
+  };
+
+  const saveAsDialog = async (blobUrl: string, suggestedName: string) => {
+    // Helper: classic <a download> fallback
+    const fallbackDownload = () => {
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = suggestedName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+
+    // Try File System Access API first (gives a real Save-As folder picker)
+    if ('showSaveFilePicker' in window) {
+      try {
+        const blob = await fetch(blobUrl).then((r) => r.blob());
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName,
+          types: [
+            {
+              description: 'PDF Document',
+              accept: { 'application/pdf': ['.pdf'] },
+            },
+          ],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        toast.success(`Saved: ${suggestedName}`);
+        return;
+      } catch (err: any) {
+        // User cancelled the dialog — not an error
+        if (err?.name === 'AbortError') return;
+        console.warn('showSaveFilePicker failed, using fallback download:', err);
+      }
+    }
+
+    // Fallback for browsers without the API or if it failed
+    fallbackDownload();
   };
 
   const blobToBase64Data = async (blob: Blob): Promise<string> => {
@@ -191,7 +382,8 @@ export default function BulkKundliRunner() {
         tzone: Number(report.birthDetails?.timezone || 5.5),
       };
 
-      const charts = await fetchMultipleCharts(birthDetails, 'North', 'en', PDF_CHARTS);
+      const rowLang = row.language || bulkLanguage;
+      const charts = await fetchMultipleCharts(birthDetails, 'North', rowLang === 'te' ? 'en' : rowLang, PDF_CHARTS);
       const reportWithCharts = { ...report, charts };
       const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
       const downloadUrl = URL.createObjectURL(blob);
@@ -324,17 +516,30 @@ export default function BulkKundliRunner() {
 
     stopRequestedRef.current = false;
     setIsRunning(true);
+    restoredRef.current = true; // ensure state gets persisted
 
-    setBulkRows(
-      selectedRows.map((row) => ({
-        rowNumber: row.rowNumber,
-        name: row.normalized.offering_user_name || row.normalized.name || '',
-        place: row.normalized.place_of_birth || '',
-        status: 'pending',
-      })),
-    );
+    // Reset status for selected rows but preserve gender/language edits
+    setBulkRows((prev) => {
+      const selectedNums = new Set(selectedRows.map((r) => r.rowNumber));
+      // Keep rows that are in the selected range, reset their status
+      const existing = new Map(prev.map((r) => [r.rowNumber, r]));
+      return selectedRows.map((row) => {
+        const ex = existing.get(row.rowNumber);
+        return {
+          rowNumber: row.rowNumber,
+          name: ex?.name || row.normalized.offering_user_name || row.normalized.name || '',
+          place: ex?.place || row.normalized.place_of_birth || '',
+          status: 'pending' as BulkStatus,
+          gender: ex?.gender || 'M',
+          language: ex?.language || bulkLanguage,
+        };
+      });
+    });
 
     const { visitorId, sessionId } = getVisitorAndSessionIds();
+
+    // Track which rows failed for the auto-retry pass
+    const firstPassFailed = new Set<number>();
 
     for (const row of selectedRows) {
       if (stopRequestedRef.current) break;
@@ -354,21 +559,39 @@ export default function BulkKundliRunner() {
         const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
         const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
         const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
-        const gender = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
+        const detectedGender: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
         const source = String(decoded?.source || 'deterministic');
 
         if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
           throw new Error('Missing normalized values after decipher step');
         }
 
+        // Get current row state to read user's gender/language overrides
+        const currentRow = bulkRows.find((r) => r.rowNumber === row.rowNumber);
+        const finalGender = currentRow?.gender || detectedGender;
+        const finalLanguage = currentRow?.language || bulkLanguage;
+
         updateBulkRow(row.rowNumber, {
           name,
           place: placeOfBirth,
           source,
+          detectedGender,
           status: 'geocoding',
         });
 
-        const coords = await resolveCoordinates(placeOfBirth);
+        // Check if Excel already has lat/long columns — skip geocoding if so
+        const n = row.normalized;
+        const rawLat = parseFloat(n.latitude || n.lat || '');
+        const rawLon = parseFloat(n.longitude || n.lng || n.lon || '');
+        const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
+
+        const coords = hasExcelCoords
+          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+          : await resolveCoordinates(placeOfBirth);
+
+        if (hasExcelCoords) {
+          console.log(`[Bulk] Row ${row.rowNumber}: using Excel lat/lon ${rawLat},${rawLon}`);
+        }
 
         updateBulkRow(row.rowNumber, { status: 'queued' });
 
@@ -381,8 +604,8 @@ export default function BulkKundliRunner() {
             latitude: coords.lat,
             longitude: coords.lon,
             timezone: 5.5,
-            language: 'en',
-            gender,
+            language: finalLanguage,
+            gender: finalGender,
             visitorId,
             sessionId,
           },
@@ -398,17 +621,103 @@ export default function BulkKundliRunner() {
         const result = await pollJobUntilDone(jobId, sessionId, visitorId);
         if (result.status === 'completed') {
           updateBulkRow(row.rowNumber, { status: 'completed' });
+          // Auto-prepare PDF + upload to bucket for download link
+          const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender, language: finalLanguage, jobId };
+          await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep failed for row ${row.rowNumber}:`, e));
         } else {
+          firstPassFailed.add(row.rowNumber);
           updateBulkRow(row.rowNumber, {
             status: 'failed',
             error: result.error || 'Job failed',
           });
         }
       } catch (err) {
+        firstPassFailed.add(row.rowNumber);
         updateBulkRow(row.rowNumber, {
           status: 'failed',
           error: err instanceof Error ? err.message : 'Unknown error',
         });
+      }
+    }
+
+    // ── Auto-retry failed rows once ──────────────────────────────────────
+    // Agent timeouts are intermittent; a second attempt usually succeeds.
+    if (!stopRequestedRef.current && firstPassFailed.size > 0) {
+      const retryRows = selectedRows.filter((r) => firstPassFailed.has(r.rowNumber));
+      toast(`Retrying ${retryRows.length} failed row(s)…`);
+      console.log(`[Bulk] Auto-retrying ${retryRows.length} failed rows: ${retryRows.map((r) => r.rowNumber).join(', ')}`);
+
+      for (const row of retryRows) {
+        if (stopRequestedRef.current) break;
+
+        try {
+          updateBulkRow(row.rowNumber, { status: 'normalizing', error: undefined, jobId: undefined });
+
+          const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', {
+            body: { row: row.normalized },
+          });
+
+          if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
+
+          const name = String(decoded?.name || '').trim();
+          const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
+          const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+          const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
+          const detectedGender: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
+
+          if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
+            throw new Error('Missing normalized values after decipher step');
+          }
+
+          const currentRow = bulkRows.find((r) => r.rowNumber === row.rowNumber);
+          const finalGender = currentRow?.gender || detectedGender;
+          const finalLanguage = currentRow?.language || bulkLanguage;
+
+          updateBulkRow(row.rowNumber, { status: 'geocoding' });
+
+          const rn = row.normalized;
+          const rawLat = parseFloat(rn.latitude || rn.lat || '');
+          const rawLon = parseFloat(rn.longitude || rn.lng || rn.lon || '');
+          const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
+          const coords = hasExcelCoords
+            ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+            : await resolveCoordinates(placeOfBirth);
+
+          updateBulkRow(row.rowNumber, { status: 'queued' });
+
+          const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+            body: {
+              name, dateOfBirth, timeOfBirth,
+              placeOfBirth: coords.displayName,
+              latitude: coords.lat, longitude: coords.lon,
+              timezone: 5.5,
+              language: finalLanguage, gender: finalGender,
+              visitorId, sessionId,
+            },
+          });
+
+          if (startError || !startData?.jobId) {
+            throw new Error(startError?.message || 'Failed to start row job');
+          }
+
+          const jobId = String(startData.jobId);
+          updateBulkRow(row.rowNumber, { status: 'processing', jobId });
+
+          const result = await pollJobUntilDone(jobId, sessionId, visitorId);
+          if (result.status === 'completed') {
+            updateBulkRow(row.rowNumber, { status: 'completed', error: undefined });
+            // Auto-prepare PDF for retried row
+            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te', jobId };
+            await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep (retry) failed for row ${row.rowNumber}:`, e));
+          } else {
+            updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${result.error || 'Job failed'}` });
+          }
+        } catch (err) {
+          updateBulkRow(row.rowNumber, {
+            status: 'failed',
+            error: `Retry failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          });
+        }
       }
     }
 
@@ -432,12 +741,12 @@ export default function BulkKundliRunner() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <Table2 className="w-5 h-5 text-primary" />
-          Bulk Google Sheet Runner (English default)
+          Bulk Google Sheet Runner
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-3 space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div className="md:col-span-4 space-y-2">
             <Label htmlFor="sheet-url">Google Sheet URL</Label>
             <Input
               id="sheet-url"
@@ -465,6 +774,25 @@ export default function BulkKundliRunner() {
               value={endRow}
               onChange={(e) => setEndRow(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="bulk-language">Report Language</Label>
+            <select
+              id="bulk-language"
+              value={bulkLanguage}
+              onChange={(e) => {
+                const lang = e.target.value as 'en' | 'hi' | 'te';
+                setBulkLanguage(lang);
+                // Update all pending rows to the new default language
+                setBulkRows((prev) => prev.map((r) => r.status === 'pending' ? { ...r, language: lang } : r));
+              }}
+              disabled={isRunning}
+              className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
+            >
+              <option value="en">English</option>
+              <option value="hi">Hindi</option>
+              <option value="te">Telugu</option>
+            </select>
           </div>
           <div className="flex items-end gap-2">
             <Button type="button" variant="outline" onClick={loadSheetRows} disabled={isLoadingSheet || isRunning} className="w-full">
@@ -504,10 +832,12 @@ export default function BulkKundliRunner() {
                     <th className="text-left p-2">Row</th>
                     <th className="text-left p-2">Name</th>
                     <th className="text-left p-2">Place</th>
+                    <th className="text-left p-2">Gender</th>
+                    <th className="text-left p-2">Language</th>
                     <th className="text-left p-2">Status</th>
                     <th className="text-left p-2">Job ID</th>
-                    <th className="text-left p-2">Download</th>
-                    <th className="text-left p-2">Bucket Link</th>
+                    <th className="text-left p-2">Save PDF</th>
+                    <th className="text-left p-2">Download Link (7 days)</th>
                     <th className="text-left p-2">Error</th>
                   </tr>
                 </thead>
@@ -518,19 +848,51 @@ export default function BulkKundliRunner() {
                       <td className="p-2">{row.name || '-'}</td>
                       <td className="p-2">{row.place || '-'}</td>
                       <td className="p-2">
+                        {row.status === 'pending' ? (
+                          <select
+                            value={row.gender}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { gender: e.target.value as 'M' | 'F' })}
+                            className="px-1 py-0.5 border border-input bg-background rounded text-xs w-16"
+                          >
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                          </select>
+                        ) : (
+                          <span className="text-xs">{row.gender === 'M' ? 'Male' : 'Female'}</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {row.status === 'pending' ? (
+                          <select
+                            value={row.language}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { language: e.target.value as 'en' | 'hi' | 'te' })}
+                            className="px-1 py-0.5 border border-input bg-background rounded text-xs w-18"
+                          >
+                            <option value="en">EN</option>
+                            <option value="hi">HI</option>
+                            <option value="te">TE</option>
+                          </select>
+                        ) : (
+                          <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : 'EN'}</span>
+                        )}
+                      </td>
+                      <td className="p-2">
                         <Badge className={STATUS_COLORS[row.status]}>{row.status}</Badge>
                       </td>
                       <td className="p-2 font-mono text-xs">{row.jobId || '-'}</td>
                       <td className="p-2">
                         {row.status === 'completed' ? (
                           row.downloadUrl ? (
-                            <a
-                              href={row.downloadUrl}
-                              download={row.downloadFileName || buildDownloadFileName(row.name, row.rowNumber)}
-                              className="text-primary underline text-xs"
+                            <button
+                              type="button"
+                              className="text-primary underline text-xs cursor-pointer bg-transparent border-none p-0"
+                              onClick={() => void saveAsDialog(
+                                row.downloadUrl!,
+                                row.downloadFileName || buildDownloadFileName(row.name),
+                              )}
                             >
-                              Download PDF
-                            </a>
+                              Save PDF
+                            </button>
                           ) : (
                             <Button
                               type="button"
@@ -553,10 +915,12 @@ export default function BulkKundliRunner() {
                             href={row.bucketSignedUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-primary underline text-xs"
+                            className="text-primary underline text-xs font-medium"
                           >
-                            Open from bucket
+                            📥 Download
                           </a>
+                        ) : row.isPreparingPdf ? (
+                          <span className="text-xs text-muted-foreground">Generating…</span>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}

@@ -10,8 +10,8 @@
     },
     {
       "name": "Supabase Local",
-      "runtimeExecutable": "supabase",
-      "runtimeArgs": ["start"],
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["supabase", "start"],
       "port": 54321
     }
   ]

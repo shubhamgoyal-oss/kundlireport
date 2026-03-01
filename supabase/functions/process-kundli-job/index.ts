@@ -8,7 +8,7 @@ import { generateAllPlanetProfiles } from "../_shared/generate-kundli-report/pla
 import { generateAllHouseAnalyses } from "../_shared/generate-kundli-report/houses-agent.ts";
 import { generateCareerPrediction, type CareerPrediction } from "../_shared/generate-kundli-report/career-agent.ts";
 import { generateMarriagePrediction, type MarriagePrediction } from "../_shared/generate-kundli-report/marriage-agent.ts";
-import { generateDashaPrediction, type DashaPrediction } from "../_shared/generate-kundli-report/dasha-agent.ts";
+import { generateDashaMahadashaPrediction, generateDashaAntardashaPrediction, mergeDashaResults, type DashaPrediction } from "../_shared/generate-kundli-report/dasha-agent.ts";
 import { generateRahuKetuPrediction } from "../_shared/generate-kundli-report/rahu-ketu-agent.ts";
 import { generateRemediesPrediction, type RemediesPrediction } from "../_shared/generate-kundli-report/remedies-agent.ts";
 import { generateNumerologyPrediction } from "../_shared/generate-kundli-report/numerology-agent.ts";
@@ -450,35 +450,6 @@ function enforceGlobalPredictionSafety(
   return normalizePartnerTerms(safeReport);
 }
 
-async function runQaWithTimeout(report: Record<string, any>, timeoutMs = 60000): Promise<any> {
-  const timeoutFallback = {
-    issues: [
-      {
-        section: "qa",
-        severity: "warning",
-        issueType: "timeout",
-        description: `QA validation exceeded ${timeoutMs}ms and returned fallback validation.`,
-        suggestedFix: "Review this report manually if strict QA verification is required.",
-      },
-    ],
-    blockedContent: [],
-    overallScore: 7,
-    approved: true,
-  };
-
-  try {
-    const result = await Promise.race([
-      runQAValidation(report),
-      new Promise<any>((resolve) => {
-        setTimeout(() => resolve(timeoutFallback), timeoutMs);
-      }),
-    ]);
-    return result || timeoutFallback;
-  } catch {
-    return timeoutFallback;
-  }
-}
-
 /**
  * Run an AgentResponse-shaped call with automatic retry on failure.
  * Retries up to `maxRetries` times with a short delay.
@@ -495,12 +466,14 @@ async function runAgentWithRetry<T>(
   factory: () => Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }>,
   maxRetries = 1,
 ): Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }> {
+  const agentStart = Date.now();
   let lastResult: { success: boolean; data?: T; error?: string; tokensUsed?: number } | undefined;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await factory();
       if (result.success) {
-        if (attempt > 0) console.log(`✅ [RETRY] Agent "${agentName}" succeeded on attempt ${attempt + 1}`);
+        const dur = ((Date.now() - agentStart) / 1000).toFixed(1);
+        console.log(`⏱️ [AGENT-TIMING] ${agentName}: ${dur}s (attempt ${attempt + 1}, tokens: ${result.tokensUsed || 0})`);
         return result;
       }
       lastResult = result;
@@ -515,7 +488,8 @@ async function runAgentWithRetry<T>(
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
-  console.error(`❌ [RETRY] Agent "${agentName}" EXHAUSTED all ${maxRetries + 1} attempts`);
+  const dur = ((Date.now() - agentStart) / 1000).toFixed(1);
+  console.error(`❌ [AGENT-TIMING] ${agentName}: ${dur}s — EXHAUSTED all ${maxRetries + 1} attempts`);
   return lastResult || { success: false, error: `Agent ${agentName} failed after ${maxRetries + 1} attempts` };
 }
 
@@ -528,11 +502,13 @@ async function runArrayAgentWithRetry<T>(
   factory: () => Promise<T[]>,
   maxRetries = 1,
 ): Promise<T[]> {
+  const agentStart = Date.now();
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const result = await factory();
       if (result && result.length > 0) {
-        if (attempt > 0) console.log(`✅ [RETRY] Agent "${agentName}" succeeded on attempt ${attempt + 1}`);
+        const dur = ((Date.now() - agentStart) / 1000).toFixed(1);
+        console.log(`⏱️ [AGENT-TIMING] ${agentName}: ${dur}s (attempt ${attempt + 1}, ${result.length} items)`);
         return result;
       }
       console.warn(`⚠️ [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} returned empty`);
@@ -545,7 +521,8 @@ async function runArrayAgentWithRetry<T>(
       await new Promise((r) => setTimeout(r, delayMs));
     }
   }
-  console.error(`❌ [RETRY] Agent "${agentName}" EXHAUSTED all ${maxRetries + 1} attempts — returning empty`);
+  const dur = ((Date.now() - agentStart) / 1000).toFixed(1);
+  console.error(`❌ [AGENT-TIMING] ${agentName}: ${dur}s — EXHAUSTED all ${maxRetries + 1} attempts — returning empty`);
   return [];
 }
 
@@ -654,7 +631,12 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Safety timeout: save + trigger Stage 2 BEFORE Supabase kills us at 150s.
+  // We need enough margin for the final DB save + Stage 2 invocation (~5-8s).
+  const STAGE1_SAFETY_TIMEOUT_MS = 140_000;
+
   let jobId: string | undefined;
+  let partialReport: Record<string, any> | undefined;
 
   try {
     const body = await req.json();
@@ -857,18 +839,26 @@ serve(async (req) => {
 
     // Fire ALL prediction agents in ONE massive parallel batch
     // None of these agents depend on each other — they all just need kundli data.
+    // Race against a safety timeout so we save partial results before Supabase kills us.
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Analyzing chart & generating predictions", 20, "progress");
     console.log("🤖 [PROCESS-JOB] Launching ALL agents in parallel...");
 
-    const [
-      panchangResult, pillarsResult, numerologyResult,
-      planetProfiles, houseAnalyses,
-      careerResult, marriageResult, dashaResult, rahuKetuResult,
-      remediesResult, spiritualResult, charaKarakasResult, glossaryResult,
-      rajYogsResult, sadeSatiResult, doshasResult,
-    ] = await Promise.all([
+    const agentsStartTime = Date.now();
+
+    // Per-agent completion tracker: on timeout, tells us exactly which agents finished vs are still running
+    const agentTracker = new Map<string, { done: boolean; durationMs: number; result?: any }>();
+    function trackAgent<T>(name: string, promise: Promise<T>): Promise<T> {
+      agentTracker.set(name, { done: false, durationMs: 0 });
+      const start = Date.now();
+      return promise.then(
+        (result) => { agentTracker.set(name, { done: true, durationMs: Date.now() - start, result }); return result; },
+        (err) => { agentTracker.set(name, { done: true, durationMs: Date.now() - start }); throw err; },
+      );
+    }
+
+    const agentsPromise = Promise.all([
       // Core
-      runAgentWithRetry("Panchang", () => generatePanchangPrediction({
+      trackAgent("Panchang", runAgentWithRetry("Panchang", () => generatePanchangPrediction({
         birthDate,
         moonDegree: moon?.deg || 0,
         sunDegree: sun?.deg || 0,
@@ -876,8 +866,8 @@ serve(async (req) => {
         tithiNumber,
         karanaName: "Bava",
         yogaName: "Siddhi",
-      })),
-      runAgentWithRetry("Pillars", () => generatePillarsPrediction({
+      }))),
+      trackAgent("Pillars", runAgentWithRetry("Pillars", () => generatePillarsPrediction({
         moonSignIdx: moon?.signIdx || 0,
         moonDegree: moon?.deg || 0,
         moonHouse: moon?.house || 1,
@@ -885,20 +875,20 @@ serve(async (req) => {
         ascDegree: kundli.asc.deg,
         ascLordHouse: ascLordPlanet?.house || 1,
         ascLordSign: ascLordPlanet?.sign || "Aries",
-      })),
-      runAgentWithRetry("Numerology", () => generateNumerologyPrediction({ name, dateOfBirth: date_of_birth })),
+      }))),
+      trackAgent("Numerology", runAgentWithRetry("Numerology", () => generateNumerologyPrediction({ name, dateOfBirth: date_of_birth }))),
       // Planets (9 internal parallel) + Houses (12 internal parallel)
-      runArrayAgentWithRetry("Planets", () => generateAllPlanetProfiles(kundli.planets, kundli.asc)),
-      runArrayAgentWithRetry("Houses", () => generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx)),
+      trackAgent("Planets", runArrayAgentWithRetry("Planets", () => generateAllPlanetProfiles(kundli.planets, kundli.asc))),
+      trackAgent("Houses", runArrayAgentWithRetry("Houses", () => generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx))),
       // Life Areas
-      runAgentWithRetry("Career", () => generateCareerPrediction({
+      trackAgent("Career", runAgentWithRetry("Career", () => generateCareerPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
         birthDate,
         generatedAt: reportGeneratedAt,
-      })),
-      runAgentWithRetry("Marriage", () => generateMarriagePrediction({
+      }))),
+      trackAgent("Marriage", runAgentWithRetry("Marriage", () => generateMarriagePrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
@@ -906,25 +896,80 @@ serve(async (req) => {
         birthDate,
         generatedAt: reportGeneratedAt,
         maritalStatus: normalizedMaritalStatus,
-      })),
-      runAgentWithRetry("Dasha", () => generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate })),
-      runAgentWithRetry("RahuKetu", () => generateRahuKetuPrediction({ planets: kundli.planets })),
+      }))),
+      trackAgent("DashaMahadasha", runAgentWithRetry("DashaMahadasha", () => generateDashaMahadashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }))),
+      trackAgent("DashaAntardasha", runAgentWithRetry("DashaAntardasha", () => generateDashaAntardashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }))),
+      trackAgent("RahuKetu", runAgentWithRetry("RahuKetu", () => generateRahuKetuPrediction({ planets: kundli.planets }))),
       // Remedies, Spiritual, etc.
-      runAgentWithRetry("Remedies", () => generateRemediesPrediction({
+      trackAgent("Remedies", runAgentWithRetry("Remedies", () => generateRemediesPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         birthDate,
         generatedAt: reportGeneratedAt,
-      })),
-      runAgentWithRetry("Spiritual", () => generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas })),
-      runAgentWithRetry("CharaKarakas", () => generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx })),
-      runAgentWithRetry("Glossary", () => generateGlossaryPrediction()),
-      runAgentWithRetry("RajYogs", () => generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx })),
-      runAgentWithRetry("SadeSati", () => generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year })),
-      runAgentWithRetry("Doshas", () => generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx })),
+      }))),
+      trackAgent("Spiritual", runAgentWithRetry("Spiritual", () => generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }))),
+      trackAgent("CharaKarakas", runAgentWithRetry("CharaKarakas", () => generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }))),
+      trackAgent("Glossary", runAgentWithRetry("Glossary", () => generateGlossaryPrediction())),
+      trackAgent("RajYogs", runAgentWithRetry("RajYogs", () => generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }))),
+      trackAgent("SadeSati", runAgentWithRetry("SadeSati", () => generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year }))),
+      trackAgent("Doshas", runAgentWithRetry("Doshas", () => generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }))),
     ]);
 
-    console.log("✅ [PROCESS-JOB] All agents completed");
+    // Remaining time for agents = safety timeout minus time already spent on Seer API
+    const elapsedSoFar = Date.now() - agentsStartTime;
+    const remainingTimeMs = Math.max(STAGE1_SAFETY_TIMEOUT_MS - elapsedSoFar, 30_000);
+    const timeoutPromise = new Promise<"TIMEOUT">((resolve) =>
+      setTimeout(() => resolve("TIMEOUT"), remainingTimeMs)
+    );
+
+    const raceResult = await Promise.race([agentsPromise, timeoutPromise]);
+
+    let panchangResult: any, pillarsResult: any, numerologyResult: any,
+        planetProfiles: any, houseAnalyses: any,
+        careerResult: any, marriageResult: any, dashaMahaResult: any, dashaAntarResult: any, rahuKetuResult: any,
+        remediesResult: any, spiritualResult: any, charaKarakasResult: any, glossaryResult: any,
+        rajYogsResult: any, sadeSatiResult: any, doshasResult: any;
+    let agentsTimedOut = false;
+
+    if (raceResult === "TIMEOUT") {
+      agentsTimedOut = true;
+      const elapsed = ((Date.now() - agentsStartTime) / 1000).toFixed(1);
+
+      // Log exactly which agents completed vs which are still running
+      const completed: string[] = [];
+      const stillRunning: string[] = [];
+      for (const [name, status] of agentTracker) {
+        if (status.done) completed.push(`${name}(${(status.durationMs / 1000).toFixed(1)}s)`);
+        else stillRunning.push(name);
+      }
+      console.warn(`⏰ [PROCESS-JOB] TIMEOUT after ${elapsed}s`);
+      console.warn(`   ✅ Completed (${completed.length}): ${completed.join(', ') || 'none'}`);
+      console.warn(`   🚨 TIMED OUT (${stillRunning.length}): ${stillRunning.join(', ') || 'none'}`);
+      errors.push(`Stage1 timeout after ${elapsed}s. Timed-out agents: ${stillRunning.join(', ') || 'none'}`);
+
+      // Salvage results from agents that finished before timeout; use empty for the rest
+      const emptyAgent = { success: false, data: null, error: "Timed out", tokensUsed: 0 };
+      const get = (name: string) => { const t = agentTracker.get(name); return t?.done ? t.result : emptyAgent; };
+      const getArr = (name: string) => { const t = agentTracker.get(name); return (t?.done && Array.isArray(t.result)) ? t.result : []; };
+      panchangResult = get("Panchang"); pillarsResult = get("Pillars"); numerologyResult = get("Numerology");
+      planetProfiles = getArr("Planets"); houseAnalyses = getArr("Houses");
+      careerResult = get("Career"); marriageResult = get("Marriage");
+      dashaMahaResult = get("DashaMahadasha"); dashaAntarResult = get("DashaAntardasha");
+      rahuKetuResult = get("RahuKetu"); remediesResult = get("Remedies"); spiritualResult = get("Spiritual");
+      charaKarakasResult = get("CharaKarakas"); glossaryResult = get("Glossary");
+      rajYogsResult = get("RajYogs"); sadeSatiResult = get("SadeSati"); doshasResult = get("Doshas");
+    } else {
+      [
+        panchangResult, pillarsResult, numerologyResult,
+        planetProfiles, houseAnalyses,
+        careerResult, marriageResult, dashaMahaResult, dashaAntarResult, rahuKetuResult,
+        remediesResult, spiritualResult, charaKarakasResult, glossaryResult,
+        rajYogsResult, sadeSatiResult, doshasResult,
+      ] = raceResult;
+    }
+
+    const agentsDuration = ((Date.now() - agentsStartTime) / 1000).toFixed(1);
+    console.log(`✅ [PROCESS-JOB] Agents ${agentsTimedOut ? "timed out" : "completed"} in ${agentsDuration}s`);
     await touchJobHeartbeat(supabaseAdmin, jobId);
 
     // Collect errors and token counts
@@ -934,7 +979,8 @@ serve(async (req) => {
       { name: "Numerology", r: numerologyResult },
       { name: "Career", r: careerResult },
       { name: "Marriage", r: marriageResult },
-      { name: "Dasha", r: dashaResult },
+      { name: "DashaMahadasha", r: dashaMahaResult },
+      { name: "DashaAntardasha", r: dashaAntarResult },
       { name: "RahuKetu", r: rahuKetuResult },
       { name: "Remedies", r: remediesResult },
       { name: "Spiritual", r: spiritualResult },
@@ -971,6 +1017,8 @@ serve(async (req) => {
       birthDate,
       reportGeneratedAt
     );
+    // Merge the two parallel Dasha agent results into a single combined result
+    const dashaResult = mergeDashaResults(dashaMahaResult, dashaAntarResult);
     const safeDasha = enforceDashaSafety(dashaResult.data || null, birthDate);
     const safeRemedies = enforceHealthSafety(remediesResult.data || null, birthDate, reportGeneratedAt);
 
@@ -1034,6 +1082,9 @@ serve(async (req) => {
       languagePackVersion: activeLanguagePack.version,
       };
 
+    // Expose report to the catch block so partial data can be saved on error
+    partialReport = report;
+
     // Deterministic truth guard before QA/persist: no factual drift allowed.
     const truthGuard = enforceAstrologyTruth({
       report,
@@ -1093,46 +1144,75 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("❌ [PROCESS-JOB] Error:", error);
+    // ── CRITICAL: Even on error, try to save partial report and trigger Stage 2 ──
+    console.error("❌ [PROCESS-JOB] Error (attempting to proceed to Stage 2):", error);
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
 
     if (jobId) {
       await createJobEvent(supabaseAdmin, {
         jobId,
-        phase: "Error",
-        eventType: "fail",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+        phase: "Stage 1 Error (non-fatal)",
+        eventType: "info",
+        message: errMsg,
+      }).catch(() => {});
 
-      const failWithCode = await supabaseAdmin
+      // If we have a partial report, save it and trigger Stage 2 anyway
+      if (partialReport) {
+        partialReport.errors = [...(partialReport.errors || []), `Stage1Error: ${errMsg}`];
+        try {
+          await supabaseAdmin
+            .from("kundli_report_jobs")
+            .update({
+              status: "processing",
+              current_phase: "Stage 1 errored — skipping to translation",
+              progress_percent: 80,
+              report_data: partialReport,
+              heartbeat_at: new Date().toISOString(),
+            })
+            .eq("id", jobId);
+
+          // Still trigger Stage 2
+          const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/translate-kundli-report`;
+          const stage2Promise = fetch(stage2Url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify({ jobId }),
+          }).catch(err => {
+            console.error("⚠️ [PROCESS-JOB] Failed to trigger Stage 2 from catch:", err);
+          });
+
+          // @ts-ignore
+          if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+            // @ts-ignore
+            EdgeRuntime.waitUntil(stage2Promise);
+          }
+
+          console.log("📤 [PROCESS-JOB] Partial report saved, Stage 2 triggered from error handler");
+          return new Response(
+            JSON.stringify({ success: true, jobId, stage: "generate_partial", error: errMsg }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } catch (saveErr) {
+          console.error("💥 [PROCESS-JOB] Failed to save partial report:", saveErr);
+        }
+      }
+
+      // No partial report available — mark as failed
+      await supabaseAdmin
         .from("kundli_report_jobs")
         .update({
           status: "failed",
-          failure_code: String(error instanceof Error ? error.message : "UNKNOWN_ERROR").startsWith("LANGUAGE_QC_FAILED")
-            ? "LANGUAGE_QC_FAILED"
-            : "RUNTIME_ERROR",
-          error_message: error instanceof Error ? error.message : "Unknown error",
+          error_message: errMsg,
         })
-        .eq("id", jobId);
-      if (failWithCode.error) {
-        await supabaseAdmin
-          .from("kundli_report_jobs")
-          .update({
-            status: "failed",
-            error_message: error instanceof Error ? error.message : "Unknown error",
-          })
-          .eq("id", jobId);
-      }
-      await upsertKundliGeneratedReport(supabaseAdmin, {
-        jobId,
-        status: "failed",
-        reportSummary: {
-          error: error instanceof Error ? error.message : "Unknown error",
-        },
-      });
+        .eq("id", jobId)
+        .catch(() => {});
     }
 
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: errMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

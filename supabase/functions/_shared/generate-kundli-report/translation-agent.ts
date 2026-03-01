@@ -30,6 +30,304 @@ const LATIN_RATIO_THRESHOLD = 0.15; // 15% Latin → needs translation (thorough
 const MIN_STRING_LENGTH = 8;    // Minimum string length to consider
 const MIN_LETTER_COUNT = 4;     // Minimum non-space/digit/punct letters
 
+// ── Pre-built Phrase Cache ──────────────────────────────────────────────────
+// Commonly recurring structural labels, section headings, and short phrases
+// that appear in EVERY report. Applied BEFORE Gemini batching for instant
+// translation (zero API cost). Reduces Gemini batches by 30-50%.
+//
+// Key format: lowercase trimmed English string
+// Value format: { hi: Hindi translation, te: Telugu translation }
+
+const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
+  // ── Section headings & titles ──
+  "overview": { hi: "अवलोकन", te: "అవలోకనం" },
+  "interpretation": { hi: "व्याख्या", te: "వ్యాఖ్యానం" },
+  "placement": { hi: "स्थान", te: "స్థానం" },
+  "description": { hi: "विवरण", te: "వివరణ" },
+  "definition": { hi: "परिभाषा", te: "నిర్వచనం" },
+  "significance": { hi: "महत्व", te: "ప్రాముఖ్యత" },
+  "analysis": { hi: "विश्लेषण", te: "విశ్లేషణ" },
+  "predictions": { hi: "भविष्यवाणियां", te: "అంచనాలు" },
+  "prediction": { hi: "भविष्यवाणी", te: "అంచనా" },
+  "summary": { hi: "सारांश", te: "సారాంశం" },
+  "guidance": { hi: "मार्गदर्शन", te: "మార్గదర్శకం" },
+  "recommendations": { hi: "सुझाव", te: "సిఫారసులు" },
+  "advice": { hi: "सलाह", te: "సలహా" },
+  "benefits": { hi: "लाभ", te: "ప్రయోజనాలు" },
+  "effects": { hi: "प्रभाव", te: "ప్రభావాలు" },
+  "remedies": { hi: "उपाय", te: "పరిహారాలు" },
+  "strengths": { hi: "शक्तियां", te: "బలాలు" },
+  "challenges": { hi: "चुनौतियां", te: "సవాళ్ళు" },
+  "opportunities": { hi: "अवसर", te: "అవకాశాలు" },
+  "timing": { hi: "समय", te: "సమయం" },
+  "formation": { hi: "गठन", te: "నిర్మాణం" },
+
+  // ── Life area section headings ──
+  "career analysis": { hi: "कैरियर विश्लेषण", te: "వృత్తి విశ్లేషణ" },
+  "marriage analysis": { hi: "विवाह विश्लेषण", te: "వివాహ విశ్లేషణ" },
+  "health guidance": { hi: "स्वास्थ्य मार्गदर्शन", te: "ఆరోగ్య మార్గదర్శకం" },
+  "health analysis": { hi: "स्वास्थ्य विश्लेषण", te: "ఆరోగ్య విశ్లేషణ" },
+  "financial analysis": { hi: "वित्तीय विश्लेषण", te: "ఆర్థిక విశ్లేషణ" },
+  "spiritual analysis": { hi: "आध्यात्मिक विश्लेषण", te: "ఆధ్యాత్మిక విశ్లేషణ" },
+  "planetary positions": { hi: "ग्रह स्थितियां", te: "గ్రహ స్థితులు" },
+  "house analysis": { hi: "भाव विश्लेषण", te: "భావ విశ్లేషణ" },
+  "dasha analysis": { hi: "दशा विश्लेषण", te: "దశ విశ్లేషణ" },
+  "yoga analysis": { hi: "योग विश्लेषण", te: "యోగ విశ్లేషణ" },
+  "dosha analysis": { hi: "दोष विश्लेषण", te: "దోష విశ్లేషణ" },
+
+  // ── Impact categories ──
+  "career impact": { hi: "कैरियर प्रभाव", te: "వృత్తి ప్రభావం" },
+  "relationship impact": { hi: "संबंध प्रभाव", te: "సంబంధ ప్రభావం" },
+  "health impact": { hi: "स्वास्थ्य प्रभाव", te: "ఆరోగ్య ప్రభావం" },
+  "financial impact": { hi: "वित्तीय प्रभाव", te: "ఆర్థిక ప్రభావం" },
+  "spiritual growth": { hi: "आध्यात्मिक विकास", te: "ఆధ్యాత్మిక వృద్ధి" },
+
+  // ── Dasha system labels ──
+  "current phase": { hi: "वर्तमान चरण", te: "ప్రస్తుత దశ" },
+  "current mahadasha": { hi: "वर्तमान महादशा", te: "ప్రస్తుత మహాదశ" },
+  "current antardasha": { hi: "वर्तमान अंतर्दशा", te: "ప్రస్తుత అంతర్దశ" },
+  "focal areas": { hi: "मुख्य क्षेत्र", te: "ప్రధాన రంగాలు" },
+  "focus areas": { hi: "मुख्य क्षेत्र", te: "ప్రధాన రంగాలు" },
+  "key events": { hi: "प्रमुख घटनाएं", te: "ముఖ్య సంఘటనలు" },
+  "key themes": { hi: "प्रमुख विषय", te: "ముఖ్య అంశాలు" },
+  "life focus": { hi: "जीवन का केंद्र", te: "జీవిత కేంద్రం" },
+  "brief prediction": { hi: "संक्षिप्त भविष्यवाणी", te: "సంక్షిప్త అంచనా" },
+  "activation period": { hi: "सक्रियता अवधि", te: "సక్రియ కాలం" },
+  "approximate period": { hi: "अनुमानित अवधि", te: "అంచనా కాలం" },
+
+  // ── Marriage/relationship labels ──
+  "partner profile": { hi: "साथी प्रोफाइल", te: "భాగస్వామి ప్రొఫైల్" },
+  "partner qualities": { hi: "साथी के गुण", te: "భాగస్వామి లక్షణాలు" },
+  "marriage prospects": { hi: "विवाह की संभावनाएं", te: "వివాహ అవకాశాలు" },
+  "compatibility": { hi: "अनुकूलता", te: "అనుకూలత" },
+  "married life": { hi: "वैवाहिक जीवन", te: "వైవాహిక జీవితం" },
+  "relationship dynamics": { hi: "संबंधों की गतिशीलता", te: "సంబంధ డైనమిక్స్" },
+
+  // ── Remedy system labels ──
+  "recommended gemstones": { hi: "अनुशंसित रत्न", te: "సిఫారసు చేయబడిన రత్నాలు" },
+  "recommended mantras": { hi: "अनुशंसित मंत्र", te: "సిఫారసు చేయబడిన మంత్రాలు" },
+  "favorable colors": { hi: "शुभ रंग", te: "అనుకూల రంగులు" },
+  "favorable directions": { hi: "शुभ दिशाएं", te: "అనుకూల దిశలు" },
+  "lucky numbers": { hi: "भाग्यशाली अंक", te: "అదృష్ట సంఖ్యలు" },
+  "vedic foundation": { hi: "वैदिक आधार", te: "వేద ఆధారం" },
+  "how remedies work": { hi: "उपाय कैसे काम करते हैं", te: "పరిహారాలు ఎలా పని చేస్తాయి" },
+  "scientific perspective": { hi: "वैज्ञानिक दृष्टिकोण", te: "శాస్త్రీయ దృక్కోణం" },
+  "scriptural reference": { hi: "शास्त्रीय संदर्भ", te: "శాస్త్ర సందర్భం" },
+  "scientific basis": { hi: "वैज्ञानिक आधार", te: "శాస్త్రీయ ఆధారం" },
+  "direction guidance": { hi: "दिशा मार्गदर्शन", te: "దిశ మార్గదర్శకం" },
+  "gemstone": { hi: "रत्न", te: "రత్నం" },
+  "mantra": { hi: "मंत्र", te: "మంత్రం" },
+  "yantra": { hi: "यंत्र", te: "యంత్రం" },
+  "donation": { hi: "दान", te: "దానం" },
+  "fasting": { hi: "उपवास", te: "ఉపవాసం" },
+  "rudraksha": { hi: "रुद्राक्ष", te: "రుద్రాక్ష" },
+
+  // ── Yoga/Raj Yoga labels ──
+  "formation criteria": { hi: "गठन मानदंड", te: "నిర్మాణ ప్రమాణాలు" },
+  "in your chart": { hi: "आपकी कुंडली में", te: "మీ జాతకంలో" },
+  "strength": { hi: "बल", te: "బలం" },
+  "auspicious": { hi: "शुभ", te: "శుభం" },
+  "inauspicious": { hi: "अशुभ", te: "అశుభం" },
+  "present in chart": { hi: "कुंडली में उपस्थित", te: "జాతకంలో ఉంది" },
+  "not present": { hi: "उपस्थित नहीं", te: "లేదు" },
+
+  // ── Karaka labels ──
+  "atmakaraka": { hi: "आत्मकारक", te: "ఆత్మకారక" },
+  "amatyakaraka": { hi: "अमात्यकारक", te: "అమాత్యకారక" },
+  "bhratrikaraka": { hi: "भ्रातृकारक", te: "భ్రాతృకారక" },
+  "matrikaraka": { hi: "मातृकारक", te: "మాతృకారక" },
+  "putrakaraka": { hi: "पुत्रकारक", te: "పుత్రకారక" },
+  "gnatikaraka": { hi: "ज्ञातिकारक", te: "జ్ఞాతికారక" },
+  "darakaraka": { hi: "दारकारक", te: "దారకారక" },
+
+  // ── Health section labels ──
+  "safe movement": { hi: "सुरक्षित गतिविधि", te: "సురక్షిత కదలిక" },
+  "nutrition and hydration": { hi: "पोषण और जलयोजन", te: "పోషణ మరియు హైడ్రేషన్" },
+  "body constitution": { hi: "शारीरिक प्रकृति", te: "శరీర తత్వం" },
+  "vulnerable areas": { hi: "संवेदनशील क्षेत्र", te: "బలహీన ప్రాంతాలు" },
+  "preventive care": { hi: "निवारक देखभाल", te: "నివారణ సంరక్షణ" },
+  "mental health": { hi: "मानसिक स्वास्थ्य", te: "మానసిక ఆరోగ్యం" },
+  "physical health": { hi: "शारीरिक स्वास्थ्य", te: "శారీరక ఆరోగ్యం" },
+  "wellness tips": { hi: "स्वास्थ्य सुझाव", te: "ఆరోగ్య చిట్కాలు" },
+
+  // ── Common adjectives/descriptors used as values ──
+  "very strong": { hi: "बहुत मजबूत", te: "చాలా బలమైన" },
+  "very weak": { hi: "बहुत कमज़ोर", te: "చాలా బలహీన" },
+  "highly favorable": { hi: "अत्यंत अनुकूल", te: "అత్యంత అనుకూలం" },
+  "moderately favorable": { hi: "मध्यम अनुकूल", te: "మధ్యస్థంగా అనుకూలం" },
+  "unfavorable": { hi: "प्रतिकूल", te: "ప్రతికూలం" },
+  "favorable": { hi: "अनुकूल", te: "అనుకూలం" },
+  "exalted": { hi: "उच्च", te: "ఉచ్చ" },
+  "debilitated": { hi: "नीच", te: "నీచ" },
+  "combust": { hi: "अस्त", te: "అస్తం" },
+
+  // ── Spiritual section labels ──
+  "spiritual path": { hi: "आध्यात्मिक मार्ग", te: "ఆధ్యాత్మిక మార్గం" },
+  "spiritual lesson": { hi: "आध्यात्मिक पाठ", te: "ఆధ్యాత్మిక పాఠం" },
+  "meditation style": { hi: "ध्यान शैली", te: "ధ్యాన శైలి" },
+  "karmic lessons": { hi: "कर्म के पाठ", te: "కర్మ పాఠాలు" },
+  "past life karma": { hi: "पूर्वजन्म कर्म", te: "పూర్వజన్మ కర్మ" },
+  "dharmic path": { hi: "धार्मिक मार्ग", te: "ధార్మిక మార్గం" },
+
+  // ── Commonly repeated short phrases ──
+  "no significant dosha found": { hi: "कोई महत्वपूर्ण दोष नहीं मिला", te: "ముఖ్యమైన దోషం కనుగొనబడలేదు" },
+  "this yoga is present in your chart": { hi: "यह योग आपकी कुंडली में उपस्थित है", te: "ఈ యోగం మీ జాతకంలో ఉంది" },
+  "based on your birth chart": { hi: "आपकी जन्म कुंडली के आधार पर", te: "మీ జన్మ జాతకం ఆధారంగా" },
+  "overall assessment": { hi: "समग्र मूल्यांकन", te: "మొత్తం అంచనా" },
+  "key highlights": { hi: "मुख्य विशेषताएं", te: "ముఖ్య విశేషాలు" },
+  "important considerations": { hi: "महत्वपूर्ण विचार", te: "ముఖ్యమైన పరిగణనలు" },
+  "positive aspects": { hi: "सकारात्मक पहलू", te: "సానుకూల అంశాలు" },
+  "areas of concern": { hi: "चिंता के क्षेत्र", te: "ఆందోళన కలిగించే అంశాలు" },
+  "general overview": { hi: "सामान्य अवलोकन", te: "సాధారణ అవలోకనం" },
+  "detailed analysis": { hi: "विस्तृत विश्लेषण", te: "వివరణాత్మక విశ్లేషణ" },
+  "practical advice": { hi: "व्यावहारिक सलाह", te: "ఆచరణాత్మక సలహా" },
+  "spiritual advice": { hi: "आध्यात्मिक सलाह", te: "ఆధ్యాత్మిక సలహా" },
+  "remedy advice": { hi: "उपाय सलाह", te: "పరిహార సలహా" },
+  "caution note": { hi: "सावधानी नोट", te: "జాగ్రత్త గమనిక" },
+  "moon saturn relationship": { hi: "चंद्र-शनि संबंध", te: "చంద్ర-శని సంబంధం" },
+
+  // ── House-related phrases ──
+  "house nature": { hi: "भाव प्रकृति", te: "భావ స్వభావం" },
+  "house lord": { hi: "भाव स्वामी", te: "భావ అధిపతి" },
+  "house occupants": { hi: "भाव के ग्रह", te: "భావ గ్రహాలు" },
+  "natural significator": { hi: "प्राकृतिक कारक", te: "సహజ కారకుడు" },
+
+  // ── Planet analysis common phrases ──
+  "planetary strength": { hi: "ग्रह बल", te: "గ్రహ బలం" },
+  "dignity analysis": { hi: "बल विश्लेषण", te: "బల విశ్లేషణ" },
+  "aspect analysis": { hi: "दृष्टि विश्लेषण", te: "దృష్టి విశ్లేషణ" },
+  "conjunction analysis": { hi: "युति विश्लेषण", te: "యుతి విశ్లేషణ" },
+  "retrograde analysis": { hi: "वक्री विश्लेषण", te: "వక్రి విశ్లేషణ" },
+
+  // ── Pillar section labels ──
+  "dharma pillar": { hi: "धर्म स्तंभ", te: "ధర్మ స్తంభం" },
+  "artha pillar": { hi: "अर्थ स्तंभ", te: "అర్థ స్తంభం" },
+  "kama pillar": { hi: "काम स्तंभ", te: "కామ స్తంభం" },
+  "moksha pillar": { hi: "मोक्ष स्तंभ", te: "మోక్ష స్తంభం" },
+
+  // ── Common structural phrases ──
+  "characteristics": { hi: "विशेषताएं", te: "లక్షణాలు" },
+  "impact": { hi: "प्रभाव", te: "ప్రభావం" },
+  "rationale": { hi: "तर्काधार", te: "హేతువు" },
+  "narrative": { hi: "वर्णन", te: "వర్ణన" },
+  "meaning": { hi: "अर्थ", te: "అర్థం" },
+  "explanation": { hi: "स्पष्टीकरण", te: "వివరణ" },
+  "insight": { hi: "अंतर्दृष्टि", te: "అంతర్దృష్టి" },
+  "severity": { hi: "गंभीरता", te: "తీవ్రత" },
+  "nature": { hi: "प्रकृति", te: "స్వభావం" },
+  "occupation": { hi: "व्यवसाय", te: "వృత్తి" },
+
+  // ── Miscellaneous high-frequency labels ──
+  "section title": { hi: "शीर्षक", te: "శీర్షిక" },
+  "sub heading": { hi: "उप शीर्षक", te: "ఉప శీర్షిక" },
+  "heading": { hi: "शीर्षक", te: "శీర్షిక" },
+  "title": { hi: "शीर्षक", te: "శీర్షిక" },
+
+  // ── Lucky / unlucky labels (user-requested) ──
+  "lucky colors": { hi: "शुभ रंग", te: "అదృష్ట రంగులు" },
+  "lucky days": { hi: "शुभ दिन", te: "అదృష్ట దినాలు" },
+  "lucky numbers": { hi: "शुभ अंक", te: "అదృష్ట సంఖ్యలు" },
+  "unlucky numbers": { hi: "अशुभ अंक", te: "దురదృష్ట సంఖ్యలు" },
+  "lucky number": { hi: "शुभ अंक", te: "అదృష్ట సంఖ్య" },
+  "unlucky number": { hi: "अशुभ अंक", te: "దురదృష్ట సంఖ్య" },
+  "lucky day": { hi: "शुभ दिन", te: "అదృష్ట దినం" },
+  "lucky color": { hi: "शुभ रंग", te: "అదృష్ట రంగు" },
+  "lucky direction": { hi: "शुभ दिशा", te: "అదృష్ట దిశ" },
+  "lucky directions": { hi: "शुभ दिशाएं", te: "అదృష్ట దిశలు" },
+
+  // ── Yoga detection / activation (user-requested) ──
+  "total yogas detected": { hi: "कुल योग पाए गए", te: "మొత్తం యోగాలు గుర్తించబడ్డాయి" },
+  "is switch due now?": { hi: "क्या परिवर्तन अपेक्षित है?", te: "మార్పు ఆశించబడుతుందా?" },
+  "is switch due now": { hi: "क्या परिवर्तन अपेक्षित है", te: "మార్పు ఆశించబడుతుందా" },
+  "switch due now": { hi: "परिवर्तन अपेक्षित", te: "మార్పు ఆశించబడుతుంది" },
+  "activation": { hi: "सक्रियता", te: "సక్రియం" },
+  "activation period": { hi: "सक्रियता अवधि", te: "సక్రియ కాలం" },
+  "love": { hi: "प्रेम", te: "ప్రేమ" },
+  "attraction": { hi: "आकर्षण", te: "ఆకర్షణ" },
+
+  // ── Remedy / gemstone terms (user-requested) ──
+  "gemstones": { hi: "रत्न", te: "రత్నాలు" },
+  "gemstone": { hi: "रत्न", te: "రత్నం" },
+  "recommended": { hi: "अनुशंसित", te: "సిఫారసు చేయబడిన" },
+  "pronunciation": { hi: "उच्चारण", te: "ఉచ్చారణ" },
+  "ideal work environment": { hi: "आदर्श कार्य वातावरण", te: "ఆదర్శ పని వాతావరణం" },
+  "work environment": { hi: "कार्य वातावरण", te: "పని వాతావరణం" },
+  "japa": { hi: "जप", te: "జపం" },
+  "chanting": { hi: "जप", te: "జపం" },
+  "recitation": { hi: "पाठ", te: "పఠనం" },
+
+  // ── Career section labels ──
+  "suitable professions": { hi: "उपयुक्त व्यवसाय", te: "తగిన వృత్తులు" },
+  "career strengths": { hi: "कैरियर शक्तियां", te: "వృత్తి బలాలు" },
+  "career challenges": { hi: "कैरियर चुनौतियां", te: "వృత్తి సవాళ్ళు" },
+  "financial prospects": { hi: "वित्तीय संभावनाएं", te: "ఆర్థిక అవకాశాలు" },
+  "business aptitude": { hi: "व्यापार योग्यता", te: "వ్యాపార సామర్థ్యం" },
+  "leadership qualities": { hi: "नेतृत्व गुण", te: "నాయకత్వ లక్షణాలు" },
+  "wealth accumulation": { hi: "धन संचय", te: "సంపద సేకరణ" },
+  "income sources": { hi: "आय के स्रोत", te: "ఆదాయ వనరులు" },
+  "professional growth": { hi: "पेशेवर विकास", te: "వృత్తిపరమైన వృద్ధి" },
+  "work style": { hi: "कार्य शैली", te: "పని శైలి" },
+
+  // ── Sade Sati labels ──
+  "sade sati": { hi: "साढ़ेसाती", te: "సాడేసాతి" },
+  "sade sati analysis": { hi: "साढ़ेसाती विश्लेषण", te: "సాడేసాతి విశ్లేషణ" },
+  "sade sati status": { hi: "साढ़ेसाती स्थिति", te: "సాడేసాతి స్థితి" },
+  "rising phase": { hi: "प्रारंभिक चरण", te: "ఆరోహణ దశ" },
+  "peak phase": { hi: "चरम चरण", te: "శిఖర దశ" },
+  "setting phase": { hi: "अंतिम चरण", te: "అస్తమయ దశ" },
+  "not active": { hi: "सक्रिय नहीं", te: "సక్రియం కాదు" },
+  "currently active": { hi: "वर्तमान में सक्रिय", te: "ప్రస్తుతం సక్రియం" },
+  "saturn transit": { hi: "शनि गोचर", te: "శని గోచరం" },
+  "moon sign": { hi: "चंद्र राशि", te: "చంద్ర రాశి" },
+  "transit effects": { hi: "गोचर प्रभाव", te: "గోచర ప్రభావాలు" },
+  "mental stress": { hi: "मानसिक तनाव", te: "మానసిక ఒత్తిడి" },
+  "emotional challenges": { hi: "भावनात्मक चुनौतियां", te: "భావోద్వేగ సవాళ్ళు" },
+  "financial difficulties": { hi: "वित्तीय कठिनाइयां", te: "ఆర్థిక కష్టాలు" },
+  "career obstacles": { hi: "कैरियर बाधाएं", te: "వృత్తి అడ్డంకులు" },
+  "health concerns": { hi: "स्वास्थ्य चिंताएं", te: "ఆరోగ్య ఆందోళనలు" },
+  "relationship strain": { hi: "संबंधों में तनाव", te: "సంబంధాల్లో ఒత్తిడి" },
+
+  // ── Marriage / relationship extra labels ──
+  "love marriage": { hi: "प्रेम विवाह", te: "ప్రేమ వివాహం" },
+  "arranged marriage": { hi: "व्यवस्थित विवाह", te: "వ్యవస్థీకృత వివాహం" },
+  "marriage timing": { hi: "विवाह समय", te: "వివాహ సమయం" },
+  "partner characteristics": { hi: "साथी की विशेषताएं", te: "భాగస్వామి లక్షణాలు" },
+  "marital harmony": { hi: "वैवाहिक सामंजस्य", te: "వైవాహిక సామరస్యం" },
+  "childbirth": { hi: "संतान", te: "సంతానం" },
+  "children": { hi: "संतान", te: "సంతానం" },
+  "family life": { hi: "पारिवारिक जीवन", te: "కుటుంబ జీవితం" },
+
+  // ── Dosha names ──
+  "manglik dosha": { hi: "मांगलिक दोष", te: "మాంగళిక దోషం" },
+  "kaal sarp dosha": { hi: "कालसर्प दोष", te: "కాలసర్ప దోషం" },
+  "pitra dosha": { hi: "पितृ दोष", te: "పితృ దోషం" },
+  "nadi dosha": { hi: "नाड़ी दोष", te: "నాడి దోషం" },
+
+  // ── More common section/field labels ──
+  "current dasha": { hi: "वर्तमान दशा", te: "ప్రస్తుత దశ" },
+  "dasha periods": { hi: "दशा अवधि", te: "దశ కాలాలు" },
+  "mahadasha lord": { hi: "महादशा स्वामी", te: "మహాదశ అధిపతి" },
+  "antardasha lord": { hi: "अंतर्दशा स्वामी", te: "అంతర్దశ అధిపతి" },
+  "dasha balance": { hi: "दशा शेष", te: "దశ శేషం" },
+  "planetary period": { hi: "ग्रह अवधि", te: "గ్రహ కాలం" },
+  "favorable period": { hi: "अनुकूल अवधि", te: "అనుకూల కాలం" },
+  "unfavorable period": { hi: "प्रतिकूल अवधि", te: "ప్రతికూల కాలం" },
+  "transit analysis": { hi: "गोचर विश्लेषण", te: "గోచర విశ్లేషణ" },
+  "birth chart": { hi: "जन्म कुंडली", te: "జన్మ జాతకం" },
+  "divisional chart": { hi: "वर्गीय कुंडली", te: "విభజన జాతకం" },
+  "chart analysis": { hi: "कुंडली विश्लेषण", te: "జాతక విశ్లేషణ" },
+  "planet in sign": { hi: "ग्रह राशि में", te: "గ్రహం రాశిలో" },
+  "planet in house": { hi: "ग्रह भाव में", te: "గ్రహం భావంలో" },
+  "retrograde planet": { hi: "वक्री ग्रह", te: "వక్రి గ్రహం" },
+  "combust planet": { hi: "अस्त ग्रह", te: "అస్త గ్రహం" },
+  "exalted planet": { hi: "उच्च ग्रह", te: "ఉచ్చ గ్రహం" },
+  "debilitated planet": { hi: "नीच ग्रह", te: "నీచ గ్రహం" },
+  "benefic": { hi: "शुभ", te: "శుభ" },
+  "malefic": { hi: "पाप", te: "పాప" },
+  "benefic planet": { hi: "शुभ ग्रह", te: "శుభ గ్రహం" },
+  "malefic planet": { hi: "पाप ग्रह", te: "పాప గ్రహం" },
+};
+
 // ── Detection heuristics ────────────────────────────────────────────────────
 
 /**
@@ -358,11 +656,26 @@ async function translateBatchWithRetry(
 export interface TranslationResult {
   stringsFound: number;
   stringsTranslated: number;
+  stringsCached: number;       // How many resolved from phrase cache (zero API cost)
   batchesSent: number;
   errors: string[];
   tokensUsed: number;
   remainingEnglishCount: number;
   sectionBreakdown: Record<string, { found: number; translated: number }>;
+}
+
+// ── Phrase cache lookup ─────────────────────────────────────────────────────
+
+/**
+ * Try to resolve a string from the phrase cache.
+ * Uses case-insensitive exact match on trimmed text.
+ * Returns the cached translation or null.
+ */
+function lookupPhraseCache(text: string, targetLanguage: string): string | null {
+  const key = text.trim().toLowerCase();
+  const entry = PHRASE_CACHE[key];
+  if (!entry) return null;
+  return targetLanguage === "hi" ? entry.hi : targetLanguage === "te" ? entry.te : null;
 }
 
 /**
@@ -387,6 +700,7 @@ export async function runTranslationSweep(
   const stats: TranslationResult = {
     stringsFound: 0,
     stringsTranslated: 0,
+    stringsCached: 0,
     batchesSent: 0,
     errors: [],
     tokensUsed: 0,
@@ -397,7 +711,7 @@ export async function runTranslationSweep(
   if (targetLanguage === "en") return stats;
 
   const langLabel = targetLanguage === "hi" ? "Hindi" : "Telugu";
-  console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, concurrency: ${CONCURRENCY}, retries: ${MAX_RETRIES})...`);
+  console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, concurrency: ${CONCURRENCY}, retries: ${MAX_RETRIES}, cache: ${Object.keys(PHRASE_CACHE).length} phrases)...`);
 
   // ── Step 1: Collect all English strings ────────────────────────────────────
   const entries: TranslationEntry[] = [];
@@ -423,8 +737,35 @@ export async function runTranslationSweep(
     stats.sectionBreakdown[sec] = { found: secEntries.length, translated: 0 };
   }
 
-  // Prioritize: sort so PRIORITY_KEYS come first (most visible in PDF)
-  entries.sort((a, b) => {
+  // ── Step 2: Apply phrase cache FIRST (instant, zero API cost) ─────────────
+  const uncachedEntries: TranslationEntry[] = [];
+
+  for (const entry of entries) {
+    const cached = lookupPhraseCache(entry.original, targetLanguage);
+    if (cached) {
+      // Instant translation from cache — no API call needed
+      setAtPath(report, entry.path, cached);
+      stats.stringsCached++;
+      stats.stringsTranslated++;
+      if (stats.sectionBreakdown[entry.section]) {
+        stats.sectionBreakdown[entry.section].translated++;
+      }
+    } else {
+      uncachedEntries.push(entry);
+    }
+  }
+
+  console.log(`⚡ [TRANSLATE] Phrase cache: ${stats.stringsCached}/${entries.length} resolved instantly (${uncachedEntries.length} need Gemini)`);
+
+  // If all strings resolved from cache, we're done!
+  if (uncachedEntries.length === 0) {
+    console.log("✅ [TRANSLATE] All strings resolved from phrase cache — no Gemini calls needed!");
+    stats.remainingEnglishCount = 0;
+    return stats;
+  }
+
+  // ── Step 3: Sort uncached entries by priority ─────────────────────────────
+  uncachedEntries.sort((a, b) => {
     const lastKeyA = a.path.split(".").pop()?.replace(/\[\d+\]$/, "") || "";
     const lastKeyB = b.path.split(".").pop()?.replace(/\[\d+\]$/, "") || "";
     const aPriority = PRIORITY_KEYS.has(lastKeyA) ? 0 : 1;
@@ -432,7 +773,7 @@ export async function runTranslationSweep(
     return aPriority - bPriority;
   });
 
-  // ── Step 2: Build batch descriptors ───────────────────────────────────────
+  // ── Step 4: Build batch descriptors for uncached strings ──────────────────
   interface BatchDescriptor {
     batch: TranslationEntry[];
     primarySection: string;
@@ -441,8 +782,8 @@ export async function runTranslationSweep(
   }
 
   const allBatches: BatchDescriptor[] = [];
-  for (let i = 0; i < entries.length; i += BATCH_SIZE) {
-    const batch = entries.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < uncachedEntries.length; i += BATCH_SIZE) {
+    const batch = uncachedEntries.slice(i, i + BATCH_SIZE);
     const batchIndex = allBatches.length + 1;
 
     // Determine primary section for context
@@ -461,9 +802,9 @@ export async function runTranslationSweep(
     });
   }
 
-  console.log(`📦 [TRANSLATE] ${allBatches.length} batches to translate (${CONCURRENCY} concurrent)...`);
+  console.log(`📦 [TRANSLATE] ${allBatches.length} batches to translate via Gemini (${CONCURRENCY} concurrent)...`);
 
-  // ── Step 3: Execute batches in PARALLEL waves of CONCURRENCY ──────────────
+  // ── Step 5: Execute batches in PARALLEL waves of CONCURRENCY ──────────────
   for (let waveStart = 0; waveStart < allBatches.length; waveStart += CONCURRENCY) {
     const wave = allBatches.slice(waveStart, waveStart + CONCURRENCY);
     const waveNum = Math.floor(waveStart / CONCURRENCY) + 1;
@@ -518,6 +859,6 @@ export async function runTranslationSweep(
   // Estimate remaining (without costly re-scan — just count untranslated)
   stats.remainingEnglishCount = Math.max(0, stats.stringsFound - stats.stringsTranslated);
 
-  console.log(`🏁 [TRANSLATE] Sweep complete: ${stats.stringsTranslated}/${stats.stringsFound} strings translated in ${stats.batchesSent} batches (${stats.tokensUsed} tokens, ~${stats.remainingEnglishCount} remaining)`);
+  console.log(`🏁 [TRANSLATE] Sweep complete: ${stats.stringsTranslated}/${stats.stringsFound} translated (${stats.stringsCached} cached + ${stats.stringsTranslated - stats.stringsCached} via Gemini) in ${stats.batchesSent} batches (${stats.tokensUsed} tokens, ~${stats.remainingEnglishCount} remaining)`);
   return stats;
 }

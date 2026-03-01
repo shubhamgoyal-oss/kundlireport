@@ -38,7 +38,12 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
+  // Safety timeout: trigger Stage 3 before Supabase kills us at 150s.
+  // Give translation 120s, then bail and proceed with whatever we have.
+  const TRANSLATION_TIMEOUT_MS = 120_000;
+
   let jobId: string | undefined;
+  let report: Record<string, any> | undefined;
 
   try {
     const body = await req.json();
@@ -57,62 +62,143 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Job not found" }), { status: 404 });
     }
 
-    const report = job.report_data as Record<string, any>;
-    if (!report) throw new Error("No report_data found — Stage 1 may not have completed");
+    report = job.report_data as Record<string, any>;
+    if (!report) {
+      console.error("❌ [TRANSLATE-JOB] No report_data — Stage 1 incomplete, skipping to finalize");
+      report = {};
+    }
 
     const requestedLanguage = normalizeLanguage(job.language || "en");
     const useLanguagePipelineV2 = isLanguagePipelineV2Enabled(requestedLanguage);
     const effectiveGenLang: SupportedLanguage = useLanguagePipelineV2 ? requestedLanguage : "en";
     setAgentLanguageContext(effectiveGenLang);
 
-    let totalTokens = report.tokensUsed || 0;
+    let totalTokens = (report as any).tokensUsed || 0;
 
-    // ── Translation Sweep ──────────────────────────────────────────────────
+    // ── Translation Sweep (with safety timeout) ─────────────────────────────
     if (effectiveGenLang !== "en") {
       await updateJobStatus(supabaseAdmin, jobId!, "processing", "Translating remaining content", 85, "progress");
 
       try {
-        const translationStats = await runTranslationSweep(report, effectiveGenLang);
-        console.log(`🌐 [TRANSLATE-JOB] Sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings in ${translationStats.batchesSent} batches`);
+        // Race translation against a safety timer
+        const translationPromise = runTranslationSweep(report!, effectiveGenLang);
+        const timeoutPromise = new Promise<"TIMEOUT">((resolve) =>
+          setTimeout(() => resolve("TIMEOUT"), TRANSLATION_TIMEOUT_MS)
+        );
 
-        if (translationStats.errors.length > 0) {
-          report.errors = [...(report.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
+        const raceResult = await Promise.race([translationPromise, timeoutPromise]);
+
+        if (raceResult === "TIMEOUT") {
+          console.warn(`⏰ [TRANSLATE-JOB] Translation timed out after ${TRANSLATION_TIMEOUT_MS / 1000}s — proceeding with partial translation`);
+          report!.errors = [...(report!.errors || []), `TranslationSweep: Timed out after ${TRANSLATION_TIMEOUT_MS / 1000}s — partial translation applied`];
+          report!.computationMeta = {
+            ...(report!.computationMeta || {}),
+            translationSweep: { timedOut: true, timeoutMs: TRANSLATION_TIMEOUT_MS },
+          };
+        } else {
+          const translationStats = raceResult;
+          console.log(`🌐 [TRANSLATE-JOB] Sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings (${translationStats.stringsCached} cached, ${translationStats.batchesSent} Gemini batches)`);
+
+          if (translationStats.errors.length > 0) {
+            report!.errors = [...(report!.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
+          }
+          report!.computationMeta = {
+            ...(report!.computationMeta || {}),
+            translationSweep: {
+              stringsFound: translationStats.stringsFound,
+              stringsTranslated: translationStats.stringsTranslated,
+              stringsCached: translationStats.stringsCached,
+              batchesSent: translationStats.batchesSent,
+              errorCount: translationStats.errors.length,
+              remainingEnglish: translationStats.remainingEnglishCount,
+              sectionBreakdown: translationStats.sectionBreakdown,
+            },
+          };
+          totalTokens += translationStats.tokensUsed || 0;
         }
-        report.computationMeta = {
-          ...(report.computationMeta || {}),
-          translationSweep: {
-            stringsFound: translationStats.stringsFound,
-            stringsTranslated: translationStats.stringsTranslated,
-            batchesSent: translationStats.batchesSent,
-            errorCount: translationStats.errors.length,
-            remainingEnglish: translationStats.remainingEnglishCount,
-            sectionBreakdown: translationStats.sectionBreakdown,
-          },
-        };
-        totalTokens += translationStats.tokensUsed || 0;
       } catch (translationErr: any) {
         console.warn(`⚠️ [TRANSLATE-JOB] Translation sweep failed (non-fatal):`, translationErr?.message || translationErr);
-        report.errors = [...(report.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
+        report!.errors = [...(report!.errors || []), `TranslationSweep: ${translationErr?.message || "unknown error"}`];
       }
 
-      await touchJobHeartbeat(supabaseAdmin, jobId!);
+      await touchJobHeartbeat(supabaseAdmin, jobId!).catch(() => {});
     } else {
       console.log(`⏭️ [TRANSLATE-JOB] Skipping translation for English report`);
     }
 
-    // ── Save translated report and trigger Stage 3 ─────────────────────────
-    report.tokensUsed = totalTokens;
-    console.log(`📦 [TRANSLATE-JOB] Saving translated report and triggering Stage 3 (finalize)...`);
+    // ── Save report and trigger Stage 3 ─────────────────────────────────────
+    report!.tokensUsed = totalTokens;
+    await saveAndTriggerFinalize(supabaseAdmin, jobId!, report!, "Translation complete — finalizing");
 
-    await supabaseAdmin
+    console.log("✅ [TRANSLATE-JOB] Translation complete, Stage 3 triggered");
+    return new Response(
+      JSON.stringify({ success: true, jobId, stage: "translate_complete" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    // ── CRITICAL: Even on error, STILL trigger Stage 3 instead of dying ────
+    console.error("❌ [TRANSLATE-JOB] Error (non-fatal, proceeding to finalize):", error);
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+
+    if (jobId) {
+      await createJobEvent(supabaseAdmin, {
+        jobId,
+        phase: "Translation Error (non-fatal)",
+        eventType: "info",
+        message: errMsg,
+      }).catch(() => {});
+
+      // If we have report data, append the error and proceed
+      if (report) {
+        report.errors = [...(report.errors || []), `TranslationStage: ${errMsg}`];
+      }
+
+      // Save whatever we have and trigger finalize anyway
+      await saveAndTriggerFinalize(
+        supabaseAdmin,
+        jobId,
+        report,
+        "Translation errored — skipping to finalize"
+      );
+
+      return new Response(
+        JSON.stringify({ success: true, jobId, stage: "translate_error_skipped", error: errMsg }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ error: errMsg }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+/**
+ * Save current report state to DB and trigger Stage 3 (finalize).
+ * Used by both the happy path and the error path to ensure finalize ALWAYS runs.
+ */
+async function saveAndTriggerFinalize(
+  supabase: any,
+  jobId: string,
+  report: Record<string, any> | undefined,
+  phase: string,
+) {
+  try {
+    // Save whatever report data we have
+    const updatePayload: Record<string, any> = {
+      status: "processing",
+      current_phase: phase,
+      progress_percent: 90,
+      heartbeat_at: new Date().toISOString(),
+    };
+    if (report) {
+      updatePayload.report_data = report;
+    }
+
+    await supabase
       .from("kundli_report_jobs")
-      .update({
-        status: "processing",
-        current_phase: "Translation complete — finalizing",
-        progress_percent: 90,
-        report_data: report,
-        heartbeat_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", jobId);
 
     // Trigger Stage 3: finalize-kundli-report
@@ -134,50 +220,11 @@ serve(async (req) => {
       EdgeRuntime.waitUntil(stage3Promise);
     }
 
-    console.log("✅ [TRANSLATE-JOB] Translation complete, Stage 3 triggered");
-    return new Response(
-      JSON.stringify({ success: true, jobId, stage: "translate_complete" }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  } catch (error) {
-    console.error("❌ [TRANSLATE-JOB] Error:", error);
-
-    if (jobId) {
-      await createJobEvent(supabaseAdmin, {
-        jobId,
-        phase: "Translation Error",
-        eventType: "fail",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-
-      await supabaseAdmin
-        .from("kundli_report_jobs")
-        .update({
-          status: "failed",
-          failure_code: "TRANSLATION_ERROR",
-          error_message: error instanceof Error ? error.message : "Unknown error",
-        })
-        .eq("id", jobId)
-        .then(({ error: updateErr }) => {
-          if (updateErr) {
-            // Fallback without failure_code
-            return supabaseAdmin
-              .from("kundli_report_jobs")
-              .update({
-                status: "failed",
-                error_message: error instanceof Error ? error.message : "Unknown error",
-              })
-              .eq("id", jobId);
-          }
-        });
-    }
-
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.log(`📤 [TRANSLATE-JOB] Stage 3 triggered (${phase})`);
+  } catch (triggerErr) {
+    console.error("💥 [TRANSLATE-JOB] CRITICAL: Failed to save/trigger finalize:", triggerErr);
   }
-});
+}
 
 async function updateJobStatus(
   supabase: any,

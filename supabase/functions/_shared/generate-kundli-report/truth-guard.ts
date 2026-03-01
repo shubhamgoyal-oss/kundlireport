@@ -2,6 +2,7 @@
 // Overwrites any AI-generated values that contradict the computed chart data
 
 import type { SeerKundli } from "./seer-adapter.ts";
+import { getAgentLanguage } from "./agent-base.ts";
 
 interface TruthGuardInput {
   report: Record<string, unknown>;
@@ -24,6 +25,19 @@ const SIGNS = [
 ];
 
 function normalizePhaseLabel(phase: string): string {
+  const lang = getAgentLanguage();
+  if (lang === "hi") {
+    if (phase === "rising") return "उदय चरण (चंद्र से 12वां)";
+    if (phase === "peak") return "शिखर चरण (चंद्र पर)";
+    if (phase === "setting") return "अस्त चरण (चंद्र से 2रा)";
+    return "सक्रिय नहीं";
+  }
+  if (lang === "te") {
+    if (phase === "rising") return "ఉదయ దశ (చంద్రుడి నుండి 12వ)";
+    if (phase === "peak") return "శిఖర దశ (చంద్రుడిపై)";
+    if (phase === "setting") return "అస్తమయ దశ (చంద్రుడి నుండి 2వ)";
+    return "క్రియాశీలం కాదు";
+  }
   if (phase === "rising") return "Rising Phase (12th from Moon)";
   if (phase === "peak") return "Peak Phase (Over Moon)";
   if (phase === "setting") return "Setting Phase (2nd from Moon)";

@@ -428,6 +428,10 @@ function planetContext(planet: string, allPlanets: SeerPlanet[]): string {
     const sign = SIGN_NAME_HI[p.sign] || p.sign;
     return `${pName} ${sign} राशि में (भाव ${p.house})${p.isRetro ? ", वक्री" : ""}`;
   }
+  if (lang === "te") {
+    if (!p) return `${planet} (స్థానం అందుబాటులో లేదు)`;
+    return `${planet} ${p.sign} లో (భావం ${p.house})${p.isRetro ? ", వక్రి" : ""}`;
+  }
   if (!p) return `${planet} (placement unavailable)`;
   return `${planet} in ${p.sign} (House ${p.house})${p.isRetro ? ", retrograde" : ""}`;
 }
@@ -513,30 +517,37 @@ function buildAntardashaAdvice(mahadasha: string, antardasha: string): string {
   return `Use this sub-period to pursue ${md.opportunity} while consciously channeling ${ad.opportunity}. Keep decisions paced, documented, and review-based so ${md.caution} and ${ad.caution} do not derail progress.`;
 }
 
-export async function generateDashaPrediction(input: DashaInput): Promise<AgentResponse<DashaPrediction>> {
-  const { planets, moonDegree, birthDate } = input;
-  
+// ─── Shared Dasha Computation ───────────────────────────────────────────────
+
+interface DashaComputedData {
+  nakshatraInfo: ReturnType<typeof getNakshatraWithPada>;
+  currentDasha: ReturnType<typeof calculateCurrentDasha>;
+  yoginiInfo: ReturnType<typeof calculateYoginiDasha>;
+  allAntardashas: ReturnType<typeof calculateAllAntardashas>;
+  relevantCurrentAntardashas: ReturnType<typeof calculateAllAntardashas>;
+  upcomingMahadashas: Array<{ planet: string; startDate: Date; endDate: Date }>;
+  upcomingMahadashaAntardashaWindows: Array<{
+    mahadasha: string; startDate: Date; endDate: Date;
+    antardashas: ReturnType<typeof calculateAllAntardashas>;
+  }>;
+  formatDate: (d: Date) => string;
+}
+
+function computeDashaTimings(input: DashaInput): DashaComputedData {
+  const { moonDegree, birthDate } = input;
   const nakshatraInfo = getNakshatraWithPada(moonDegree);
   const currentDasha = calculateCurrentDasha(moonDegree, birthDate);
   const yoginiInfo = calculateYoginiDasha(moonDegree, birthDate);
   const allAntardashas = calculateAllAntardashas(
-    currentDasha.mahadasha, 
-    currentDasha.mahadashaStart, 
-    currentDasha.mahadashaEnd
+    currentDasha.mahadasha, currentDasha.mahadashaStart, currentDasha.mahadashaEnd
   );
   const now = new Date();
   const relevantCurrentAntardashas = allAntardashas.filter((ad) => ad.endDate.getTime() >= now.getTime());
-  
-  const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
-  const antarPlanet = planets.find(p => p.name === currentDasha.antardasha);
-  
   const formatDate = (d: Date) => d.toLocaleDateString('en-IN', { year: 'numeric', month: 'long' });
 
-  // Calculate upcoming mahadashas
   const upcomingMahadashas: Array<{ planet: string; startDate: Date; endDate: Date }> = [];
   let nextStart = currentDasha.mahadashaEnd;
   let nextIndex = (DASHA_ORDER.indexOf(currentDasha.mahadasha) + 1) % 9;
-  
   for (let i = 0; i < 3; i++) {
     const planet = DASHA_ORDER[nextIndex];
     const years = DASHA_YEARS[planet];
@@ -548,13 +559,60 @@ export async function generateDashaPrediction(input: DashaInput): Promise<AgentR
   }
 
   const upcomingMahadashaAntardashaWindows = upcomingMahadashas.map((md) => ({
-    mahadasha: md.planet,
-    startDate: md.startDate,
-    endDate: md.endDate,
+    mahadasha: md.planet, startDate: md.startDate, endDate: md.endDate,
     antardashas: calculateAllAntardashas(md.planet, md.startDate, md.endDate),
   }));
 
-  const userPrompt = `Provide comprehensive Vimshottari and Yogini Dasha analysis:
+  return {
+    nakshatraInfo, currentDasha, yoginiInfo, allAntardashas,
+    relevantCurrentAntardashas, upcomingMahadashas,
+    upcomingMahadashaAntardashaWindows, formatDate,
+  };
+}
+
+// ─── Result interfaces for split agents ─────────────────────────────────────
+
+export interface DashaMahadashaResult {
+  overview: string;
+  vimshottariSystem: string;
+  birthNakshatra: DashaPrediction["birthNakshatra"];
+  currentMahadasha: DashaPrediction["currentMahadasha"];
+  mahadashaPredictions: MahadashaPrediction[];
+  upcomingDashas: DashaPrediction["upcomingDashas"];
+  dashaSequence: DashaPrediction["dashaSequence"];
+  yoginiDasha: YoginiDashaInfo;
+  currentTransitImpact: string;
+  periodRecommendations: string[];
+  spiritualGuidance: string;
+}
+
+export interface DashaAntardashaResult {
+  currentAntardasha: DashaPrediction["currentAntardasha"];
+  antardashaPredictions: AntardashaPrediction[];
+  upcomingMahadashaAntardashaPredictions: UpcomingMahadashaAntardashaPrediction[];
+}
+
+// ─── Mahadasha Agent ────────────────────────────────────────────────────────
+
+const MAHADASHA_SYSTEM_PROMPT = `You are an expert Vedic astrologer specializing in Vimshottari and Yogini Dasha predictions.
+
+Analyze the Mahadasha (major planetary periods) in depth:
+1. The dasha lord's placement in the chart (sign, house, aspects)
+2. What the dasha lord naturally signifies
+3. Practical life predictions during each Mahadasha period
+4. Career, relationships, health, finances, spirituality for each period
+
+For Yogini Dasha, explain the unique characteristics of each Yogini and their planetary associations.
+
+Provide specific, actionable predictions. Reference the planet's dignity and house placement.`;
+
+export async function generateDashaMahadashaPrediction(input: DashaInput): Promise<AgentResponse<DashaMahadashaResult>> {
+  const { planets, moonDegree } = input;
+  const cd = computeDashaTimings(input);
+  const { nakshatraInfo, currentDasha, yoginiInfo, upcomingMahadashas, formatDate } = cd;
+  const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
+
+  const userPrompt = `Provide Mahadasha-level Vimshottari and Yogini Dasha analysis:
 
 **Birth Nakshatra:**
 - Name: ${nakshatraInfo.nakshatra.name}
@@ -568,25 +626,10 @@ export async function generateDashaPrediction(input: DashaInput): Promise<AgentR
 - Planet's House: ${mahaPlanet?.house || "N/A"}
 - Retrograde: ${mahaPlanet?.isRetro ? "Yes" : "No"}
 
-**Current Antardasha:**
-- Planet: ${currentDasha.antardasha}
-- Period: ${formatDate(currentDasha.antardashaStart)} to ${formatDate(currentDasha.antardashaEnd)}
-- Planet's Sign: ${antarPlanet?.sign || "N/A"}
-- Planet's House: ${antarPlanet?.house || "N/A"}
-
-**Current + Upcoming Antardashas in Current Mahadasha (exclude completed past periods):**
-${relevantCurrentAntardashas.map(ad => `- ${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}
-
 **Upcoming Mahadashas:**
 ${upcomingMahadashas.map(md => {
   const p = planets.find(pl => pl.name === md.planet);
   return `- ${md.planet}: ${formatDate(md.startDate)} to ${formatDate(md.endDate)}, in ${p?.sign || 'N/A'} (House ${p?.house || 'N/A'})`;
-}).join("\n")}
-
-**Antardasha Timelines for Upcoming Mahadashas:**
-${upcomingMahadashaAntardashaWindows.map((md) => {
-  return `\n${md.mahadasha} Mahadasha (${formatDate(md.startDate)} to ${formatDate(md.endDate)}):
-${md.antardashas.map((ad) => `  - ${md.mahadasha}/${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}`;
 }).join("\n")}
 
 **Current Yogini Dasha:**
@@ -598,22 +641,16 @@ ${md.antardashas.map((ad) => `  - ${md.mahadasha}/${ad.antardasha}: ${formatDate
 **All Planetary Positions for Reference:**
 ${planets.map(p => `- ${p.name}: ${p.sign} (House ${p.house})${p.isRetro ? " [R]" : ""}`).join("\n")}
 
-Provide detailed dasha predictions with:
+Focus on:
 1. Deep analysis of current mahadasha themes
-2. Current antardasha effects
-3. DETAILED predictions for EACH upcoming mahadasha (career, relationships, health, finances, spirituality)
-4. Predictions for current and upcoming antardashas within current mahadasha (exclude completed past antardashas)
-5. Predictions for EACH antardasha within EACH upcoming mahadasha listed above
-6. Yogini Dasha analysis with current and upcoming yoginis
-7. Complete dasha sequence for life
-8. Specific recommendations
+2. DETAILED predictions for EACH upcoming mahadasha (career, relationships, health, finances, spirituality)
+3. Yogini Dasha analysis
+4. Complete dasha sequence for life
+5. Transit impact and recommendations
 
 CRITICAL DEPTH REQUIREMENTS:
-- Avoid one-line interpretations.
 - Current Mahadasha interpretation must be multi-paragraph and deeply detailed.
-- Current Antardasha interpretation must be a substantial paragraph.
-- Each Mahadasha impact section (career/relationship/health/financial) must be a developed paragraph.
-- For upcoming Mahadashas, each Antardasha interpretation must be paragraph-style (not bullet-fragment).`;
+- Each Mahadasha impact section (career/relationship/health/financial) must be a developed paragraph.`;
 
   const toolSchema = {
     type: "object",
@@ -623,19 +660,15 @@ CRITICAL DEPTH REQUIREMENTS:
       birthNakshatra: {
         type: "object",
         properties: {
-          name: { type: "string" },
-          lord: { type: "string" },
-          startingDasha: { type: "string" },
-          balance: { type: "string" }
+          name: { type: "string" }, lord: { type: "string" },
+          startingDasha: { type: "string" }, balance: { type: "string" }
         },
         required: ["name", "lord", "startingDasha", "balance"]
       },
       currentMahadasha: {
         type: "object",
         properties: {
-          planet: { type: "string" },
-          startDate: { type: "string" },
-          endDate: { type: "string" },
+          planet: { type: "string" }, startDate: { type: "string" }, endDate: { type: "string" },
           planetSignificance: { type: "string" },
           interpretation: { type: "string", minLength: 320, description: "3-4 paragraph detailed analysis" },
           majorThemes: { type: "array", items: { type: "string" } },
@@ -645,27 +678,12 @@ CRITICAL DEPTH REQUIREMENTS:
         },
         required: ["planet", "startDate", "endDate", "planetSignificance", "interpretation", "majorThemes", "opportunities", "challenges", "advice"]
       },
-      currentAntardasha: {
-        type: "object",
-        properties: {
-          planet: { type: "string" },
-          startDate: { type: "string" },
-          endDate: { type: "string" },
-          interpretation: { type: "string", minLength: 180 },
-          keyEvents: { type: "array", items: { type: "string" } },
-          recommendations: { type: "array", items: { type: "string" } }
-        },
-        required: ["planet", "startDate", "endDate", "interpretation", "keyEvents", "recommendations"]
-      },
       mahadashaPredictions: {
-        type: "array",
-        description: "Detailed predictions for each upcoming mahadasha",
+        type: "array", description: "Detailed predictions for each upcoming mahadasha",
         items: {
           type: "object",
           properties: {
-            planet: { type: "string" },
-            startDate: { type: "string" },
-            endDate: { type: "string" },
+            planet: { type: "string" }, startDate: { type: "string" }, endDate: { type: "string" },
             duration: { type: "string" },
             overview: { type: "string", minLength: 240, description: "2-3 paragraph overview" },
             careerImpact: { type: "string", minLength: 170 },
@@ -681,124 +699,39 @@ CRITICAL DEPTH REQUIREMENTS:
           required: ["planet", "startDate", "endDate", "duration", "overview", "careerImpact", "relationshipImpact", "healthImpact", "financialImpact", "spiritualGrowth", "keyEvents", "opportunities", "challenges", "remedies"]
         }
       },
-      antardashaPredictions: {
-        type: "array",
-        description: "Predictions for each antardasha within current mahadasha",
-        items: {
-          type: "object",
-          properties: {
-            mahadasha: { type: "string" },
-            antardasha: { type: "string" },
-            startDate: { type: "string" },
-            endDate: { type: "string" },
-            duration: { type: "string" },
-            overview: { type: "string", minLength: 140 },
-            focusAreas: { type: "array", items: { type: "string" } },
-            predictions: { type: "array", items: { type: "string" } },
-            advice: { type: "string", minLength: 90 }
-          },
-          required: ["mahadasha", "antardasha", "startDate", "endDate", "duration", "overview", "focusAreas", "predictions", "advice"]
-        }
-      },
-      upcomingMahadashaAntardashaPredictions: {
-        type: "array",
-        description: "Antardasha predictions for each upcoming Mahadasha",
-        items: {
-          type: "object",
-          properties: {
-            mahadasha: { type: "string" },
-            startDate: { type: "string" },
-            endDate: { type: "string" },
-            overview: { type: "string", minLength: 140 },
-            antardashas: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  antardasha: { type: "string" },
-                  startDate: { type: "string" },
-                  endDate: { type: "string" },
-                  duration: { type: "string" },
-                  interpretation: { type: "string", minLength: 100 },
-                  focusAreas: { type: "array", items: { type: "string" } },
-                  advice: { type: "string", minLength: 70 }
-                },
-                required: ["antardasha", "startDate", "endDate", "duration", "interpretation", "focusAreas", "advice"]
-              }
-            }
-          },
-          required: ["mahadasha", "startDate", "endDate", "overview", "antardashas"]
-        }
-      },
       upcomingDashas: {
-        type: "array",
-        items: {
+        type: "array", items: {
           type: "object",
-          properties: {
-            type: { type: "string" },
-            planet: { type: "string" },
-            period: { type: "string" },
-            briefPrediction: { type: "string" },
-            focus: { type: "string" }
-          },
+          properties: { type: { type: "string" }, planet: { type: "string" }, period: { type: "string" }, briefPrediction: { type: "string" }, focus: { type: "string" } },
           required: ["type", "planet", "period", "briefPrediction", "focus"]
         }
       },
       dashaSequence: {
-        type: "array",
-        items: {
+        type: "array", items: {
           type: "object",
-          properties: {
-            planet: { type: "string" },
-            years: { type: "number" },
-            approximatePeriod: { type: "string" },
-            lifeFocus: { type: "string" }
-          },
+          properties: { planet: { type: "string" }, years: { type: "number" }, approximatePeriod: { type: "string" }, lifeFocus: { type: "string" } },
           required: ["planet", "years", "approximatePeriod", "lifeFocus"]
         }
       },
       yoginiDasha: {
-        type: "object",
-        description: "Yogini Dasha analysis",
+        type: "object", description: "Yogini Dasha analysis",
         properties: {
           currentYogini: {
             type: "object",
-            properties: {
-              name: { type: "string" },
-              planet: { type: "string" },
-              years: { type: "number" },
-              startDate: { type: "string" },
-              endDate: { type: "string" },
-              characteristics: { type: "string" },
-              lifeThemes: { type: "array", items: { type: "string" } },
-              predictions: { type: "string" }
-            },
+            properties: { name: { type: "string" }, planet: { type: "string" }, years: { type: "number" }, startDate: { type: "string" }, endDate: { type: "string" }, characteristics: { type: "string" }, lifeThemes: { type: "array", items: { type: "string" } }, predictions: { type: "string" } },
             required: ["name", "planet", "years", "startDate", "endDate", "characteristics", "lifeThemes", "predictions"]
           },
           upcomingYoginis: {
-            type: "array",
-            items: {
+            type: "array", items: {
               type: "object",
-              properties: {
-                name: { type: "string" },
-                planet: { type: "string" },
-                years: { type: "number" },
-                approximatePeriod: { type: "string" },
-                briefPrediction: { type: "string" }
-              },
+              properties: { name: { type: "string" }, planet: { type: "string" }, years: { type: "number" }, approximatePeriod: { type: "string" }, briefPrediction: { type: "string" } },
               required: ["name", "planet", "years", "approximatePeriod", "briefPrediction"]
             }
           },
           yoginiSequence: {
-            type: "array",
-            items: {
+            type: "array", items: {
               type: "object",
-              properties: {
-                name: { type: "string" },
-                planet: { type: "string" },
-                years: { type: "number" },
-                nature: { type: "string" }
-              },
+              properties: { name: { type: "string" }, planet: { type: "string" }, years: { type: "number" }, nature: { type: "string" } },
               required: ["name", "planet", "years", "nature"]
             }
           },
@@ -810,24 +743,18 @@ CRITICAL DEPTH REQUIREMENTS:
       periodRecommendations: { type: "array", items: { type: "string" } },
       spiritualGuidance: { type: "string" }
     },
-    required: ["overview", "vimshottariSystem", "birthNakshatra", "currentMahadasha", "currentAntardasha", "mahadashaPredictions", "antardashaPredictions", "upcomingMahadashaAntardashaPredictions", "upcomingDashas", "dashaSequence", "yoginiDasha", "currentTransitImpact", "periodRecommendations", "spiritualGuidance"],
+    required: ["overview", "vimshottariSystem", "birthNakshatra", "currentMahadasha", "mahadashaPredictions", "upcomingDashas", "dashaSequence", "yoginiDasha", "currentTransitImpact", "periodRecommendations", "spiritualGuidance"],
     additionalProperties: false
   };
 
-  const aiResult = await callAgent<DashaPrediction>(
-    DASHA_SYSTEM_PROMPT,
-    userPrompt,
-    "generate_dasha_prediction",
-    "Generate comprehensive Vimshottari and Yogini Dasha predictions",
-    toolSchema
+  const aiResult = await callAgent<DashaMahadashaResult>(
+    MAHADASHA_SYSTEM_PROMPT, userPrompt,
+    "generate_mahadasha_prediction", "Generate Mahadasha and Yogini Dasha predictions", toolSchema
   );
 
-  if (!aiResult.success || !aiResult.data) {
-    return aiResult;
-  }
+  if (!aiResult.success || !aiResult.data) return aiResult;
 
-  // Enforce deterministic timeline fields from computed astronomy math.
-  // LLM can provide narrative, but date boundaries must come from calculations.
+  // Normalize with deterministic data
   const startingDasha = nakshatraInfo.nakshatra.lord;
   const NAKSHATRA_SPAN = 360 / 27;
   const nakshatraDegree = moonDegree % NAKSHATRA_SPAN;
@@ -835,41 +762,17 @@ CRITICAL DEPTH REQUIREMENTS:
   const balanceYears = DASHA_YEARS[startingDasha] * (1 - nakshatraProgress);
 
   const allMahadashaPeriods = [
-    {
-      planet: currentDasha.mahadasha,
-      startDate: currentDasha.mahadashaStart,
-      endDate: currentDasha.mahadashaEnd,
-    },
+    { planet: currentDasha.mahadasha, startDate: currentDasha.mahadashaStart, endDate: currentDasha.mahadashaEnd },
     ...upcomingMahadashas,
   ];
+  const mahadashaByPlanet = new Map(allMahadashaPeriods.map((md) => [md.planet, md] as const));
 
-  const mahadashaByPlanet = new Map(
-    allMahadashaPeriods.map((md) => [md.planet, md] as const)
-  );
-  const antardashaByPlanet = new Map(
-    allAntardashas.map((ad) => [ad.antardasha, ad] as const)
-  );
-  const upcomingAntardashaWindowsByMahadasha = new Map(
-    upcomingMahadashaAntardashaWindows.map((md) => [
-      md.mahadasha,
-      new Map(md.antardashas.map((ad) => [ad.antardasha, ad] as const)),
-    ] as const)
-  );
-  const aiUpcomingByMahadasha = new Map(
-    (aiResult.data.upcomingMahadashaAntardashaPredictions || []).map((md) => [md.mahadasha, md] as const)
-  );
-  const aiCurrentAntardashaByPlanet = new Map(
-    (aiResult.data.antardashaPredictions || []).map((ad) => [ad.antardasha, ad] as const)
-  );
-
-  const normalized: DashaPrediction = {
+  const normalized: DashaMahadashaResult = {
     ...aiResult.data,
     birthNakshatra: {
       ...aiResult.data.birthNakshatra,
-      name: nakshatraInfo.nakshatra.name,
-      lord: nakshatraInfo.nakshatra.lord,
-      startingDasha,
-      balance: `${balanceYears.toFixed(2)} years`,
+      name: nakshatraInfo.nakshatra.name, lord: nakshatraInfo.nakshatra.lord,
+      startingDasha, balance: `${balanceYears.toFixed(2)} years`,
     },
     currentMahadasha: {
       ...aiResult.data.currentMahadasha,
@@ -877,21 +780,132 @@ CRITICAL DEPTH REQUIREMENTS:
       startDate: formatDate(currentDasha.mahadashaStart),
       endDate: formatDate(currentDasha.mahadashaEnd),
     },
+    mahadashaPredictions: (aiResult.data.mahadashaPredictions || []).map((md) => {
+      const deterministic = mahadashaByPlanet.get(md.planet);
+      if (!deterministic) return md;
+      return { ...md, startDate: formatDate(deterministic.startDate), endDate: formatDate(deterministic.endDate) };
+    }),
+    yoginiDasha: {
+      ...aiResult.data.yoginiDasha,
+      currentYogini: {
+        ...aiResult.data.yoginiDasha.currentYogini,
+        name: yoginiInfo.currentYogini.name, planet: yoginiInfo.currentYogini.planet,
+        years: yoginiInfo.currentYogini.years,
+        startDate: formatDate(yoginiInfo.currentYogini.startDate),
+        endDate: formatDate(yoginiInfo.currentYogini.endDate),
+      },
+    },
+  };
+
+  return { ...aiResult, data: normalized };
+}
+
+// ─── Antardasha Agent ───────────────────────────────────────────────────────
+
+const ANTARDASHA_SYSTEM_PROMPT = `You are an expert Vedic astrologer specializing in Antardasha (sub-period) predictions.
+
+For each Antardasha within a Mahadasha, analyze:
+1. The interaction between the Mahadasha lord and Antardasha lord
+2. How their combined energies manifest in the native's chart
+3. Specific focus areas, opportunities, and risks during the sub-period
+4. Practical advice for navigating each sub-period
+
+Provide specific, chart-linked predictions. Each interpretation must be a developed paragraph.`;
+
+export async function generateDashaAntardashaPrediction(input: DashaInput): Promise<AgentResponse<DashaAntardashaResult>> {
+  const { planets } = input;
+  const cd = computeDashaTimings(input);
+  const { currentDasha, relevantCurrentAntardashas, upcomingMahadashas,
+          upcomingMahadashaAntardashaWindows, formatDate, allAntardashas } = cd;
+  const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
+  const antarPlanet = planets.find(p => p.name === currentDasha.antardasha);
+
+  // NOTE: We only ask the AI for current-mahadasha antardashas (~9 items).
+  // Upcoming-mahadasha antardashas (3×9 = 27 items) are generated deterministically
+  // to keep the AI call fast (<60s) and within Supabase free-tier timeout.
+  const userPrompt = `Provide Antardasha (sub-period) predictions for the CURRENT Mahadasha only:
+
+**Current Mahadasha (context):**
+- Planet: ${currentDasha.mahadasha}
+- Period: ${formatDate(currentDasha.mahadashaStart)} to ${formatDate(currentDasha.mahadashaEnd)}
+- Planet's Sign: ${mahaPlanet?.sign || "N/A"}, House: ${mahaPlanet?.house || "N/A"}
+
+**Current Antardasha:**
+- Planet: ${currentDasha.antardasha}
+- Period: ${formatDate(currentDasha.antardashaStart)} to ${formatDate(currentDasha.antardashaEnd)}
+- Planet's Sign: ${antarPlanet?.sign || "N/A"}, House: ${antarPlanet?.house || "N/A"}
+
+**Current + Upcoming Antardashas in Current Mahadasha:**
+${relevantCurrentAntardashas.map(ad => `- ${currentDasha.mahadasha}/${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}
+
+**All Planetary Positions for Reference:**
+${planets.map(p => `- ${p.name}: ${p.sign} (House ${p.house})${p.isRetro ? " [R]" : ""}`).join("\n")}
+
+Focus on:
+1. Current antardasha effects in detail
+2. Predictions for EACH remaining antardasha within current mahadasha
+- Each interpretation must be a substantial paragraph, not a one-liner.`;
+
+  const toolSchema = {
+    type: "object",
+    properties: {
+      currentAntardasha: {
+        type: "object",
+        properties: {
+          planet: { type: "string" }, startDate: { type: "string" }, endDate: { type: "string" },
+          interpretation: { type: "string", minLength: 180 },
+          keyEvents: { type: "array", items: { type: "string" } },
+          recommendations: { type: "array", items: { type: "string" } }
+        },
+        required: ["planet", "startDate", "endDate", "interpretation", "keyEvents", "recommendations"]
+      },
+      antardashaPredictions: {
+        type: "array", description: "Predictions for each antardasha within current mahadasha",
+        items: {
+          type: "object",
+          properties: {
+            mahadasha: { type: "string" }, antardasha: { type: "string" },
+            startDate: { type: "string" }, endDate: { type: "string" }, duration: { type: "string" },
+            overview: { type: "string", minLength: 140 },
+            focusAreas: { type: "array", items: { type: "string" } },
+            predictions: { type: "array", items: { type: "string" } },
+            advice: { type: "string", minLength: 90 }
+          },
+          required: ["mahadasha", "antardasha", "startDate", "endDate", "duration", "overview", "focusAreas", "predictions", "advice"]
+        }
+      },
+    },
+    required: ["currentAntardasha", "antardashaPredictions"],
+    additionalProperties: false
+  };
+
+  const aiResult = await callAgent<DashaAntardashaResult>(
+    ANTARDASHA_SYSTEM_PROMPT, userPrompt,
+    "generate_antardasha_prediction", "Generate Antardasha sub-period predictions", toolSchema
+  );
+
+  if (!aiResult.success || !aiResult.data) return aiResult;
+
+  // Normalize with deterministic data + fallbacks
+  const antardashaByPlanet = new Map(allAntardashas.map((ad) => [ad.antardasha, ad] as const));
+  const upcomingAntardashaWindowsByMahadasha = new Map(
+    upcomingMahadashaAntardashaWindows.map((md) => [
+      md.mahadasha, new Map(md.antardashas.map((ad) => [ad.antardasha, ad] as const)),
+    ] as const)
+  );
+  const aiCurrentAntardashaByPlanet = new Map(
+    (aiResult.data.antardashaPredictions || []).map((ad) => [ad.antardasha, ad] as const)
+  );
+
+  const lang = getAgentLanguage();
+
+  const normalized: DashaAntardashaResult = {
     currentAntardasha: {
       ...aiResult.data.currentAntardasha,
       planet: currentDasha.antardasha,
       startDate: formatDate(currentDasha.antardashaStart),
       endDate: formatDate(currentDasha.antardashaEnd),
     },
-    mahadashaPredictions: (aiResult.data.mahadashaPredictions || []).map((md) => {
-      const deterministic = mahadashaByPlanet.get(md.planet);
-      if (!deterministic) return md;
-      return {
-        ...md,
-        startDate: formatDate(deterministic.startDate),
-        endDate: formatDate(deterministic.endDate),
-      };
-    }),
     antardashaPredictions: relevantCurrentAntardashas.map((adWindow) => {
       const aiAd = aiCurrentAntardashaByPlanet.get(adWindow.antardasha);
       const deterministic = antardashaByPlanet.get(adWindow.antardasha);
@@ -901,17 +915,13 @@ CRITICAL DEPTH REQUIREMENTS:
         antardasha: adWindow.antardasha,
         startDate: formatDate(deterministic?.startDate || adWindow.startDate),
         endDate: formatDate(deterministic?.endDate || adWindow.endDate),
-        duration: `~${adWindow.durationMonths} months`,
+        duration: lang === "hi" ? `~${adWindow.durationMonths} महीने` : `~${adWindow.durationMonths} months`,
         overview: !isWeakNarrative(aiAd?.overview, 150)
-          ? cleanTextArtifact(aiAd!.overview)
-          : fallbackInterpretation,
-        focusAreas: useOrFallbackArray(
-          aiAd?.focusAreas,
-          buildAntardashaFocusAreas(currentDasha.mahadasha, adWindow.antardasha),
-        ),
-        predictions: useOrFallbackArray(
-          aiAd?.predictions,
-          getAgentLanguage() === "hi"
+          ? cleanTextArtifact(aiAd!.overview) : fallbackInterpretation,
+        focusAreas: useOrFallbackArray(aiAd?.focusAreas,
+          buildAntardashaFocusAreas(currentDasha.mahadasha, adWindow.antardasha)),
+        predictions: useOrFallbackArray(aiAd?.predictions,
+          lang === "hi"
             ? [
                 `${PLANET_NAME_HI[currentDasha.mahadasha] || currentDasha.mahadasha}/${PLANET_NAME_HI[adWindow.antardasha] || adWindow.antardasha} चरण कार्य और जिम्मेदारी संरचनाओं में प्राथमिकताओं को पुनर्निर्धारित कर सकता है।`,
                 `जब प्रतिबद्धताओं को क्रमबद्ध और समीक्षित किया जाता है तो परिणाम बेहतर होते हैं।`,
@@ -921,67 +931,76 @@ CRITICAL DEPTH REQUIREMENTS:
                 `This ${currentDasha.mahadasha}/${adWindow.antardasha} phase can reset priorities in work and responsibility structures.`,
                 `Outcomes improve when commitments are sequenced and reviewed rather than rushed.`,
                 `Relationship and financial choices should be evaluated for long-term stability before execution.`,
-              ],
-        ),
+              ]),
         advice: !isWeakNarrative(aiAd?.advice, 90)
           ? cleanTextArtifact(aiAd!.advice)
           : buildAntardashaAdvice(currentDasha.mahadasha, adWindow.antardasha),
       };
     }),
+    // Upcoming mahadasha antardashas are generated entirely deterministically.
+    // This avoids the 27-item AI generation that was causing timeouts (3 mahadashas × 9 antardashas).
+    // The deterministic content uses actual chart placements and planet significations.
     upcomingMahadashaAntardashaPredictions: upcomingMahadashaAntardashaWindows.map((mdWindow) => {
-      const aiGroup = aiUpcomingByMahadasha.get(mdWindow.mahadasha);
       const deterministicByAntardasha = upcomingAntardashaWindowsByMahadasha.get(mdWindow.mahadasha);
-      const aiAntardashaByPlanet = new Map(
-        (aiGroup?.antardashas || []).map((ad) => [ad.antardasha, ad] as const)
-      );
-
       return {
         mahadasha: mdWindow.mahadasha,
         startDate: formatDate(mdWindow.startDate),
         endDate: formatDate(mdWindow.endDate),
-        overview: !isWeakNarrative(aiGroup?.overview, 170)
-          ? cleanTextArtifact(aiGroup!.overview)
-          : getAgentLanguage() === "hi"
-            ? `${PLANET_NAME_HI[mdWindow.mahadasha] || mdWindow.mahadasha} महादशा ${getPlanetSig(mdWindow.mahadasha).themes} पर केंद्रित एक दीर्घकालिक कर्म अध्याय खोलती है। प्रत्येक अंतर्दशा गति, प्राथमिकताओं और जोखिम प्रोफ़ाइल को बदलती है। सर्वोत्तम रणनीति चरणबद्ध कार्यान्वयन है: उद्देश्य निर्धारित करें, प्रत्येक अंतर्दशा परिवर्तन पर पुनर्मूल्यांकन करें।`
-            : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Expect outcomes to unfold through sub-period shifts, where each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
+        overview: lang === "hi"
+          ? `${PLANET_NAME_HI[mdWindow.mahadasha] || mdWindow.mahadasha} महादशा ${getPlanetSig(mdWindow.mahadasha).themes} पर केंद्रित एक दीर्घकालिक कर्म अध्याय खोलती है। प्रत्येक अंतर्दशा गति, प्राथमिकताओं और जोखिम प्रोफ़ाइल को बदलती है। सर्वोत्तम रणनीति चरणबद्ध कार्यान्वयन है: उद्देश्य निर्धारित करें, प्रत्येक अंतर्दशा परिवर्तन पर पुनर्मूल्यांकन करें।`
+          : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
         antardashas: mdWindow.antardashas.map((adWindow) => {
           const deterministic = deterministicByAntardasha?.get(adWindow.antardasha);
-          const aiAd = aiAntardashaByPlanet.get(adWindow.antardasha);
-          const fallbackInterpretation = buildAntardashaInterpretation(mdWindow.mahadasha, adWindow.antardasha, planets);
           return {
             antardasha: adWindow.antardasha,
             startDate: formatDate(deterministic?.startDate || adWindow.startDate),
             endDate: formatDate(deterministic?.endDate || adWindow.endDate),
-            duration: `~${adWindow.durationMonths} months`,
-            interpretation: !isWeakNarrative(aiAd?.interpretation, 140)
-              ? cleanTextArtifact(aiAd!.interpretation)
-              : fallbackInterpretation,
-            focusAreas: useOrFallbackArray(
-              aiAd?.focusAreas,
-              buildAntardashaFocusAreas(mdWindow.mahadasha, adWindow.antardasha),
-            ),
-            advice: !isWeakNarrative(aiAd?.advice, 80)
-              ? cleanTextArtifact(aiAd!.advice)
-              : buildAntardashaAdvice(mdWindow.mahadasha, adWindow.antardasha),
+            duration: lang === "hi" ? `~${adWindow.durationMonths} महीने` : `~${adWindow.durationMonths} months`,
+            interpretation: buildAntardashaInterpretation(mdWindow.mahadasha, adWindow.antardasha, planets),
+            focusAreas: buildAntardashaFocusAreas(mdWindow.mahadasha, adWindow.antardasha),
+            advice: buildAntardashaAdvice(mdWindow.mahadasha, adWindow.antardasha),
           };
         }),
       };
     }),
-    yoginiDasha: {
-      ...aiResult.data.yoginiDasha,
-      currentYogini: {
-        ...aiResult.data.yoginiDasha.currentYogini,
-        name: yoginiInfo.currentYogini.name,
-        planet: yoginiInfo.currentYogini.planet,
-        years: yoginiInfo.currentYogini.years,
-        startDate: formatDate(yoginiInfo.currentYogini.startDate),
-        endDate: formatDate(yoginiInfo.currentYogini.endDate),
-      },
-    },
   };
 
-  return {
-    ...aiResult,
-    data: normalized,
+  return { ...aiResult, data: normalized };
+}
+
+// ─── Merge utility ──────────────────────────────────────────────────────────
+
+export function mergeDashaResults(
+  mahaResult: AgentResponse<DashaMahadashaResult>,
+  antarResult: AgentResponse<DashaAntardashaResult>,
+): AgentResponse<DashaPrediction> {
+  // If both failed, return mahadasha error (more critical)
+  if (!mahaResult.success && !antarResult.success) {
+    return { success: false, error: mahaResult.error || antarResult.error, tokensUsed: (mahaResult.tokensUsed || 0) + (antarResult.tokensUsed || 0) };
+  }
+
+  const totalTokens = (mahaResult.tokensUsed || 0) + (antarResult.tokensUsed || 0);
+
+  // Build empty defaults for whichever side failed
+  const maha = mahaResult.data || {} as any;
+  const antar = antarResult.data || {} as any;
+
+  const merged: DashaPrediction = {
+    overview: maha.overview || "",
+    vimshottariSystem: maha.vimshottariSystem || "",
+    birthNakshatra: maha.birthNakshatra || { name: "", lord: "", startingDasha: "", balance: "" },
+    currentMahadasha: maha.currentMahadasha || { planet: "", startDate: "", endDate: "", planetSignificance: "", interpretation: "", majorThemes: [], opportunities: [], challenges: [], advice: "" },
+    currentAntardasha: antar.currentAntardasha || { planet: "", startDate: "", endDate: "", interpretation: "", keyEvents: [], recommendations: [] },
+    mahadashaPredictions: maha.mahadashaPredictions || [],
+    antardashaPredictions: antar.antardashaPredictions || [],
+    upcomingMahadashaAntardashaPredictions: antar.upcomingMahadashaAntardashaPredictions || [],
+    upcomingDashas: maha.upcomingDashas || [],
+    dashaSequence: maha.dashaSequence || [],
+    yoginiDasha: maha.yoginiDasha || { currentYogini: { name: "", planet: "", years: 0, startDate: "", endDate: "", characteristics: "", lifeThemes: [], predictions: "" }, upcomingYoginis: [], yoginiSequence: [], systemExplanation: "" },
+    currentTransitImpact: maha.currentTransitImpact || "",
+    periodRecommendations: maha.periodRecommendations || [],
+    spiritualGuidance: maha.spiritualGuidance || "",
   };
+
+  return { success: true, data: merged, tokensUsed: totalTokens };
 }

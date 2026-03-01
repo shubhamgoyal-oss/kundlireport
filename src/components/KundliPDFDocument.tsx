@@ -65,6 +65,9 @@ Font.register({
   ],
 });
 
+// Sri Mandir logo (200×200 PNG, base64-encoded for reliable @react-pdf/renderer rendering)
+const SRI_MANDIR_LOGO_URI = '/images/sri-mandir-logo.png';
+
 // Warm orange/saffron color palette — matches Sri Mandir branding (NO purple)
 const P = {
   pageBg: '#FDF8F0',       // warm cream page background
@@ -627,6 +630,95 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Scriptural Derivation': 'शास्त्रीय उत्पत्ति',
     'Physiological Benefits': 'शारीरिक लाभ',
     'Vastu Explanation': 'वास्तु व्याख्या',
+    // ── InfoRow labels — Career section ────────────────────────────────────────
+    'Ideal Work Environment': 'आदर्श कार्य वातावरण',
+    'Is Switch Due Now?': 'क्या अभी बदलाव उचित है?',
+    'Next Switch Window': 'अगला परिवर्तन समय',
+    // ── InfoRow labels — Marriage section ────────────────────────────────────
+    'Love Nature': 'प्रेम स्वभाव',
+    'Marriage Prospects': 'विवाह संभावनाएं',
+    'Attraction Style': 'आकर्षण शैली',
+    'Physical Traits': 'शारीरिक विशेषताएं',
+    'Personality': 'व्यक्तित्व',
+    'Background': 'पृष्ठभूमि',
+    'Meeting': 'मिलन परिस्थिति',
+    'Applicability': 'लागू होने की स्थिति',
+    'Ideal Age Range': 'आदर्श आयु सीमा',
+    'Ideal Time for Young Natives': 'युवा जातकों के लिए आदर्श समय',
+    'Current Prospects': 'वर्तमान संभावनाएं',
+    'Status Assumption': 'स्थिति अनुमान',
+    // ── InfoRow labels — Birth details ──────────────────────────────────────
+    'Name': 'नाम',
+    'Sex': 'लिंग',
+    'Day': 'दिन',
+    'City': 'शहर',
+    'State': 'राज्य',
+    'Country': 'देश',
+    'Latitude': 'अक्षांश',
+    'Longitude': 'देशांतर',
+    'Timezone': 'समय क्षेत्र',
+    'Male': 'पुरुष',
+    'Female': 'स्त्री',
+    // ── InfoRow labels — Three Pillars ──────────────────────────────────────
+    'Element': 'तत्व',
+    // ── InfoRow labels — Dasha section ──────────────────────────────────────
+    'Starting Dasha': 'प्रारंभिक दशा',
+    'Balance at Birth': 'जन्म पर शेष',
+    // ── InfoRow labels — Spiritual section ──────────────────────────────────
+    'Dharma Path': 'धर्म मार्ग',
+    'Liberation Path': 'मोक्ष मार्ग',
+    'Style': 'शैली',
+    // ── InfoRow labels — Remedies section ────────────────────────────────────
+    'Weight': 'भार',
+    'Metal': 'धातु',
+    'Finger': 'उंगली',
+    'Day to Wear': 'धारण का दिन',
+    'Japa Count': 'जप संख्या',
+    'Pronunciation': 'उच्चारण',
+    'Placement': 'स्थापना',
+    'Frequency': 'आवृत्ति',
+    'Worship Method': 'पूजन विधि',
+    'Mantra': 'मंत्र',
+    'Temple Visit': 'मंदिर दर्शन',
+    'Favorable Colors': 'शुभ रंग',
+    'Colors to Avoid': 'अशुभ रंग',
+    'Favorable Directions': 'शुभ दिशाएं',
+    'Directions to Avoid': 'अशुभ दिशाएं',
+    'Sleep Direction': 'शयन दिशा',
+    'Work Direction': 'कार्य दिशा',
+    // ── InfoRow labels — Numerology ─────────────────────────────────────────
+    'Lucky Numbers': 'शुभ अंक',
+    'Unlucky Numbers': 'अशुभ अंक',
+    'Lucky Days': 'शुभ दिन',
+    'Lucky Colors': 'शुभ रंग',
+    // ── InfoRow labels — Raja Yogas ─────────────────────────────────────────
+    'Activation Period': 'सक्रियता काल',
+    'Activation': 'सक्रियता',
+    'Strength': 'शक्ति',
+    'Peak Period': 'चरम काल',
+    'Recommended Gemstones': 'अनुशंसित रत्न',
+    // ── InfoRow labels — Sade Sati ──────────────────────────────────────────
+    'Approximate Start': 'अनुमानित प्रारंभ',
+    // ── InfoRow labels — Health ─────────────────────────────────────────────
+    'Age Group Context': 'आयु वर्ग संदर्भ',
+    // ── InfoRow labels — misc ───────────────────────────────────────────────
+    'Rahu': 'राहु',
+    'Ketu': 'केतु',
+    'N/A': 'उपलब्ध नहीं',
+    'Career': 'करियर',
+    // ── InfoRow labels — (if available) birth data ──────────────────────────
+    'Ishta (if available)': 'इष्ट (यदि उपलब्ध)',
+    'Sunrise (if available)': 'सूर्योदय (यदि उपलब्ध)',
+    'Sunset (if available)': 'सूर्यास्त (यदि उपलब्ध)',
+    'Local Mean Time (if available)': 'स्थानीय माध्य समय (यदि उपलब्ध)',
+    'Sidereal Time (if available)': 'नाक्षत्र समय (यदि उपलब्ध)',
+    'Tithi Ending Time (if available)': 'तिथि समाप्ति समय (यदि उपलब्ध)',
+    'Nakshatra Ending Time (if available)': 'नक्षत्र समाप्ति समय (यदि उपलब्ध)',
+    // ── Thank You page ────────────────────────────────────────────────────────
+    'THANK YOU': 'धन्यवाद',
+    'Thank you for choosing Sri Mandir for your Kundli report. We hope this personalized Vedic astrology blueprint brings you clarity, guidance, and confidence on your life journey.': 'श्री मंदिर से कुंडली रिपोर्ट चुनने के लिए धन्यवाद। हमें आशा है कि यह वैदिक ज्योतिष रूपरेखा आपको जीवन यात्रा में स्पष्टता, मार्गदर्शन और आत्मविश्वास प्रदान करेगी।',
+    'For personalized consultations with our expert astrologers': 'हमारे विशेषज्ञ ज्योतिषियों से व्यक्तिगत परामर्श के लिए',
+    'May the stars guide your path': 'ग्रह आपके मार्ग को प्रकाशित करें',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
@@ -1019,6 +1111,95 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Overview': 'అవలోకనం',
     'Antardashas': 'అంతర్దశలు',
     'Interpretation': 'వ్యాఖ్యానం',
+    // ── InfoRow labels — Career section ────────────────────────────────────────
+    'Ideal Work Environment': 'ఆదర్శ పని వాతావరణం',
+    'Is Switch Due Now?': 'ఇప్పుడు మార్పు అవసరమా?',
+    'Next Switch Window': 'తదుపరి మార్పు సమయం',
+    // ── InfoRow labels — Marriage section ────────────────────────────────────
+    'Love Nature': 'ప్రేమ స్వభావం',
+    'Marriage Prospects': 'వివాహ అవకాశాలు',
+    'Attraction Style': 'ఆకర్షణ శైలి',
+    'Physical Traits': 'భౌతిక లక్షణాలు',
+    'Personality': 'వ్యక్తిత్వం',
+    'Background': 'నేపథ్యం',
+    'Meeting': 'కలయిక పరిస్థితి',
+    'Applicability': 'వర్తింపు',
+    'Ideal Age Range': 'ఆదర్శ వయస్సు పరిధి',
+    'Ideal Time for Young Natives': 'యువ జాతకులకు ఆదర్శ సమయం',
+    'Current Prospects': 'ప్రస్తుత అవకాశాలు',
+    'Status Assumption': 'స్థితి అంచనా',
+    // ── InfoRow labels — Birth details ──────────────────────────────────────
+    'Name': 'పేరు',
+    'Sex': 'లింగం',
+    'Day': 'రోజు',
+    'City': 'నగరం',
+    'State': 'రాష్ట్రం',
+    'Country': 'దేశం',
+    'Latitude': 'అక్షాంశం',
+    'Longitude': 'రేఖాంశం',
+    'Timezone': 'సమయ మండలం',
+    'Male': 'పురుషుడు',
+    'Female': 'స్త్రీ',
+    // ── InfoRow labels — Three Pillars ──────────────────────────────────────
+    'Element': 'తత్వం',
+    // ── InfoRow labels — Dasha section ──────────────────────────────────────
+    'Starting Dasha': 'ప్రారంభ దశ',
+    'Balance at Birth': 'జననంలో మిగిలిన',
+    // ── InfoRow labels — Spiritual section ──────────────────────────────────
+    'Dharma Path': 'ధర్మ మార్గం',
+    'Liberation Path': 'మోక్ష మార్గం',
+    'Style': 'శైలి',
+    // ── InfoRow labels — Remedies section ────────────────────────────────────
+    'Weight': 'బరువు',
+    'Metal': 'లోహం',
+    'Finger': 'వేలు',
+    'Day to Wear': 'ధరించే రోజు',
+    'Japa Count': 'జప సంఖ్య',
+    'Pronunciation': 'ఉచ్చారణ',
+    'Placement': 'ప్రతిష్ఠాపన',
+    'Frequency': 'తరచుదనం',
+    'Worship Method': 'పూజా విధానం',
+    'Mantra': 'మంత్రం',
+    'Temple Visit': 'దేవాలయ దర్శనం',
+    'Favorable Colors': 'శుభ రంగులు',
+    'Colors to Avoid': 'అశుభ రంగులు',
+    'Favorable Directions': 'శుభ దిశలు',
+    'Directions to Avoid': 'అశుభ దిశలు',
+    'Sleep Direction': 'నిద్ర దిశ',
+    'Work Direction': 'పని దిశ',
+    // ── InfoRow labels — Numerology ─────────────────────────────────────────
+    'Lucky Numbers': 'శుభ సంఖ్యలు',
+    'Unlucky Numbers': 'అశుభ సంఖ్యలు',
+    'Lucky Days': 'శుభ రోజులు',
+    'Lucky Colors': 'శుభ రంగులు',
+    // ── InfoRow labels — Raja Yogas ─────────────────────────────────────────
+    'Activation Period': 'సక్రియ కాలం',
+    'Activation': 'సక్రియం',
+    'Strength': 'బలం',
+    'Peak Period': 'శిఖర కాలం',
+    'Recommended Gemstones': 'సిఫార్సు చేసిన రత్నాలు',
+    // ── InfoRow labels — Sade Sati ──────────────────────────────────────────
+    'Approximate Start': 'సుమారు ప్రారంభం',
+    // ── InfoRow labels — Health ─────────────────────────────────────────────
+    'Age Group Context': 'వయస్సు సందర్భం',
+    // ── InfoRow labels — misc ───────────────────────────────────────────────
+    'Rahu': 'రాహు',
+    'Ketu': 'కేతు',
+    'N/A': 'అందుబాటులో లేదు',
+    'Career': 'వృత్తి',
+    // ── InfoRow labels — (if available) birth data ──────────────────────────
+    'Ishta (if available)': 'ఇష్ట (లభ్యమైతే)',
+    'Sunrise (if available)': 'సూర్యోదయం (లభ్యమైతే)',
+    'Sunset (if available)': 'సూర్యాస్తమయం (లభ్యమైతే)',
+    'Local Mean Time (if available)': 'స్థానిక సగటు సమయం (లభ్యమైతే)',
+    'Sidereal Time (if available)': 'నక్షత్ర సమయం (లభ్యమైతే)',
+    'Tithi Ending Time (if available)': 'తిథి ముగింపు సమయం (లభ్యమైతే)',
+    'Nakshatra Ending Time (if available)': 'నక్షత్ర ముగింపు సమయం (లభ్యమైతే)',
+    // ── Thank You page ────────────────────────────────────────────────────────
+    'THANK YOU': 'ధన్యవాదాలు',
+    'Thank you for choosing Sri Mandir for your Kundli report. We hope this personalized Vedic astrology blueprint brings you clarity, guidance, and confidence on your life journey.': 'మీ కుండ్లీ రిపోర్ట్ కోసం శ్రీ మందిర్‌ను ఎంచుకున్నందుకు ధన్యవాదాలు. ఈ వ్యక్తిగత వైదిక జ్యోతిష్య రూపరేఖ మీ జీవన ప్రయాణంలో స్పష్టత, మార్గదర్శనం మరియు ఆత్మవిశ్వాసాన్ని అందిస్తుందని ఆశిస్తున్నాము.',
+    'For personalized consultations with our expert astrologers': 'మా నిపుణ జ్యోతిష్యులతో వ్యక్తిగత సంప్రదింపుల కోసం',
+    'May the stars guide your path': 'నక్షత్రాలు మీ మార్గాన్ని ప్రకాశింపజేయాలని కోరుకుంటున్నాము',
   },
 };
 
@@ -1302,6 +1483,69 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
   },
 };
 
+const DISCLAIMER_CONTENT: Record<'en' | 'hi' | 'te', { title: string; paragraphs: string[] }> = {
+  en: {
+    title: 'Disclaimer',
+    paragraphs: [
+      'This report is created using principles of Vedic astrology and is meant to offer guidance and self-understanding, not fixed predictions. Astrology is a rich and interpretive science, and insights may vary across astrologers, systems, and traditions.',
+      'The purpose of this report is to help you gain clarity and awareness, so you can make more informed choices in life. It is not a substitute for medical, legal, financial, or professional advice, and important decisions should always be made with the support of qualified experts.',
+      'Any remedies or spiritual suggestions mentioned — such as mantras, practices, or donations — are completely optional. Please follow only what feels right to you. Their impact can differ from person to person and depends on belief, intention, and consistent practice. No outcomes are guaranteed.',
+      'Your life path is shaped by your own choices. This report is a tool for reflection and growth, and the author is not responsible for actions taken or results experienced based on its content. The content of this report may be updated or refined over time.',
+      'Read this report with an open heart and a grounded mind — the universe may guide you, but you always remain in control of your journey.',
+    ],
+  },
+  hi: {
+    title: 'अस्वीकरण',
+    paragraphs: [
+      'यह रिपोर्ट वैदिक ज्योतिष के सिद्धांतों के आधार पर तैयार की गई है और इसका उद्देश्य मार्गदर्शन एवं आत्म-जागरूकता प्रदान करना है, न कि निश्चित भविष्यवाणियाँ करना। ज्योतिष एक समृद्ध एवं व्याख्यात्मक विद्या है, और विभिन्न ज्योतिषियों, पद्धतियों व परंपराओं के अनुसार व्याख्या भिन्न हो सकती है।',
+      'इस रिपोर्ट का उद्देश्य आपको स्पष्टता और जागरूकता प्रदान करना है, ताकि आप जीवन में अधिक सूचित निर्णय ले सकें। यह चिकित्सा, कानूनी, वित्तीय या किसी अन्य पेशेवर सलाह का विकल्प नहीं है, और महत्वपूर्ण निर्णय हमेशा योग्य विशेषज्ञों के परामर्श से लिए जाने चाहिए।',
+      'रिपोर्ट में उल्लिखित कोई भी उपाय या आध्यात्मिक सुझाव — जैसे मंत्र, साधना या दान — पूर्णतः वैकल्पिक हैं। कृपया वही अपनाएँ जो आपको उचित लगे। इनका प्रभाव व्यक्ति-व्यक्ति पर भिन्न हो सकता है और यह विश्वास, संकल्प एवं निरंतर अभ्यास पर निर्भर करता है। किसी भी परिणाम की गारंटी नहीं दी जाती।',
+      'आपके जीवन की दिशा आपके अपने निर्णयों से तय होती है। यह रिपोर्ट आत्मचिंतन और विकास का एक साधन है, और इसकी विषय-वस्तु के आधार पर किए गए कार्यों या प्राप्त परिणामों के लिए लेखक उत्तरदायी नहीं है। इस रिपोर्ट की सामग्री को समय-समय पर अद्यतन या परिष्कृत किया जा सकता है।',
+      'इस रिपोर्ट को खुले हृदय और स्थिर मन से पढ़ें — ब्रह्मांड आपका मार्गदर्शन कर सकता है, लेकिन आपकी यात्रा पर नियंत्रण सदैव आपका ही रहता है।',
+    ],
+  },
+  te: {
+    title: 'నిరాకరణ',
+    paragraphs: [
+      'ఈ నివేదిక వైదిక జ్యోతిష్యం యొక్క సూత్రాల ఆధారంగా రూపొందించబడింది మరియు మార్గదర్శనం మరియు ఆత్మ-అవగాహన అందించడానికి ఉద్దేశించబడింది, నిశ్చిత అంచనాలు కాదు. జ్యోతిష్యం ఒక సమృద్ధమైన మరియు వ్యాఖ్యానాత్మక శాస్త్రం, మరియు జ్యోతిష్యులు, పద్ధతులు మరియు సంప్రదాయాలను బట్టి అంతర్దృష్టులు మారవచ్చు.',
+      'ఈ నివేదిక యొక్క ఉద్దేశ్యం మీకు స్పష్టత మరియు అవగాహన కల్పించడం, తద్వారా మీరు జీవితంలో మరింత సమాచారం ఆధారంగా నిర్ణయాలు తీసుకోగలరు. ఇది వైద్య, న్యాయ, ఆర్థిక లేదా వృత్తిపరమైన సలహాకు ప్రత్యామ్నాయం కాదు, మరియు ముఖ్యమైన నిర్ణయాలు ఎల్లప్పుడూ అర్హత గల నిపుణుల మద్దతుతో తీసుకోవాలి.',
+      'పేర్కొన్న ఏదైనా ఆధ్యాత్మిక సూచనలు — మంత్రాలు, సాధనలు లేదా దానాలు — పూర్తిగా ఐచ్ఛికం. దయచేసి మీకు సరిగ్గా అనిపించేదే అనుసరించండి. వాటి ప్రభావం వ్యక్తికి వ్యక్తికి భిన్నంగా ఉంటుంది మరియు విశ్వాసం, సంకల్పం మరియు స్థిరమైన సాధనపై ఆధారపడి ఉంటుంది. ఎటువంటి ఫలితాలు హామీ ఇవ్వబడవు.',
+      'మీ జీవిత మార్గం మీ స్వంత ఎంపికల ద్వారా రూపొందుతుంది. ఈ నివేదిక ఆత్మపరిశీలన మరియు ఎదుగుదల కోసం ఒక సాధనం, మరియు దాని కంటెంట్ ఆధారంగా తీసుకున్న చర్యలు లేదా అనుభవించిన ఫలితాలకు రచయిత బాధ్యత వహించరు. ఈ నివేదిక యొక్క కంటెంట్ కాలక్రమేణా నవీకరించబడవచ్చు.',
+      'ఈ నివేదికను తెరిచిన హృదయంతో మరియు స్థిరమైన మనసుతో చదవండి — విశ్వం మీకు మార్గదర్శనం చేయవచ్చు, కానీ మీ ప్రయాణంపై నియంత్రణ ఎల్లప్పుడూ మీదే.',
+    ],
+  },
+};
+
+const GUIDANCE_CONTENT: Record<'en' | 'hi' | 'te', { title: string; paragraphs: string[] }> = {
+  en: {
+    title: 'Guidance for Your Journey Ahead',
+    paragraphs: [
+      'This Kundli report brings together insights from Vedic astrology to help you better understand the influences shaping your life. By carefully exploring planetary patterns, karmic tendencies, and key life themes, the report offers perspective to support thoughtful and informed choices.',
+      'At Sri Mandir, we believe guidance should be followed by meaningful support. Through our trusted network of temples and experienced astrologers, we provide access to authentic Vedic remedies such as energized Rudrakshas, gemstones, yantras, and detailed guided spiritual services — rooted in tradition and offered with care.',
+      'If you feel uncertain or would like deeper clarity, you can connect with our certified expert astrologers through online consultations, tailored to your chart and current life phase.',
+      'Your journey does not end with this report — it continues with awareness, faith, and conscious action.',
+    ],
+  },
+  hi: {
+    title: 'आपकी आगे की यात्रा के लिए मार्गदर्शन',
+    paragraphs: [
+      'यह कुंडली रिपोर्ट वैदिक ज्योतिष की अंतर्दृष्टि को एक साथ लाती है ताकि आप अपने जीवन को प्रभावित करने वाली शक्तियों को बेहतर समझ सकें। ग्रहों की स्थिति, कर्म प्रवृत्तियों और प्रमुख जीवन विषयों का सावधानीपूर्वक विश्लेषण करके, यह रिपोर्ट विचारशील और सूचित निर्णय लेने में सहायता प्रदान करती है।',
+      'श्री मंदिर में हम मानते हैं कि मार्गदर्शन के बाद सार्थक सहयोग होना चाहिए। हमारे विश्वसनीय मंदिरों के नेटवर्क और अनुभवी ज्योतिषियों के माध्यम से, हम प्रामाणिक वैदिक उपाय प्रदान करते हैं — जैसे ऊर्जायुक्त रुद्राक्ष, रत्न, यंत्र और विस्तृत आध्यात्मिक सेवाएँ — जो परंपरा में निहित हैं और श्रद्धा के साथ प्रस्तुत की जाती हैं।',
+      'यदि आप अनिश्चित महसूस करते हैं या अधिक स्पष्टता चाहते हैं, तो आप हमारे प्रमाणित विशेषज्ञ ज्योतिषियों से ऑनलाइन परामर्श के माध्यम से जुड़ सकते हैं, जो आपकी कुंडली और वर्तमान जीवन चरण के अनुसार अनुकूलित होता है।',
+      'आपकी यात्रा इस रिपोर्ट के साथ समाप्त नहीं होती — यह जागरूकता, श्रद्धा और सचेत कर्म के साथ आगे बढ़ती रहती है।',
+    ],
+  },
+  te: {
+    title: 'మీ ముందున్న ప్రయాణానికి మార్గదర్శనం',
+    paragraphs: [
+      'ఈ కుండలి నివేదిక మీ జీవితాన్ని ప్రభావితం చేస్తున్న శక్తులను బాగా అర్థం చేసుకోవడానికి వైదిక జ్యోతిష్యం నుండి అంతర్దృష్టులను ఒకచోట చేర్చింది. గ్రహ స్థితులు, కర్మ ప్రవృత్తులు మరియు ముఖ్యమైన జీవిత అంశాలను జాగ్రత్తగా విశ్లేషించడం ద్వారా, ఆలోచనాత్మక మరియు సమాచారంతో కూడిన నిర్ణయాలకు మద్దతుగా ఈ నివేదిక దృక్పథాన్ని అందిస్తుంది.',
+      'శ్రీ మందిర్‌లో, మార్గదర్శనం తర్వాత అర్థవంతమైన మద్దతు ఉండాలని మేము విశ్వసిస్తాము. మా విశ్వసనీయ దేవాలయాల నెట్‌వర్క్ మరియు అనుభవజ్ఞులైన జ్యోతిష్యుల ద్వారా, శక్తివంతమైన రుద్రాక్షలు, రత్నాలు, యంత్రాలు మరియు వివరమైన ఆధ్యాత్మిక సేవలు వంటి ప్రామాణిక వైదిక పరిహారాలను మేము అందిస్తాము — సంప్రదాయంలో పాతుకుపోయి, శ్రద్ధతో అందించబడతాయి.',
+      'మీరు అనిశ్చితంగా అనిపించినా లేదా లోతైన స్పష్టత కోరుకుంటున్నా, మీ జాతకం మరియు ప్రస్తుత జీవిత దశకు అనుగుణంగా రూపొందించబడిన ఆన్‌లైన్ సంప్రదింపుల ద్వారా మా ప్రమాణీకృత నిపుణ జ్యోతిష్యులతో మీరు కనెక్ట్ అవ్వవచ్చు.',
+      'మీ ప్రయాణం ఈ నివేదికతో ముగియదు — అది అవగాహన, విశ్వాసం మరియు చైతన్యవంతమైన చర్యతో కొనసాగుతుంది.',
+    ],
+  },
+};
+
 const applyLanguageTypography = (language: string | null | undefined) => {
   const code = String(language || 'en').toLowerCase();
   if (code.startsWith('hi')) {
@@ -1502,7 +1746,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 841.89,
     fontFamily: 'DejaVuSans',
-    backgroundColor: '#160603',
+    backgroundColor: '#5c1d0c',
   },
   coverBackgroundLayer: {
     position: 'absolute',
@@ -1591,19 +1835,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  coverBrandBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#fde047',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  coverBrandDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#dc2626',
+  coverBrandLogo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
   },
   coverBrandText: {
     fontSize: 24,
@@ -1631,13 +1866,33 @@ const styles = StyleSheet.create({
   coverIdentityCard: {
     marginTop: 12,
     width: 430,
-    backgroundColor: 'rgba(30, 12, 7, 0.82)',
+    backgroundColor: 'rgba(92, 29, 12, 0.75)',
     borderWidth: 1,
-    borderColor: 'rgba(251, 191, 36, 0.52)',
+    borderColor: 'rgba(249, 115, 22, 0.50)',
     borderRadius: 14,
     paddingTop: 14,
     paddingBottom: 12,
     paddingHorizontal: 18,
+  },
+  coverInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  coverInfoLabel: {
+    width: 140,
+    fontSize: 8.4,
+    color: '#f59e0b',
+    textTransform: 'uppercase',
+    letterSpacing: 1.1,
+    textAlign: 'right',
+    paddingRight: 10,
+  },
+  coverInfoValue: {
+    flex: 1,
+    fontSize: 10.2,
+    color: '#fde68a',
+    textAlign: 'left',
   },
   coverFooterWrap: {
     marginTop: 28,
@@ -3026,68 +3281,96 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       {/* Cover Page */}
       <Page size="A4" style={[styles.coverPage, { fontFamily: ACTIVE_PDF_FONT_FAMILY }]}>
         <View style={styles.coverBackgroundLayer}>
-          {ACTIVE_PDF_LANGUAGE === 'en' ? (
           <Svg width={595} height={842}>
           <Defs>
-            <RadialGradient id="coverCore" cx="50%" cy="62%" r="60%">
-              <Stop offset="0%" stopColor="#f59e0b" stopOpacity={0.75} />
-              <Stop offset="48%" stopColor="#ea580c" stopOpacity={0.22} />
-              <Stop offset="100%" stopColor="#160603" stopOpacity={0} />
+            {/* Central saffron glow — brand orange radiating from center */}
+            <RadialGradient id="cvBrandGlow" cx="50%" cy="50%" r="60%">
+              <Stop offset="0%" stopColor="#f97316" stopOpacity={0.50} />
+              <Stop offset="30%" stopColor="#ea580c" stopOpacity={0.35} />
+              <Stop offset="60%" stopColor="#c2410c" stopOpacity={0.18} />
+              <Stop offset="100%" stopColor="#7c2d12" stopOpacity={0} />
             </RadialGradient>
-            <LinearGradient id="coverVignette" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor="#240b05" stopOpacity={0.96} />
-              <Stop offset="55%" stopColor="#1b0804" stopOpacity={0.92} />
-              <Stop offset="100%" stopColor="#110401" stopOpacity={0.98} />
+            {/* Top-to-bottom: lighter saffron top → deep burnt orange bottom */}
+            <LinearGradient id="cvBrandGrad" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor="#9a3412" stopOpacity={0.65} />
+              <Stop offset="45%" stopColor="#7c2d12" stopOpacity={0.50} />
+              <Stop offset="100%" stopColor="#5c1d0c" stopOpacity={0.75} />
             </LinearGradient>
+            {/* Soft top highlight — warm saffron wash at the top */}
+            <RadialGradient id="cvTopWash" cx="50%" cy="5%" r="50%">
+              <Stop offset="0%" stopColor="#f97316" stopOpacity={0.22} />
+              <Stop offset="100%" stopColor="#7c2d12" stopOpacity={0} />
+            </RadialGradient>
           </Defs>
 
-          <Rect x={0} y={0} width={595} height={842} fill="#160603" />
-          <Rect x={0} y={0} width={595} height={842} fill="url(#coverVignette)" />
-          <Circle cx={297} cy={500} r={250} fill="url(#coverCore)" />
+          {/* Base deep saffron-brown */}
+          <Rect x={0} y={0} width={595} height={842} fill="#5c1d0c" />
+          <Rect x={0} y={0} width={595} height={842} fill="url(#cvBrandGrad)" />
+          <Rect x={0} y={0} width={595} height={842} fill="url(#cvBrandGlow)" />
+          <Rect x={0} y={0} width={595} height={842} fill="url(#cvTopWash)" />
 
-          {/* star field */}
-          <Circle cx={78} cy={86} r={1.1} fill="#fcd34d" opacity={0.8} />
-          <Circle cx={132} cy={96} r={0.8} fill="#fde68a" opacity={0.7} />
-          <Circle cx={220} cy={70} r={1.2} fill="#fbbf24" opacity={0.9} />
-          <Circle cx={305} cy={120} r={1.0} fill="#fcd34d" opacity={0.8} />
-          <Circle cx={402} cy={92} r={0.9} fill="#fde68a" opacity={0.7} />
-          <Circle cx={515} cy={84} r={1.0} fill="#f59e0b" opacity={0.85} />
-          <Circle cx={540} cy={210} r={0.8} fill="#fcd34d" opacity={0.65} />
-          <Circle cx={68} cy={230} r={0.9} fill="#fde68a" opacity={0.7} />
-          <Circle cx={90} cy={332} r={0.7} fill="#fbbf24" opacity={0.72} />
-          <Circle cx={498} cy={334} r={1.1} fill="#fcd34d" opacity={0.8} />
+          {/* Brand orange top border — like the orange page borders */}
+          <Rect x={0} y={0} width={595} height={4} fill="#f97316" opacity={0.85} />
+          <Rect x={0} y={838} width={595} height={4} fill="#f97316" opacity={0.85} />
+          <Rect x={0} y={0} width={4} height={842} fill="#f97316" opacity={0.45} />
+          <Rect x={591} y={0} width={4} height={842} fill="#f97316" opacity={0.45} />
 
-          {/* wheel */}
-          <Circle cx={297} cy={455} r={188} fill="none" stroke="#f59e0b" strokeWidth={2} opacity={0.62} />
-          <Circle cx={297} cy={455} r={150} fill="none" stroke="#fbbf24" strokeWidth={1.6} opacity={0.58} />
-          <Circle cx={297} cy={455} r={114} fill="none" stroke="#fcd34d" strokeWidth={1.2} opacity={0.55} />
+          {/* Inner frame line — gold */}
+          <Rect x={18} y={18} width={559} height={1} fill="#fbbf24" opacity={0.35} />
+          <Rect x={18} y={823} width={559} height={1} fill="#fbbf24" opacity={0.35} />
+          <Rect x={18} y={18} width={1} height={806} fill="#fbbf24" opacity={0.25} />
+          <Rect x={576} y={18} width={1} height={806} fill="#fbbf24" opacity={0.25} />
+
+          {/* Corner ornaments — brand orange dots */}
+          <Circle cx={18} cy={18} r={3} fill="#f97316" opacity={0.7} />
+          <Circle cx={577} cy={18} r={3} fill="#f97316" opacity={0.7} />
+          <Circle cx={18} cy={824} r={3} fill="#f97316" opacity={0.7} />
+          <Circle cx={577} cy={824} r={3} fill="#f97316" opacity={0.7} />
+
+          {/* Zodiac wheel — subtle concentric rings in brand palette */}
+          <Circle cx={297} cy={480} r={210} fill="none" stroke="#f97316" strokeWidth={0.7} opacity={0.12} />
+          <Circle cx={297} cy={480} r={175} fill="none" stroke="#ea580c" strokeWidth={1.2} opacity={0.16} />
+          <Circle cx={297} cy={480} r={140} fill="none" stroke="#f97316" strokeWidth={0.9} opacity={0.14} />
+          <Circle cx={297} cy={480} r={105} fill="none" stroke="#fbbf24" strokeWidth={0.7} opacity={0.12} />
+
+          {/* 12 zodiac rays */}
           {Array.from({ length: 12 }).map((_, idx) => {
             const angle = (idx * 30 - 90) * Math.PI / 180;
-            const x1 = 297 + Math.cos(angle) * 114;
-            const y1 = 455 + Math.sin(angle) * 114;
-            const x2 = 297 + Math.cos(angle) * 188;
-            const y2 = 455 + Math.sin(angle) * 188;
-            return <Line key={`wheel-ray-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f59e0b" strokeWidth={1.1} opacity={0.52} />;
+            const x1 = 297 + Math.cos(angle) * 105;
+            const y1 = 480 + Math.sin(angle) * 105;
+            const x2 = 297 + Math.cos(angle) * 210;
+            const y2 = 480 + Math.sin(angle) * 210;
+            return <Line key={`cv-ray-${idx}`} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#f97316" strokeWidth={0.6} opacity={0.12} />;
           })}
 
-          {/* silhouette */}
-          <Circle cx={297} cy={460} r={58} fill="#2a0d07" opacity={0.95} />
-          <Ellipse cx={297} cy={598} rx={108} ry={150} fill="#2a0d07" opacity={0.95} />
-          <Path d="M205 565 L295 630 L242 667 L172 610 Z" fill="#2a0d07" opacity={0.96} />
-          <Path d="M389 565 L299 630 L352 667 L422 610 Z" fill="#2a0d07" opacity={0.96} />
-          <Path d="M286 612 L308 612 L323 690 L271 690 Z" fill="#2a0d07" opacity={0.98} />
-          <Circle cx={297} cy={602} r={88} fill="none" stroke="#fbbf24" strokeWidth={1.2} opacity={0.45} />
-          <Circle cx={297} cy={602} r={56} fill="none" stroke="#fcd34d" strokeWidth={1.1} opacity={0.55} />
+          {/* Zodiac marker dots on middle ring */}
+          {Array.from({ length: 12 }).map((_, idx) => {
+            const angle = (idx * 30 - 75) * Math.PI / 180;
+            const cx = 297 + Math.cos(angle) * 192;
+            const cy = 480 + Math.sin(angle) * 192;
+            return <Circle key={`cv-dot-${idx}`} cx={cx} cy={cy} r={2.5} fill="#f97316" opacity={0.30} />;
+          })}
+
+          {/* Star field — gold and orange dots */}
+          <Circle cx={62} cy={68} r={1.4} fill="#fbbf24" opacity={0.65} />
+          <Circle cx={145} cy={42} r={1.0} fill="#fcd34d" opacity={0.50} />
+          <Circle cx={230} cy={58} r={1.5} fill="#f97316" opacity={0.55} />
+          <Circle cx={365} cy={45} r={1.2} fill="#fbbf24" opacity={0.55} />
+          <Circle cx={460} cy={70} r={1.1} fill="#fcd34d" opacity={0.45} />
+          <Circle cx={530} cy={55} r={1.3} fill="#f97316" opacity={0.60} />
+          <Circle cx={50} cy={160} r={0.9} fill="#fcd34d" opacity={0.40} />
+          <Circle cx={545} cy={175} r={1.0} fill="#fbbf24" opacity={0.45} />
+          <Circle cx={85} cy={400} r={0.8} fill="#f97316" opacity={0.35} />
+          <Circle cx={510} cy={380} r={0.9} fill="#fcd34d" opacity={0.40} />
+          <Circle cx={55} cy={650} r={1.0} fill="#fbbf24" opacity={0.40} />
+          <Circle cx={540} cy={670} r={0.8} fill="#f97316" opacity={0.35} />
+          <Circle cx={100} cy={770} r={1.1} fill="#fbbf24" opacity={0.45} />
+          <Circle cx={495} cy={760} r={0.9} fill="#fcd34d" opacity={0.40} />
           </Svg>
-          ) : (
-            <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#160603' }} />
-          )}
         </View>
 
         <View style={styles.coverBrandRow}>
-          <View style={styles.coverBrandBadge}>
-            <View style={styles.coverBrandDot} />
-          </View>
+          <Image src={SRI_MANDIR_LOGO_URI} style={styles.coverBrandLogo} />
           <Text style={[styles.coverBrandText, { marginLeft: 10 }]}>Sri Mandir</Text>
         </View>
 
@@ -3105,12 +3388,18 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
         <View style={styles.coverIdentityCard}>
           <Text style={styles.coverName}>{report.birthDetails.name}</Text>
-          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Date of Birth')}</Text>
-          <Text style={styles.coverDetails}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
-          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Time of Birth')}</Text>
-          <Text style={styles.coverDetails}>{report.birthDetails.timeOfBirth}</Text>
-          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Place of Birth')}</Text>
-          <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{placeDetails.city || report.birthDetails.placeOfBirth || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')}</Text>
+          <View style={styles.coverInfoRow}>
+            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Date of Birth')}</Text>
+            <Text style={styles.coverInfoValue}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
+          </View>
+          <View style={styles.coverInfoRow}>
+            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Time of Birth')}</Text>
+            <Text style={styles.coverInfoValue}>{report.birthDetails.timeOfBirth}</Text>
+          </View>
+          <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
+            <Text style={styles.coverInfoLabel}>{localizePdfUiText('Place of Birth')}</Text>
+            <Text style={styles.coverInfoValue}>{placeDetails.city || report.birthDetails.placeOfBirth || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')}</Text>
+          </View>
         </View>
 
         <View style={styles.coverFooterWrap}>
@@ -3125,6 +3414,172 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </Text>
         </View>
       </Page>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          DISCLAIMER PAGE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const disc = DISCLAIMER_CONTENT[ACTIVE_PDF_LANGUAGE] || DISCLAIMER_CONTENT.en;
+        return (
+      <Page size="A4" style={[styles.page, { fontFamily: ACTIVE_PDF_FONT_FAMILY, fontSize: ACTIVE_PDF_BODY_FONT_SIZE, lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT }]}>
+        <View style={styles.pageWhitePanel} fixed />
+        <View style={styles.fixedHeader} fixed>
+          <Text style={styles.fixedHeaderTitle}>{localizePdfUiText('Sri Mandir Kundli Report')}</Text>
+          <Text style={styles.fixedHeaderSection}>{disc.title}</Text>
+        </View>
+        <SriMandirFooter />
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+
+        {/* Shield icon + heading */}
+        <View style={{ alignItems: 'center', marginTop: 12, marginBottom: 18 }}>
+          <Svg width={44} height={44} viewBox="0 0 24 24">
+            <Path
+              d="M12 2L3 7v5c0 5.25 3.83 10.16 9 11.33C17.17 22.16 21 17.25 21 12V7l-9-5z"
+              fill="none"
+              stroke={SRIMANDIR_ORANGE}
+              strokeWidth={1.5}
+            />
+            <Path
+              d="M12 2L3 7v5c0 5.25 3.83 10.16 9 11.33C17.17 22.16 21 17.25 21 12V7l-9-5z"
+              fill={SRIMANDIR_ORANGE}
+              opacity={0.08}
+            />
+            <Path
+              d="M10 12l2 2 4-4"
+              fill="none"
+              stroke={SRIMANDIR_ORANGE}
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: P.primary,
+            marginTop: 10,
+            letterSpacing: 0.5,
+            textAlign: 'center',
+          }}>
+            {disc.title}
+          </Text>
+          <View style={{ width: 50, height: 2, backgroundColor: SRIMANDIR_ORANGE, marginTop: 8, opacity: 0.5, borderRadius: 1 }} />
+        </View>
+
+        {/* Disclaimer body — styled paragraphs */}
+        <View style={{
+          backgroundColor: P.cardBg,
+          borderWidth: 1,
+          borderColor: P.lightBorder,
+          borderRadius: 8,
+          paddingVertical: 18,
+          paddingHorizontal: 20,
+          marginBottom: 14,
+        }}>
+          {disc.paragraphs.slice(0, -1).map((para, idx) => (
+            <Text key={`disc-p-${idx}`} style={{
+              fontSize: 10,
+              color: P.bodyText,
+              lineHeight: 1.55,
+              marginBottom: 12,
+              textAlign: 'justify',
+            }}>
+              {para}
+            </Text>
+          ))}
+          {/* Last paragraph — closing message, italic + centered */}
+          <Text style={{
+            fontSize: 10,
+            color: P.mutedText,
+            lineHeight: 1.55,
+            fontStyle: 'italic',
+            textAlign: 'center',
+            marginTop: 4,
+            marginBottom: 0,
+          }}>
+            {disc.paragraphs[disc.paragraphs.length - 1]}
+          </Text>
+        </View>
+      </Page>
+        );
+      })()}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          GUIDANCE FOR YOUR JOURNEY AHEAD
+          ═══════════════════════════════════════════════════════════════════════ */}
+      {(() => {
+        const guide = GUIDANCE_CONTENT[ACTIVE_PDF_LANGUAGE] || GUIDANCE_CONTENT.en;
+        return (
+      <Page size="A4" style={[styles.page, { fontFamily: ACTIVE_PDF_FONT_FAMILY, fontSize: ACTIVE_PDF_BODY_FONT_SIZE, lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT }]}>
+        <View style={styles.pageWhitePanel} fixed />
+        <View style={styles.fixedHeader} fixed>
+          <Text style={styles.fixedHeaderTitle}>{localizePdfUiText('Sri Mandir Kundli Report')}</Text>
+        </View>
+        <SriMandirFooter />
+        <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
+
+        {/* Compass/star icon + heading */}
+        <View style={{ alignItems: 'center', marginTop: 12, marginBottom: 18 }}>
+          <Svg width={44} height={44} viewBox="0 0 24 24">
+            <Circle cx={12} cy={12} r={10} fill="none" stroke={SRIMANDIR_ORANGE} strokeWidth={1.3} />
+            <Circle cx={12} cy={12} r={10} fill={SRIMANDIR_ORANGE} opacity={0.06} />
+            {/* 4-pointed star/compass */}
+            <Path d="M12 2 L13.5 10 L12 9 L10.5 10 Z" fill={SRIMANDIR_ORANGE} opacity={0.75} />
+            <Path d="M12 22 L13.5 14 L12 15 L10.5 14 Z" fill={SRIMANDIR_ORANGE} opacity={0.75} />
+            <Path d="M2 12 L10 10.5 L9 12 L10 13.5 Z" fill={SRIMANDIR_ORANGE} opacity={0.75} />
+            <Path d="M22 12 L14 10.5 L15 12 L14 13.5 Z" fill={SRIMANDIR_ORANGE} opacity={0.75} />
+            <Circle cx={12} cy={12} r={2} fill={SRIMANDIR_ORANGE} opacity={0.4} />
+          </Svg>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: P.primary,
+            marginTop: 10,
+            letterSpacing: 0.3,
+            textAlign: 'center',
+          }}>
+            {guide.title}
+          </Text>
+          <View style={{ width: 50, height: 2, backgroundColor: SRIMANDIR_ORANGE, marginTop: 8, opacity: 0.5, borderRadius: 1 }} />
+        </View>
+
+        {/* Guidance body */}
+        <View style={{
+          backgroundColor: P.cardBg,
+          borderWidth: 1,
+          borderColor: P.lightBorder,
+          borderRadius: 8,
+          paddingVertical: 18,
+          paddingHorizontal: 20,
+          marginBottom: 14,
+        }}>
+          {guide.paragraphs.slice(0, -1).map((para, idx) => (
+            <Text key={`guide-p-${idx}`} style={{
+              fontSize: 10,
+              color: P.bodyText,
+              lineHeight: 1.55,
+              marginBottom: 12,
+              textAlign: 'justify',
+            }}>
+              {para}
+            </Text>
+          ))}
+          {/* Last paragraph — closing inspiration, italic + centered */}
+          <Text style={{
+            fontSize: 10,
+            color: P.mutedText,
+            lineHeight: 1.55,
+            fontStyle: 'italic',
+            textAlign: 'center',
+            marginTop: 4,
+            marginBottom: 0,
+          }}>
+            {guide.paragraphs[guide.paragraphs.length - 1]}
+          </Text>
+        </View>
+      </Page>
+        );
+      })()}
 
       {/* Table of Contents Page */}
       <ContentPage sectionName="Table of Contents">
@@ -3550,7 +4005,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   </SubSection>
                 )}
 
-                <View style={styles.grid2}>
+                <View style={styles.grid2} wrap={false}>
                   {house.strengths && house.strengths.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Strengths')}</Text>
@@ -5447,6 +5902,105 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
         </>
       )}
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          THANK YOU / CLOSING PAGE
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <Page size="A4" style={[styles.coverPage, { fontFamily: ACTIVE_PDF_FONT_FAMILY }]}>
+
+        {/* Spacer to push content toward vertical center */}
+        <View style={{ marginTop: 260 }} />
+
+        {/* Decorative line above */}
+        <View style={{ width: 60, height: 2, backgroundColor: '#f59e0b', marginBottom: 28, opacity: 0.7 }} />
+
+        <Text style={{
+          fontSize: 38,
+          fontWeight: 'bold',
+          color: '#ffffff',
+          textAlign: 'center',
+          marginBottom: 8,
+          letterSpacing: 2,
+        }}>
+          {localizePdfUiText('THANK YOU')}
+        </Text>
+
+        {/* Divider ornament */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 30 }}>
+          <View style={{ width: 40, height: 1, backgroundColor: '#fbbf24', opacity: 0.5 }} />
+          <Text style={{ color: '#fbbf24', fontSize: 12, marginHorizontal: 12, opacity: 0.8 }}>✦</Text>
+          <View style={{ width: 40, height: 1, backgroundColor: '#fbbf24', opacity: 0.5 }} />
+        </View>
+
+        <Text style={{
+          fontSize: 11,
+          color: '#fff7ed',
+          textAlign: 'center',
+          lineHeight: 1.6,
+          marginBottom: 36,
+          paddingHorizontal: 60,
+          opacity: 0.9,
+        }}>
+          {localizePdfUiText('Thank you for choosing Sri Mandir for your Kundli report. We hope this personalized Vedic astrology blueprint brings you clarity, guidance, and confidence on your life journey.')}
+        </Text>
+
+        {/* Consultation CTA */}
+        <View style={{
+          backgroundColor: 'rgba(92, 29, 12, 0.70)',
+          borderWidth: 1,
+          borderColor: 'rgba(249, 115, 22, 0.45)',
+          borderRadius: 8,
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          marginBottom: 28,
+          marginHorizontal: 60,
+          alignItems: 'center',
+        }}>
+          <Text style={{ fontSize: 10, color: '#fcd34d', marginBottom: 8, opacity: 0.85 }}>
+            {localizePdfUiText('For personalized consultations with our expert astrologers')}
+          </Text>
+          <Text style={{ fontSize: 13, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
+            {ACTIVE_PDF_LANGUAGE === 'hi'
+              ? 'कॉल या व्हाट्सऐप: 080 711 74417'
+              : ACTIVE_PDF_LANGUAGE === 'te'
+                ? 'కాల్ లేదా వాట్సాప్: 080 711 74417'
+                : 'Call or WhatsApp: 080 711 74417'}
+          </Text>
+        </View>
+
+        {/* Website link */}
+        <Text style={{
+          fontSize: 11,
+          color: '#fbbf24',
+          letterSpacing: 0.8,
+          marginBottom: 6,
+        }}>
+          www.srimandir.com
+        </Text>
+        {/* Blessing */}
+        <Text style={{
+          fontSize: 12,
+          color: '#fbbf24',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          fontStyle: 'italic',
+          opacity: 0.85,
+          letterSpacing: 0.4,
+        }}>
+          {localizePdfUiText('May the stars guide your path')}
+        </Text>
+
+        {/* Footer */}
+        <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>
+          <Text style={styles.dividerFooter}>
+            {ACTIVE_PDF_LANGUAGE === 'hi'
+              ? 'श्री मंदिर — धर्म, कर्म, ज्योतिष'
+              : ACTIVE_PDF_LANGUAGE === 'te'
+                ? 'శ్రీ మందిర్ — ధర్మ, కర్మ, జ్యోతిష్యం'
+                : 'Sri Mandir — Dharma, Karma, Jyotish'}
+          </Text>
+        </View>
+      </Page>
     </Document>
   );
 };

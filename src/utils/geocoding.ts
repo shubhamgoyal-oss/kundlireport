@@ -138,6 +138,54 @@ async function searchPhoton(query: string): Promise<Place[]> {
 }
 
 /**
+ * Google Geocoding API — reliable paid fallback when free APIs fail
+ */
+const GOOGLE_GEOCODING_KEY = 'AIzaSyAloADZONRgxV40nf6MoECrHSulOuyJOjs';
+
+async function searchGoogleGeocoding(query: string): Promise<Place[]> {
+  const params = new URLSearchParams({
+    address: query,
+    key: GOOGLE_GEOCODING_KEY,
+    region: 'in', // bias towards India
+    language: 'en',
+  });
+
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/geocode/json?${params}`
+  );
+
+  if (!response.ok) {
+    throw new Error(`Google Geocoding error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (data.status !== 'OK' || !Array.isArray(data.results) || data.results.length === 0) {
+    return [];
+  }
+
+  return data.results.slice(0, 8).map((item: any) => {
+    const loc = item.geometry?.location || {};
+    const components = item.address_components || [];
+
+    const findComponent = (type: string) =>
+      components.find((c: any) => c.types?.includes(type))?.long_name || '';
+
+    return {
+      display_name: item.formatted_address || query,
+      lat: loc.lat,
+      lon: loc.lng,
+      type: item.types?.[0] || 'locality',
+      address: {
+        city: findComponent('locality') || findComponent('administrative_area_level_2'),
+        state: findComponent('administrative_area_level_1'),
+        country: findComponent('country'),
+      },
+      confidence: 'city' as const,
+    } satisfies Place;
+  });
+}
+
+/**
  * GeoNames (Tertiary) - Free with username
  */
 async function searchGeoNames(query: string): Promise<Place[]> {
@@ -388,8 +436,20 @@ export async function searchPlaces(query: string): Promise<Place[]> {
 
   console.log(`📊 External search results: ${externalResults.length}`);
 
+  // Priority 3: Google Geocoding API as final paid fallback
+  let finalResults = externalResults;
+  if (finalResults.length === 0) {
+    console.log('⚠️ Free APIs returned 0 results, trying Google Geocoding...');
+    try {
+      finalResults = await searchGoogleGeocoding(sanitizedQuery);
+      console.log(`📊 Google Geocoding results: ${finalResults.length}`);
+    } catch (err) {
+      console.warn('Google Geocoding failed:', err);
+    }
+  }
+
   // Limit total results
-  const results = externalResults.slice(0, 10);
+  const results = finalResults.slice(0, 10);
 
   if (results.length === 0) {
     throw new Error('No locations found. Please try a different search.');

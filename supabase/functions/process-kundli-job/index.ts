@@ -1064,6 +1064,8 @@ serve(async (req) => {
             stringsTranslated: translationStats.stringsTranslated,
             batchesSent: translationStats.batchesSent,
             errorCount: translationStats.errors.length,
+            remainingEnglish: translationStats.remainingEnglishCount,
+            sectionBreakdown: translationStats.sectionBreakdown,
           },
         };
         totalTokens += translationStats.tokensUsed || 0;

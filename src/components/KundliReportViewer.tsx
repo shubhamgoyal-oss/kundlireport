@@ -229,16 +229,25 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     };
   }, [supportsFolderSave]);
 
-  // Fetch charts after report is ready
+  // Use charts from report or fetch if not available
   useEffect(() => {
     if (!isLoading && report && !chartsFetchedRef.current) {
       chartsFetchedRef.current = true;
+
+      // If charts are already in the report (from backend), use them
+      if (report.charts && report.charts.length > 0) {
+        console.log('[KundliReportViewer] Using charts from backend report:', report.charts.length, 'charts');
+        setCharts(report.charts);
+        return;
+      }
+
+      // Otherwise, fetch charts from API
       setIsFetchingCharts(true);
-      
+
       // Parse birth details for chart fetching
       const [year, month, day] = report.birthDetails.dateOfBirth.split('-').map(Number);
       const [hour, minute] = report.birthDetails.timeOfBirth.split(':').map(Number);
-      
+
       const birthDetails: BirthDetails = {
         day,
         month,
@@ -249,11 +258,12 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
         lon: report.birthDetails.longitude,
         tzone: report.birthDetails.timezone
       };
-      
+
       // Force English chart labels for PDF to avoid SVG font glyph issues in react-pdf.
+      console.log('[KundliReportViewer] Fetching charts from API...');
       fetchMultipleCharts(birthDetails, 'North', 'en', PDF_CHARTS)
         .then(fetchedCharts => {
-          console.log('[KundliReportViewer] Fetched', fetchedCharts.length, 'charts');
+          console.log('[KundliReportViewer] Fetched', fetchedCharts.length, 'charts from API');
           setCharts(fetchedCharts);
         })
         .catch(err => {

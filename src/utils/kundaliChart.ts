@@ -16,23 +16,23 @@ export type ChartType = 'North' | 'South';
 // Divisional chart types supported by Seer API
 export type DivisionalChart = 'D1' | 'D2' | 'D3' | 'D4' | 'D7' | 'D9' | 'D10' | 'D12' | 'D16' | 'D20' | 'D24' | 'D27' | 'D30' | 'D40' | 'D45' | 'D60';
 
-export const CHART_INFO: Record<DivisionalChart, { name: string; nameHindi: string; purpose: string }> = {
-  D1: { name: 'Rashi (Birth Chart)', nameHindi: 'राशि चक्र', purpose: 'Overall life assessment' },
-  D2: { name: 'Hora', nameHindi: 'होरा', purpose: 'Wealth and finances' },
-  D3: { name: 'Drekkana', nameHindi: 'द्रेक्काण', purpose: 'Siblings and courage' },
-  D4: { name: 'Chaturthamsa', nameHindi: 'चतुर्थांश', purpose: 'Fortune and property' },
-  D7: { name: 'Saptamsa', nameHindi: 'सप्तांश', purpose: 'Children and progeny' },
-  D9: { name: 'Navamsa', nameHindi: 'नवांश', purpose: 'Marriage and spouse' },
-  D10: { name: 'Dasamsa', nameHindi: 'दशांश', purpose: 'Career and profession' },
-  D12: { name: 'Dwadasamsa', nameHindi: 'द्वादशांश', purpose: 'Parents and ancestry' },
-  D16: { name: 'Shodasamsa', nameHindi: 'षोडशांश', purpose: 'Vehicles and comforts' },
-  D20: { name: 'Vimsamsa', nameHindi: 'विंशांश', purpose: 'Spiritual progress' },
-  D24: { name: 'Chaturvimsamsa', nameHindi: 'चतुर्विंशांश', purpose: 'Education and learning' },
-  D27: { name: 'Bhamsa', nameHindi: 'भांश', purpose: 'Strength and weakness' },
-  D30: { name: 'Trimsamsa', nameHindi: 'त्रिंशांश', purpose: 'Misfortune and evil' },
-  D40: { name: 'Khavedamsa', nameHindi: 'खवेदांश', purpose: 'Auspiciousness' },
-  D45: { name: 'Akshavedamsa', nameHindi: 'अक्षवेदांश', purpose: 'Character and morals' },
-  D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', purpose: 'Past life karma' },
+export const CHART_INFO: Record<DivisionalChart, { name: string; nameHindi: string; purpose: string; purposeHindi: string; purposeTelugu?: string }> = {
+  D1: { name: 'Rashi (Birth Chart)', nameHindi: 'राशि चक्र', purpose: 'Overall life assessment', purposeHindi: 'संपूर्ण जीवन आकलन' },
+  D2: { name: 'Hora', nameHindi: 'होरा', purpose: 'Wealth and finances', purposeHindi: 'धन और वित्त' },
+  D3: { name: 'Drekkana', nameHindi: 'द्रेक्काण', purpose: 'Siblings and courage', purposeHindi: 'भाई-बहन और साहस' },
+  D4: { name: 'Chaturthamsa', nameHindi: 'चतुर्थांश', purpose: 'Fortune and property', purposeHindi: 'भाग्य और संपत्ति' },
+  D7: { name: 'Saptamsa', nameHindi: 'सप्तांश', purpose: 'Children and progeny', purposeHindi: 'संतान और संतति' },
+  D9: { name: 'Navamsa', nameHindi: 'नवांश', purpose: 'Marriage and spouse', purposeHindi: 'विवाह और जीवनसाथी' },
+  D10: { name: 'Dasamsa', nameHindi: 'दशांश', purpose: 'Career and profession', purposeHindi: 'करियर और व्यवसाय' },
+  D12: { name: 'Dwadasamsa', nameHindi: 'द्वादशांश', purpose: 'Parents and ancestry', purposeHindi: 'माता-पिता और वंश' },
+  D16: { name: 'Shodasamsa', nameHindi: 'षोडशांश', purpose: 'Vehicles and comforts', purposeHindi: 'वाहन और सुविधाएं' },
+  D20: { name: 'Vimsamsa', nameHindi: 'विंशांश', purpose: 'Spiritual progress', purposeHindi: 'आध्यात्मिक प्रगति' },
+  D24: { name: 'Chaturvimsamsa', nameHindi: 'चतुर्विंशांश', purpose: 'Education and learning', purposeHindi: 'शिक्षा और सीखना' },
+  D27: { name: 'Bhamsa', nameHindi: 'भांश', purpose: 'Strength and weakness', purposeHindi: 'शक्ति और कमजोरी' },
+  D30: { name: 'Trimsamsa', nameHindi: 'त्रिंशांश', purpose: 'Misfortune and evil', purposeHindi: 'दुर्भाग्य और बुराई' },
+  D40: { name: 'Khavedamsa', nameHindi: 'खवेदांश', purpose: 'Auspiciousness', purposeHindi: 'शुभता' },
+  D45: { name: 'Akshavedamsa', nameHindi: 'अक्षवेदांश', purpose: 'Character and morals', purposeHindi: 'चरित्र और नैतिकता' },
+  D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', purpose: 'Past life karma', purposeHindi: 'पूर्वजन्म कर्म' },
 };
 
 // Important charts for PDF report (12 key divisional charts)

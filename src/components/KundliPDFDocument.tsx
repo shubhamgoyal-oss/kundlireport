@@ -476,6 +476,13 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Quick Reference': 'त्वरित संदर्भ',
     'Upcoming Yogini Periods': 'आगामी योगिनी अवधियां',
     'Complete Yogini Dasha Cycle (36 Years)': 'संपूर्ण योगिनी दशा चक्र (36 वर्ष)',
+    // ── Career, marriage, and analysis subsection headers ─────────────────────
+    'Strengths': 'शक्तियां',
+    'Challenges': 'चुनौतियां',
+    'Core Strengths': 'मुख्य शक्तियां',
+    'Challenges to Navigate': 'नेविगेट करने के लिए चुनौतियां',
+    'Attributes': 'विशेषताएं',
+    'Impact': 'प्रभाव',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
@@ -739,6 +746,13 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Quick Reference': 'త్వరిత సూచిక',
     'Upcoming Yogini Periods': 'రాబోయే యోగిని కాలాలు',
     'Complete Yogini Dasha Cycle (36 Years)': 'సంపూర్ణ యోగిని దశా చక్రం (36 సంవత్సరాలు)',
+    // ── Career, marriage, and analysis subsection headers ─────────────────────
+    'Strengths': 'బలాలు',
+    'Challenges': 'సవాళ్లు',
+    'Core Strengths': 'ప్రధాన బలాలు',
+    'Challenges to Navigate': 'నావిగేట్ చేయడానికి సవాళ్లు',
+    'Attributes': 'లక్షణాలు',
+    'Impact': 'ప్రభావం',
   },
 };
 
@@ -2789,7 +2803,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                  <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
                 </View>
               ))}
             </View>
@@ -2816,7 +2830,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       </Text>
                     )}
                   </View>
-                  <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                  <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
                 </View>
               ))}
             </View>
@@ -2836,7 +2850,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.chartPurpose}>{chart.purpose}</Text>
+                    <Text style={styles.chartPurpose}>{ACTIVE_PDF_LANGUAGE === 'hi' && (chart as any).purposeHindi ? (chart as any).purposeHindi : ACTIVE_PDF_LANGUAGE === 'te' && (chart as any).purposeTelugu ? (chart as any).purposeTelugu : chart.purpose}</Text>
                   </View>
                 ))}
               </View>
@@ -3169,13 +3183,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View style={styles.grid2}>
                   {house.strengths && house.strengths.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Strengths</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Strengths')}</Text>
                       <BulletList items={house.strengths} />
                     </View>
                   )}
                   {house.challenges && house.challenges.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Challenges</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
                       <BulletList items={house.challenges} />
                     </View>
                   )}
@@ -3214,7 +3228,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 </View>
                 {report.career.careerDirection.coreStrengths && report.career.careerDirection.coreStrengths.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Core Strengths</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Core Strengths')}</Text>
                     <BulletList items={report.career.careerDirection.coreStrengths} />
                   </>
                 )}
@@ -3272,7 +3286,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 )}
                 {report.career.careerTiming.challenges && report.career.careerTiming.challenges.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Challenges to Navigate</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges to Navigate')}</Text>
                     <BulletList items={report.career.careerTiming.challenges} />
                   </>
                 )}
@@ -3552,7 +3566,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               
               {report.dasha.currentMahadasha?.challenges && report.dasha.currentMahadasha.challenges.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Challenges</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
                   <BulletList items={report.dasha.currentMahadasha.challenges} />
                 </>
               )}
@@ -3645,7 +3659,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   )}
                   {md.challenges && md.challenges.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Challenges</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
                       <BulletList items={md.challenges} />
                     </View>
                   )}
@@ -4288,7 +4302,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     <View style={styles.grid2}>
                       {phase.challenges && phase.challenges.length > 0 && (
                         <View style={styles.gridItem}>
-                          <Text style={styles.subSubHeader}>Challenges to Navigate</Text>
+                          <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges to Navigate')}</Text>
                           <BulletList items={phase.challenges} />
                         </View>
                       )}
@@ -4980,13 +4994,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View style={styles.grid2}>
                   {karaka.strengths && karaka.strengths.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Strengths</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Strengths')}</Text>
                       <BulletList items={karaka.strengths} />
                     </View>
                   )}
                   {karaka.challenges && karaka.challenges.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Challenges</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
                       <BulletList items={karaka.challenges} />
                     </View>
                   )}

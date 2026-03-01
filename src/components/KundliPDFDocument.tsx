@@ -628,7 +628,6 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Physiological Benefits': 'शारीरिक लाभ',
     'Vastu Explanation': 'वास्तु व्याख्या',
     'Partner Qualities': 'जीवनसाथी के गुण',
-    'Unique Opportunities': 'विशेष अवसर',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',

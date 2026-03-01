@@ -2059,7 +2059,7 @@ interface ChartData {
   nameHindi: string;
   purpose: string;
   svg: string;
-  pngDataUrl?: string | null;
+  dataUrl?: string | null;
 }
 
 interface KundliPDFProps {
@@ -2793,8 +2793,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    {chart.pngDataUrl ? (
-                      <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    {chart.dataUrl ? (
+                      <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : chart.svg ? (
                       <SVGRenderer svgString={chart.svg} />
                     ) : (
@@ -2820,8 +2820,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    {chart.pngDataUrl ? (
-                      <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    {chart.dataUrl ? (
+                      <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                     ) : chart.svg ? (
                       <SVGRenderer svgString={chart.svg} />
                     ) : (
@@ -2840,8 +2840,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View key={idx} style={styles.chartItem}>
                     <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                     <View style={styles.chartContainer}>
-                      {chart.pngDataUrl ? (
-                        <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      {chart.dataUrl ? (
+                        <Image src={chart.dataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       ) : chart.svg ? (
                         <SVGRenderer svgString={chart.svg} />
                       ) : (

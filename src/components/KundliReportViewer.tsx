@@ -68,14 +68,35 @@ const ensureReadWritePermission = async (handle: any): Promise<boolean> => {
 
 // Convert an SVG string to a PNG data URL via canvas.
 // This bypasses @react-pdf/renderer's broken SVG path parser (xCoordinate null error).
-const svgToDataUrl = (svgString: string, size = 400): Promise<string> =>
+// Uses 800px canvas for high-res PDF output (4x the 200px PDF container).
+const svgToDataUrl = (svgString: string, size = 800): Promise<string> =>
   new Promise((resolve, reject) => {
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
     if (!ctx) { reject(new Error('Canvas unavailable')); return; }
-    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+
+    // Ensure the SVG has explicit width/height for off-screen rendering
+    // (percentage-based styles like width:100% don't work in Image/canvas context)
+    let fixedSvg = svgString;
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgString, 'image/svg+xml');
+      const svg = doc.querySelector('svg');
+      if (svg) {
+        svg.setAttribute('width', String(size));
+        svg.setAttribute('height', String(size));
+        // Remove percentage-based inline styles that break canvas rendering
+        const style = svg.getAttribute('style') || '';
+        if (style.includes('width:100%')) {
+          svg.removeAttribute('style');
+        }
+        fixedSvg = new XMLSerializer().serializeToString(doc);
+      }
+    } catch { /* use original string */ }
+
+    const blob = new Blob([fixedSvg], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const img = new window.Image();
     img.onload = () => {

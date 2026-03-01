@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { preloadCityDatabase, searchPlaces } from '@/utils/geocoding';
-import { Loader2, Play, Square, Table2, RefreshCw } from 'lucide-react';
+import { Loader2, Play, Square, Table2, RefreshCw, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
@@ -185,6 +185,66 @@ export default function BulkKundliRunner() {
     [LS_BULK_ROWS, LS_ALL_ROWS].forEach((k) => localStorage.removeItem(k));
   };
 
+  /** Run gender/name/place detection on the given sheet rows and update bulkRows */
+  const detectGendersForRows = async (filteredRows: LoadedSheetRow[]) => {
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < filteredRows.length; i += BATCH_SIZE) {
+      const batch = filteredRows.slice(i, i + BATCH_SIZE);
+      await Promise.allSettled(
+        batch.map(async (r) => {
+          try {
+            const { data: decoded, error: decErr } = await supabase.functions.invoke(
+              'decipher-kundli-input',
+              { body: { row: r.normalized } },
+            );
+            if (!decErr && decoded) {
+              const g: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
+              const name = String(decoded?.name || '').trim();
+              const place = String(decoded?.placeOfBirth || '').trim();
+              setBulkRows((prev) =>
+                prev.map((br) =>
+                  br.rowNumber === r.rowNumber
+                    ? { ...br, gender: g, detectedGender: g, ...(name ? { name } : {}), ...(place ? { place } : {}) }
+                    : br,
+                ),
+              );
+            }
+          } catch (err) {
+            console.warn(`[BulkKundliRunner] Gender detect failed for row ${r.rowNumber}:`, err);
+          }
+        }),
+      );
+    }
+    toast.success('Gender detection complete');
+  };
+
+  /** Refresh all generated files: re-prepare PDFs for all completed rows */
+  const [isRefreshingPdfs, setIsRefreshingPdfs] = useState(false);
+  const refreshAllFiles = async () => {
+    const targets = bulkRows.filter((r) => r.status === 'completed' && r.jobId);
+    if (!targets.length) {
+      toast.error('No completed rows to refresh');
+      return;
+    }
+    setIsRefreshingPdfs(true);
+    toast(`Regenerating PDFs for ${targets.length} completed row(s)…`);
+
+    // Clear existing download URLs so preparePdfForRow runs fresh
+    for (const t of targets) {
+      updateBulkRow(t.rowNumber, { downloadUrl: undefined, bucketSignedUrl: undefined, isPreparingPdf: false });
+    }
+
+    for (const row of targets) {
+      const freshRow = { ...row, downloadUrl: undefined, bucketSignedUrl: undefined };
+      await preparePdfForRow(freshRow).catch((e) =>
+        console.warn(`[Bulk] Refresh PDF failed for row ${row.rowNumber}:`, e),
+      );
+    }
+
+    setIsRefreshingPdfs(false);
+    toast.success('All PDFs refreshed');
+  };
+
   const loadSheetRows = async () => {
     setIsLoadingSheet(true);
     // Clear old persisted data — fresh start
@@ -224,36 +284,8 @@ export default function BulkKundliRunner() {
       );
       toast.success(`Loaded ${filteredRows.length} rows. Detecting gender…`);
 
-      // Decipher gender for each row in batches of 5
-      const BATCH_SIZE = 5;
-      for (let i = 0; i < filteredRows.length; i += BATCH_SIZE) {
-        const batch = filteredRows.slice(i, i + BATCH_SIZE);
-        await Promise.allSettled(
-          batch.map(async (r) => {
-            try {
-              const { data: decoded, error: decErr } = await supabase.functions.invoke(
-                'decipher-kundli-input',
-                { body: { row: r.normalized } },
-              );
-              if (!decErr && decoded) {
-                const g: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
-                const name = String(decoded?.name || '').trim();
-                const place = String(decoded?.placeOfBirth || '').trim();
-                setBulkRows((prev) =>
-                  prev.map((br) =>
-                    br.rowNumber === r.rowNumber
-                      ? { ...br, gender: g, detectedGender: g, ...(name ? { name } : {}), ...(place ? { place } : {}) }
-                      : br,
-                  ),
-                );
-              }
-            } catch (err) {
-              console.warn(`[BulkKundliRunner] Gender detect failed for row ${r.rowNumber}:`, err);
-            }
-          }),
-        );
-      }
-      toast.success('Gender detection complete');
+      // Run gender/name/place detection
+      await detectGendersForRows(filteredRows);
     } catch (err) {
       console.error('[BulkKundliRunner] Failed loading sheet:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to load Google Sheet');
@@ -814,6 +846,10 @@ export default function BulkKundliRunner() {
           <Button type="button" variant="destructive" onClick={stopBulkRun} disabled={!isRunning}>
             <Square className="w-4 h-4 mr-2" />
             Stop
+          </Button>
+          <Button type="button" variant="outline" onClick={refreshAllFiles} disabled={isRunning || isRefreshingPdfs || completedCount === 0}>
+            {isRefreshingPdfs ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}
+            Refresh All PDFs
           </Button>
           <Button type="button" variant="outline" onClick={prepareAllCompletedPdfs} disabled={isRunning || completedCount === 0}>
             Prepare Downloads

@@ -533,18 +533,30 @@ async function fetchKundaliCharts(
   language: string = "en",
 ): Promise<Array<{ type: string; name: string; nameHindi: string; purpose: string; svg: string }>> {
   const payload = { day, month, year, hour, minute, lat, lon, tzone, chartType: "North", image_type: "svg", language };
-  const results = await Promise.allSettled(
-    PDF_CHART_TYPES.map(async (ct) => {
-      const svg = await fetchOneChartSvg(ct, payload);
-      if (!svg) throw new Error("no svg");
-      return { type: ct, svg, ...CHART_INFO[ct] };
-    })
-  );
-  const charts = results
-    .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
-    .map((r) => r.value);
-  console.log(`📊 [CHARTS] Fetched ${charts.length}/${PDF_CHART_TYPES.length} chart SVGs`);
-  return charts;
+
+  // Wrap in timeout to prevent edge function timeout (max 5 seconds for chart fetch)
+  return Promise.race([
+    (async () => {
+      const results = await Promise.allSettled(
+        PDF_CHART_TYPES.map(async (ct) => {
+          const svg = await fetchOneChartSvg(ct, payload);
+          if (!svg) throw new Error("no svg");
+          return { type: ct, svg, ...CHART_INFO[ct] };
+        })
+      );
+      const charts = results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
+        .map((r) => r.value);
+      console.log(`📊 [CHARTS] Fetched ${charts.length}/${PDF_CHART_TYPES.length} chart SVGs`);
+      return charts;
+    })(),
+    new Promise<any[]>((_, reject) =>
+      setTimeout(() => reject(new Error("Chart fetch timeout (5s)")), 5000)
+    ),
+  ]).catch((err) => {
+    console.warn(`⚠️ [CHARTS] Fetch timeout/error: ${err.message} - frontend will fetch charts`);
+    return []; // Return empty, frontend will fetch as fallback
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

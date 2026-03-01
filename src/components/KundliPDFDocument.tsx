@@ -2173,6 +2173,8 @@ const styles = StyleSheet.create({
     borderColor: P.lightBorder,
     borderRadius: 3,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chartGrid: {
     flexDirection: 'row',
@@ -3630,7 +3632,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <Text style={styles.chartTitle}>{chart.type}: {chartName(chart)}</Text>
             <View style={styles.chartContainer}>
               {chart.dataUrl ? (
-                <Image src={chart.dataUrl} style={{ width: '100%', height: '100%' }} />
+                <Image src={chart.dataUrl} style={{ width: 246, height: 246, objectFit: 'contain' }} />
               ) : chart.svg ? (
                 <SVGRenderer svgString={chart.svg} />
               ) : (

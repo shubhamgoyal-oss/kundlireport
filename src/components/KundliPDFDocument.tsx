@@ -574,6 +574,61 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Degree': 'अंश',
     'Lord': 'स्वामी',
     'Occupants': 'स्थित ग्रह',
+    // ── Remaining hardcoded English headers ─────────────────────────────────
+    'Ideal Roles': 'आदर्श भूमिकाएं',
+    'Current Career Phase': 'वर्तमान करियर चरण',
+    'Upcoming Opportunities': 'आगामी अवसर',
+    'Future Career Changes': 'भविष्य के करियर परिवर्तन',
+    'Preparation Plan': 'तैयारी योजना',
+    'Key Qualities': 'प्रमुख गुण',
+    'Caution Traits': 'सतर्कता गुण',
+    'Relationship Strengthening': 'संबंध सुदृढ़ीकरण',
+    'Conflicts to Avoid': 'बचने योग्य संघर्ष',
+    'Favorable Periods': 'अनुकूल अवधि',
+    'Challenging Periods': 'चुनौतीपूर्ण अवधि',
+    'Opportunities': 'अवसर',
+    'Formation in Your Chart': 'आपकी कुंडली में निर्माण',
+    'Benefits': 'लाभ',
+    'In Your Chart': 'आपकी कुंडली में',
+    'Practices to Strengthen Yogas': 'योग सुदृढ़ीकरण अभ्यास',
+    'Hidden Blessings': 'छिपे हुए आशीर्वाद',
+    'Phase 1 — The Rising (Building Pressure)': 'चरण 1 — उदय (दबाव निर्माण)',
+    'Phase 2 — The Peak (Maximum Intensity)': 'चरण 2 — चरम (अधिकतम तीव्रता)',
+    'Phase 3 — The Setting (Harvest & Release)': 'चरण 3 — अवरोह (फसल और मुक्ति)',
+    'What to Expect': 'क्या अपेक्षा करें',
+    'Unique Opportunities': 'विशेष अवसर',
+    'Scriptural Reference': 'शास्त्रीय संदर्भ',
+    'How It Works': 'यह कैसे कार्य करता है',
+    'Scientific Basis': 'वैज्ञानिक आधार',
+    'Quality Guidelines': 'गुणवत्ता दिशानिर्देश',
+    'Cautions': 'सावधानियां',
+    'Wearing Instructions': 'धारण निर्देश',
+    'How to Verify Authenticity': 'प्रामाणिकता कैसे जांचें',
+    'Scriptural Source': 'शास्त्रीय स्रोत',
+    'Scriptural Basis': 'शास्त्रीय आधार',
+    'Scriptural Derivation': 'शास्त्रीय उत्पत्ति',
+    'Overview': 'अवलोकन',
+    'Antardashas': 'अंतर्दशाएं',
+    'Interpretation': 'व्याख्या',
+    'Current Mahadasha': 'वर्तमान महादशा',
+    'Current Antardasha': 'वर्तमान अंतर्दशा',
+    'Mahadasha Predictions': 'महादशा भविष्यवाणी',
+    'Antardasha Predictions': 'अंतर्दशा भविष्यवाणी',
+    'Current Career Phase': 'वर्तमान करियर चरण',
+    'How It Works': 'यह कैसे कार्य करता है',
+    'Quality Guidelines': 'गुणवत्ता दिशानिर्देश',
+    'Wearing Instructions': 'धारण निर्देश',
+    'How to Verify Authenticity': 'प्रामाणिकता कैसे सत्यापित करें',
+    'Scriptural Source': 'शास्त्रीय स्रोत',
+    'Vibrational Science': 'कंपन विज्ञान',
+    'Proper Method': 'उचित विधि',
+    'Geometric Significance': 'ज्यामितीय महत्व',
+    'Consecration Method': 'अभिषेक विधि',
+    'Scriptural Derivation': 'शास्त्रीय उत्पत्ति',
+    'Physiological Benefits': 'शारीरिक लाभ',
+    'Vastu Explanation': 'वास्तु व्याख्या',
+    'Partner Qualities': 'जीवनसाथी के गुण',
+    'Unique Opportunities': 'विशेष अवसर',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
@@ -930,6 +985,42 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Degree': 'అంశం',
     'Lord': 'అధిపతి',
     'Occupants': 'ఉన్న గ్రహాలు',
+    // ── Remaining hardcoded English headers ─────────────────────────────────
+    'Ideal Roles': 'ఆదర్శ పాత్రలు',
+    'Current Career Phase': 'ప్రస్తుత వృత్తి దశ',
+    'Upcoming Opportunities': 'రాబోయే అవకాశాలు',
+    'Future Career Changes': 'భవిష్యత్ వృత్తి మార్పులు',
+    'Preparation Plan': 'సిద్ధత ప్రణాళిక',
+    'Key Qualities': 'ముఖ్య గుణాలు',
+    'Caution Traits': 'జాగ్రత్త లక్షణాలు',
+    'Relationship Strengthening': 'సంబంధ బలపరచడం',
+    'Conflicts to Avoid': 'నివారించాల్సిన సంఘర్షణలు',
+    'Favorable Periods': 'అనుకూల కాలాలు',
+    'Challenging Periods': 'సవాలు కాలాలు',
+    'Opportunities': 'అవకాశాలు',
+    'Formation in Your Chart': 'మీ కుండలిలో ఏర్పడటం',
+    'Benefits': 'ప్రయోజనాలు',
+    'In Your Chart': 'మీ కుండలిలో',
+    'Practices to Strengthen Yogas': 'యోగాలను బలపరచే అభ్యాసాలు',
+    'Hidden Blessings': 'దాగి ఉన్న ఆశీర్వాదాలు',
+    'Phase 1 — The Rising (Building Pressure)': 'దశ 1 — ఉదయం (ఒత్తిడి నిర్మాణం)',
+    'Phase 2 — The Peak (Maximum Intensity)': 'దశ 2 — శిఖరం (గరిష్ట తీవ్రత)',
+    'Phase 3 — The Setting (Harvest & Release)': 'దశ 3 — అస్తమయం (ఫలితం & విముక్తి)',
+    'What to Expect': 'ఏమి ఆశించాలి',
+    'Unique Opportunities': 'ప్రత్యేక అవకాశాలు',
+    'Scriptural Reference': 'శాస్త్రీయ సూచన',
+    'How It Works': 'ఇది ఎలా పని చేస్తుంది',
+    'Scientific Basis': 'శాస్త్రీయ ఆధారం',
+    'Quality Guidelines': 'నాణ్యత మార్గదర్శకాలు',
+    'Cautions': 'జాగ్రత్తలు',
+    'Wearing Instructions': 'ధరించే నిర్దేశాలు',
+    'How to Verify Authenticity': 'ప్రామాణికతను ఎలా ధృవీకరించాలి',
+    'Scriptural Source': 'శాస్త్రీయ మూలం',
+    'Scriptural Basis': 'శాస్త్రీయ ఆధారం',
+    'Scriptural Derivation': 'శాస్త్రీయ ఉత్పత్తి',
+    'Overview': 'అవలోకనం',
+    'Antardashas': 'అంతర్దశలు',
+    'Interpretation': 'వ్యాఖ్యానం',
   },
 };
 
@@ -1028,6 +1119,69 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Day: 'दिन',
     Personality: 'व्यक्तित्व',
     Aspect: 'दृष्टि',
+    Mahadasha: 'महादशा',
+    Antardasha: 'अंतर्दशा',
+    Antardashas: 'अंतर्दशाएं',
+    Predictions: 'भविष्यवाणी',
+    Opportunities: 'अवसर',
+    Challenges: 'चुनौतियां',
+    Recommendations: 'सुझाव',
+    Impact: 'प्रभाव',
+    Spiritual: 'आध्यात्मिक',
+    Growth: 'विकास',
+    Financial: 'आर्थिक',
+    Relationship: 'संबंध',
+    Key: 'प्रमुख',
+    Events: 'घटनाएं',
+    Upcoming: 'आगामी',
+    Definition: 'परिभाषा',
+    Formation: 'निर्माण',
+    Chart: 'कुंडली',
+    Practices: 'अभ्यास',
+    Strengthen: 'मजबूत करें',
+    Hidden: 'छिपे',
+    Blessings: 'आशीर्वाद',
+    Rising: 'उदय',
+    Peak: 'चरम',
+    Setting: 'अवरोह',
+    Pressure: 'दबाव',
+    Building: 'निर्माण',
+    Maximum: 'अधिकतम',
+    Intensity: 'तीव्रता',
+    Harvest: 'फसल',
+    Release: 'मुक्ति',
+    Expect: 'अपेक्षा',
+    Avoid: 'परहेज',
+    Unique: 'विशेष',
+    Works: 'कार्य',
+    Quality: 'गुणवत्ता',
+    Guidelines: 'दिशानिर्देश',
+    Cautions: 'सावधानियां',
+    Wearing: 'धारण',
+    Instructions: 'निर्देश',
+    Verify: 'सत्यापन',
+    Authenticity: 'प्रामाणिकता',
+    Scriptural: 'शास्त्रीय',
+    Source: 'स्रोत',
+    Vibrational: 'कंपन',
+    Science: 'विज्ञान',
+    Proper: 'उचित',
+    Method: 'विधि',
+    Geometric: 'ज्यामितीय',
+    Consecration: 'अभिषेक',
+    Basis: 'आधार',
+    Procedure: 'विधि',
+    Derivation: 'व्युत्पत्ति',
+    Physiological: 'शारीरिक',
+    Benefits: 'लाभ',
+    Vastu: 'वास्तु',
+    Explanation: 'व्याख्या',
+    Partner: 'जीवनसाथी',
+    Qualities: 'गुण',
+    How: 'कैसे',
+    It: 'यह',
+    What: 'क्या',
+    to: 'को',
   },
   te: {
     Report: 'నివేదిక',
@@ -1116,6 +1270,37 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Day: 'రోజు',
     Personality: 'వ్యక్తిత్వం',
     Aspect: 'దృష్టి',
+    Mahadasha: 'మహాదశ',
+    Antardasha: 'అంతర్దశ',
+    Antardashas: 'అంతర్దశలు',
+    Predictions: 'అంచనాలు',
+    Opportunities: 'అవకాశాలు',
+    Challenges: 'సవాళ్లు',
+    Recommendations: 'సిఫార్సులు',
+    Impact: 'ప్రభావం',
+    Spiritual: 'ఆధ్యాత్మిక',
+    Growth: 'వృద్ధి',
+    Financial: 'ఆర్థిక',
+    Relationship: 'సంబంధం',
+    Key: 'ప్రధాన',
+    Events: 'సంఘటనలు',
+    Upcoming: 'రాబోయే',
+    Definition: 'నిర్వచనం',
+    Formation: 'నిర్మాణం',
+    Chart: 'చార్ట్',
+    Practices: 'సాధనలు',
+    Strengthen: 'బలపరచడం',
+    Hidden: 'దాచిన',
+    Blessings: 'ఆశీర్వాదాలు',
+    Unique: 'ప్రత్యేక',
+    Avoid: 'నివారించండి',
+    Quality: 'నాణ్యత',
+    Guidelines: 'మార్గదర్శకాలు',
+    Cautions: 'జాగ్రత్తలు',
+    Wearing: 'ధరించు',
+    Instructions: 'సూచనలు',
+    Partner: 'భాగస్వామి',
+    Qualities: 'లక్షణాలు',
   },
 };
 
@@ -2319,9 +2504,15 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       .split(',')
       .map((v) => v.trim())
       .filter(Boolean);
-    const city = String(fallback?.city || parts[0] || 'N/A');
-    const state = String(fallback?.state || parts[1] || 'N/A');
-    const country = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : 'N/A'));
+    // Build a lat/lon fallback when no place text is available
+    const lat = fallback?.latitude;
+    const lon = fallback?.longitude;
+    const latLonFallback = (lat != null && lon != null && (lat !== 0 || lon !== 0))
+      ? `${Number(lat).toFixed(4)}°N, ${Number(lon).toFixed(4)}°E`
+      : 'N/A';
+    const city = String(fallback?.city || parts[0] || latLonFallback);
+    const state = String(fallback?.state || parts[1] || '');
+    const country = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : ''));
     return { city, state, country };
   };
 
@@ -3410,7 +3601,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 )}
                 {report.career.careerDirection.idealRoles && report.career.careerDirection.idealRoles.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Ideal Roles</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Ideal Roles')}</Text>
                     <BulletList items={report.career.careerDirection.idealRoles} />
                   </>
                 )}
@@ -3451,12 +3642,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             {report.career.careerTiming && (
               <SubSection title="Career Timing & Phases">
                 <View style={styles.calloutBox}>
-                  <Text style={styles.calloutTitle}>Current Career Phase</Text>
+                  <Text style={styles.calloutTitle}>{localizePdfUiText('Current Career Phase')}</Text>
                   <Text style={styles.bodyText}>{report.career.careerTiming.currentPhase || ''}</Text>
                 </View>
                 {report.career.careerTiming.upcomingOpportunities && report.career.careerTiming.upcomingOpportunities.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Upcoming Opportunities</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Upcoming Opportunities')}</Text>
                     <BulletList items={report.career.careerTiming.upcomingOpportunities} />
                   </>
                 )}
@@ -3475,14 +3666,14 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Next Switch Window" value={report.career.careerSwitchInsights.nextSwitchWindow || 'N/A'} />
                 {report.career.careerSwitchInsights.oneOrTwoFutureChanges && report.career.careerSwitchInsights.oneOrTwoFutureChanges.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Future Career Changes</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Future Career Changes')}</Text>
                     <BulletList items={report.career.careerSwitchInsights.oneOrTwoFutureChanges} />
                   </>
                 )}
                 <Text style={styles.paragraph}>{report.career.careerSwitchInsights.rationale || ''}</Text>
                 {report.career.careerSwitchInsights.preparationPlan && report.career.careerSwitchInsights.preparationPlan.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Preparation Plan</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Preparation Plan')}</Text>
                     <BulletList items={report.career.careerSwitchInsights.preparationPlan} />
                   </>
                 )}
@@ -3546,7 +3737,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <Text style={styles.paragraph}>{report.marriage.darakaraka?.interpretation || ''}</Text>
               {report.marriage.darakaraka?.partnerQualities && (
                 <>
-                  <Text style={styles.subSubHeader}>Partner Qualities</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Partner Qualities')}</Text>
                   <BulletList items={report.marriage.darakaraka.partnerQualities} />
                 </>
               )}
@@ -3564,13 +3755,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Applicability" value={report.marriage.idealPartnerForUnmarried.whenApplicable || 'N/A'} />
                 {report.marriage.idealPartnerForUnmarried.keyQualities && report.marriage.idealPartnerForUnmarried.keyQualities.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Key Qualities</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Key Qualities')}</Text>
                     <BulletList items={report.marriage.idealPartnerForUnmarried.keyQualities} />
                   </>
                 )}
                 {report.marriage.idealPartnerForUnmarried.cautionTraits && report.marriage.idealPartnerForUnmarried.cautionTraits.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Caution Traits</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Caution Traits')}</Text>
                     <BulletList items={report.marriage.idealPartnerForUnmarried.cautionTraits} />
                   </>
                 )}
@@ -3588,13 +3779,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 )}
                 {report.marriage.guidanceForMarriedNatives.relationshipStrengthening && report.marriage.guidanceForMarriedNatives.relationshipStrengthening.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Relationship Strengthening</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Relationship Strengthening')}</Text>
                     <BulletList items={report.marriage.guidanceForMarriedNatives.relationshipStrengthening} />
                   </>
                 )}
                 {report.marriage.guidanceForMarriedNatives.conflictsToAvoid && report.marriage.guidanceForMarriedNatives.conflictsToAvoid.length > 0 && (
                   <>
-                    <Text style={styles.subSubHeader}>Conflicts to Avoid</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Conflicts to Avoid')}</Text>
                     <BulletList items={report.marriage.guidanceForMarriedNatives.conflictsToAvoid} />
                   </>
                 )}
@@ -3607,13 +3798,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <InfoRow label="Current Prospects" value={report.marriage.marriageTiming?.currentProspects || 'N/A'} />
               {report.marriage.marriageTiming?.favorablePeriods && (
                 <>
-                  <Text style={styles.subSubHeader}>Favorable Periods</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Favorable Periods')}</Text>
                   <BulletList items={report.marriage.marriageTiming.favorablePeriods} />
                 </>
               )}
               {report.marriage.marriageTiming?.challengingPeriods && report.marriage.marriageTiming.challengingPeriods.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Challenging Periods</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Challenging Periods')}</Text>
                   <BulletList items={report.marriage.marriageTiming.challengingPeriods} />
                 </>
               )}
@@ -3735,7 +3926,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               
               {report.dasha.currentMahadasha?.opportunities && report.dasha.currentMahadasha.opportunities.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Opportunities</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Opportunities')}</Text>
                   <BulletList items={report.dasha.currentMahadasha.opportunities} />
                 </>
               )}
@@ -3773,7 +3964,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               {report.dasha.currentAntardasha?.recommendations && report.dasha.currentAntardasha.recommendations.length > 0 && (
                 <>
-                  <Text style={styles.subSubHeader}>Recommendations</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Recommendations')}</Text>
                   <BulletList items={report.dasha.currentAntardasha.recommendations} />
                 </>
               )}
@@ -3829,7 +4020,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View style={styles.grid2}>
                   {md.opportunities && md.opportunities.length > 0 && (
                     <View style={styles.gridItem}>
-                      <Text style={styles.subSubHeader}>Opportunities</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('Opportunities')}</Text>
                       <BulletList items={md.opportunities} />
                     </View>
                   )}
@@ -4286,15 +4477,15 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       { label: 'Activation', value: yoga.activationPeriod || 'N/A' },
                     ]} />
                     
-                    <Text style={styles.subSubHeader}>Definition</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Definition')}</Text>
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
                     
-                    <Text style={styles.subSubHeader}>Formation in Your Chart</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Formation in Your Chart')}</Text>
                     <View style={styles.highlight}>
                       <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
                     </View>
                     
-                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                     <BulletList items={yoga.benefits || []} />
                     
                     <InfoRow label="Activation Period" value={yoga.activationPeriod || 'N/A'} />
@@ -4316,9 +4507,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                     ]} />
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
-                    <Text style={styles.subSubHeader}>In Your Chart</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('In Your Chart')}</Text>
                     <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
-                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                     <BulletList items={yoga.benefits || []} />
                     <InfoRow label="Activation" value={yoga.activationPeriod || 'N/A'} />
                   </Card>
@@ -4357,12 +4548,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
                 {report.rajYogs.yogaEnhancement && (
                   <SubSection title="Yoga Enhancement">
-                    <Text style={styles.subSubHeader}>Practices to Strengthen Yogas</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Practices to Strengthen Yogas')}</Text>
                     <BulletList items={report.rajYogs.yogaEnhancement.practices || []} />
                     
                     {report.rajYogs.yogaEnhancement.mantras && report.rajYogs.yogaEnhancement.mantras.length > 0 && (
                       <>
-                        <Text style={styles.subSubHeader}>Mantras</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Mantras')}</Text>
                         {report.rajYogs.yogaEnhancement.mantras.map((m: any, idx: number) => (
                           <View key={idx} style={{ marginBottom: 5 }}>
                             <Text style={styles.boldLabel}>{m.mantra}</Text>
@@ -4394,7 +4585,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
                   <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
-                    <Text style={styles.subSubHeader}>In Your Chart</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('In Your Chart')}</Text>
                     <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('Effects')}</Text>
                     <BulletList items={yoga.benefits || []} />
@@ -4483,7 +4674,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       )}
                       {phase.hidden_blessings && phase.hidden_blessings.length > 0 && (
                         <View style={styles.gridItem}>
-                          <Text style={styles.subSubHeader}>Hidden Blessings</Text>
+                          <Text style={styles.subSubHeader}>{localizePdfUiText('Hidden Blessings')}</Text>
                           <BulletList items={phase.hidden_blessings} />
                         </View>
                       )}
@@ -4507,29 +4698,29 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               {report.sadeSati.currentSadeSati && (
                 <SubSection title={`Current Sade Sati: ${report.sadeSati.currentSadeSati.period}`}>
                   <Text style={styles.paragraph}>{report.sadeSati.currentSadeSati.overallTheme || ''}</Text>
-                  <Text style={styles.subSubHeader}>Phase 1 — The Rising (Building Pressure)</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Phase 1 — The Rising (Building Pressure)')}</Text>
                   <Text style={styles.paragraph}>{report.sadeSati.currentSadeSati.phase1 || ''}</Text>
-                  <Text style={styles.subSubHeader}>Phase 2 — The Peak (Maximum Intensity)</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Phase 2 — The Peak (Maximum Intensity)')}</Text>
                   <Text style={styles.paragraph}>{report.sadeSati.currentSadeSati.phase2 || ''}</Text>
-                  <Text style={styles.subSubHeader}>Phase 3 — The Setting (Harvest & Release)</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Phase 3 — The Setting (Harvest & Release)')}</Text>
                   <Text style={styles.paragraph}>{report.sadeSati.currentSadeSati.phase3 || ''}</Text>
                   <View style={styles.grid2}>
                     {report.sadeSati.currentSadeSati.whatToExpect && (
                       <View style={styles.gridItem}>
-                        <Text style={styles.subSubHeader}>What to Expect</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('What to Expect')}</Text>
                         <BulletList items={report.sadeSati.currentSadeSati.whatToExpect} />
                       </View>
                     )}
                     {report.sadeSati.currentSadeSati.opportunities && (
                       <View style={styles.gridItem}>
-                        <Text style={styles.subSubHeader}>Unique Opportunities</Text>
+                        <Text style={styles.subSubHeader}>{localizePdfUiText('Unique Opportunities')}</Text>
                         <BulletList items={report.sadeSati.currentSadeSati.opportunities} />
                       </View>
                     )}
                   </View>
                   {report.sadeSati.currentSadeSati.whatNotToDo && (
                     <>
-                      <Text style={styles.subSubHeader}>What to Avoid</Text>
+                      <Text style={styles.subSubHeader}>{localizePdfUiText('What to Avoid')}</Text>
                       <BulletList items={report.sadeSati.currentSadeSati.whatNotToDo} />
                     </>
                   )}
@@ -4758,26 +4949,26 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Day to Wear" value={report.remedies.gemstoneRecommendations?.primary?.day || 'N/A'} />
               </View>
               
-              <Text style={styles.subSubHeader}>Benefits</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
               <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.benefits || ''}</Text>
               
-              <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Reference')}</Text>
               <View style={styles.highlight}>
                 <Text style={styles.scriptural}>{report.remedies.gemstoneRecommendations?.primary?.scripturalReference || ''}</Text>
               </View>
               
-              <Text style={styles.subSubHeader}>How It Works</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('How It Works')}</Text>
               <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.howItWorks || ''}</Text>
               
-              <Text style={styles.subSubHeader}>Scientific Basis</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Scientific Basis')}</Text>
               <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.primary?.scientificBasis || ''}</Text>
               
-              <Text style={styles.subSubHeader}>Quality Guidelines</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Quality Guidelines')}</Text>
               <View style={styles.card}>
                 <Text style={styles.bodyText}>{report.remedies.gemstoneRecommendations?.primary?.qualityGuidelines || ''}</Text>
               </View>
               
-              <Text style={styles.subSubHeader}>Cautions</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Cautions')}</Text>
               <Text style={styles.cautionText}>{report.remedies.gemstoneRecommendations?.primary?.cautions || ''}</Text>
             </SubSection>
 
@@ -4810,21 +5001,21 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <Card key={idx} title={`${rud.mukhi} Mukhi Rudraksha - ${rud.name}`}>
                 <InfoRow label="Associated Planet" value={rud.planet} />
                 
-                <Text style={styles.subSubHeader}>Benefits</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                 <Text style={styles.paragraph}>{rud.benefits}</Text>
                 
-                <Text style={styles.subSubHeader}>Wearing Instructions</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Wearing Instructions')}</Text>
                 <Text style={styles.bodyText}>{rud.wearingInstructions}</Text>
                 
-                <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Reference')}</Text>
                 <View style={styles.highlight}>
                   <Text style={styles.scriptural}>{rud.scripturalReference || ''}</Text>
                 </View>
                 
-                <Text style={styles.subSubHeader}>Scientific Basis</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Scientific Basis')}</Text>
                 <Text style={styles.bodyText}>{rud.scientificBasis || ''}</Text>
                 
-                <Text style={styles.subSubHeader}>How to Verify Authenticity</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('How to Verify Authenticity')}</Text>
                 <Text style={styles.successText}>{rud.authenticity || ''}</Text>
               </Card>
             ))}
@@ -4850,18 +5041,18 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Timing" value={mantra.timing} />
                 <InfoRow label="Pronunciation" value={mantra.pronunciation} />
                 
-                <Text style={styles.subSubHeader}>Benefits</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                 <Text style={styles.paragraph}>{mantra.benefits}</Text>
                 
-                <Text style={styles.subSubHeader}>Scriptural Source</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Source')}</Text>
                 <View style={styles.highlight}>
                   <Text style={styles.scriptural}>{mantra.scripturalSource || ''}</Text>
                 </View>
                 
-                <Text style={styles.subSubHeader}>Vibrational Science</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Vibrational Science')}</Text>
                 <Text style={styles.bodyText}>{mantra.vibrationalScience || ''}</Text>
                 
-                <Text style={styles.subSubHeader}>Proper Method</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Proper Method')}</Text>
                 <Text style={styles.bodyText}>{mantra.properMethod || ''}</Text>
               </Card>
             ))}
@@ -4884,10 +5075,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     <InfoRow label="Placement" value={yantra.placement} />
                     <Text style={styles.paragraph}>{yantra.benefits}</Text>
                     
-                    <Text style={styles.subSubHeader}>Geometric Significance</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Geometric Significance')}</Text>
                     <Text style={styles.bodyText}>{yantra.geometricSignificance || ''}</Text>
                     
-                    <Text style={styles.subSubHeader}>Consecration Method</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Consecration Method')}</Text>
                     <Text style={styles.bodyText}>{yantra.consecrationMethod || ''}</Text>
                     
                     <Text style={styles.scriptural}>{yantra.scripturalReference || ''}</Text>
@@ -4904,13 +5095,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     <InfoRow label="Purpose" value={puja.purpose} />
                     <InfoRow label="Frequency" value={puja.frequency} />
                     
-                    <Text style={styles.subSubHeader}>Benefits</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                     <BulletList items={puja.benefits || []} />
                     
-                    <Text style={styles.subSubHeader}>Scriptural Basis</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Basis')}</Text>
                     <Text style={styles.scriptural}>{puja.scripturalBasis || ''}</Text>
                     
-                    <Text style={styles.subSubHeader}>Procedure</Text>
+                    <Text style={styles.subSubHeader}>{localizePdfUiText('Procedure')}</Text>
                     <Text style={styles.bodyText}>{puja.procedure || ''}</Text>
                   </Card>
                 ))}
@@ -4932,12 +5123,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <InfoRow label="Mantra" value={report.remedies.ishtaDevata?.mantra || 'N/A'} />
                 <InfoRow label="Temple Visit" value={report.remedies.ishtaDevata?.templeVisit || 'N/A'} />
                 
-                <Text style={styles.subSubHeader}>Scriptural Derivation</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Derivation')}</Text>
                 <View style={styles.highlight}>
                   <Text style={styles.scriptural}>{report.remedies.ishtaDevata?.scripturalDerivation || ''}</Text>
                 </View>
                 
-                <Text style={styles.subSubHeader}>Significance</Text>
+                <Text style={styles.subSubHeader}>{localizePdfUiText('Significance')}</Text>
                 <Text style={styles.paragraph}>{report.remedies.ishtaDevata?.significance || ''}</Text>
               </Card>
             </SubSection>
@@ -4948,10 +5139,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <Text style={styles.paragraph}>{fast.method}</Text>
                   <Text style={styles.paragraph}>{fast.benefits}</Text>
                   
-                  <Text style={styles.subSubHeader}>Scriptural Reference</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Scriptural Reference')}</Text>
                   <Text style={styles.scriptural}>{fast.scripturalReference || ''}</Text>
                   
-                  <Text style={styles.subSubHeader}>Physiological Benefits</Text>
+                  <Text style={styles.subSubHeader}>{localizePdfUiText('Physiological Benefits')}</Text>
                   <Text style={styles.bodyText}>{fast.physiologicalBenefits || ''}</Text>
                 </Card>
               ))}
@@ -4980,7 +5171,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <InfoRow label="Colors to Avoid" value={(report.remedies.colorTherapy?.avoid || []).join(', ')} />
               <Text style={styles.paragraph}>{report.remedies.colorTherapy?.explanation || ''}</Text>
               
-              <Text style={styles.subSubHeader}>Scientific Basis</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Scientific Basis')}</Text>
               <Text style={styles.bodyText}>{report.remedies.colorTherapy?.scientificBasis || ''}</Text>
             </SubSection>
 
@@ -4990,7 +5181,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <InfoRow label="Sleep Direction" value={report.remedies.directionGuidance?.sleepDirection || 'N/A'} />
               <InfoRow label="Work Direction" value={report.remedies.directionGuidance?.workDirection || 'N/A'} />
               
-              <Text style={styles.subSubHeader}>Vastu Explanation</Text>
+              <Text style={styles.subSubHeader}>{localizePdfUiText('Vastu Explanation')}</Text>
               <Text style={styles.bodyText}>{report.remedies.directionGuidance?.vastuExplanation || ''}</Text>
             </SubSection>
 

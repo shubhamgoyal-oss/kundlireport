@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SolutionFinder from '@/components/SolutionFinder';
 import KundliReportGenerator from '@/components/KundliReportGenerator';
+import BulkKundliRunner from '@/components/BulkKundliRunner';
 import LanguageToggle from '@/components/LanguageToggle';
 import { trackEvent } from '@/lib/analytics';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 
 import ReviewTiles from '@/components/ReviewTiles';
 import TrustBanner from '@/components/TrustBanner';
@@ -124,9 +131,26 @@ const Index = () => {
                 </Collapsible>
               </div>
 
-              {/* Kundli Report Generator - Generates PDF report */}
+              {/* Kundli Report Generator - Tabs for Single and Bulk Reports */}
               <div className="w-full">
-                <KundliReportGenerator />
+                <Tabs defaultValue="single" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="single">
+                      {t('kundli.singleReport', 'Single Report')}
+                    </TabsTrigger>
+                    <TabsTrigger value="bulk">
+                      {t('kundli.bulkUpload', 'Bulk Upload')}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="single" className="w-full">
+                    <KundliReportGenerator />
+                  </TabsContent>
+
+                  <TabsContent value="bulk" className="w-full">
+                    <BulkKundliRunner />
+                  </TabsContent>
+                </Tabs>
               </div>
             </div>
 

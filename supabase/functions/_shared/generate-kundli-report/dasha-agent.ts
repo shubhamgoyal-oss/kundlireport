@@ -1,6 +1,6 @@
 // Dasha Agent - Generates detailed Vimshottari and Yogini Dasha predictions
 
-import { callAgent, type AgentResponse } from "./agent-base.ts";
+import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
 import { getNakshatraWithPada } from "./utils/nakshatra.ts";
 
@@ -395,7 +395,12 @@ function planetContext(planet: string, allPlanets: SeerPlanet[]): string {
 
 function isWeakNarrative(text: string | undefined, minLength = 130): boolean {
   const t = (text || "").trim();
-  if (t.length < minLength) return true;
+  const lang = getAgentLanguage();
+  // Hindi/Telugu scripts are more compact — halve the min-length requirement.
+  // Also skip English-only generic-phrase detection for non-Latin scripts.
+  const effectiveMin = lang === "en" ? minLength : Math.floor(minLength * 0.4);
+  if (t.length < effectiveMin) return true;
+  if (lang !== "en") return false;  // skip English pattern checks for non-English
   const genericPatterns = [
     /meaningful shift in priorities/i,
     /structured action/i,
@@ -414,6 +419,10 @@ function cleanTextArtifact(text: string | undefined): string {
 
 function useOrFallbackArray(values: string[] | undefined, fallback: string[]): string[] {
   const clean = (values || []).map((v) => cleanTextArtifact(String(v))).filter(Boolean);
+  const lang = getAgentLanguage();
+  // For non-English: accept any AI content (even 1 item) to avoid English fallbacks
+  // that render as invisible text under Devanagari/Telugu fonts.
+  if (lang !== "en" && clean.length >= 1) return clean;
   return clean.length >= 3 ? clean : fallback;
 }
 
@@ -426,12 +435,24 @@ function buildAntardashaInterpretation(
   const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
   const mdCtx = planetContext(mahadasha, allPlanets);
   const adCtx = planetContext(antardasha, allPlanets);
+  const lang = getAgentLanguage();
+  if (lang === "hi") {
+    return `${mahadasha}/${antardasha} का संयोग ${md.themes} और ${ad.themes} को जोड़ता है। इस कुंडली में ${mdCtx} और ${adCtx} मिलकर कार्य करते हैं, इसलिए परिणाम सुनियोजित प्रयासों से आते हैं। यह समय उन कार्यों के लिए सर्वोत्तम है जो जिम्मेदारी और समय को संतुलित करते हैं। ${md.caution} और ${ad.caution} से बचने के लिए निर्णय तथ्यों पर आधारित रखें।`;
+  }
   return `${mahadasha}/${antardasha} combines ${md.themes} with ${ad.themes}. In this chart, ${mdCtx} works in tandem with ${adCtx}, so results come through intentional sequencing rather than sudden luck. This window is strongest for actions that align responsibility with timing: commit to high-value priorities, formalize key decisions, and keep execution measurable. If unmanaged, ${md.caution} can amplify ${ad.caution}, so avoid reactive decisions and keep your strategy grounded in facts.`;
 }
 
 function buildAntardashaFocusAreas(mahadasha: string, antardasha: string): string[] {
   const md = PLANET_SIGNIFICATIONS[mahadasha] || PLANET_SIGNIFICATIONS.Saturn;
   const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
+  const lang = getAgentLanguage();
+  if (lang === "hi") {
+    return [
+      `${mahadasha} और ${antardasha} का संयोग — ${md.themes} तथा ${ad.themes} पर केंद्रित।`,
+      `अवसर — ${md.opportunity}; ${ad.opportunity} द्वारा समर्थित।`,
+      `सावधानी — ${md.caution} और ${ad.caution} पर नियंत्रण रखें।`,
+    ];
+  }
   return [
     `Primary theme integration: ${md.themes} with ${ad.themes}.`,
     `Opportunity focus: ${md.opportunity}; supported by ${ad.opportunity}.`,
@@ -442,6 +463,10 @@ function buildAntardashaFocusAreas(mahadasha: string, antardasha: string): strin
 function buildAntardashaAdvice(mahadasha: string, antardasha: string): string {
   const md = PLANET_SIGNIFICATIONS[mahadasha] || PLANET_SIGNIFICATIONS.Saturn;
   const ad = PLANET_SIGNIFICATIONS[antardasha] || PLANET_SIGNIFICATIONS.Mercury;
+  const lang = getAgentLanguage();
+  if (lang === "hi") {
+    return `इस अंतर्दशा में ${md.opportunity} पर ध्यान दें और ${ad.opportunity} का सचेत उपयोग करें। ${md.caution} और ${ad.caution} से बचने के लिए निर्णय संयमित और समीक्षा-आधारित रखें।`;
+  }
   return `Use this sub-period to pursue ${md.opportunity} while consciously channeling ${ad.opportunity}. Keep decisions paced, documented, and review-based so ${md.caution} and ${ad.caution} do not derail progress.`;
 }
 
@@ -843,11 +868,17 @@ CRITICAL DEPTH REQUIREMENTS:
         ),
         predictions: useOrFallbackArray(
           aiAd?.predictions,
-          [
-            `This ${currentDasha.mahadasha}/${adWindow.antardasha} phase can reset priorities in work and responsibility structures.`,
-            `Outcomes improve when commitments are sequenced and reviewed rather than rushed.`,
-            `Relationship and financial choices should be evaluated for long-term stability before execution.`,
-          ],
+          getAgentLanguage() === "hi"
+            ? [
+                `${currentDasha.mahadasha}/${adWindow.antardasha} चरण कार्य और जिम्मेदारी संरचनाओं में प्राथमिकताओं को पुनर्निर्धारित कर सकता है।`,
+                `जब प्रतिबद्धताओं को क्रमबद्ध और समीक्षित किया जाता है तो परिणाम बेहतर होते हैं।`,
+                `संबंध और वित्तीय निर्णय दीर्घकालिक स्थिरता के लिए मूल्यांकन करके लें।`,
+              ]
+            : [
+                `This ${currentDasha.mahadasha}/${adWindow.antardasha} phase can reset priorities in work and responsibility structures.`,
+                `Outcomes improve when commitments are sequenced and reviewed rather than rushed.`,
+                `Relationship and financial choices should be evaluated for long-term stability before execution.`,
+              ],
         ),
         advice: !isWeakNarrative(aiAd?.advice, 90)
           ? cleanTextArtifact(aiAd!.advice)
@@ -867,7 +898,9 @@ CRITICAL DEPTH REQUIREMENTS:
         endDate: formatDate(mdWindow.endDate),
         overview: !isWeakNarrative(aiGroup?.overview, 170)
           ? cleanTextArtifact(aiGroup!.overview)
-          : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Expect outcomes to unfold through sub-period shifts, where each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
+          : getAgentLanguage() === "hi"
+            ? `${mdWindow.mahadasha} महादशा ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "जीवन पुनर्गठन"} पर केंद्रित एक दीर्घकालिक कर्म अध्याय खोलती है। प्रत्येक अंतर्दशा गति, प्राथमिकताओं और जोखिम प्रोफ़ाइल को बदलती है। सर्वोत्तम रणनीति चरणबद्ध कार्यान्वयन है: उद्देश्य निर्धारित करें, प्रत्येक अंतर्दशा परिवर्तन पर पुनर्मूल्यांकन करें।`
+            : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Expect outcomes to unfold through sub-period shifts, where each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
         antardashas: mdWindow.antardashas.map((adWindow) => {
           const deterministic = deterministicByAntardasha?.get(adWindow.antardasha);
           const aiAd = aiAntardashaByPlanet.get(adWindow.antardasha);

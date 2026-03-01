@@ -12,6 +12,10 @@ export function setAgentLanguageContext(language: string): void {
   console.log(`[AGENT] Language context set to: ${_agentLanguage}`);
 }
 
+export function getAgentLanguage(): string {
+  return _agentLanguage;
+}
+
 function getLanguageInstruction(): string {
   if (_agentLanguage === "hi") {
     return `

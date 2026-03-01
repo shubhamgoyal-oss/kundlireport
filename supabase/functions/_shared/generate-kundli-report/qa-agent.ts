@@ -91,9 +91,11 @@ function sanitizeText(text: string): string {
   return sanitized;
 }
 
-function isWeakNarrative(text: unknown, minLength: number): boolean {
+function isWeakNarrative(text: unknown, minLength: number, reportLanguage = "en"): boolean {
   const t = typeof text === "string" ? text.trim() : "";
-  if (t.length < minLength) return true;
+  const effectiveMin = reportLanguage === "en" ? minLength : Math.floor(minLength * 0.4);
+  if (t.length < effectiveMin) return true;
+  if (reportLanguage !== "en") return false;  // skip English-only vague patterns
   return VAGUE_PATTERNS.some((rx) => rx.test(t));
 }
 
@@ -108,10 +110,11 @@ function parseMonthYearToDate(value: unknown): Date | null {
 
 function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIssue[] {
   const issues: QAIssue[] = [];
+  const lang = String(reportContent.language || "en").toLowerCase();
 
   const sade = reportContent.sadeSati;
   if (sade) {
-    if (isWeakNarrative(sade.overview, 140)) {
+    if (isWeakNarrative(sade.overview, 140, lang)) {
       issues.push({
         section: "sadeSati.overview",
         issueType: "clarity",
@@ -120,7 +123,7 @@ function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIs
         suggestedFix: "Add a detailed paragraph tied to Moon sign, Saturn transit sign, and current phase.",
       });
     }
-    if (isWeakNarrative(sade.moonSaturnRelationship, 100)) {
+    if (isWeakNarrative(sade.moonSaturnRelationship, 100, lang)) {
       issues.push({
         section: "sadeSati.moonSaturnRelationship",
         issueType: "clarity",
@@ -137,7 +140,7 @@ function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIs
     for (const md of dasha.upcomingMahadashaAntardashaPredictions) {
       const antardashas = Array.isArray(md?.antardashas) ? md.antardashas : [];
       for (const ad of antardashas) {
-        if (isWeakNarrative(ad?.interpretation, 100)) weakCount++;
+        if (isWeakNarrative(ad?.interpretation, 100, lang)) weakCount++;
       }
     }
     if (weakCount > 0) {
@@ -196,7 +199,7 @@ function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIs
   }
 
   const careerOverview = reportContent.career?.overview;
-  if (isWeakNarrative(careerOverview, 180)) {
+  if (isWeakNarrative(careerOverview, 180, lang)) {
     issues.push({
       section: "career.overview",
       issueType: "clarity",
@@ -207,7 +210,7 @@ function runDeterministicQualityChecks(reportContent: Record<string, any>): QAIs
   }
 
   const marriageOverview = reportContent.marriage?.overview;
-  if (isWeakNarrative(marriageOverview, 180)) {
+  if (isWeakNarrative(marriageOverview, 180, lang)) {
     issues.push({
       section: "marriage.overview",
       issueType: "clarity",

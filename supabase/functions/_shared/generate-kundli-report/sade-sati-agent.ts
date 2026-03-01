@@ -1,6 +1,6 @@
 // Sade Sati Agent - Analyzes Saturn's transit over Moon sign
 
-import { callAgent, type AgentResponse } from "./agent-base.ts";
+import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
 
 type SadeSatiPhase = "rising" | "peak" | "setting" | "not_active";
@@ -103,7 +103,10 @@ const CURRENT_SATURN_SIGN = "Pisces";
 
 function isWeakNarrative(text: string | undefined, minLength = 120): boolean {
   const t = String(text || "").trim();
-  if (t.length < minLength) return true;
+  const lang = getAgentLanguage();
+  const effectiveMin = lang === "en" ? minLength : Math.floor(minLength * 0.4);
+  if (t.length < effectiveMin) return true;
+  if (lang !== "en") return false;
   const genericPatterns = [
     /meaningful shift in priorities/i,
     /structured action/i,

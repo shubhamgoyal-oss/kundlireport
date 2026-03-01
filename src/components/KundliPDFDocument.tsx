@@ -3145,7 +3145,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
           {report.houses.map((house: any, idx: number) => (
             <ContentPage key={idx} sectionName={`House ${house.house}`}>
-              <Section title={`House ${house.house}${house.houseHindi ? ' - ' + sanitizeText(house.houseHindi) : ''}`}>
+              <Section title={`House ${house.house}${ACTIVE_PDF_LANGUAGE !== 'en' && house.houseHindi ? ' - ' + sanitizeText(house.houseHindi) : ''}`}>
                 <InfoStrip items={[
                   { label: 'Sign', value: sanitizeText(String(house.sign || 'N/A')) || 'N/A' },
                   { label: 'Lord', value: sanitizeText(String(house.lord || 'N/A')) || 'N/A' },

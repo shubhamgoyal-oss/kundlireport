@@ -170,19 +170,43 @@ export async function fetchKundaliSvg(options: FetchKundaliOptions): Promise<str
       divisionalChart
     }
   });
-  
+
   // Check if aborted
   if (signal?.aborted) {
     throw new DOMException('Aborted', 'AbortError');
   }
-  
-  if (response.error) {
-    throw new Error(response.error.message || 'Failed to fetch kundali chart');
-  }
-  
-  const svg = response.data?.data?.svg;
+
+  let svg = response.error ? null : (response.data?.data?.svg as string | null);
+
+  // Fallback: call Seer chart API directly from browser if edge function failed or returned no SVG
   if (!svg) {
-    throw new Error('No SVG data in response');
+    console.warn('[kundaliChart] Edge function failed/empty, trying direct API call for', divisionalChart);
+    const directRes = await fetch(
+      `https://api-sbox.a4b.io/gw2/seer/external/v1/chart/horo-image/${divisionalChart}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fe-server': 'true',
+          'x-afb-r-uid': '7160881',
+        },
+        body: JSON.stringify({
+          day: birthDetails.day, month: birthDetails.month, year: birthDetails.year,
+          hour: birthDetails.hour, minute: birthDetails.minute,
+          lat: birthDetails.lat, lon: birthDetails.lon, tzone: birthDetails.tzone,
+          chartType, image_type: 'svg', language,
+        }),
+        signal,
+      }
+    );
+    if (directRes.ok) {
+      const directData = await directRes.json();
+      svg = (directData?.data?.svg as string) || null;
+    }
+  }
+
+  if (!svg) {
+    throw new Error(response.error?.message || 'No SVG data in response');
   }
   
   // Transform to responsive

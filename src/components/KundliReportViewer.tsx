@@ -66,6 +66,39 @@ const ensureReadWritePermission = async (handle: any): Promise<boolean> => {
   return false;
 };
 
+// Convert an SVG string to a PNG data URL via canvas.
+// This bypasses @react-pdf/renderer's broken SVG path parser (xCoordinate null error).
+const svgToDataUrl = (svgString: string, size = 400): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { reject(new Error('Canvas unavailable')); return; }
+    const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const img = new window.Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, size, size);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG load failed')); };
+    img.src = url;
+  });
+
+const chartsWithDataUrls = async (charts: ChartData[]): Promise<ChartData[]> =>
+  Promise.all(
+    charts.map(async (chart) => {
+      try {
+        const dataUrl = await svgToDataUrl(chart.svg);
+        return { ...chart, dataUrl };
+      } catch {
+        return chart; // fall back to SVGRenderer for this chart
+      }
+    })
+  );
+
 interface KundliReport {
   birthDetails: {
     name: string;
@@ -137,7 +170,10 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   }, [report.birthDetails.name, report.generatedAt]);
 
   const createPdfBlob = useCallback(async () => {
-    const reportWithCharts = { ...report, charts };
+    // Convert SVG charts to PNG data URLs to avoid @react-pdf/renderer's SVG path parser bug
+    // (crashes with "Cannot read properties of null (reading 'xCoordinate')")
+    const convertedCharts = await chartsWithDataUrls(charts);
+    const reportWithCharts = { ...report, charts: convertedCharts };
     return pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
   }, [report, charts]);
 

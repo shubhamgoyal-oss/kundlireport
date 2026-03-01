@@ -120,9 +120,11 @@ async function runToolCallRequest(
   toolDescription: string,
   toolSchema: Record<string, any>,
 ): Promise<{ ok: boolean; status?: number; errorText?: string; result?: any }> {
-  // 2-minute timeout per API call to prevent indefinite hangs
+  // 5-minute timeout per API call to prevent indefinite hangs.
+  // The Dasha agent generates 10k+ tokens of structured JSON (especially in Hindi)
+  // and legitimately needs 2-4 minutes. The retry wrapper handles true failures.
   const controller = new AbortController();
-  const fetchTimeout = setTimeout(() => controller.abort(), 120_000);
+  const fetchTimeout = setTimeout(() => controller.abort(), 300_000);
 
   let response: Response;
   try {
@@ -155,7 +157,7 @@ async function runToolCallRequest(
   } catch (err: any) {
     clearTimeout(fetchTimeout);
     if (err?.name === "AbortError") {
-      return { ok: false, status: 408, errorText: "AI API request timed out after 120s" };
+      return { ok: false, status: 408, errorText: "AI API request timed out after 300s" };
     }
     throw err;
   }

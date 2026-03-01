@@ -570,6 +570,10 @@ export default function BulkKundliRunner() {
 
     const { visitorId, sessionId } = getVisitorAndSessionIds();
 
+    // Run gender/name/place detection before processing
+    toast('Detecting gender for all rows…');
+    await detectGendersForRows(selectedRows);
+
     // Track which rows failed for the auto-retry pass
     const firstPassFailed = new Set<number>();
 

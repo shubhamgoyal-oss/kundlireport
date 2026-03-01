@@ -1,4 +1,4 @@
-import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Tspan } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Image } from '@react-pdf/renderer';
 import React from 'react';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Disable hyphenation to prevent character substitution issues
@@ -30,6 +30,38 @@ Font.register({
       fontWeight: 'bold',
       fontStyle: 'italic',
     },
+  ],
+});
+
+// Register neutral Latin family alias
+Font.register({
+  family: 'NotoSans',
+  fonts: [
+    { src: '/fonts/DejaVuSans.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/DejaVuSans.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/DejaVuSans-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+});
+
+// Register Hindi and Telugu fonts for native-script rendering
+Font.register({
+  family: 'NotoSansDevanagari',
+  fonts: [
+    { src: '/fonts/NotoSansDevanagari-Regular.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansDevanagari-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansDevanagari-Regular.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/NotoSansDevanagari-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+});
+
+Font.register({
+  family: 'NotoSansTelugu',
+  fonts: [
+    { src: '/fonts/NotoSansTelugu-Regular.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansTelugu-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansTelugu-Regular.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/NotoSansTelugu-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
   ],
 });
 
@@ -153,43 +185,800 @@ const normalizeChartLabel = (raw: string): string => {
   const text = String(raw || "").trim();
   if (!text) return "";
   if (CHART_LABEL_MAP[text]) return CHART_LABEL_MAP[text];
-  // If Devanagari remains, strip to avoid PDF glyph corruption.
   return sanitizeText(text);
 };
 
 /**
- * Sanitize text to remove characters that DejaVuSans cannot render (Devanagari, etc.).
- * Keeps Latin, common punctuation, and basic symbols. Strips Devanagari Unicode blocks
- * (U+0900–U+097F, U+A8E0–U+A8FF) and other non-renderable scripts to prevent garbled output.
- * If the string contains parenthesized English text after Hindi, extracts just the English part.
+ * Sanitize text to remove control/noise characters while preserving native scripts.
  */
 const sanitizeText = (text: string | null | undefined): string => {
   if (!text) return '';
-  const str = String(text);
-  // Remove Devanagari and extended Devanagari ranges, and other Indic scripts
-  // eslint-disable-next-line no-control-regex
-  let cleaned = str.replace(/[\u0900-\u097F\uA8E0-\uA8FF\u0980-\u09FF\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/g, '');
-  cleaned = cleaned.replace(/\(([^)]*)\)/g, (_m, inner) => {
-    const token = String(inner || '').trim();
-    if (!token) return '';
-    // Keep meaningful transliterations like "(Budh)", remove noisy tokens like "(6AM0)", "(G$A)".
-    if (/[a-z]/.test(token)) return `(${token})`;
-    if (/^[A-Za-z ]{3,}$/.test(token)) return `(${token})`;
-    return '';
-  });
-  cleaned = cleaned
-    .replace(/\(\s*[^)]*$/g, '')    // strip dangling "(" fragments
+  return String(text)
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/\s+,/g, ',')
     .replace(/\(\s*\)/g, '')
     .replace(/\s+/g, ' ')
-    .replace(/^\s*-?\s*$/g, '')
     .trim();
-  return cleaned;
 };
 
 const SATURN_TRANSIT_FALLBACK_SIGN = 'Pisces';
 const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const MONTH_NAMES_BY_LANGUAGE: Record<'en' | 'hi' | 'te', string[]> = {
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+  hi: ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
+  te: ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగస్టు', 'సెప్టెంబర్', 'అక్టోబర్', 'నవంబర్', 'డిసెంబర్'],
+};
+
+let ACTIVE_PDF_FONT_FAMILY = 'NotoSans';
+let ACTIVE_PDF_BODY_FONT_SIZE = 10.5;
+let ACTIVE_PDF_BODY_LINE_HEIGHT = 1.45;
+let ACTIVE_PDF_LANGUAGE: 'en' | 'hi' | 'te' = 'en';
+
+const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
+  hi: {
+    'Sri Mandir Kundli Report': 'श्री मंदिर कुंडली रिपोर्ट',
+    'Table of Contents': 'विषय सूची',
+    'Birth Details': 'जन्म विवरण',
+    'YOUR': 'आपकी',
+    'KUNDLI REPORT': 'कुंडली रिपोर्ट',
+    'A Personalized Vedic Astrology Blueprint': 'आपकी वैदिक ज्योतिष रूपरेखा',
+    'Date of Birth': 'जन्म तिथि',
+    'Time of Birth': 'जन्म समय',
+    'Place of Birth': 'जन्म स्थान',
+    'Created by expert astrologers': 'विशेषज्ञ ज्योतिषियों द्वारा तैयार',
+    'Prepared on': 'तैयार किया गया',
+    'This comprehensive Kundli report covers all major dimensions of your birth chart, from your fundamental planetary blueprint to specific life-area predictions and remedial guidance.': 'यह विस्तृत कुंडली रिपोर्ट आपकी जन्मकुंडली के सभी प्रमुख आयामों को समाहित करती है, जिसमें मूल ग्रह स्थिति से लेकर जीवन के विभिन्न क्षेत्रों की भविष्यवाणियां और उपाय सम्मिलित हैं।',
+    'Birth Details & Planetary Positions': 'जन्म विवरण और ग्रह स्थितियां',
+    'Planetary Positions': 'ग्रह स्थितियां',
+    'Detailed Planetary Snapshot': 'विस्तृत ग्रह सारणी',
+    'Panchang Analysis': 'पंचांग विश्लेषण',
+    'Three Pillars of Your Chart': 'आपकी कुंडली के तीन स्तंभ',
+    'Personal Planetary Profiles': 'ग्रह प्रोफ़ाइल',
+    'Bhavphal — The 12 Houses': 'भावफल — 12 भाव',
+    'Career & Professional Life': 'कैरियर और पेशेवर जीवन',
+    'Love, Romance & Marriage': 'प्रेम, संबंध और विवाह',
+    'Health & Well-Being': 'स्वास्थ्य और कल्याण',
+    'Vimshottari Dasha Predictions': 'विंशोत्तरी दशा भविष्यवाणी',
+    'Rahu–Ketu Karmic Axis': 'राहु-केतु कर्म अक्ष',
+    'Raja Yogas & Auspicious Combinations': 'राजयोग और शुभ संयोजन',
+    'Dosha Analysis': 'दोष विश्लेषण',
+    "Sade Sati — Saturn's 7.5-Year Transit": 'साढ़ेसाती — शनि का 7.5 वर्ष का गोचर',
+    'Numerology Analysis': 'अंक ज्योतिष विश्लेषण',
+    'Spiritual Potential & Dharma': 'आध्यात्मिक क्षमता और धर्म',
+    'Vedic Remedies': 'वैदिक उपाय',
+    'Chara Karakas — Jaimini System': 'चर कारक — जैमिनी पद्धति',
+    'Sade Sati': 'साढ़ेसाती',
+    'Your Sade Sati Status': 'आपकी साढ़ेसाती स्थिति',
+    'Transit Saturn': 'गोचर शनि',
+    'Currently Active': 'वर्तमान सक्रियता',
+    'Current Phase': 'वर्तमान चरण',
+    'YES — ACTIVE NOW': 'हाँ — अभी सक्रिय',
+    'Not Currently Active': 'वर्तमान में सक्रिय नहीं',
+    'Saturn Sign': 'शनि राशि',
+    'Period': 'अवधि',
+    'Guidance for This Phase': 'इस चरण के लिए मार्गदर्शन',
+    'Purpose': 'उद्देश्य',
+    'Best Time': 'उत्तम समय',
+    'Month-level periods below are approximate transit windows derived from Saturn phase sequencing.': 'नीचे दिए गए मासिक कालखंड शनि चरण क्रम के आधार पर अनुमानित गोचर विंडो हैं।',
+    'The Three Phases of Your Sade Sati': 'आपकी साढ़ेसाती के तीन चरण',
+    'Sade Sati — Detailed Analysis': 'साढ़ेसाती — विस्तृत विश्लेषण',
+    'Sade Sati — Remedies & Spiritual Significance': 'साढ़ेसाती — उपाय और आध्यात्मिक महत्व',
+    'Powerful Remedies for Sade Sati': 'साढ़ेसाती के प्रभावी उपाय',
+    'Current Sade Sati': 'वर्तमान साढ़ेसाती',
+    'Past Sade Sati': 'पूर्व साढ़ेसाती',
+    'Next Sade Sati': 'अगली साढ़ेसाती',
+    'The Moon-Saturn Relationship in Your Chart': 'आपकी कुंडली में चंद्र-शनि संबंध',
+    'Master Guidance for Your Sade Sati': 'साढ़ेसाती के लिए मुख्य मार्गदर्शन',
+    'Inspiration — Famous People Who Thrived During Sade Sati': 'प्रेरणा — साढ़ेसाती में सफल रहे प्रसिद्ध लोग',
+    'PART': 'भाग',
+    'Rising Phase (12th from Moon)': 'उदय चरण (चंद्र से 12वां)',
+    'Peak Phase (Over Moon)': 'चरम चरण (चंद्र पर)',
+    'Setting Phase (2nd from Moon)': 'अवरोह चरण (चंद्र से 2रा)',
+    'Not Active': 'सक्रिय नहीं',
+    'Looking for detailed guidance on your birth chart? Speak to our expert astrologers today': 'अपनी कुंडली पर विस्तृत मार्गदर्शन चाहिए? आज ही हमारे विशेषज्ञ ज्योतिषियों से बात करें',
+    // Section sub-headers (planet profiles)
+    'Placement Analysis': 'स्थान विश्लेषण',
+    'House Significance': 'भाव महत्व',
+    'Aspects': 'दृष्टियां',
+    'Retrograde Effect': 'वक्री प्रभाव',
+    'Dasha Influence': 'दशा प्रभाव',
+    // Chara Karakas
+    'Chara Karakas (Jaimini)': 'चर कारक (जैमिनी)',
+    'Chara Karakas - Jaimini Astrology': 'चर कारक — जैमिनी ज्योतिष',
+    'Understanding the Jaimini System': 'जैमिनी पद्धति की समझ',
+    'Your Chara Karakas': 'आपके चर कारक',
+    // Charts
+    'Kundali Charts (Divisional Charts)': 'कुंडली चार्ट (विभागीय)',
+    'Additional Divisional Charts': 'अतिरिक्त विभागीय चार्ट',
+    'Kundali Charts': 'कुंडली चार्ट',
+    // Birth details labels
+    'Tithi at Birth': 'जन्म कालीन तिथि',
+    'Nakshatra at Birth': 'जन्म नक्षत्र',
+    'Yoga at Birth': 'जन्म का योग',
+    'Karana at Birth': 'जन्म का करण',
+    'Lahiri Ayanamsha': 'लाहिरी अयनांश',
+    'Sun Degree': 'सूर्य अंश',
+    'Ascendant Degree': 'लग्न अंश',
+    'Lord in': 'स्वामी भाव',
+    'Vaar (Day)': 'वार',
+    // Three Pillars
+    'Moon Sign (Rashi)': 'चंद्र राशि',
+    'Moon Sign': 'चंद्र राशि',
+    'Ascendant (Lagna)': 'लग्न',
+    'Birth Nakshatra': 'जन्म नक्षत्र',
+    'Emotional Nature': 'भावनात्मक स्वभाव',
+    'Ruling Planet': 'राशि स्वामी',
+    // Bhavphal
+    'Bhavphal - House Analysis Overview': 'भावफल — भाव विश्लेषण',
+    // TOC sub-descriptions
+    'Ascendant, planetary placements, Chara Karakas (Jaimini)': 'लग्न, ग्रह स्थितियां, चर कारक (जैमिनी)',
+    'Vaar, Tithi, Nakshatra, Yoga, Karana at birth': 'वार, तिथि, नक्षत्र, योग, करण',
+    'Moon Sign, Ascendant, Birth Nakshatra': 'चंद्र राशि, लग्न, जन्म नक्षत्र',
+    'Detailed analysis of all 9 planets': 'सभी 9 ग्रहों का विस्तृत विश्लेषण',
+    'Complete house-by-house life analysis': 'सभी 12 भावों का जीवन विश्लेषण',
+    'Career calling, wealth potential, suitable fields': 'कैरियर, आर्थिक संभावना, उपयुक्त क्षेत्र',
+    'Partner profile, marriage timing, compatibility': 'जीवनसाथी, विवाह काल, अनुकूलता',
+    'Age-aware lifestyle guidance and preventive care focus': 'आयु-आधारित जीवनशैली मार्गदर्शन',
+    'Current & upcoming planetary periods': 'वर्तमान और आगामी दशा-अंतर्दशा',
+    'Past karma, future direction, Kaal Sarp Yoga': 'पूर्व कर्म, भविष्य दिशा, कालसर्प योग',
+    'Pancha Mahapurusha, Dhana Yogas and more': 'पंचमहापुरुष, धन योग और अन्य',
+    'Mangal Dosha, Kaal Sarp and other planetary afflictions': 'मंगल दोष, कालसर्प और अन्य दोष',
+    'Current status, phases, remedies': 'वर्तमान स्थिति, चरण, उपाय',
+    'Birth number, destiny number, personal year': 'मूलांक, भाग्यांक, व्यक्तिगत वर्ष',
+    'Atmakaraka, Ishta Devata, Moksha path': 'आत्मकारक, इष्ट देवता, मोक्ष मार्ग',
+    'Gemstones, Rudraksha, Mantras, Yantras, Pujas': 'रत्न, रुद्राक्ष, मंत्र, यंत्र, पूजा',
+    'Atmakaraka, Amatyakaraka, Darakaraka in depth': 'आत्मकारक, अमात्यकारक, दारकारक',
+    // Static paragraph texts
+    'R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.': 'R = वक्री, C = अस्त। "यदि उपलब्ध" से अंकित क्षेत्र केवल स्रोत डेटा में उपलब्ध होने पर प्रदर्शित होते हैं।',
+    'The Panchang (five limbs) provides the foundational cosmic timing of your birth, revealing the day\'s energy, lunar phase, and celestial influences that shape your destiny.': 'पंचांग (पाँच अंग) आपके जन्म की मूल ज्योतिषीय समय-गणना है, जो उस दिन की ऊर्जा, चंद्र चरण और आपकी नियति को आकार देने वाले खगोलीय प्रभावों को प्रकट करती है।',
+    'The three fundamental pillars—Moon Sign, Ascendant, and Birth Nakshatra—form the core identity markers of your horoscope, revealing your emotional nature, physical constitution, and life purpose.': 'तीन मूल स्तंभ — चंद्र राशि, लग्न और जन्म नक्षत्र — आपकी कुंडली के केंद्रीय पहचान चिह्न हैं, जो आपकी भावनात्मक प्रकृति, शारीरिक गठन और जीवन उद्देश्य को दर्शाते हैं।',
+    'The twelve houses (Bhavas) of your horoscope govern different areas of life. Each house is colored by its sign, lord placement, and any planetary occupants. This comprehensive analysis reveals the potential in each life domain.': 'आपकी कुंडली के बारह भाव जीवन के विभिन्न क्षेत्रों को नियंत्रित करते हैं। प्रत्येक भाव अपनी राशि, भावेश की स्थिति और ग्रहों की उपस्थिति से प्रभावित होता है।',
+    'These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.': 'ये आपकी जन्मकुंडली से निकाले गए प्रमुख विभागीय चार्ट (वर्ग चार्ट) हैं। प्रत्येक चार्ट जीवन के विशेष क्षेत्रों को दर्शाता है।',
+    // ── Section / ContentPage names ───────────────────────────────────────────
+    'House Analysis (Bhavphal)': 'भावफल — भाव विश्लेषण',
+    'Career Analysis': 'करियर विश्लेषण',
+    'Career Calling': 'करियर — आपकी पुकार',
+    'Love & Marriage': 'प्रेम और विवाह',
+    'Dasha Predictions': 'दशा भविष्यवाणी',
+    'Antardasha Predictions': 'अंतर्दशा भविष्यवाणी',
+    'Antardasha Predictions (Current Mahadasha)': 'अंतर्दशा भविष्यवाणी (वर्तमान महादशा)',
+    'Yogini Dasha': 'योगिनी दशा',
+    'Yogini Dasha System': 'योगिनी दशा पद्धति',
+    'Dasha Sequence': 'दशा क्रम',
+    'Dasha Sequence & Timing': 'दशा क्रम और समय',
+    'Rahu-Ketu Axis': 'राहु-केतु अक्ष',
+    'Minor Doshas': 'लघु दोष',
+    'Dosha Remedies': 'दोष उपाय',
+    'Raja Yogas': 'राजयोग',
+    'Raja Yogas (Auspicious Combinations)': 'राजयोग (शुभ संयोजन)',
+    'Dhana Yogas': 'धन योग',
+    'Dhana Yogas (Wealth Combinations)': 'धन योग (धन संयोजन)',
+    'Life Predictions from Yogas': 'योग आधारित जीवन भविष्यवाणी',
+    'Life Predictions Based on Yogas': 'योग आधारित जीवन भविष्यवाणी',
+    'Challenging Yogas': 'चुनौतीपूर्ण योग',
+    'Challenging Yogas (For Awareness)': 'चुनौतीपूर्ण योग (जागरूकता के लिए)',
+    'Spiritual Potential': 'आध्यात्मिक क्षमता',
+    'Understanding Vedic Remedies': 'वैदिक उपाय — परिचय',
+    'Gemstone Therapy': 'रत्न चिकित्सा',
+    'Gemstone Therapy (Ratna Shastra)': 'रत्न चिकित्सा (रत्न शास्त्र)',
+    'Rudraksha Therapy': 'रुद्राक्ष चिकित्सा',
+    'Mantra Therapy': 'मंत्र चिकित्सा',
+    'Mantra Therapy (Mantra Shastra)': 'मंत्र चिकित्सा (मंत्र शास्त्र)',
+    'Yantras & Pujas': 'यंत्र और पूजा',
+    'Yantras & Puja Recommendations': 'यंत्र और पूजा सुझाव',
+    'Ishta Devata & Spiritual Practices': 'इष्ट देवता और साधना',
+    'Lifestyle Remedies': 'जीवनशैली उपाय',
+    'Lifestyle Remedies & Guidance': 'जीवनशैली उपाय और मार्गदर्शन',
+    'Atmakaraka Analysis': 'आत्मकारक विश्लेषण',
+    'Amatyakaraka Analysis': 'अमात्यकारक विश्लेषण',
+    'Glossary': 'शब्दकोश',
+    'Glossary of Vedic Astrology Terms': 'वैदिक ज्योतिष शब्दकोश',
+    // ── SubSection titles ─────────────────────────────────────────────────────
+    'Remedies': 'उपाय',
+    'Significance': 'महत्व',
+    'Detailed Analysis': 'विस्तृत विश्लेषण',
+    'Predictions': 'भविष्यवाणी',
+    'Timing': 'समय',
+    'Right Career For You': 'आपके लिए सही करियर',
+    '10th House Analysis': 'दशम भाव विश्लेषण',
+    'Sun Analysis (Authority)': 'सूर्य विश्लेषण (अधिकार)',
+    'Saturn Analysis (Work Ethic)': 'शनि विश्लेषण (कार्य निष्ठा)',
+    'Amatyakaraka (Career Significator)': 'अमात्यकारक (करियर कारक)',
+    'Suitable Career Fields': 'उपयुक्त करियर क्षेत्र',
+    'Fields to Avoid': 'परहेज करने योग्य क्षेत्र',
+    'Career Timing & Phases': 'करियर समय और चरण',
+    'Career Switch Insights': 'करियर परिवर्तन दृष्टिकोण',
+    'Success Formula': 'सफलता का सूत्र',
+    'Wealth Potential': 'आर्थिक क्षमता',
+    'Business vs Job': 'व्यवसाय बनाम नौकरी',
+    'Recommendations': 'सुझाव',
+    'Relationship Safety Framework': 'संबंध सुरक्षा ढांचा',
+    '5th House (Romance)': 'पंचम भाव (प्रेम)',
+    '7th House (Marriage)': 'सप्तम भाव (विवाह)',
+    'Venus Analysis': 'शुक्र विश्लेषण',
+    'Darakaraka (Spouse Significator)': 'दारकारक (जीवनसाथी कारक)',
+    'Partner Profile': 'जीवनसाथी प्रोफ़ाइल',
+    'Ideal Partner (If Unmarried)': 'आदर्श जीवनसाथी (अविवाहित के लिए)',
+    'Guidance If Married': 'विवाहित के लिए मार्गदर्शन',
+    'Marriage Timing': 'विवाह काल',
+    'Mangal Dosha': 'मंगल दोष',
+    'Age Context & Safety': 'आयु संदर्भ और सुरक्षा',
+    'Safe Movement Guidance': 'सुरक्षित गतिविधि मार्गदर्शन',
+    'Nutrition & Hydration': 'पोषण और जलयोजन',
+    'Recovery & Sleep': 'पुनर्प्राप्ति और नींद',
+    'Preventive Health Checks': 'निवारक स्वास्थ्य जांच',
+    'What to Avoid': 'क्या न करें',
+    'General Wellness Note': 'सामान्य स्वास्थ्य सुझाव',
+    'Career Impact': 'करियर प्रभाव',
+    'Relationship Impact': 'संबंध प्रभाव',
+    'Health Impact': 'स्वास्थ्य प्रभाव',
+    'Financial Impact': 'आर्थिक प्रभाव',
+    'Spiritual Growth': 'आध्यात्मिक विकास',
+    'Key Events': 'प्रमुख घटनाएं',
+    'Recommended Remedies': 'अनुशंसित उपाय',
+    'Upcoming Periods': 'आगामी अवधि',
+    'Complete Dasha Sequence (Vimshottari 120-Year Cycle)': 'संपूर्ण दशा क्रम (विंशोत्तरी 120 वर्ष)',
+    'Current Transit Impact': 'वर्तमान गोचर प्रभाव',
+    'Period Recommendations': 'अवधि सुझाव',
+    'Spiritual Guidance': 'आध्यात्मिक मार्गदर्शन',
+    'Karmic Axis': 'कर्म अक्ष',
+    'Rahu Analysis (Future Direction)': 'राहु विश्लेषण (भविष्य दिशा)',
+    'Ketu Analysis (Past Life Karma)': 'केतु विश्लेषण (पूर्वजन्म कर्म)',
+    'Kaal Sarp Yoga': 'कालसर्प योग',
+    'Spiritual Path': 'आध्यात्मिक पथ',
+    'Major Doshas': 'प्रमुख दोष',
+    'Priority Remedies': 'प्राथमिकता उपाय',
+    'Raja Yogas (Power & Success)': 'राजयोग (शक्ति और सफलता)',
+    'Wealth': 'धन',
+    'Fame & Recognition': 'यश और पहचान',
+    'Spirituality': 'आध्यात्मिकता',
+    'Yoga Enhancement': 'योग संवर्धन',
+    'Spiritual Significance': 'आध्यात्मिक महत्व',
+    'Sacred Mantras': 'पवित्र मंत्र',
+    'Lucky Associations': 'शुभ संबंध',
+    'Spiritual Rating': 'आध्यात्मिक स्तर',
+    'Atmakaraka (Soul Purpose)': 'आत्मकारक (आत्मा का उद्देश्य)',
+    '9th House (Dharma)': 'नवम भाव (धर्म)',
+    '12th House (Moksha)': 'द्वादश भाव (मोक्ष)',
+    'Ishta Devata (Personal Deity)': 'इष्ट देवता',
+    'Meditation Guidance': 'ध्यान मार्गदर्शन',
+    'Moksha Path': 'मोक्ष मार्ग',
+    'Vedic Foundation': 'वैदिक आधार',
+    'How Remedies Work': 'उपाय कैसे कार्य करते हैं',
+    'The Role of Faith and Intention': 'श्रद्धा और संकल्प का महत्व',
+    'Scientific Perspective': 'वैज्ञानिक दृष्टिकोण',
+    'Traditional Wisdom': 'पारंपरिक ज्ञान',
+    'Gemstones to Avoid': 'कौन से रत्न न पहनें',
+    'Yantra Recommendations': 'यंत्र सुझाव',
+    'Recommended Pujas': 'अनुशंसित पूजाएं',
+    'Your Ishta Devata (Personal Deity)': 'आपके इष्ट देवता',
+    'Fasting Recommendations (Vrata)': 'व्रत सुझाव',
+    'Donations (Daan)': 'दान',
+    'Color Therapy': 'रंग चिकित्सा',
+    'Direction Guidance (Vastu)': 'दिशा मार्गदर्शन (वास्तु)',
+    'Daily Routine Recommendations': 'दैनिक दिनचर्या सुझाव',
+    'Daily Spiritual Practices': 'दैनिक साधना',
+    'General Advice': 'सामान्य सुझाव',
+    'Weak Planets Summary': 'कमजोर ग्रह सारांश',
+    'Soul Purpose': 'आत्मा का उद्देश्य',
+    'Spiritual Lesson': 'आध्यात्मिक शिक्षा',
+    'Spouse Characteristics': 'जीवनसाथी के गुण',
+    'Marriage Indications': 'विवाह संकेत',
+    'Partner Qualities': 'जीवनसाथी के गुण',
+    'Career Direction': 'करियर दिशा',
+    'Professional Strengths': 'पेशेवर शक्तियां',
+    'Suitable Professions': 'उपयुक्त पेशे',
+    'Karaka Interactions': 'कारक अंतःक्रिया',
+    'Scriptural References': 'शास्त्रीय संदर्भ',
+    'Detailed Interpretation': 'विस्तृत व्याख्या',
+    'Life Impact': 'जीवन प्रभाव',
+    'Quick Reference': 'त्वरित संदर्भ',
+    'Upcoming Yogini Periods': 'आगामी योगिनी अवधियां',
+    'Complete Yogini Dasha Cycle (36 Years)': 'संपूर्ण योगिनी दशा चक्र (36 वर्ष)',
+  },
+  te: {
+    'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
+    'Table of Contents': 'విషయ సూచిక',
+    'Birth Details': 'జనన వివరాలు',
+    'YOUR': 'మీ',
+    'KUNDLI REPORT': 'కుండ్లీ రిపోర్ట్',
+    'A Personalized Vedic Astrology Blueprint': 'మీ వ్యక్తిగత వైదిక జ్యోతిష్య రూపరేఖ',
+    'Date of Birth': 'జనన తేది',
+    'Time of Birth': 'జనన సమయం',
+    'Place of Birth': 'జనన స్థలం',
+    'Created by expert astrologers': 'నిపుణ జ్యోతిష్యులచే సిద్ధం చేయబడింది',
+    'Prepared on': 'తయారైన తేదీ',
+    'This comprehensive Kundli report covers all major dimensions of your birth chart, from your fundamental planetary blueprint to specific life-area predictions and remedial guidance.': 'ఈ సమగ్ర కుండ్లీ రిపోర్ట్ మీ జనన జాతకంలోని ప్రధాన అంశాలన్నింటినీ కవర్ చేస్తుంది; ప్రాథమిక గ్రహ స్థితి నుండి జీవితం వివిధ రంగాల అంచనాలు మరియు పరిహార మార్గదర్శకత వరకు అందిస్తుంది.',
+    'Birth Details & Planetary Positions': 'జనన వివరాలు మరియు గ్రహ స్థితులు',
+    'Planetary Positions': 'గ్రహ స్థితులు',
+    'Detailed Planetary Snapshot': 'వివరమైన గ్రహ పట్టిక',
+    'Panchang Analysis': 'పంచాంగ విశ్లేషణ',
+    'Career & Professional Life': 'వృత్తి మరియు ప్రొఫెషనల్ జీవితం',
+    'Love, Romance & Marriage': 'ప్రేమ, సంబంధం మరియు వివాహం',
+    'Health & Well-Being': 'ఆరోగ్యం మరియు శ్రేయస్సు',
+    "Sade Sati — Saturn's 7.5-Year Transit": 'ఏడున్నర శని — 7.5 ఏళ్ల గోచారం',
+    'Sade Sati': 'ఏడున్నర శని',
+    'Your Sade Sati Status': 'మీ ఏడున్నర శని స్థితి',
+    'Transit Saturn': 'గోచార శని',
+    'Currently Active': 'ప్రస్తుతం చురుకుగా ఉందా',
+    'Current Phase': 'ప్రస్తుత దశ',
+    'YES — ACTIVE NOW': 'అవును — ప్రస్తుతం చురుకుగా ఉంది',
+    'Not Currently Active': 'ప్రస్తుతం చురుకుగా లేదు',
+    'Saturn Sign': 'శని రాశి',
+    'Period': 'కాలం',
+    'Guidance for This Phase': 'ఈ దశకు మార్గదర్శనం',
+    'Purpose': 'ఉద్దేశ్యం',
+    'Best Time': 'మంచి సమయం',
+    'Month-level periods below are approximate transit windows derived from Saturn phase sequencing.': 'క్రింద ఉన్న నెలవారీ కాలాలు శని దశ క్రమంపై ఆధారపడ్డ అంచనా గోచార విండోలు.',
+    'PART': 'భాగం',
+    'Not Active': 'ప్రస్తుతం లేదు',
+    'Looking for detailed guidance on your birth chart? Speak to our expert astrologers today': 'మీ జనన చార్ట్‌పై విశదమైన మార్గదర్శనం కావాలా? ఈరోజే మా నిపుణ జ్యోతిష్యులతో మాట్లాడండి',
+    // Missing major section headers
+    'Three Pillars of Your Chart': 'మీ కుండలిలోని మూడు స్తంభాలు',
+    'Personal Planetary Profiles': 'గ్రహ ప్రొఫైల్‌లు',
+    'Bhavphal — The 12 Houses': 'భావఫలం — 12 భావాలు',
+    'Vimshottari Dasha Predictions': 'వింశోత్తరి దశా అంచనాలు',
+    'Rahu–Ketu Karmic Axis': 'రాహు-కేతు కర్మ అక్షం',
+    'Raja Yogas & Auspicious Combinations': 'రాజయోగాలు మరియు శుభ సంయోగాలు',
+    'Dosha Analysis': 'దోష విశ్లేషణ',
+    'Numerology Analysis': 'సంఖ్యా జ్యోతిష్య విశ్లేషణ',
+    'Spiritual Potential & Dharma': 'ఆధ్యాత్మిక సామర్థ్యం మరియు ధర్మం',
+    'Vedic Remedies': 'వైదిక పరిహారాలు',
+    'Chara Karakas — Jaimini System': 'చర కారకాలు — జైమిని పద్ధతి',
+    // Planet sub-headers
+    'Placement Analysis': 'స్థాన విశ్లేషణ',
+    'House Significance': 'భావ ప్రాముఖ్యత',
+    'Aspects': 'దృష్టులు',
+    'Retrograde Effect': 'వక్రీ ప్రభావం',
+    'Dasha Influence': 'దశా ప్రభావం',
+    // Chara Karakas
+    'Chara Karakas (Jaimini)': 'చర కారకాలు (జైమిని)',
+    'Chara Karakas - Jaimini Astrology': 'చర కారకాలు — జైమిని జ్యోతిష్యం',
+    'Understanding the Jaimini System': 'జైమిని పద్ధతి అర్థం',
+    'Your Chara Karakas': 'మీ చర కారకాలు',
+    // Charts
+    'Kundali Charts (Divisional Charts)': 'కుండలి చార్ట్‌లు',
+    'Additional Divisional Charts': 'అదనపు విభాగీయ చార్ట్‌లు',
+    'Kundali Charts': 'కుండలి చార్ట్‌లు',
+    // Birth details labels
+    'Tithi at Birth': 'జనన తిథి',
+    'Nakshatra at Birth': 'జనన నక్షత్రం',
+    'Yoga at Birth': 'జనన యోగం',
+    'Karana at Birth': 'జనన కరణం',
+    'Lahiri Ayanamsha': 'లాహిరి అయనాంశం',
+    'Sun Degree': 'సూర్యుని అంశం',
+    'Ascendant Degree': 'లగ్న అంశం',
+    'Lord in': 'అధిపతి భావం',
+    'Vaar (Day)': 'వారం',
+    // Three Pillars
+    'Moon Sign (Rashi)': 'చంద్ర రాశి',
+    'Moon Sign': 'చంద్ర రాశి',
+    'Ascendant (Lagna)': 'లగ్నం',
+    'Birth Nakshatra': 'జన్మ నక్షత్రం',
+    'Emotional Nature': 'భావనాత్మక స్వభావం',
+    'Ruling Planet': 'రాశి అధిపతి',
+    // Bhavphal
+    'Bhavphal - House Analysis Overview': 'భావఫలం — భావ విశ్లేషణ',
+    // TOC sub-descriptions
+    'Ascendant, planetary placements, Chara Karakas (Jaimini)': 'లగ్నం, గ్రహ స్థితులు, చర కారకాలు (జైమిని)',
+    'Vaar, Tithi, Nakshatra, Yoga, Karana at birth': 'వారం, తిథి, నక్షత్రం, యోగం, కరణం',
+    'Moon Sign, Ascendant, Birth Nakshatra': 'చంద్ర రాశి, లగ్నం, జన్మ నక్షత్రం',
+    'Detailed analysis of all 9 planets': 'అన్ని 9 గ్రహాల వివరమైన విశ్లేషణ',
+    'Complete house-by-house life analysis': 'అన్ని 12 భావాల జీవిత విశ్లేషణ',
+    'Career calling, wealth potential, suitable fields': 'వృత్తి, ఆర్థిక సామర్థ్యం, అనువైన రంగాలు',
+    'Partner profile, marriage timing, compatibility': 'జీవిత భాగస్వామి, వివాహ సమయం, అనుకూలత',
+    'Age-aware lifestyle guidance and preventive care focus': 'వయసు-ఆధారిత జీవనశైలి మార్గదర్శనం',
+    'Current & upcoming planetary periods': 'ప్రస్తుత మరియు రాబోయే దశలు',
+    'Past karma, future direction, Kaal Sarp Yoga': 'గత కర్మ, భవిష్య దిశ, కాలసర్ప యోగం',
+    'Pancha Mahapurusha, Dhana Yogas and more': 'పంచమహాపురుష, ధన యోగాలు మరియు ఇతరాలు',
+    'Mangal Dosha, Kaal Sarp and other planetary afflictions': 'మంగళ దోషం, కాలసర్పం మరియు ఇతర దోషాలు',
+    'Current status, phases, remedies': 'ప్రస్తుత స్థితి, దశలు, పరిహారాలు',
+    'Birth number, destiny number, personal year': 'మూలాంకం, భాగ్యాంకం, వ్యక్తిగత సంవత్సరం',
+    'Atmakaraka, Ishta Devata, Moksha path': 'ఆత్మకారకం, ఇష్ట దేవత, మోక్ష మార్గం',
+    'Gemstones, Rudraksha, Mantras, Yantras, Pujas': 'రత్నాలు, రుద్రాక్ష, మంత్రాలు, యంత్రాలు, పూజలు',
+    'Atmakaraka, Amatyakaraka, Darakaraka in depth': 'ఆత్మకారకం, అమాత్యకారకం, దారకారకం',
+    // Static paragraph texts
+    'R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.': 'R = వక్రీ, C = అస్తం. "లభ్యమైతే" అని గుర్తించిన అంశాలు మూల డేటాలో ఉన్నప్పుడు మాత్రమే చూపబడతాయి.',
+    'The Panchang (five limbs) provides the foundational cosmic timing of your birth, revealing the day\'s energy, lunar phase, and celestial influences that shape your destiny.': 'పంచాంగం (ఐదు అంగాలు) మీ జన్మ సమయపు మూల జ్యోతిష్య గణన, ఆ రోజు శక్తి, చంద్ర దశ మరియు మీ విధిని నిర్ణయించే ఖగోళ ప్రభావాలను వెల్లడిస్తుంది.',
+    'The three fundamental pillars—Moon Sign, Ascendant, and Birth Nakshatra—form the core identity markers of your horoscope, revealing your emotional nature, physical constitution, and life purpose.': 'మూడు మూల స్తంభాలు — చంద్ర రాశి, లగ్నం మరియు జన్మ నక్షత్రం — మీ కుండలిలోని కేంద్ర గుర్తింపు చిహ్నాలు, ఇవి మీ భావనాత్మక స్వభావం, శారీరక స్వరూపం మరియు జీవిత లక్ష్యాన్ని తెలుపుతాయి.',
+    'The twelve houses (Bhavas) of your horoscope govern different areas of life. Each house is colored by its sign, lord placement, and any planetary occupants. This comprehensive analysis reveals the potential in each life domain.': 'మీ కుండలిలోని పన్నెండు భావాలు జీవితంలోని వేర్వేరు రంగాలను నియంత్రిస్తాయి. ప్రతి భావం దాని రాశి, అధిపతి స్థానం మరియు గ్రహాల ఉనికి ద్వారా ప్రభావితమవుతుంది.',
+    'These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.': 'ఇవి మీ జన్మ కుండలి నుండి తీసుకోబడిన ముఖ్యమైన విభాగీయ చార్ట్‌లు (వర్గ చార్ట్‌లు). ప్రతి చార్ట్ జీవితంలో నిర్దిష్ట రంగాలను చూపిస్తుంది.',
+    // ── Sade Sati entries ─────────────────────────────────────────────────────
+    'Sade Sati — Detailed Analysis': 'ఏడున్నర శని — వివరమైన విశ్లేషణ',
+    'Sade Sati — Remedies & Spiritual Significance': 'ఏడున్నర శని — పరిహారాలు మరియు ఆధ్యాత్మిక ప్రాముఖ్యత',
+    'Powerful Remedies for Sade Sati': 'ఏడున్నర శనికి శక్తివంతమైన పరిహారాలు',
+    'Current Sade Sati': 'ప్రస్తుత ఏడున్నర శని',
+    'Past Sade Sati': 'గత ఏడున్నర శని',
+    'Next Sade Sati': 'తదుపరి ఏడున్నర శని',
+    'The Moon-Saturn Relationship in Your Chart': 'మీ కుండలిలో చంద్ర-శని సంబంధం',
+    'Master Guidance for Your Sade Sati': 'మీ ఏడున్నర శనికి ప్రధాన మార్గదర్శనం',
+    'Inspiration — Famous People Who Thrived During Sade Sati': 'స్ఫూర్తి — ఏడున్నర శనిలో వృద్ధి చెందిన ప్రసిద్ధులు',
+    'The Three Phases of Your Sade Sati': 'మీ ఏడున్నర శని మూడు దశలు',
+    'Rising Phase (12th from Moon)': 'ఉదయ దశ (చంద్రుడి నుండి 12వ)',
+    'Peak Phase (Over Moon)': 'శిఖర దశ (చంద్రుడిపై)',
+    'Setting Phase (2nd from Moon)': 'అస్తమయ దశ (చంద్రుడి నుండి 2వ)',
+    // ── Section / ContentPage names ───────────────────────────────────────────
+    'House Analysis (Bhavphal)': 'భావఫలం — భావ విశ్లేషణ',
+    'Career Analysis': 'వృత్తి విశ్లేషణ',
+    'Career Calling': 'వృత్తి — మీ పిలుపు',
+    'Love & Marriage': 'ప్రేమ మరియు వివాహం',
+    'Dasha Predictions': 'దశా అంచనాలు',
+    'Antardasha Predictions': 'అంతర్దశా అంచనాలు',
+    'Antardasha Predictions (Current Mahadasha)': 'అంతర్దశా అంచనాలు (ప్రస్తుత మహాదశ)',
+    'Yogini Dasha': 'యోగిని దశ',
+    'Yogini Dasha System': 'యోగిని దశా పద్ధతి',
+    'Dasha Sequence': 'దశా క్రమం',
+    'Dasha Sequence & Timing': 'దశా క్రమం మరియు సమయం',
+    'Rahu-Ketu Axis': 'రాహు-కేతు అక్షం',
+    'Minor Doshas': 'చిన్న దోషాలు',
+    'Dosha Remedies': 'దోష పరిహారాలు',
+    'Raja Yogas': 'రాజయోగాలు',
+    'Raja Yogas (Auspicious Combinations)': 'రాజయోగాలు (శుభ సంయోగాలు)',
+    'Dhana Yogas': 'ధన యోగాలు',
+    'Dhana Yogas (Wealth Combinations)': 'ధన యోగాలు (సంపద సంయోగాలు)',
+    'Life Predictions from Yogas': 'యోగ ఆధారిత జీవిత అంచనాలు',
+    'Life Predictions Based on Yogas': 'యోగ ఆధారిత జీవిత అంచనాలు',
+    'Challenging Yogas': 'సవాలు యోగాలు',
+    'Challenging Yogas (For Awareness)': 'సవాలు యోగాలు (అవగాహన కోసం)',
+    'Spiritual Potential': 'ఆధ్యాత్మిక సామర్థ్యం',
+    'Understanding Vedic Remedies': 'వైదిక పరిహారాలు — పరిచయం',
+    'Gemstone Therapy': 'రత్న చికిత్స',
+    'Gemstone Therapy (Ratna Shastra)': 'రత్న చికిత్స (రత్న శాస్త్రం)',
+    'Rudraksha Therapy': 'రుద్రాక్ష చికిత్స',
+    'Mantra Therapy': 'మంత్ర చికిత్స',
+    'Mantra Therapy (Mantra Shastra)': 'మంత్ర చికిత్స (మంత్ర శాస్త్రం)',
+    'Yantras & Pujas': 'యంత్రాలు మరియు పూజలు',
+    'Yantras & Puja Recommendations': 'యంత్రాలు మరియు పూజా సూచనలు',
+    'Ishta Devata & Spiritual Practices': 'ఇష్ట దేవత మరియు ఆధ్యాత్మిక సాధన',
+    'Lifestyle Remedies': 'జీవనశైలి పరిహారాలు',
+    'Lifestyle Remedies & Guidance': 'జీవనశైలి పరిహారాలు మరియు మార్గదర్శనం',
+    'Atmakaraka Analysis': 'ఆత్మకారక విశ్లేషణ',
+    'Amatyakaraka Analysis': 'అమాత్యకారక విశ్లేషణ',
+    'Glossary': 'పారిభాషిక నిఘంటువు',
+    'Glossary of Vedic Astrology Terms': 'వైదిక జ్యోతిష్య పారిభాషిక నిఘంటువు',
+    // ── SubSection titles ─────────────────────────────────────────────────────
+    'Remedies': 'పరిహారాలు',
+    'Significance': 'ప్రాముఖ్యత',
+    'Detailed Analysis': 'వివరమైన విశ్లేషణ',
+    'Predictions': 'అంచనాలు',
+    'Timing': 'సమయం',
+    'Right Career For You': 'మీకు సరైన వృత్తి',
+    '10th House Analysis': 'దశమ భావ విశ్లేషణ',
+    'Sun Analysis (Authority)': 'సూర్య విశ్లేషణ (అధికారం)',
+    'Saturn Analysis (Work Ethic)': 'శని విశ్లేషణ (పని నైతికత)',
+    'Amatyakaraka (Career Significator)': 'అమాత్యకారకం (వృత్తి కారకం)',
+    'Suitable Career Fields': 'అనువైన వృత్తి రంగాలు',
+    'Fields to Avoid': 'నివారించాల్సిన రంగాలు',
+    'Career Timing & Phases': 'వృత్తి సమయం మరియు దశలు',
+    'Career Switch Insights': 'వృత్తి మార్పు అంతర్దృష్టి',
+    'Success Formula': 'విజయ సూత్రం',
+    'Wealth Potential': 'ఆర్థిక సామర్థ్యం',
+    'Business vs Job': 'వ్యాపారం vs ఉద్యోగం',
+    'Recommendations': 'సూచనలు',
+    'Relationship Safety Framework': 'సంబంధ భద్రతా చట్రం',
+    '5th House (Romance)': 'పంచమ భావం (ప్రేమ)',
+    '7th House (Marriage)': 'సప్తమ భావం (వివాహం)',
+    'Venus Analysis': 'శుక్ర విశ్లేషణ',
+    'Darakaraka (Spouse Significator)': 'దారకారకం (జీవిత భాగస్వామి కారకం)',
+    'Partner Profile': 'జీవిత భాగస్వామి ప్రొఫైల్',
+    'Ideal Partner (If Unmarried)': 'ఆదర్శ భాగస్వామి (అవివాహితులకు)',
+    'Guidance If Married': 'వివాహితులకు మార్గదర్శనం',
+    'Marriage Timing': 'వివాహ సమయం',
+    'Mangal Dosha': 'మంగళ దోషం',
+    'Age Context & Safety': 'వయసు సందర్భం మరియు భద్రత',
+    'Safe Movement Guidance': 'సురక్షిత కదలిక మార్గదర్శనం',
+    'Nutrition & Hydration': 'పోషణ మరియు నీటి పుష్టి',
+    'Recovery & Sleep': 'పునరుద్ధరణ మరియు నిద్ర',
+    'Preventive Health Checks': 'నివారణ ఆరోగ్య పరీక్షలు',
+    'What to Avoid': 'ఏమి నివారించాలి',
+    'General Wellness Note': 'సాధారణ ఆరోగ్య గమనిక',
+    'Career Impact': 'వృత్తి ప్రభావం',
+    'Relationship Impact': 'సంబంధ ప్రభావం',
+    'Health Impact': 'ఆరోగ్య ప్రభావం',
+    'Financial Impact': 'ఆర్థిక ప్రభావం',
+    'Spiritual Growth': 'ఆధ్యాత్మిక వికాసం',
+    'Key Events': 'ముఖ్య సంఘటనలు',
+    'Recommended Remedies': 'సూచించిన పరిహారాలు',
+    'Upcoming Periods': 'రాబోయే కాలాలు',
+    'Complete Dasha Sequence (Vimshottari 120-Year Cycle)': 'సంపూర్ణ దశా క్రమం (వింశోత్తరి 120 సంవత్సరాల చక్రం)',
+    'Current Transit Impact': 'ప్రస్తుత గోచార ప్రభావం',
+    'Period Recommendations': 'కాల సూచనలు',
+    'Spiritual Guidance': 'ఆధ్యాత్మిక మార్గదర్శనం',
+    'Karmic Axis': 'కర్మ అక్షం',
+    'Rahu Analysis (Future Direction)': 'రాహు విశ్లేషణ (భవిష్య దిశ)',
+    'Ketu Analysis (Past Life Karma)': 'కేతు విశ్లేషణ (పూర్వ జన్మ కర్మ)',
+    'Kaal Sarp Yoga': 'కాలసర్ప యోగం',
+    'Spiritual Path': 'ఆధ్యాత్మిక మార్గం',
+    'Major Doshas': 'ప్రధాన దోషాలు',
+    'Priority Remedies': 'ప్రాధాన్య పరిహారాలు',
+    'Raja Yogas (Power & Success)': 'రాజయోగాలు (శక్తి మరియు విజయం)',
+    'Wealth': 'సంపద',
+    'Fame & Recognition': 'కీర్తి మరియు గుర్తింపు',
+    'Spirituality': 'ఆధ్యాత్మికత',
+    'Yoga Enhancement': 'యోగ బలపరచడం',
+    'Spiritual Significance': 'ఆధ్యాత్మిక ప్రాముఖ్యత',
+    'Sacred Mantras': 'పవిత్ర మంత్రాలు',
+    'Lucky Associations': 'శుభ అనుబంధాలు',
+    'Spiritual Rating': 'ఆధ్యాత్మిక స్థాయి',
+    'Atmakaraka (Soul Purpose)': 'ఆత్మకారకం (ఆత్మ ఉద్దేశ్యం)',
+    '9th House (Dharma)': 'నవమ భావం (ధర్మం)',
+    '12th House (Moksha)': 'ద్వాదశ భావం (మోక్షం)',
+    'Ishta Devata (Personal Deity)': 'ఇష్ట దేవత',
+    'Meditation Guidance': 'ధ్యాన మార్గదర్శనం',
+    'Moksha Path': 'మోక్ష మార్గం',
+    'Vedic Foundation': 'వైదిక ఆధారం',
+    'How Remedies Work': 'పరిహారాలు ఎలా పని చేస్తాయి',
+    'The Role of Faith and Intention': 'విశ్వాసం మరియు సంకల్పం పాత్ర',
+    'Scientific Perspective': 'శాస్త్రీయ దృక్పథం',
+    'Traditional Wisdom': 'సాంప్రదాయిక జ్ఞానం',
+    'Gemstones to Avoid': 'నివారించాల్సిన రత్నాలు',
+    'Yantra Recommendations': 'యంత్ర సూచనలు',
+    'Recommended Pujas': 'సూచించిన పూజలు',
+    'Your Ishta Devata (Personal Deity)': 'మీ ఇష్ట దేవత',
+    'Fasting Recommendations (Vrata)': 'వ్రత సూచనలు',
+    'Donations (Daan)': 'దానం',
+    'Color Therapy': 'రంగు చికిత్స',
+    'Direction Guidance (Vastu)': 'దిశ మార్గదర్శనం (వాస్తు)',
+    'Daily Routine Recommendations': 'దైనందిన దినచర్య సూచనలు',
+    'Daily Spiritual Practices': 'దైనందిన ఆధ్యాత్మిక సాధన',
+    'General Advice': 'సాధారణ సలహా',
+    'Weak Planets Summary': 'బలహీన గ్రహాల సారాంశం',
+    'Soul Purpose': 'ఆత్మ ఉద్దేశ్యం',
+    'Spiritual Lesson': 'ఆధ్యాత్మిక పాఠం',
+    'Spouse Characteristics': 'జీవిత భాగస్వామి లక్షణాలు',
+    'Marriage Indications': 'వివాహ సూచనలు',
+    'Partner Qualities': 'భాగస్వామి గుణాలు',
+    'Career Direction': 'వృత్తి దిశ',
+    'Professional Strengths': 'వృత్తిపరమైన బలాలు',
+    'Suitable Professions': 'అనువైన వృత్తులు',
+    'Karaka Interactions': 'కారక అంతఃచర్యలు',
+    'Scriptural References': 'శాస్త్రీయ సూచనలు',
+    'Detailed Interpretation': 'వివరమైన వ్యాఖ్యానం',
+    'Life Impact': 'జీవిత ప్రభావం',
+    'Quick Reference': 'త్వరిత సూచిక',
+    'Upcoming Yogini Periods': 'రాబోయే యోగిని కాలాలు',
+    'Complete Yogini Dasha Cycle (36 Years)': 'సంపూర్ణ యోగిని దశా చక్రం (36 సంవత్సరాలు)',
+  },
+};
+
+const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
+  hi: {
+    Report: 'रिपोर्ट',
+    Birth: 'जन्म',
+    Details: 'विवरण',
+    Planetary: 'ग्रह',
+    Positions: 'स्थितियां',
+    Analysis: 'विश्लेषण',
+    Career: 'कैरियर',
+    Marriage: 'विवाह',
+    Health: 'स्वास्थ्य',
+    Remedies: 'उपाय',
+    Degree: 'अंश',
+    Sunrise: 'सूर्योदय',
+    Sunset: 'सूर्यास्त',
+    available: 'उपलब्ध',
+    if: 'यदि',
+    at: 'पर',
+    Time: 'समय',
+    Date: 'तिथि',
+    Place: 'स्थान',
+    Name: 'नाम',
+    Status: 'स्थिति',
+    Rasi: 'राशि',
+    Speed: 'गति',
+    Nak: 'नक्ष',
+    Pad: 'पाद',
+    Dignity: 'गरिमा',
+    Retrograde: 'वक्री',
+    Combust: 'अस्त',
+    Pl: 'ग्रह',
+    Transit: 'गोचर',
+    Phase: 'चरण',
+    Current: 'वर्तमान',
+    Next: 'अगला',
+    Past: 'पूर्व',
+    Moon: 'चंद्र',
+    Saturn: 'शनि',
+    Sun: 'सूर्य',
+    Jupiter: 'गुरु',
+    Venus: 'शुक्र',
+    Mercury: 'बुध',
+    Mars: 'मंगल',
+    Rahu: 'राहु',
+    Ketu: 'केतु',
+    Aries: 'मेष',
+    Taurus: 'वृषभ',
+    Gemini: 'मिथुन',
+    Cancer: 'कर्क',
+    Leo: 'सिंह',
+    Virgo: 'कन्या',
+    Libra: 'तुला',
+    Scorpio: 'वृश्चिक',
+    Sagittarius: 'धनु',
+    Capricorn: 'मकर',
+    Aquarius: 'कुंभ',
+    Pisces: 'मीन',
+    Monday: 'सोमवार',
+    Tuesday: 'मंगलवार',
+    Wednesday: 'बुधवार',
+    Thursday: 'गुरुवार',
+    Friday: 'शुक्रवार',
+    Saturday: 'शनिवार',
+    Sunday: 'रविवार',
+    // Additional UI words
+    Sign: 'राशि',
+    House: 'भाव',
+    Motion: 'गति',
+    Direct: 'मार्गी',
+    Placement: 'स्थान',
+    Significance: 'महत्व',
+    Influence: 'प्रभाव',
+    Ascendant: 'लग्न',
+    Nakshatra: 'नक्षत्र',
+    Tithi: 'तिथि',
+    Yoga: 'योग',
+    Karana: 'करण',
+    Pada: 'पाद',
+    Deity: 'देवता',
+    Element: 'तत्व',
+    Lord: 'स्वामी',
+    Occupants: 'स्थित ग्रह',
+    Signification: 'कारकत्व',
+    Karaka: 'कारक',
+    Planet: 'ग्रह',
+    Sex: 'लिंग',
+    City: 'शहर',
+    State: 'राज्य',
+    Country: 'देश',
+    Latitude: 'अक्षांश',
+    Longitude: 'देशांतर',
+    Timezone: 'समय क्षेत्र',
+    Day: 'दिन',
+    Personality: 'व्यक्तित्व',
+    Aspect: 'दृष्टि',
+  },
+  te: {
+    Report: 'నివేదిక',
+    Birth: 'జనన',
+    Details: 'వివరాలు',
+    Planetary: 'గ్రహ',
+    Positions: 'స్థితులు',
+    Analysis: 'విశ్లేషణ',
+    Career: 'వృత్తి',
+    Marriage: 'వివాహం',
+    Health: 'ఆరోగ్యం',
+    Remedies: 'పరిహారాలు',
+    Degree: 'డిగ్రీ',
+    Sunrise: 'సూర్యోదయం',
+    Sunset: 'సూర్యాస్తమయం',
+    available: 'లభ్యం',
+    if: 'యెడల',
+    at: 'వద్ద',
+    Time: 'సమయం',
+    Date: 'తేదీ',
+    Place: 'స్థలం',
+    Name: 'పేరు',
+    Status: 'స్థితి',
+    Rasi: 'రాశి',
+    Speed: 'వేగం',
+    Nak: 'నక్ష',
+    Pad: 'పాదం',
+    Dignity: 'స్థితి బలం',
+    Retrograde: 'వక్రీ',
+    Combust: 'అస్త',
+    Pl: 'గ్రహం',
+    Transit: 'గోచారం',
+    Phase: 'దశ',
+    Current: 'ప్రస్తుత',
+    Next: 'తదుపరి',
+    Past: 'గత',
+    Moon: 'చంద్ర',
+    Saturn: 'శని',
+    Sun: 'సూర్యుడు',
+    Jupiter: 'గురు',
+    Venus: 'శుక్రుడు',
+    Mercury: 'బుధుడు',
+    Mars: 'కుజుడు',
+    Rahu: 'రాహు',
+    Ketu: 'కేతు',
+    Aries: 'మేషం',
+    Taurus: 'వృషభం',
+    Gemini: 'మిథునం',
+    Cancer: 'కర్కాటకం',
+    Leo: 'సింహం',
+    Virgo: 'కన్య',
+    Libra: 'తులా',
+    Scorpio: 'వృశ్చికం',
+    Sagittarius: 'ధనుస్సు',
+    Capricorn: 'మకరం',
+    Aquarius: 'కుంభం',
+    Pisces: 'మీనం',
+    // Additional UI words
+    Sign: 'రాశి',
+    House: 'భావం',
+    Motion: 'గతి',
+    Direct: 'నేరు',
+    Placement: 'స్థానం',
+    Significance: 'ప్రాముఖ్యత',
+    Influence: 'ప్రభావం',
+    Ascendant: 'లగ్నం',
+    Nakshatra: 'నక్షత్రం',
+    Tithi: 'తిథి',
+    Yoga: 'యోగం',
+    Karana: 'కరణం',
+    Pada: 'పాదం',
+    Deity: 'దేవత',
+    Element: 'తత్వం',
+    Lord: 'అధిపతి',
+    Occupants: 'స్థిత గ్రహాలు',
+    Signification: 'కారకత్వం',
+    Karaka: 'కారకం',
+    Planet: 'గ్రహం',
+    Sex: 'లింగం',
+    City: 'నగరం',
+    State: 'రాష్ట్రం',
+    Country: 'దేశం',
+    Latitude: 'అక్షాంశం',
+    Longitude: 'రేఖాంశం',
+    Timezone: 'సమయ మండలం',
+    Day: 'రోజు',
+    Personality: 'వ్యక్తిత్వం',
+    Aspect: 'దృష్టి',
+  },
+};
+
+const applyLanguageTypography = (language: string | null | undefined) => {
+  const code = String(language || 'en').toLowerCase();
+  if (code.startsWith('hi')) {
+    ACTIVE_PDF_LANGUAGE = 'hi';
+    // GPOS/GDEF tables stripped from NotoSansDevanagari via fonttools to fix fontkit null-anchor crash.
+    ACTIVE_PDF_FONT_FAMILY = 'NotoSansDevanagari';
+    ACTIVE_PDF_BODY_FONT_SIZE = 11.2;
+    ACTIVE_PDF_BODY_LINE_HEIGHT = 1.62;
+    return;
+  }
+  if (code.startsWith('te')) {
+    ACTIVE_PDF_LANGUAGE = 'te';
+    // GPOS/GDEF tables stripped from NotoSansTelugu via fonttools to fix fontkit null-anchor crash.
+    ACTIVE_PDF_FONT_FAMILY = 'NotoSansTelugu';
+    ACTIVE_PDF_BODY_FONT_SIZE = 11.2;
+    ACTIVE_PDF_BODY_LINE_HEIGHT = 1.62;
+    return;
+  }
+  ACTIVE_PDF_LANGUAGE = 'en';
+  ACTIVE_PDF_FONT_FAMILY = 'NotoSans';
+  ACTIVE_PDF_BODY_FONT_SIZE = 10.5;
+  ACTIVE_PDF_BODY_LINE_HEIGHT = 1.45;
+};
+
+const localizePdfUiText = (raw: string | null | undefined): string => {
+  const input = sanitizeText(String(raw || ''));
+  if (!input || ACTIVE_PDF_LANGUAGE === 'en') return input;
+
+  const phraseMap = PDF_UI_PHRASE_MAP[ACTIVE_PDF_LANGUAGE];
+  const wordMap = PDF_UI_WORD_MAP[ACTIVE_PDF_LANGUAGE];
+
+  if (phraseMap[input]) return phraseMap[input];
+
+  let output = input;
+  const phraseEntries = Object.entries(phraseMap).sort((a, b) => b[0].length - a[0].length);
+  for (const [from, to] of phraseEntries) {
+    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const startBound = /^\w/.test(from) ? '\\b' : '';
+    const endBound = /\w$/.test(from) ? '\\b' : '';
+    const re = new RegExp(`${startBound}${escaped}${endBound}`, 'gi');
+    output = output.replace(re, to);
+  }
+
+  for (const [from, to] of Object.entries(wordMap)) {
+    const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`\\b${escaped}\\b`, 'gi');
+    output = output.replace(re, to);
+  }
+
+  return output;
+};
 
 type SadeSatiPhaseKey = 'rising' | 'peak' | 'setting' | 'not_active';
 
@@ -214,10 +1003,10 @@ const computeSadeSatiPhaseFromSigns = (moonSign: string, saturnSign: string): Sa
 };
 
 const phaseLabel = (phase: SadeSatiPhaseKey): string => {
-  if (phase === 'rising') return 'Rising Phase (12th from Moon)';
-  if (phase === 'peak') return 'Peak Phase (Over Moon)';
-  if (phase === 'setting') return 'Setting Phase (2nd from Moon)';
-  return 'Not Active';
+  if (phase === 'rising') return localizePdfUiText('Rising Phase (12th from Moon)');
+  if (phase === 'peak') return localizePdfUiText('Peak Phase (Over Moon)');
+  if (phase === 'setting') return localizePdfUiText('Setting Phase (2nd from Moon)');
+  return localizePdfUiText('Not Active');
 };
 
 const isSadeSatiDoshaName = (name: unknown, nameHindi?: unknown): boolean => {
@@ -522,7 +1311,7 @@ const styles = StyleSheet.create({
   // Small italic muted text — for scriptural refs, disclaimers, cautions
   scriptural: {
     fontSize: 9.5,
-    fontStyle: 'italic',
+    fontStyle: 'normal',
     color: '#6b7280',
     marginTop: 3,
     lineHeight: 1.4,
@@ -886,14 +1675,14 @@ const styles = StyleSheet.create({
   nicknameFun: {
     fontSize: 9.5,
     color: P.mutedText,
-    fontStyle: 'italic',
+    fontStyle: 'normal',
     marginBottom: 7,
   },
   // ── Section intro italic ────────────────────────────────────
   sectionIntro: {
     fontSize: 10.5,
     marginBottom: 6,
-    fontStyle: 'italic',
+    fontStyle: 'normal',
     color: P.mutedText,
     lineHeight: 1.45,
     borderLeftWidth: 3,
@@ -989,7 +1778,7 @@ const Section = ({
   keepWithNext?: number;
 }) => (
   <View style={styles.section} wrap={wrap}>
-    <Text style={styles.header} minPresenceAhead={keepWithNext}>{title}</Text>
+    <Text style={styles.header} minPresenceAhead={keepWithNext}>{localizePdfUiText(title)}</Text>
     {children}
   </View>
 );
@@ -1004,7 +1793,7 @@ const SubSection = ({
   keepWithNext?: number;
 }) => (
   <View>
-    <Text style={styles.subHeader} minPresenceAhead={keepWithNext}>{title}</Text>
+    <Text style={styles.subHeader} minPresenceAhead={keepWithNext}>{localizePdfUiText(title)}</Text>
     {children}
   </View>
 );
@@ -1014,8 +1803,8 @@ const InfoStrip = ({ items }: { items: { label: string; value: string }[] }) => 
   <View style={styles.infoStrip}>
     {items.map((item, idx) => (
       <View key={idx} style={[styles.infoStripItem, idx === items.length - 1 && { borderRightWidth: 0 }]}>
-        <Text style={styles.infoStripLabel}>{item.label.toUpperCase()}</Text>
-        <Text style={styles.infoStripValue}>{item.value}</Text>
+        <Text style={styles.infoStripLabel}>{localizePdfUiText(item.label).toUpperCase()}</Text>
+        <Text style={styles.infoStripValue}>{localizePdfUiText(item.value)}</Text>
       </View>
     ))}
   </View>
@@ -1023,24 +1812,37 @@ const InfoStrip = ({ items }: { items: { label: string; value: string }[] }) => 
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => (
   <View style={[styles.row, { marginBottom: 2 }]}>
-    <Text style={styles.label}>{label}:</Text>
-    <Text style={styles.value}>{value}</Text>
+    <Text style={styles.label}>{localizePdfUiText(label)}:</Text>
+    <Text style={styles.value}>{localizePdfUiText(value)}</Text>
   </View>
 );
 
 const SriMandirFooter = () => (
   <View style={styles.sriMandirFooterBar} fixed>
-    <Text style={styles.sriMandirBrandName}>SRI MANDIR</Text>
+    <Text style={styles.sriMandirBrandName}>{localizePdfUiText('SRI MANDIR')}</Text>
     <Text style={styles.sriMandirTagline}>
-      Looking for detailed guidance on your birth chart? Speak to our expert astrologers today
+      {localizePdfUiText('Looking for detailed guidance on your birth chart? Speak to our expert astrologers today')}
     </Text>
-    <Text style={styles.sriMandirContact}>Call or WhatsApp: 080 711 74417</Text>
+    <Text style={styles.sriMandirContact}>
+      {ACTIVE_PDF_LANGUAGE === 'hi'
+        ? 'कॉल या व्हाट्सऐप: 080 711 74417'
+        : ACTIVE_PDF_LANGUAGE === 'te'
+          ? 'కాల్ లేదా వాట్సాప్: 080 711 74417'
+          : 'Call or WhatsApp: 080 711 74417'}
+    </Text>
   </View>
 );
 
 // Page wrapper (legacy - kept for cover page compatibility)
 const PageWrapper = ({ children, style }: { children: React.ReactNode; style?: any }) => (
-  <Page size="A4" style={[styles.page, style]}>
+  <Page
+    size="A4"
+    style={[
+      styles.page,
+      { fontFamily: ACTIVE_PDF_FONT_FAMILY, fontSize: ACTIVE_PDF_BODY_FONT_SIZE, lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT },
+      style,
+    ]}
+  >
     <View style={styles.pageWhitePanel} fixed />
     {children}
     <SriMandirFooter />
@@ -1048,12 +1850,16 @@ const PageWrapper = ({ children, style }: { children: React.ReactNode; style?: a
 );
 
 const ContentPage = ({ sectionName, children, pageKey }: { sectionName?: string; children: React.ReactNode; pageKey?: string | number }) => (
-  <Page size="A4" style={styles.page} key={pageKey}>
+  <Page
+    size="A4"
+    style={[styles.page, { fontFamily: ACTIVE_PDF_FONT_FAMILY, fontSize: ACTIVE_PDF_BODY_FONT_SIZE, lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT }]}
+    key={pageKey}
+  >
     {/* Fixed elements use absolute positioning — they ignore page padding and repeat on every page */}
     <View style={styles.pageWhitePanel} fixed />
     <View style={styles.fixedHeader} fixed>
-      <Text style={styles.fixedHeaderTitle}>Sri Mandir Kundli Report</Text>
-      {sectionName && <Text style={styles.fixedHeaderSection}>{sectionName}</Text>}
+      <Text style={styles.fixedHeaderTitle}>{localizePdfUiText('Sri Mandir Kundli Report')}</Text>
+      {sectionName && <Text style={styles.fixedHeaderSection}>{localizePdfUiText(sectionName)}</Text>}
     </View>
     <SriMandirFooter />
     <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
@@ -1063,22 +1869,28 @@ const ContentPage = ({ sectionName, children, pageKey }: { sectionName?: string;
 );
 
 const SectionDividerPage = ({ partNumber, title, subtitle }: { partNumber: string; title: string; subtitle: string }) => (
-  <Page size="A4" style={styles.dividerPage}>
+  <Page size="A4" style={[styles.dividerPage, { fontFamily: ACTIVE_PDF_FONT_FAMILY }]}>
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 60 }}>
-      <Text style={styles.dividerKicker}>PART {partNumber}</Text>
+      <Text style={styles.dividerKicker}>{localizePdfUiText(`PART ${partNumber}`)}</Text>
       <View style={{ width: 60, height: 2, backgroundColor: '#ffffff', marginBottom: 24, opacity: 0.6 }} />
-      <Text style={styles.dividerTitle}>{title}</Text>
-      <Text style={styles.dividerSubtitle}>{subtitle}</Text>
+      <Text style={styles.dividerTitle}>{localizePdfUiText(title)}</Text>
+      <Text style={styles.dividerSubtitle}>{localizePdfUiText(subtitle)}</Text>
     </View>
     <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>
-      <Text style={styles.dividerFooter}>Sri Mandir — Dharma, Karma, Jyotish</Text>
+      <Text style={styles.dividerFooter}>
+        {ACTIVE_PDF_LANGUAGE === 'hi'
+          ? 'श्री मंदिर — धर्म, कर्म, ज्योतिष'
+          : ACTIVE_PDF_LANGUAGE === 'te'
+            ? 'శ్రీ మందిర్ — ధర్మ, కర్మ, జ్యోతిష్యం'
+            : 'Sri Mandir — Dharma, Karma, Jyotish'}
+      </Text>
     </View>
   </Page>
 );
 
 const Card = ({ title, children }: { title: string; children: React.ReactNode }) => (
   <View style={styles.card}>
-    <Text style={styles.cardTitle}>{title}</Text>
+    <Text style={styles.cardTitle}>{localizePdfUiText(title)}</Text>
     {children}
   </View>
 );
@@ -1091,13 +1903,24 @@ const BulletList = ({ items }: { items: string[] }) => (
       .map((item, idx) => (
         <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
           <Text style={styles.bullet}>•</Text>
-          <Text style={[styles.bodyText, { flex: 1 }]}>{item}</Text>
+          <Text style={[styles.bodyText, { flex: 1 }]}>{localizePdfUiText(item)}</Text>
         </View>
       ))}
   </View>
 );
 
 // SVG Parser - converts SVG string to react-pdf components
+const normalizeSvgCoordinate = (value: unknown): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  if (!text) return undefined;
+  const firstToken = text.split(/[,\s]+/).find(Boolean);
+  if (!firstToken) return undefined;
+  const parsed = Number(firstToken);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
 const parseSvgElement = (element: Element, key: number): React.ReactNode | null => {
   const tagName = element.tagName.toLowerCase();
   const attrs: Record<string, any> = {};
@@ -1157,12 +1980,20 @@ const parseSvgElement = (element: Element, key: number): React.ReactNode | null 
     case 'polygon':
       if (!attrs.points) return null;
       return <Polygon key={key} {...(attrs as any)} />;
-    case 'text':
+    case 'text': {
       attrs.fontFamily = 'DejaVuSans';
+      const safeX = normalizeSvgCoordinate(attrs.x);
+      const safeY = normalizeSvgCoordinate(attrs.y);
+      if (safeX !== undefined) attrs.x = safeX; else delete attrs.x;
+      if (safeY !== undefined) attrs.y = safeY; else delete attrs.y;
+      delete attrs.xCoordinate;
+      delete attrs.yCoordinate;
       return <Text key={key} {...(attrs as any)}>{children}</Text>;
-    case 'tspan':
-      attrs.fontFamily = 'DejaVuSans';
-      return <Tspan key={key} {...(attrs as any)}>{children}</Tspan>;
+    }
+    case 'tspan': {
+      const tspanText = normalizeChartLabel(element.textContent || '');
+      return tspanText || null;
+    }
     case 'defs':
       return <Defs key={key}>{children}</Defs>;
     case 'clippath':
@@ -1214,6 +2045,7 @@ interface ChartData {
   nameHindi: string;
   purpose: string;
   svg: string;
+  pngDataUrl?: string | null;
 }
 
 interface KundliPDFProps {
@@ -1221,6 +2053,8 @@ interface KundliPDFProps {
 }
 
 export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
+  applyLanguageTypography(report?.language);
+
   const parseBirthTime = (rawTime: unknown): { hour: number; minute: number } | null => {
     const input = String(rawTime ?? '').trim();
     if (!input) return null;
@@ -1453,13 +2287,22 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (Number.isNaN(date.getTime())) return String(dateStr || '');
+    if (ACTIVE_PDF_LANGUAGE === 'en') {
+      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    const months = MONTH_NAMES_BY_LANGUAGE[ACTIVE_PDF_LANGUAGE] || MONTH_NAMES_BY_LANGUAGE.en;
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
   const formatBirthDate = (dateStr: string) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    if (ACTIVE_PDF_LANGUAGE === 'en') {
+      return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    const months = MONTH_NAMES_BY_LANGUAGE[ACTIVE_PDF_LANGUAGE] || MONTH_NAMES_BY_LANGUAGE.en;
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
   const formatMonthYear = (date: Date) =>
     date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
@@ -1632,12 +2475,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     : formatUtcOffset(timezoneOffset);
   const genderRaw = String(birthDetails.gender || '').toUpperCase();
   const sex = genderRaw === 'F' || genderRaw === 'FEMALE'
-    ? 'Female'
+    ? (ACTIVE_PDF_LANGUAGE === 'hi' ? 'महिला' : ACTIVE_PDF_LANGUAGE === 'te' ? 'స్త్రీ' : 'Female')
     : genderRaw === 'O' || genderRaw === 'OTHER'
-      ? 'Other'
+      ? (ACTIVE_PDF_LANGUAGE === 'hi' ? 'अन्य' : ACTIVE_PDF_LANGUAGE === 'te' ? 'ఇతర' : 'Other')
       : genderRaw === 'M' || genderRaw === 'MALE'
-        ? 'Male'
-        : 'N/A';
+        ? (ACTIVE_PDF_LANGUAGE === 'hi' ? 'पुरुष' : ACTIVE_PDF_LANGUAGE === 'te' ? 'పురుషుడు' : 'Male')
+        : (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'లభ్యం కాదు' : 'N/A');
   const birthDateValue = String(birthDetails.dateOfBirth || '');
   const sunPosition = report?.planetaryPositions?.find((planet: any) => planet?.name === 'Sun');
   const tithiName = report?.panchang?.tithi?.name || 'N/A';
@@ -1755,15 +2598,20 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
     const estimatedEnd = addMonthsUtc(sadeSatiAnchorYear, 2, ((idx + 1) * 30) - 1);
     const startYear = parseYearLike(phase?.startYear) || estimatedStart.year;
     const endYear = parseYearLike(phase?.endYear) || estimatedEnd.year;
-    const startMonth = sanitizeText(String(phase?.startMonth || MONTH_NAMES[estimatedStart.monthIndex] || 'March'));
-    const endMonth = sanitizeText(String(phase?.endMonth || MONTH_NAMES[estimatedEnd.monthIndex] || 'August'));
+    const langMonths = MONTH_NAMES_BY_LANGUAGE[ACTIVE_PDF_LANGUAGE] || MONTH_NAMES_BY_LANGUAGE.en;
+    const startMonth = sanitizeText(String(phase?.startMonth || langMonths[estimatedStart.monthIndex] || langMonths[2]));
+    const endMonth = sanitizeText(String(phase?.endMonth || langMonths[estimatedEnd.monthIndex] || langMonths[7]));
     return {
       ...phase,
       startYear,
       endYear,
       startMonth,
       endMonth,
-      periodLabel: `${startMonth} ${startYear} to ${endMonth} ${endYear}`,
+      periodLabel: ACTIVE_PDF_LANGUAGE === 'hi'
+        ? `${startMonth} ${startYear} से ${endMonth} ${endYear}`
+        : ACTIVE_PDF_LANGUAGE === 'te'
+          ? `${startMonth} ${startYear} నుండి ${endMonth} ${endYear} వరకు`
+          : `${startMonth} ${startYear} to ${endMonth} ${endYear}`,
     };
   });
 
@@ -1792,8 +2640,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
   return (
     <Document>
       {/* Cover Page */}
-      <Page size="A4" style={styles.coverPage}>
+      <Page size="A4" style={[styles.coverPage, { fontFamily: ACTIVE_PDF_FONT_FAMILY }]}>
         <View style={styles.coverBackgroundLayer}>
+          {ACTIVE_PDF_LANGUAGE === 'en' ? (
           <Svg width={595} height={842}>
           <Defs>
             <RadialGradient id="coverCore" cx="50%" cy="62%" r="60%">
@@ -1846,6 +2695,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Circle cx={297} cy={602} r={88} fill="none" stroke="#fbbf24" strokeWidth={1.2} opacity={0.45} />
           <Circle cx={297} cy={602} r={56} fill="none" stroke="#fcd34d" strokeWidth={1.1} opacity={0.55} />
           </Svg>
+          ) : (
+            <View style={{ flex: 1, width: '100%', height: '100%', backgroundColor: '#160603' }} />
+          )}
         </View>
 
         <View style={styles.coverBrandRow}>
@@ -1856,9 +2708,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         </View>
 
         <View style={{ marginTop: 22, alignItems: 'center', width: '100%' }}>
-          <Text style={styles.coverKicker}>YOUR</Text>
-          <Text style={styles.coverMark}>KUNDLI REPORT</Text>
-          <Text style={styles.coverSubtitle}>A Personalized Vedic Astrology Blueprint</Text>
+          <Text style={styles.coverKicker}>{localizePdfUiText('YOUR')}</Text>
+          <Text style={styles.coverMark}>{localizePdfUiText('KUNDLI REPORT')}</Text>
+          <Text style={styles.coverSubtitle}>{localizePdfUiText('A Personalized Vedic Astrology Blueprint')}</Text>
         </View>
 
         <View style={styles.coverDividerRow}>
@@ -1869,23 +2721,23 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
         <View style={styles.coverIdentityCard}>
           <Text style={styles.coverName}>{report.birthDetails.name}</Text>
-          <Text style={styles.coverMetaLabel}>Date of Birth</Text>
+          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Date of Birth')}</Text>
           <Text style={styles.coverDetails}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
-          <Text style={styles.coverMetaLabel}>Time of Birth</Text>
+          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Time of Birth')}</Text>
           <Text style={styles.coverDetails}>{report.birthDetails.timeOfBirth}</Text>
-          <Text style={styles.coverMetaLabel}>Place of Birth</Text>
+          <Text style={styles.coverMetaLabel}>{localizePdfUiText('Place of Birth')}</Text>
           <Text style={[styles.coverDetails, { marginBottom: 0 }]}>{report.birthDetails.placeOfBirth}</Text>
         </View>
 
         <View style={styles.coverFooterWrap}>
           <Text style={styles.coverFooterMeta}>
-            Created by expert astrologers
+            {localizePdfUiText('Created by expert astrologers')}
           </Text>
           <Text style={styles.coverFooterBrand}>
             www.srimandir.com
           </Text>
           <Text style={[styles.coverDetails, { marginTop: 8, color: '#fcd34d' }]}>
-            Prepared on {formatDate(report.generatedAt)}
+            {localizePdfUiText('Prepared on')} {formatDate(report.generatedAt)}
           </Text>
         </View>
       </Page>
@@ -1893,10 +2745,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       {/* Table of Contents Page */}
       <ContentPage sectionName="Table of Contents">
         <Section title="Table of Contents">
-          <Text style={[styles.paragraph, { marginBottom: 16, fontStyle: 'italic' }]}>
-            This comprehensive Kundli report covers all major dimensions of your birth chart,
-            from your fundamental planetary blueprint to specific life-area predictions and
-            remedial guidance.
+          <Text style={[styles.paragraph, { marginBottom: 16, fontStyle: 'normal' }]}>
+            {localizePdfUiText('This comprehensive Kundli report covers all major dimensions of your birth chart, from your fundamental planetary blueprint to specific life-area predictions and remedial guidance.')}
           </Text>
 
           <View style={styles.tocColumns}>
@@ -1906,9 +2756,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View key={entry.num} style={styles.tocEntryCompact}>
                     <View style={styles.tocEntryCompactTop}>
                       <Text style={styles.tocNumberCompact}>{entry.num}</Text>
-                      <Text style={styles.tocTitleCompact}>{entry.title}</Text>
+                      <Text style={styles.tocTitleCompact}>{localizePdfUiText(entry.title)}</Text>
                     </View>
-                    <Text style={styles.tocSubtitleCompact}>{entry.sub}</Text>
+                    <Text style={styles.tocSubtitleCompact}>{localizePdfUiText(entry.sub)}</Text>
                   </View>
                 ))}
               </View>
@@ -1922,14 +2772,22 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Kundali Charts">
           <Section title="Kundali Charts (Divisional Charts)" keepWithNext={260}>
             <Text style={styles.paragraph}>
-              These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.
+              {localizePdfUiText('These are the key divisional charts (Varga charts) derived from your birth chart. Each chart reveals specific life areas and is used for deeper analysis of those domains.')}
             </Text>
             <View style={styles.chartGrid}>
               {charts.slice(0, 2).map((chart, idx) => (
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    <SVGRenderer svgString={chart.svg} />
+                    {chart.pngDataUrl ? (
+                      <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : chart.svg ? (
+                      <SVGRenderer svgString={chart.svg} />
+                    ) : (
+                      <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
+                        Chart image unavailable for this section.
+                      </Text>
+                    )}
                   </View>
                   <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                 </View>
@@ -1948,7 +2806,15 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <View key={idx} style={styles.chartItem}>
                   <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                   <View style={styles.chartContainer}>
-                    <SVGRenderer svgString={chart.svg} />
+                    {chart.pngDataUrl ? (
+                      <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    ) : chart.svg ? (
+                      <SVGRenderer svgString={chart.svg} />
+                    ) : (
+                      <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
+                        Chart image unavailable for this section.
+                      </Text>
+                    )}
                   </View>
                   <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                 </View>
@@ -1960,7 +2826,15 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <View key={idx} style={styles.chartItem}>
                     <Text style={styles.chartTitle}>{chart.type}: {chart.name}</Text>
                     <View style={styles.chartContainer}>
-                      <SVGRenderer svgString={chart.svg} />
+                      {chart.pngDataUrl ? (
+                        <Image src={chart.pngDataUrl} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                      ) : chart.svg ? (
+                        <SVGRenderer svgString={chart.svg} />
+                      ) : (
+                        <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
+                          Chart image unavailable for this section.
+                        </Text>
+                      )}
                     </View>
                     <Text style={styles.chartPurpose}>{chart.purpose}</Text>
                   </View>
@@ -2011,11 +2885,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <Section title="Planetary Positions" wrap={false}>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={styles.tableHeaderCell}>Planet</Text>
-              <Text style={styles.tableHeaderCell}>Sign</Text>
-              <Text style={styles.tableHeaderCell}>House</Text>
-              <Text style={styles.tableHeaderCell}>Degree</Text>
-              <Text style={styles.tableHeaderCell}>Status</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Sign')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('House')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Degree')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Status')}</Text>
             </View>
             {report.planetaryPositions.map((planet: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
@@ -2023,7 +2897,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <Text style={styles.tableCell}>{planet.sign}</Text>
                 <Text style={styles.tableCell}>{planet.house}</Text>
                 <Text style={styles.tableCell}>{planet.degree.toFixed(2)}°</Text>
-                <Text style={styles.tableCell}>{planet.isRetro ? 'Retrograde' : 'Direct'}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(planet.isRetro ? 'Retrograde' : 'Direct')}</Text>
               </View>
             ))}
           </View>
@@ -2048,22 +2922,22 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Planetary Degree Matrix</Text>
+            <Text style={styles.cardTitle}>{localizePdfUiText('Planetary Degree Matrix')}</Text>
             <View style={styles.advancedTable}>
               <View style={styles.advancedTableHeader}>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Pl</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Pl')}</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>R</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>C</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Rasi</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.3 }]}>Degree</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.2 }]}>Speed</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.8 }]}>Nak</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>Pad</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>No.</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Rasi')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.3 }]}>{localizePdfUiText('Degree')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.2 }]}>{localizePdfUiText('Speed')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.8 }]}>{localizePdfUiText('Nak')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('Pad')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('No.')}</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>RL</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>NL</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Sub</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>Dignity</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>{localizePdfUiText('Dignity')}</Text>
               </View>
               {detailedPlanetRows.map((row: any, idx: number) => (
                 <View
@@ -2088,7 +2962,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               ))}
             </View>
             <Text style={styles.tinyNote}>
-              R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.
+              {localizePdfUiText('R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.')}
             </Text>
           </View>
         </Section>
@@ -2096,10 +2970,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <Section title="Chara Karakas (Jaimini)" wrap={false}>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
-              <Text style={styles.tableHeaderCell}>Karaka</Text>
-              <Text style={styles.tableHeaderCell}>Planet</Text>
-              <Text style={styles.tableHeaderCell}>Degree</Text>
-              <Text style={styles.tableHeaderCell}>Signification</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Karaka')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Planet')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Degree')}</Text>
+              <Text style={styles.tableHeaderCell}>{localizePdfUiText('Signification')}</Text>
             </View>
             {report.charaKarakas.map((karaka: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
@@ -2118,7 +2992,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Panchang Analysis">
           <Section title="Panchang Analysis">
             <Text style={styles.paragraph}>
-              The Panchang (five limbs) provides the foundational cosmic timing of your birth, revealing the day's energy, lunar phase, and celestial influences that shape your destiny.
+              {localizePdfUiText("The Panchang (five limbs) provides the foundational cosmic timing of your birth, revealing the day's energy, lunar phase, and celestial influences that shape your destiny.")}
             </Text>
             
             <Card title={`Vaar (Day): ${report.panchang.vaar?.day || 'N/A'}`}>
@@ -2149,7 +3023,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Three Pillars">
           <Section title="Three Pillars of Your Chart">
             <Text style={styles.paragraph}>
-              The three fundamental pillars—Moon Sign, Ascendant, and Birth Nakshatra—form the core identity markers of your horoscope, revealing your emotional nature, physical constitution, and life purpose.
+              {localizePdfUiText('The three fundamental pillars—Moon Sign, Ascendant, and Birth Nakshatra—form the core identity markers of your horoscope, revealing your emotional nature, physical constitution, and life purpose.')}
             </Text>
 
             <SubSection title={`Moon Sign (Rashi): ${report.pillars.moonSign?.sign || 'N/A'}`}>
@@ -2198,7 +3072,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 {planet.aspects && planet.aspects.length > 0 && (
                   <SubSection title="Aspects">
                     {planet.aspects.map((aspect: any, aIdx: number) => (
-                      <Card key={aIdx} title={`${aspect.aspectType} Aspect → House ${aspect.targetHouse}`}>
+                      <Card key={aIdx} title={ACTIVE_PDF_LANGUAGE === 'en' ? `${aspect.aspectType} Aspect → House ${aspect.targetHouse}` : `${aspect.aspectType} → ${localizePdfUiText('House')} ${aspect.targetHouse}`}>
                         <Text style={styles.paragraph}>{aspect.interpretation || ''}</Text>
                       </Card>
                     ))}
@@ -2236,16 +3110,15 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <ContentPage sectionName="House Analysis (Bhavphal)">
             <Section title="Bhavphal - House Analysis Overview">
               <Text style={styles.paragraph}>
-                The twelve houses (Bhavas) of your horoscope govern different areas of life. Each house is colored by its sign, 
-                lord placement, and any planetary occupants. This comprehensive analysis reveals the potential in each life domain.
+                {localizePdfUiText('The twelve houses (Bhavas) of your horoscope govern different areas of life. Each house is colored by its sign, lord placement, and any planetary occupants. This comprehensive analysis reveals the potential in each life domain.')}
               </Text>
               <View style={styles.table}>
                 <View style={styles.tableHeader}>
-                  <Text style={styles.tableHeaderCell}>House</Text>
-                  <Text style={styles.tableHeaderCell}>Sign</Text>
-                  <Text style={styles.tableHeaderCell}>Lord</Text>
-                  <Text style={styles.tableHeaderCell}>Lord in</Text>
-                  <Text style={styles.tableHeaderCell}>Occupants</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('House')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Sign')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Lord')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Lord in')}</Text>
+                  <Text style={styles.tableHeaderCell}>{localizePdfUiText('Occupants')}</Text>
                 </View>
                 {report.houses.map((house: any, idx: number) => {
                   const houseSign = sanitizeText(String(house.sign || 'N/A')) || 'N/A';
@@ -3356,23 +4229,25 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <SubSection title="Your Sade Sati Status">
                 <View style={styles.highlight}>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Moon Sign</Text>
+                    <Text style={styles.label}>{localizePdfUiText('Moon Sign')}</Text>
                     <Text style={[styles.value, { fontWeight: 'bold' }]}>
                       {sadeSatiMoonSign || 'N/A'}{report.sadeSati.moonSignHindi ? ` (${sanitizeText(report.sadeSati.moonSignHindi)})` : ''}
                     </Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Transit Saturn</Text>
+                    <Text style={styles.label}>{localizePdfUiText('Transit Saturn')}</Text>
                     <Text style={styles.value}>{sadeSatiTransitSign}</Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Currently Active</Text>
+                    <Text style={styles.label}>{localizePdfUiText('Currently Active')}</Text>
                     <Text style={[styles.value, { fontWeight: 'bold', color: sadeSatiIsActive ? '#dc2626' : '#059669' }]}>
-                      {sadeSatiIsActive ? 'YES — ACTIVE NOW' : 'Not Currently Active'}
+                      {sadeSatiIsActive
+                        ? localizePdfUiText('YES — ACTIVE NOW')
+                        : localizePdfUiText('Not Currently Active')}
                     </Text>
                   </View>
                   <View style={styles.row}>
-                    <Text style={styles.label}>Current Phase</Text>
+                    <Text style={styles.label}>{localizePdfUiText('Current Phase')}</Text>
                     <Text style={styles.value}>
                       {sadeSatiCurrentPhaseLabel}
                     </Text>
@@ -3394,18 +4269,18 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Sade Sati">
               <Section title="The Three Phases of Your Sade Sati">
                 <Text style={styles.scriptural}>
-                  Month-level periods below are approximate transit windows derived from Saturn phase sequencing.
+                  {localizePdfUiText('Month-level periods below are approximate transit windows derived from Saturn phase sequencing.')}
                 </Text>
                 {sadeSatiPhasesForDisplay.map((phase: any, idx: number) => (
                   <View key={idx} style={{ marginBottom: 6 }}>
                     <Text style={styles.subHeader}>{phase.phaseName}</Text>
                     <View style={styles.card}>
                       <View style={styles.row}>
-                        <Text style={styles.label}>Saturn Sign</Text>
+                        <Text style={styles.label}>{localizePdfUiText('Saturn Sign')}</Text>
                         <Text style={styles.value}>{phase.saturnSign || 'N/A'}</Text>
                       </View>
                       <View style={styles.row}>
-                        <Text style={styles.label}>Period</Text>
+                        <Text style={styles.label}>{localizePdfUiText('Period')}</Text>
                         <Text style={styles.value}>{phase.periodLabel}</Text>
                       </View>
                     </View>
@@ -3426,7 +4301,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     </View>
                     {phase.advice && (
                       <View style={styles.highlight}>
-                        <Text style={[styles.boldLabel, { marginBottom: 2 }]}>Guidance for This Phase</Text>
+                        <Text style={[styles.boldLabel, { marginBottom: 2 }]}>{localizePdfUiText('Guidance for This Phase')}</Text>
                         <Text style={styles.bodyText}>{phase.advice}</Text>
                       </View>
                     )}
@@ -3471,7 +4346,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   )}
                   {report.sadeSati.currentSadeSati.advice && (
                     <View style={[styles.highlight, { marginTop: 4 }]}>
-                      <Text style={[styles.boldLabel, { marginBottom: 4 }]}>Master Guidance for Your Sade Sati</Text>
+                      <Text style={[styles.boldLabel, { marginBottom: 4 }]}>{localizePdfUiText('Master Guidance for Your Sade Sati')}</Text>
                       <Text style={styles.bodyText}>{report.sadeSati.currentSadeSati.advice}</Text>
                     </View>
                   )}
@@ -3513,11 +4388,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                     <View key={idx} style={[styles.card, { marginBottom: 8 }]}>
                       <Text style={[styles.boldLabel, { color: '#9a3412', marginBottom: 2 }]}>{m.mantra}</Text>
                       <View style={styles.row}>
-                        <Text style={styles.label}>Purpose</Text>
+                        <Text style={styles.label}>{localizePdfUiText('Purpose')}</Text>
                         <Text style={styles.value}>{m.purpose}</Text>
                       </View>
                       <View style={styles.row}>
-                        <Text style={styles.label}>Best Time</Text>
+                        <Text style={styles.label}>{localizePdfUiText('Best Time')}</Text>
                         <Text style={styles.value}>{m.timing}</Text>
                       </View>
                     </View>
@@ -3527,7 +4402,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               {report.sadeSati.famousPeopleThrivedDuringSadeSati && (
                 <View style={styles.highlight}>
-                  <Text style={[styles.boldLabel, { marginBottom: 2 }]}>Inspiration — Famous People Who Thrived During Sade Sati</Text>
+                  <Text style={[styles.boldLabel, { marginBottom: 2 }]}>{localizePdfUiText('Inspiration — Famous People Who Thrived During Sade Sati')}</Text>
                   <Text style={styles.scriptural}>{report.sadeSati.famousPeopleThrivedDuringSadeSati}</Text>
                 </View>
               )}

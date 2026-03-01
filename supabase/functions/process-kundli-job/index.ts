@@ -6,9 +6,9 @@ import { generatePanchangPrediction } from "../_shared/generate-kundli-report/pa
 import { generatePillarsPrediction } from "../_shared/generate-kundli-report/pillars-agent.ts";
 import { generateAllPlanetProfiles } from "../_shared/generate-kundli-report/planets-agent.ts";
 import { generateAllHouseAnalyses } from "../_shared/generate-kundli-report/houses-agent.ts";
-import { generateCareerPrediction } from "../_shared/generate-kundli-report/career-agent.ts";
+import { generateCareerPrediction, type CareerPrediction } from "../_shared/generate-kundli-report/career-agent.ts";
 import { generateMarriagePrediction, type MarriagePrediction } from "../_shared/generate-kundli-report/marriage-agent.ts";
-import { generateDashaPrediction } from "../_shared/generate-kundli-report/dasha-agent.ts";
+import { generateDashaPrediction, type DashaPrediction } from "../_shared/generate-kundli-report/dasha-agent.ts";
 import { generateRahuKetuPrediction } from "../_shared/generate-kundli-report/rahu-ketu-agent.ts";
 import { generateRemediesPrediction, type RemediesPrediction } from "../_shared/generate-kundli-report/remedies-agent.ts";
 import { generateNumerologyPrediction } from "../_shared/generate-kundli-report/numerology-agent.ts";
@@ -65,16 +65,161 @@ function angularDistance(a: number, b: number): number {
 
 type NormalizedMaritalStatus = "single" | "married" | "unknown";
 
+const CAREER_MIN_AGE = 21;
+const MARRIAGE_MIN_AGE = 21;
+const MAX_PREDICTION_AGE = 95;
+
 function getAgeYears(birthDate: Date, referenceDate: Date): number {
   return Math.max(0, Math.floor((referenceDate.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
 }
 
+function addYears(date: Date, years: number): Date {
+  const d = new Date(date);
+  d.setFullYear(d.getFullYear() + years);
+  return d;
+}
+
+function formatMonthYear(date: Date): string {
+  return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
+
+function parseFlexibleMonthYear(raw: unknown): Date | null {
+  if (typeof raw !== "string") return null;
+  const value = raw.trim();
+  if (!value) return null;
+
+  const direct = Date.parse(value);
+  if (!Number.isNaN(direct)) return new Date(direct);
+
+  const monthYear = value.match(/([A-Za-z]+)\s+(\d{4})/);
+  if (monthYear) {
+    const parsed = Date.parse(`${monthYear[1]} 1, ${monthYear[2]}`);
+    if (!Number.isNaN(parsed)) return new Date(parsed);
+  }
+
+  const yearOnly = value.match(/\b(19|20|21)\d{2}\b/);
+  if (yearOnly) return new Date(Number(yearOnly[0]), 0, 1);
+
+  return null;
+}
+
+function clampPeriodText(raw: string, cutoffDate: Date, cutoffLabel: string): string {
+  const years = Array.from(raw.matchAll(/\b(19|20|21)\d{2}\b/g)).map((m) => Number(m[0]));
+  if (years.length === 0) return raw;
+  const maxYear = Math.max(...years);
+  return maxYear > cutoffDate.getFullYear()
+    ? `Future windows are capped at ${cutoffLabel} for lifecycle-safe predictions.`
+    : raw;
+}
+
+function normalizePartnerTermsInText(text: string): string {
+  return text
+    .replace(/\bwives\b/gi, "spouses")
+    .replace(/\bwife\b/gi, "spouse")
+    .replace(/\bhusbands\b/gi, "spouses")
+    .replace(/\bhusband\b/gi, "spouse")
+    .replace(/\bboyfriend\b/gi, "partner")
+    .replace(/\bgirlfriend\b/gi, "partner");
+}
+
+function normalizePartnerTerms<T>(value: T): T {
+  if (typeof value === "string") return normalizePartnerTermsInText(value) as T;
+  if (Array.isArray(value)) return value.map((item) => normalizePartnerTerms(item)) as T;
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(obj)) out[key] = normalizePartnerTerms(val);
+    return out as T;
+  }
+  return value;
+}
+
+function enforceCareerSafety(
+  career: CareerPrediction | null,
+  birthDate: Date,
+  referenceDate: Date
+): CareerPrediction | null {
+  if (!career) return career;
+  const safe = normalizePartnerTerms(structuredClone(career));
+  safe.careerSwitchInsights = safe.careerSwitchInsights || {
+    isSwitchDueNow: "",
+    nextSwitchWindow: "",
+    oneOrTwoFutureChanges: [],
+    rationale: "",
+    preparationPlan: [],
+  };
+  safe.careerTiming = safe.careerTiming || {
+    currentPhase: "",
+    upcomingOpportunities: [],
+    challenges: [],
+  };
+  const ageYears = getAgeYears(birthDate, referenceDate);
+  const cutoffDate = addYears(birthDate, MAX_PREDICTION_AGE);
+  const cutoffLabel = formatMonthYear(cutoffDate);
+
+  safe.careerSwitchInsights.nextSwitchWindow = clampPeriodText(
+    safe.careerSwitchInsights.nextSwitchWindow || "",
+    cutoffDate,
+    cutoffLabel
+  );
+  safe.careerSwitchInsights.oneOrTwoFutureChanges = (safe.careerSwitchInsights.oneOrTwoFutureChanges || [])
+    .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
+  safe.careerTiming.upcomingOpportunities = (safe.careerTiming.upcomingOpportunities || [])
+    .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
+
+  if (ageYears < CAREER_MIN_AGE) {
+    const adultYear = birthDate.getFullYear() + CAREER_MIN_AGE;
+    safe.overview = `Career advice is age-calibrated. At age ${ageYears}, this section focuses on education, skills, and foundation building. Detailed switch/job timing should be interpreted from age ${CAREER_MIN_AGE} onward (from ${adultYear}).`;
+    safe.careerSwitchInsights = {
+      isSwitchDueNow: "No. Focus on learning-stage milestones first.",
+      nextSwitchWindow: `After age ${CAREER_MIN_AGE} (from ${adultYear}).`,
+      oneOrTwoFutureChanges: [],
+      rationale: "Early high-stakes career transitions are intentionally suppressed for under-age natives.",
+      preparationPlan: [
+        "Build strong academic/technical fundamentals.",
+        "Develop communication and problem-solving through projects.",
+        "Reassess professional timing after reaching adulthood threshold.",
+      ],
+    };
+    safe.careerTiming = {
+      currentPhase: `Foundation phase (age ${ageYears}).`,
+      upcomingOpportunities: [`Structured career timing will open after age ${CAREER_MIN_AGE}.`],
+      challenges: ["Avoid premature long-term career commitments before readiness."],
+    };
+  } else if (ageYears >= MAX_PREDICTION_AGE) {
+    safe.careerSwitchInsights = {
+      isSwitchDueNow: "No major career-switch forecasting is provided at this life stage.",
+      nextSwitchWindow: `Future windows beyond ${cutoffLabel} are intentionally excluded.`,
+      oneOrTwoFutureChanges: [],
+      rationale: "Long-range professional transitions are capped by lifecycle safety policy.",
+      preparationPlan: [
+        "Prioritize legacy planning and mentorship.",
+        "Preserve stable routines and workload balance.",
+      ],
+    };
+  }
+
+  return safe;
+}
+
 function enforceMarriageSafety(
   marriage: MarriagePrediction | null,
-  maritalStatus: NormalizedMaritalStatus
+  maritalStatus: NormalizedMaritalStatus,
+  birthDate: Date,
+  referenceDate: Date
 ): MarriagePrediction | null {
   if (!marriage) return marriage;
-  const safe = structuredClone(marriage);
+  const safe = normalizePartnerTerms(structuredClone(marriage));
+  safe.marriageTiming = safe.marriageTiming || {
+    favorablePeriods: [],
+    challengingPeriods: [],
+    idealAgeRange: "",
+    idealTimeForYoungNatives: "",
+    currentProspects: "",
+  };
+  const ageYears = getAgeYears(birthDate, referenceDate);
+  const cutoffDate = addYears(birthDate, MAX_PREDICTION_AGE);
+  const cutoffLabel = formatMonthYear(cutoffDate);
 
   safe.maritalSafety = safe.maritalSafety || {
     statusAssumption: `Input marital status treated as: ${maritalStatus}`,
@@ -110,6 +255,40 @@ function enforceMarriageSafety(
     marriedGuidance.conflictsToAvoid = ["Reactive arguments, emotional distancing, and third-party triangulation."];
   }
   safe.guidanceForMarriedNatives = marriedGuidance;
+
+  if (ageYears < MARRIAGE_MIN_AGE) {
+    const adultYear = birthDate.getFullYear() + MARRIAGE_MIN_AGE;
+    safe.idealPartnerForUnmarried = {
+      whenApplicable: `Applicable only after adulthood threshold (age ${MARRIAGE_MIN_AGE}, from ${adultYear}).`,
+      keyQualities: [],
+      cautionTraits: [],
+      practicalAdvice: "At this stage, focus on emotional maturity, education, and healthy boundaries.",
+    };
+    safe.marriageTiming = {
+      favorablePeriods: [`Marriage timing is deferred until age ${MARRIAGE_MIN_AGE}+.`],
+      challengingPeriods: ["Avoid pressure-driven commitment decisions before full maturity."],
+      idealAgeRange: `After age ${MARRIAGE_MIN_AGE}`,
+      idealTimeForYoungNatives: `Reassess from ${adultYear} onward.`,
+      currentProspects: "Current stage is developmental; no immediate marriage timing is advised.",
+    };
+  }
+
+  if (ageYears >= MAX_PREDICTION_AGE) {
+    safe.idealPartnerForUnmarried = {
+      whenApplicable: "Not applicable at this life stage under lifecycle safety policy.",
+      keyQualities: [],
+      cautionTraits: [],
+      practicalAdvice: "Focus on companionship quality, dignity, and emotional steadiness.",
+    };
+    safe.marriageTiming.favorablePeriods = [`Time windows beyond ${cutoffLabel} are intentionally excluded.`];
+    safe.marriageTiming.challengingPeriods = [];
+    safe.marriageTiming.currentProspects = "Future long-range marriage timing is not projected at this stage.";
+  } else {
+    safe.marriageTiming.favorablePeriods = (safe.marriageTiming.favorablePeriods || [])
+      .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
+    safe.marriageTiming.challengingPeriods = (safe.marriageTiming.challengingPeriods || [])
+      .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
+  }
 
   return safe;
 }
@@ -162,6 +341,75 @@ function enforceHealthSafety(
   }
 
   return safe;
+}
+
+function enforceDashaSafety(
+  dasha: DashaPrediction | null,
+  birthDate: Date
+): DashaPrediction | null {
+  if (!dasha) return dasha;
+  const cutoffDate = addYears(birthDate, MAX_PREDICTION_AGE);
+  const cutoffLabel = formatMonthYear(cutoffDate);
+
+  const walk = (node: unknown): unknown => {
+    if (Array.isArray(node)) {
+      return node.map((item) => walk(item)).filter((item) => item !== null);
+    }
+    if (!node || typeof node !== "object") return node;
+
+    const obj = structuredClone(node) as Record<string, unknown>;
+    const startDate = parseFlexibleMonthYear(obj.startDate);
+    if (startDate && startDate.getTime() > cutoffDate.getTime()) return null;
+
+    if (typeof obj.endDate === "string") {
+      const endDate = parseFlexibleMonthYear(obj.endDate);
+      if (endDate && endDate.getTime() > cutoffDate.getTime()) {
+        obj.endDate = cutoffLabel;
+      }
+    }
+
+    for (const [key, value] of Object.entries(obj)) {
+      if ((key === "period" || key === "approximatePeriod") && typeof value === "string") {
+        obj[key] = clampPeriodText(value, cutoffDate, cutoffLabel);
+      } else {
+        obj[key] = walk(value);
+      }
+    }
+    return obj;
+  };
+
+  const safe = walk(normalizePartnerTerms(structuredClone(dasha))) as DashaPrediction | null;
+  if (!safe) return null;
+
+  const periodRecommendations = Array.isArray(safe.periodRecommendations) ? safe.periodRecommendations : [];
+  if (!periodRecommendations.some((line) => line.includes("lifecycle-safe"))) {
+    periodRecommendations.push(`Timelines are lifecycle-safe and capped at ${cutoffLabel}.`);
+  }
+  safe.periodRecommendations = periodRecommendations;
+  return safe;
+}
+
+function enforceGlobalPredictionSafety(
+  report: Record<string, any>,
+  birthDate: Date,
+  referenceDate: Date,
+  maritalStatus: NormalizedMaritalStatus
+): Record<string, any> {
+  const safeReport = structuredClone(report);
+  safeReport.career = enforceCareerSafety(safeReport.career || null, birthDate, referenceDate);
+  safeReport.marriage = enforceMarriageSafety(safeReport.marriage || null, maritalStatus, birthDate, referenceDate);
+  safeReport.dasha = enforceDashaSafety(safeReport.dasha || null, birthDate);
+  safeReport.computationMeta = {
+    ...(safeReport.computationMeta || {}),
+    predictionSafety: {
+      careerMinAge: CAREER_MIN_AGE,
+      marriageMinAge: MARRIAGE_MIN_AGE,
+      maxPredictionAge: MAX_PREDICTION_AGE,
+      referenceDate: referenceDate.toISOString(),
+      birthDate: birthDate.toISOString(),
+    },
+  };
+  return normalizePartnerTerms(safeReport);
 }
 
 serve(async (req) => {
@@ -412,7 +660,14 @@ serve(async (req) => {
       else totalTokens += r.tokensUsed || 0;
     }
 
-    const safeMarriage = enforceMarriageSafety(marriageResult.data || null, normalizedMaritalStatus);
+    const safeCareer = enforceCareerSafety(careerResult.data || null, birthDate, reportGeneratedAt);
+    const safeMarriage = enforceMarriageSafety(
+      marriageResult.data || null,
+      normalizedMaritalStatus,
+      birthDate,
+      reportGeneratedAt
+    );
+    const safeDasha = enforceDashaSafety(dashaResult.data || null, birthDate);
     const safeRemedies = enforceHealthSafety(remediesResult.data || null, birthDate, reportGeneratedAt);
 
     let report: Record<string, any> = {
@@ -445,9 +700,9 @@ serve(async (req) => {
       pillars: pillarsResult.data || null,
       planets: planetProfiles,
       houses: houseAnalyses,
-      career: careerResult.data || null,
+      career: safeCareer,
       marriage: safeMarriage,
-      dasha: dashaResult.data || null,
+      dasha: safeDasha,
       rahuKetu: rahuKetuResult.data || null,
       doshas: doshasResult.data || null,
       rajYogs: rajYogsResult.data || null,
@@ -481,6 +736,8 @@ serve(async (req) => {
     if (truthGuard.corrections > 0) {
       console.log(`🛡️ [PROCESS-JOB] Truth guard applied ${truthGuard.corrections} corrections`);
     }
+
+    report = enforceGlobalPredictionSafety(report, birthDate, reportGeneratedAt, normalizedMaritalStatus);
 
     // Phase 7
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Running quality checks", 95);

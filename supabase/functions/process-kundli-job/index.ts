@@ -483,51 +483,67 @@ async function runQaWithTimeout(report: Record<string, any>, timeoutMs = 60000):
 }
 
 /**
- * Wrap an AgentResponse-shaped call with a timeout.
- * Returns { success: false, error: "..." } on timeout instead of hanging.
+ * Run an AgentResponse-shaped call with automatic retry on failure.
+ * Retries up to `maxRetries` times with increasing delay.
+ * Every agent MUST deliver — we never skip a section.
  */
-function withAgentTimeout<T>(
+async function runAgentWithRetry<T>(
   agentName: string,
-  promise: Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }>,
-  timeoutMs = 180_000,
+  factory: () => Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }>,
+  maxRetries = 2,
 ): Promise<{ success: boolean; data?: T; error?: string; tokensUsed?: number }> {
-  const guarded = promise.catch((err) => {
-    console.error(`💥 [PROCESS-JOB] Agent "${agentName}" crashed:`, err);
-    return { success: false as const, error: `Agent ${agentName} crashed: ${err?.message || err}` };
-  });
-  return Promise.race([
-    guarded,
-    new Promise<{ success: false; error: string }>((resolve) => {
-      setTimeout(() => {
-        console.error(`⏰ [PROCESS-JOB] Agent "${agentName}" timed out after ${timeoutMs}ms`);
-        resolve({ success: false, error: `Agent ${agentName} timed out after ${timeoutMs / 1000}s` });
-      }, timeoutMs);
-    }),
-  ]);
+  let lastResult: { success: boolean; data?: T; error?: string; tokensUsed?: number } | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await factory();
+      if (result.success) {
+        if (attempt > 0) console.log(`✅ [RETRY] Agent "${agentName}" succeeded on attempt ${attempt + 1}`);
+        return result;
+      }
+      lastResult = result;
+      console.warn(`⚠️ [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} failed: ${result.error}`);
+    } catch (err: any) {
+      lastResult = { success: false, error: `Agent ${agentName} crashed: ${err?.message || err}` };
+      console.error(`💥 [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} crashed:`, err?.message || err);
+    }
+    if (attempt < maxRetries) {
+      const delayMs = 5_000 * (attempt + 1); // 5s, 10s
+      console.log(`🔄 [RETRY] Retrying "${agentName}" in ${delayMs / 1000}s...`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  console.error(`❌ [RETRY] Agent "${agentName}" EXHAUSTED all ${maxRetries + 1} attempts`);
+  return lastResult || { success: false, error: `Agent ${agentName} failed after ${maxRetries + 1} attempts` };
 }
 
 /**
- * Wrap an array-returning agent with a timeout.
- * Returns empty array on timeout/crash instead of hanging.
+ * Run an array-returning agent with automatic retry on failure/crash.
+ * Returns empty array ONLY after all retries are exhausted.
  */
-function withArrayAgentTimeout<T>(
+async function runArrayAgentWithRetry<T>(
   agentName: string,
-  promise: Promise<T[]>,
-  timeoutMs = 180_000,
+  factory: () => Promise<T[]>,
+  maxRetries = 2,
 ): Promise<T[]> {
-  const guarded = promise.catch((err) => {
-    console.error(`💥 [PROCESS-JOB] Agent "${agentName}" crashed:`, err);
-    return [] as T[];
-  });
-  return Promise.race([
-    guarded,
-    new Promise<T[]>((resolve) => {
-      setTimeout(() => {
-        console.error(`⏰ [PROCESS-JOB] Agent "${agentName}" timed out after ${timeoutMs}ms`);
-        resolve([]);
-      }, timeoutMs);
-    }),
-  ]);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await factory();
+      if (result && result.length > 0) {
+        if (attempt > 0) console.log(`✅ [RETRY] Agent "${agentName}" succeeded on attempt ${attempt + 1}`);
+        return result;
+      }
+      console.warn(`⚠️ [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} returned empty`);
+    } catch (err: any) {
+      console.error(`💥 [RETRY] Agent "${agentName}" attempt ${attempt + 1}/${maxRetries + 1} crashed:`, err?.message || err);
+    }
+    if (attempt < maxRetries) {
+      const delayMs = 5_000 * (attempt + 1);
+      console.log(`🔄 [RETRY] Retrying "${agentName}" in ${delayMs / 1000}s...`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+  console.error(`❌ [RETRY] Agent "${agentName}" EXHAUSTED all ${maxRetries + 1} attempts — returning empty`);
+  return [];
 }
 
 // ─── Chart SVG fetching ──────────────────────────────────────────────────────
@@ -835,8 +851,6 @@ serve(async (req) => {
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Analyzing chart & generating predictions", 20, "progress");
     console.log("🤖 [PROCESS-JOB] Launching ALL agents in parallel...");
 
-    const AGENT_TIMEOUT_MS = 180_000; // 3 minutes per agent
-
     const [
       panchangResult, pillarsResult, numerologyResult,
       planetProfiles, houseAnalyses,
@@ -845,7 +859,7 @@ serve(async (req) => {
       rajYogsResult, sadeSatiResult, doshasResult,
     ] = await Promise.all([
       // Core
-      withAgentTimeout("Panchang", generatePanchangPrediction({
+      runAgentWithRetry("Panchang", () => generatePanchangPrediction({
         birthDate,
         moonDegree: moon?.deg || 0,
         sunDegree: sun?.deg || 0,
@@ -853,8 +867,8 @@ serve(async (req) => {
         tithiNumber,
         karanaName: "Bava",
         yogaName: "Siddhi",
-      }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Pillars", generatePillarsPrediction({
+      })),
+      runAgentWithRetry("Pillars", () => generatePillarsPrediction({
         moonSignIdx: moon?.signIdx || 0,
         moonDegree: moon?.deg || 0,
         moonHouse: moon?.house || 1,
@@ -862,20 +876,20 @@ serve(async (req) => {
         ascDegree: kundli.asc.deg,
         ascLordHouse: ascLordPlanet?.house || 1,
         ascLordSign: ascLordPlanet?.sign || "Aries",
-      }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Numerology", generateNumerologyPrediction({ name, dateOfBirth: date_of_birth }), AGENT_TIMEOUT_MS),
+      })),
+      runAgentWithRetry("Numerology", () => generateNumerologyPrediction({ name, dateOfBirth: date_of_birth })),
       // Planets (9 internal parallel) + Houses (12 internal parallel)
-      withArrayAgentTimeout("Planets", generateAllPlanetProfiles(kundli.planets, kundli.asc), AGENT_TIMEOUT_MS),
-      withArrayAgentTimeout("Houses", generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx), AGENT_TIMEOUT_MS),
+      runArrayAgentWithRetry("Planets", () => generateAllPlanetProfiles(kundli.planets, kundli.asc)),
+      runArrayAgentWithRetry("Houses", () => generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx)),
       // Life Areas
-      withAgentTimeout("Career", generateCareerPrediction({
+      runAgentWithRetry("Career", () => generateCareerPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
         birthDate,
         generatedAt: reportGeneratedAt,
-      }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Marriage", generateMarriagePrediction({
+      })),
+      runAgentWithRetry("Marriage", () => generateMarriagePrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         charaKarakas,
@@ -883,22 +897,22 @@ serve(async (req) => {
         birthDate,
         generatedAt: reportGeneratedAt,
         maritalStatus: normalizedMaritalStatus,
-      }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Dasha", generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("RahuKetu", generateRahuKetuPrediction({ planets: kundli.planets }), AGENT_TIMEOUT_MS),
+      })),
+      runAgentWithRetry("Dasha", () => generateDashaPrediction({ planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate })),
+      runAgentWithRetry("RahuKetu", () => generateRahuKetuPrediction({ planets: kundli.planets })),
       // Remedies, Spiritual, etc.
-      withAgentTimeout("Remedies", generateRemediesPrediction({
+      runAgentWithRetry("Remedies", () => generateRemediesPrediction({
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
         birthDate,
         generatedAt: reportGeneratedAt,
-      }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Spiritual", generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("CharaKarakas", generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Glossary", generateGlossaryPrediction(), AGENT_TIMEOUT_MS),
-      withAgentTimeout("RajYogs", generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("SadeSati", generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year }), AGENT_TIMEOUT_MS),
-      withAgentTimeout("Doshas", generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }), AGENT_TIMEOUT_MS),
+      })),
+      runAgentWithRetry("Spiritual", () => generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas })),
+      runAgentWithRetry("CharaKarakas", () => generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx })),
+      runAgentWithRetry("Glossary", () => generateGlossaryPrediction()),
+      runAgentWithRetry("RajYogs", () => generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx })),
+      runAgentWithRetry("SadeSati", () => generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year })),
+      runAgentWithRetry("Doshas", () => generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx })),
     ]);
 
     console.log("✅ [PROCESS-JOB] All agents completed");

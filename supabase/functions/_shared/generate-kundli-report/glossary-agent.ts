@@ -29,7 +29,54 @@ export interface GlossaryPrediction {
   furtherReading: string[];
 }
 
-const GLOSSARY_SYSTEM_PROMPT = `You are an expert Vedic astrology educator creating a comprehensive glossary for a Kundli report.
+function getGlossarySystemPrompt(language: string): string {
+  if (language === "hi") {
+    return `आप एक विशेषज्ञ वैदिक ज्योतिष शिक्षक हैं जो कुंडली रिपोर्ट के लिए एक व्यापक शब्दकोश बना रहे हैं।
+
+कृपया सभी सामग्री हिन्दी (देवनागरी लिपि) में लिखें। अंग्रेज़ी का उपयोग बिल्कुल न करें।
+
+स्पष्ट, सुलभ परिभाषाएं बनाएं जो पाठकों को समझने में मदद करें:
+1. मूल अवधारणाएं (ग्रह, राशियां, भाव)
+2. तकनीकी शब्द (दृष्टि, बल, योग)
+3. भविष्यवाणी शब्दावली (दशा, गोचर)
+4. जैमिनी अवधारणाएं (कारक, आर्गला)
+5. उपचार शब्द (उपाय, मंत्र, यंत्र)
+
+प्रत्येक शब्द के लिए प्रदान करें:
+- संस्कृत/हिन्दी नाम
+- उच्चारण मार्गदर्शन
+- शुरुआती लोगों के लिए स्पष्ट परिभाषा
+- गहन समझ के लिए विस्तृत व्याख्या
+- ज्योतिष से व्यावहारिक उदाहरण
+- क्रॉस-रेफरेंस के लिए संबंधित शब्द
+
+श्रेणी के अनुसार शब्दों को व्यवस्थित करें।
+सटीकता बनाए रखते हुए सरल हिन्दी भाषा का उपयोग करें।`;
+  }
+  if (language === "te") {
+    return `మీరు కుండలీ నివేదిక కోసం సమగ్ర పారిభాషిక నిఘంటువును సృష్టిస్తున్న నిపుణ వైదిక జ్యోతిష్య విద్యావేత్త.
+
+దయచేసి మొత్తం కంటెంట్ తెలుగు లిపిలో రాయండి. ఆంగ్లం ఉపయోగించకండి.
+
+స్పష్టమైన, అందుబాటులో ఉన్న నిర్వచనాలను సృష్టించండి:
+1. ప్రాథమిక భావనలు (గ్రహాలు, రాశులు, భావాలు)
+2. సాంకేతిక పదాలు (దృష్టి, బలం, యోగాలు)
+3. భవిష్యవాణి పరిభాష (దశ, గోచారం)
+4. జైమిని భావనలు (కారకాలు, ఆర్గళ)
+5. పరిహార పదాలు (ఉపాయాలు, మంత్రాలు, యంత్రాలు)
+
+ప్రతి పదానికి అందించండి:
+- సంస్కృత/తెలుగు పేరు
+- ఉచ్చారణ మార్గదర్శకం
+- ప్రారంభకులకు స్పష్టమైన నిర్వచనం
+- లోతైన అవగాహన కోసం వివరణాత్మక వివరణ
+- జ్యోతిష్యం నుండి ఆచరణాత్మక ఉదాహరణ
+- క్రాస్-రిఫరెన్స్ కోసం సంబంధిత పదాలు
+
+వర్గం ప్రకారం పదాలను నిర్వహించండి.
+ఖచ్చితత్వాన్ని కాపాడుతూ సరళ తెలుగు భాషను ఉపయోగించండి.`;
+  }
+  return `You are an expert Vedic astrology educator creating a comprehensive glossary for a Kundli report.
 
 Create clear, accessible definitions that help readers understand:
 1. Basic concepts (planets, signs, houses)
@@ -49,10 +96,15 @@ For each term, provide:
 Organize terms by category for easy navigation.
 Use simple language while maintaining accuracy.
 Include both Parashari and Jaimini terminology.`;
+}
 
-export async function generateGlossaryPrediction(): Promise<AgentResponse<GlossaryPrediction>> {
-  
-  const userPrompt = `Generate a comprehensive glossary of Vedic astrology terms used in a Kundli report.
+export async function generateGlossaryPrediction(language: string = "en"): Promise<AgentResponse<GlossaryPrediction>> {
+  const langLabel = language === "hi" ? "हिन्दी" : language === "te" ? "తెలుగు" : "English";
+  const langInstruction = language !== "en"
+    ? `\n\nCRITICAL: Write ALL content (categories, descriptions, definitions, examples) in ${langLabel} script. Do NOT use English for any descriptive text. Sanskrit terms can remain in Devanagari.`
+    : "";
+
+  const userPrompt = `Generate a comprehensive glossary of Vedic astrology terms used in a Kundli report.${langInstruction}
 
 Include all major terms organized by these categories:
 
@@ -161,10 +213,10 @@ Provide clear, educational definitions suitable for readers new to Vedic astrolo
   };
 
   return callAgent<GlossaryPrediction>(
-    GLOSSARY_SYSTEM_PROMPT,
+    getGlossarySystemPrompt(language),
     userPrompt,
     "generate_glossary",
-    "Generate comprehensive Vedic astrology glossary",
+    `Generate comprehensive Vedic astrology glossary (${langLabel})`,
     toolSchema
   );
 }

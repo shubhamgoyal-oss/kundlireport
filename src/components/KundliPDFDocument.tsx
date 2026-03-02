@@ -377,6 +377,9 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Amatyakaraka Analysis': 'अमात्यकारक विश्लेषण',
     'Glossary': 'शब्दकोश',
     'Glossary of Vedic Astrology Terms': 'वैदिक ज्योतिष शब्दकोश',
+    // ── Glossary inline labels ──────────────────────────────────────────────
+    'Example': 'उदाहरण',
+    'Related': 'संबंधित',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'उपाय',
     'Significance': 'महत्व',
@@ -880,6 +883,9 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Amatyakaraka Analysis': 'అమాత్యకారక విశ్లేషణ',
     'Glossary': 'పారిభాషిక నిఘంటువు',
     'Glossary of Vedic Astrology Terms': 'వైదిక జ్యోతిష్య పారిభాషిక నిఘంటువు',
+    // ── Glossary inline labels ──────────────────────────────────────────────
+    'Example': 'ఉదాహరణ',
+    'Related': 'సంబంధిత',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'పరిహారాలు',
     'Significance': 'ప్రాముఖ్యత',
@@ -5857,20 +5863,20 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
                 {(section.terms || []).map((term: any, tIdx: number) => (
                   <Card key={tIdx} title={`${term.term}${term.termSanskrit ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
-                    <Text style={[styles.scriptural, { marginBottom: 4 }]}>Pronunciation: {term.pronunciation}</Text>
-                    
+                    <Text style={[styles.scriptural, { marginBottom: 4 }]}>{localizePdfUiText('Pronunciation')}: {term.pronunciation}</Text>
+
                     <Text style={[styles.boldLabel, { marginBottom: 3 }]}>{term.definition}</Text>
-                    
+
                     <Text style={styles.paragraph}>{term.detailedExplanation}</Text>
-                    
+
                     {term.example && (
                       <View style={styles.highlight}>
-                        <Text style={styles.bodyText}>Example: {term.example}</Text>
+                        <Text style={styles.bodyText}>{localizePdfUiText('Example')}: {term.example}</Text>
                       </View>
                     )}
-                    
+
                     {term.relatedTerms && term.relatedTerms.length > 0 && (
-                      <Text style={styles.accentText}>Related: {term.relatedTerms.join(', ')}</Text>
+                      <Text style={styles.accentText}>{localizePdfUiText('Related')}: {term.relatedTerms.join(', ')}</Text>
                     )}
                   </Card>
                 ))}

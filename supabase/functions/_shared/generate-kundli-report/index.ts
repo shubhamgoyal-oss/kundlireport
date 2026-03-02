@@ -453,7 +453,7 @@ serve(async (req) => {
         planets: kundli.planets,
         ascSignIdx: kundli.asc.signIdx,
       }),
-      generateGlossaryPrediction(),
+      generateGlossaryPrediction(language),
     ]);
 
     if (!remediesResult.success) errors.push(`Remedies: ${remediesResult.error}`);

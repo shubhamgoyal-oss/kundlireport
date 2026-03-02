@@ -70,7 +70,7 @@ function stripAiDisclosure<T>(value: T): T {
   return value;
 }
 
-// ── English report gibberish cleanup ─────────────────────────────────────────
+// ── Report text cleanup ──────────────────────────────────────────────────────
 
 /**
  * Detect whether a string is mostly gibberish.
@@ -85,7 +85,7 @@ function isGibberishText(text: string): boolean {
   // 2. Same character repeated 4+ times
   if (/(.)\1{3,}/.test(text)) return true;
 
-  // 3. Mostly non-ASCII non-Devanagari control/garbage characters
+  // 3. Mostly non-ASCII non-Devanagari/Telugu control/garbage characters
   const controlChars = text.replace(/[\x20-\x7E\u0900-\u097F\u0C00-\u0C7F\n\r\t]/g, "");
   if (controlChars.length > text.length * 0.3) return true;
 
@@ -93,68 +93,57 @@ function isGibberishText(text: string): boolean {
 }
 
 /**
- * Clean a single English text string:
- *  - Strip Devanagari / Telugu script (shouldn't appear in English fields)
- *  - Remove garbled character sequences
+ * Clean a single text string — language-agnostic:
+ *  - Remove zero-width / invisible Unicode
+ *  - Collapse repeated characters (4+ → 2)
  *  - Collapse excess whitespace
- *  - Remove incomplete trailing sentences
+ *  - Replace em-dashes (—) with regular dashes (-) to avoid AI-generated look
+ *
+ * NOTE: We do NOT strip Devanagari/Telugu from English reports. If the content
+ * is valid (e.g., Sanskrit terms), we keep it. Only truly garbled sequences
+ * (detected by isGibberishText) get flagged.
  */
-function cleanEnglishText(text: string, allowDevanagari = false): string {
+function cleanReportText(text: string): string {
   if (!text || typeof text !== "string") return text;
 
   let cleaned = text;
 
-  // Remove Devanagari (U+0900–U+097F) and Telugu (U+0C00–U+0C7F) from non-mantra fields
-  if (!allowDevanagari) {
-    cleaned = cleaned.replace(/[\u0900-\u097F\u0C00-\u0C7F]+/g, "").trim();
-  }
-
   // Remove zero-width chars, soft hyphens, and other invisible Unicode
   cleaned = cleaned.replace(/[\u200B-\u200F\u2028-\u202F\u00AD\uFEFF]/g, "");
 
-  // Remove sequences of random symbols (3+ non-word non-space chars in a row)
-  cleaned = cleaned.replace(/[^\w\s'".,;:!?()\-\/]{3,}/g, "");
+  // Replace em-dashes (—) with regular dashes (-) — avoids AI-generated look
+  cleaned = cleaned.replace(/\u2014/g, "-");
+  // Replace en-dashes (–) with regular dashes too
+  cleaned = cleaned.replace(/\u2013/g, "-");
 
-  // Remove same character repeated 4+ times
+  // Remove same character repeated 4+ times (garbled output)
   cleaned = cleaned.replace(/(.)\1{3,}/g, "$1$1");
 
   // Collapse multiple spaces / newlines
   cleaned = cleaned.replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 
-  // Remove incomplete sentence fragments at the end (ending mid-word or with trailing comma)
-  cleaned = cleaned.replace(/,\s*$/, ".").replace(/\s+\w{1,3}$/, ".");
-
   return cleaned;
 }
 
-/** Keys whose string values may legitimately contain Devanagari (mantras) */
-const MANTRA_KEYS = new Set([
-  "mantra", "mantras", "pronunciation", "chant",
-  "termSanskrit", "scripturalSource", "scripturalReference",
-  "scripturalBasis", "consecrationMethod",
-]);
-
 /**
- * Recursively clean all text fields in the English report.
- * Preserves Devanagari in mantra-related fields.
+ * Recursively clean all text fields in the report (any language).
+ * Replaces em-dashes, removes invisible chars, fixes garbled sequences.
+ * Does NOT remove valid script content (Devanagari, Telugu, Latin).
  */
-function cleanEnglishReport<T>(value: T, parentKey = ""): T {
+function cleanReportTexts<T>(value: T, parentKey = ""): T {
   if (typeof value === "string") {
-    const allowDev = MANTRA_KEYS.has(parentKey);
-    // If the entire string is gibberish, replace with empty string
-    if (isGibberishText(value) && !allowDev) {
-      const cleaned = cleanEnglishText(value, false);
-      // If after cleaning it's basically empty, return a placeholder
+    // If the entire string is true gibberish, return empty
+    if (isGibberishText(value)) {
+      const cleaned = cleanReportText(value);
       if (cleaned.length < 5) return "" as unknown as T;
       return cleaned as unknown as T;
     }
-    return cleanEnglishText(value, allowDev) as unknown as T;
+    return cleanReportText(value) as unknown as T;
   }
   if (Array.isArray(value)) {
     return value
-      .map((item) => cleanEnglishReport(item, parentKey))
+      .map((item) => cleanReportTexts(item, parentKey))
       .filter((item) => {
-        // Remove array entries that are empty strings after cleanup
         if (typeof item === "string" && item.trim() === "") return false;
         return true;
       }) as unknown as T;
@@ -163,7 +152,7 @@ function cleanEnglishReport<T>(value: T, parentKey = ""): T {
     const obj = value as Record<string, unknown>;
     const out: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(obj)) {
-      out[key] = cleanEnglishReport(val, key);
+      out[key] = cleanReportTexts(val, key);
     }
     return out as T;
   }
@@ -323,14 +312,12 @@ serve(async (req) => {
     }
     report.qa = qaResult;
 
-    // ── English gibberish cleanup ───────────────────────────────────────────
-    // For English reports: strip Devanagari/Telugu script from non-mantra fields,
-    // remove garbled character sequences, fix encoding artifacts.
-    if (requestedLanguage === "en") {
-      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Cleaning report text", 94, "progress");
-      report = cleanEnglishReport(report);
-      console.log("🧹 [FINALIZE-JOB] English report gibberish cleanup complete");
-    }
+    // ── Text cleanup (ALL languages) ──────────────────────────────────────────
+    // Remove em-dashes (→ regular dashes), invisible chars, garbled sequences.
+    // Applied to ALL languages — does NOT strip valid script content.
+    await updateJobStatus(supabaseAdmin, jobId!, "processing", "Cleaning report text", 94, "progress");
+    report = cleanReportTexts(report);
+    console.log("🧹 [FINALIZE-JOB] Report text cleanup complete (em-dashes, invisible chars, gibberish)");
 
     // ── Localization + Language QC ──────────────────────────────────────────
     report = localizeStructuredReportTerms(report, requestedLanguage);

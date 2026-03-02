@@ -909,7 +909,7 @@ serve(async (req) => {
       }))),
       trackAgent("Spiritual", runAgentWithRetry("Spiritual", () => generateSpiritualPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas }))),
       trackAgent("CharaKarakas", runAgentWithRetry("CharaKarakas", () => generateCharaKarakasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }))),
-      trackAgent("Glossary", runAgentWithRetry("Glossary", () => generateGlossaryPrediction())),
+      trackAgent("Glossary", runAgentWithRetry("Glossary", () => generateGlossaryPrediction(effectiveGenerationLanguage))),
       trackAgent("RajYogs", runAgentWithRetry("RajYogs", () => generateRajYogsPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx }))),
       trackAgent("SadeSati", runAgentWithRetry("SadeSati", () => generateSadeSatiPrediction({ planets: kundli.planets, birthYear: year }))),
       trackAgent("Doshas", runAgentWithRetry("Doshas", () => generateDoshasPrediction({ planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx }))),

@@ -1,6 +1,6 @@
 // Planets Agent - Generates detailed planetary profiles for all 9 planets
 
-import { callAgent, type AgentResponse } from "./agent-base.ts";
+import { callAgent, type AgentResponse, getAgentLanguage } from "./agent-base.ts";
 import { calculateDignity, getDignityDescription, getSignLord, type Dignity } from "./utils/dignity.ts";
 import { calculateAspects, getAspectsFromPlanet, type Aspect } from "./utils/aspects.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
@@ -31,16 +31,16 @@ export interface PlanetProfile {
   remedies: string[];
 }
 
+// ── Language-specific dictionaries ───────────────────────────────────────────
+
 const PLANET_HINDI: Record<string, string> = {
-  Sun: "सूर्य",
-  Moon: "चंद्र",
-  Mars: "मंगल",
-  Mercury: "बुध",
-  Jupiter: "गुरु",
-  Venus: "शुक्र",
-  Saturn: "शनि",
-  Rahu: "राहु",
-  Ketu: "केतु",
+  Sun: "सूर्य", Moon: "चंद्र", Mars: "मंगल", Mercury: "बुध",
+  Jupiter: "गुरु", Venus: "शुक्र", Saturn: "शनि", Rahu: "राहु", Ketu: "केतु",
+};
+
+const PLANET_TELUGU: Record<string, string> = {
+  Sun: "సూర్యుడు", Moon: "చంద్రుడు", Mars: "కుజుడు", Mercury: "బుధుడు",
+  Jupiter: "గురువు", Venus: "శుక్రుడు", Saturn: "శని", Rahu: "రాహువు", Ketu: "కేతువు",
 };
 
 const SIGN_HINDI: Record<string, string> = {
@@ -48,6 +48,26 @@ const SIGN_HINDI: Record<string, string> = {
   Leo: "सिंह", Virgo: "कन्या", Libra: "तुला", Scorpio: "वृश्चिक",
   Sagittarius: "धनु", Capricorn: "मकर", Aquarius: "कुम्भ", Pisces: "मीन",
 };
+
+const SIGN_TELUGU: Record<string, string> = {
+  Aries: "మేషం", Taurus: "వృషభం", Gemini: "మిథునం", Cancer: "కర్కాటకం",
+  Leo: "సింహం", Virgo: "కన్య", Libra: "తుల", Scorpio: "వృశ్చికం",
+  Sagittarius: "ధనుస్సు", Capricorn: "మకరం", Aquarius: "కుంభం", Pisces: "మీనం",
+};
+
+// ── Language-aware lookups ───────────────────────────────────────────────────
+
+function planetLocal(key: string): string {
+  const lang = getAgentLanguage();
+  if (lang === "te") return PLANET_TELUGU[key] || key;
+  return PLANET_HINDI[key] || key;
+}
+
+function signLocal(key: string): string {
+  const lang = getAgentLanguage();
+  if (lang === "te") return SIGN_TELUGU[key] || key;
+  return SIGN_HINDI[key] || key;
+}
 
 const PLANET_SIGNIFICATIONS: Record<string, string> = {
   Sun: "Soul, father, authority, government, health, ego, leadership, vitality",
@@ -113,8 +133,8 @@ export async function generatePlanetProfile(input: PlanetInput): Promise<AgentRe
   const userPrompt = `Analyze ${planet.name} in detail:
 
 **Basic Position:**
-- Planet: ${planet.name} (${PLANET_HINDI[planet.name]})
-- Sign: ${planet.sign} (${SIGN_HINDI[planet.sign]})
+- Planet: ${planet.name} (${planetLocal(planet.name)})
+- Sign: ${planet.sign} (${signLocal(planet.sign)})
 - House: ${planet.house}
 - Degree: ${planet.deg.toFixed(2)}°
 - Retrograde: ${planet.isRetro ? "Yes" : "No"}

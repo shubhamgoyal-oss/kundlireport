@@ -526,6 +526,291 @@ async function runArrayAgentWithRetry<T>(
   return [];
 }
 
+// ─── Agent retry handler ─────────────────────────────────────────────────────
+
+/**
+ * Handles retry of failed (timed-out) agents.
+ * Called when process-kundli-job self-invokes with retryPass:2.
+ * Loads existing report from DB, re-adapts Seer data, runs ONLY failed agents,
+ * merges results, saves, and triggers Stage 2 (translate).
+ * Only 1 retry attempt is allowed — if retry also times out, proceeds to Stage 2 with partial data.
+ */
+async function handleAgentRetry(
+  supabase: any,
+  job: any,
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
+  const jobId = job.id;
+  const existingReport = job.report_data;
+  const failedAgentNames: string[] = existingReport?.computationMeta?.failedAgents || [];
+
+  console.log(`🔄 [RETRY] Starting retry for job ${jobId}`);
+  console.log(`🔄 [RETRY] Failed agents: ${failedAgentNames.join(', ') || 'none'}`);
+
+  // Nothing to retry or can't retry — proceed directly to Stage 2
+  if (failedAgentNames.length === 0 || !existingReport?.seerRawResponse) {
+    console.log('ℹ️ [RETRY] No failed agents or no Seer data — skipping to Stage 2');
+    return triggerStage2AndReturn(supabase, jobId, corsHeaders);
+  }
+
+  await updateJobStatus(supabase, jobId, "processing", `Retrying ${failedAgentNames.length} timed-out agents`, 82, "progress");
+
+  // Re-setup language context
+  const requestedLanguage = normalizeLanguage(job.language || "en");
+  const effectiveGenerationLanguage: SupportedLanguage = isLanguagePipelineV2Enabled(requestedLanguage) ? requestedLanguage : "en";
+  setAgentLanguageContext(effectiveGenerationLanguage);
+
+  // Re-adapt Seer data from cached response
+  const kundli = adaptSeerResponse(existingReport.seerRawResponse);
+  const charaKarakas = calculateCharaKarakas(kundli.planets);
+  const moon = kundli.planets.find((p: any) => p.name === "Moon");
+  const sun = kundli.planets.find((p: any) => p.name === "Sun");
+  const tithiNumber = moon && sun ? calculateTithi(moon.deg, sun.deg) : 1;
+  const ascLord = getSignLord(kundli.asc.signIdx);
+  const ascLordPlanet = kundli.planets.find((p: any) => p.name === ascLord);
+  const moonSignIdx = moon?.signIdx || 0;
+
+  // Parse dates from job record
+  const [year, month, day] = String(job.date_of_birth).split("-").map(Number);
+  const { hour, min } = parseBirthTime(String(job.time_of_birth));
+  const birthDate = new Date(year, month - 1, day, hour, min);
+  const reportGeneratedAt = new Date(existingReport.generatedAt);
+  const normalizedGender = job.gender === "female" || job.gender === "F" ? "F" : job.gender === "other" || job.gender === "O" ? "O" : "M";
+  const maritalStatusRaw = String(job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown").toLowerCase();
+  const normalizedMaritalStatus: NormalizedMaritalStatus = maritalStatusRaw === "married" ? "married" : maritalStatusRaw === "single" || maritalStatusRaw === "unmarried" ? "single" : "unknown";
+
+  // Build agent factory map — each entry creates a promise that runs the agent
+  const agentFactories: Record<string, () => Promise<any>> = {
+    Panchang: () => runAgentWithRetry("Panchang", () => generatePanchangPrediction({
+      birthDate, moonDegree: moon?.deg || 0, sunDegree: sun?.deg || 0,
+      vaarIndex: birthDate.getDay(), tithiNumber, karanaName: "Bava", yogaName: "Siddhi",
+    })),
+    Pillars: () => runAgentWithRetry("Pillars", () => generatePillarsPrediction({
+      moonSignIdx: moon?.signIdx || 0, moonDegree: moon?.deg || 0, moonHouse: moon?.house || 1,
+      ascSignIdx: kundli.asc.signIdx, ascDegree: kundli.asc.deg,
+      ascLordHouse: ascLordPlanet?.house || 1, ascLordSign: ascLordPlanet?.sign || "Aries",
+    })),
+    Numerology: () => runAgentWithRetry("Numerology", () => generateNumerologyPrediction({
+      name: job.name, dateOfBirth: job.date_of_birth,
+    })),
+    Planets: () => runArrayAgentWithRetry("Planets", () => generateAllPlanetProfiles(kundli.planets, kundli.asc)),
+    Houses: () => runArrayAgentWithRetry("Houses", () => generateAllHouseAnalyses(kundli.planets, kundli.asc.signIdx)),
+    Career: () => runAgentWithRetry("Career", () => generateCareerPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas, birthDate, generatedAt: reportGeneratedAt,
+    })),
+    Marriage: () => runAgentWithRetry("Marriage", () => generateMarriagePrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas,
+      gender: normalizedGender, birthDate, generatedAt: reportGeneratedAt, maritalStatus: normalizedMaritalStatus,
+    })),
+    DashaMahadasha: () => runAgentWithRetry("DashaMahadasha", () => generateDashaMahadashaPrediction({
+      planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate,
+    })),
+    DashaAntardasha: () => runAgentWithRetry("DashaAntardasha", () => generateDashaAntardashaPrediction({
+      planets: kundli.planets, moonDegree: moon?.deg || 0, birthDate,
+    })),
+    RahuKetu: () => runAgentWithRetry("RahuKetu", () => generateRahuKetuPrediction({ planets: kundli.planets })),
+    Remedies: () => runAgentWithRetry("Remedies", () => generateRemediesPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, birthDate, generatedAt: reportGeneratedAt,
+    })),
+    Spiritual: () => runAgentWithRetry("Spiritual", () => generateSpiritualPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, charaKarakas,
+    })),
+    CharaKarakas: () => runAgentWithRetry("CharaKarakas", () => generateCharaKarakasPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx,
+    })),
+    Glossary: () => runAgentWithRetry("Glossary", () => generateGlossaryPrediction(effectiveGenerationLanguage)),
+    RajYogs: () => runAgentWithRetry("RajYogs", () => generateRajYogsPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx,
+    })),
+    SadeSati: () => runAgentWithRetry("SadeSati", () => generateSadeSatiPrediction({
+      planets: kundli.planets, birthYear: year,
+    })),
+    Doshas: () => runAgentWithRetry("Doshas", () => generateDoshasPrediction({
+      planets: kundli.planets, ascSignIdx: kundli.asc.signIdx, moonSignIdx,
+    })),
+  };
+
+  // Run only failed agents in parallel
+  const retryStart = Date.now();
+  const retryTasks: Array<{ name: string; promise: Promise<any> }> = [];
+  for (const name of failedAgentNames) {
+    const factory = agentFactories[name];
+    if (factory) {
+      retryTasks.push({ name, promise: factory() });
+    } else {
+      console.warn(`⚠️ [RETRY] Unknown agent "${name}" — skipping`);
+    }
+  }
+
+  console.log(`🤖 [RETRY] Launching ${retryTasks.length} agents in parallel...`);
+
+  // Generous timeout for retry (130s) since we only run a few agents
+  const RETRY_TIMEOUT_MS = 130_000;
+  const retryPromise = Promise.all(
+    retryTasks.map(t => t.promise.then(
+      (result: any) => ({ name: t.name, result }),
+      (err: any) => ({ name: t.name, result: { success: false, data: null, error: err?.message || "Retry crash" } }),
+    ))
+  );
+  const retryTimeoutPromise = new Promise<"TIMEOUT">(resolve =>
+    setTimeout(() => resolve("TIMEOUT"), RETRY_TIMEOUT_MS)
+  );
+
+  const retryRace = await Promise.race([retryPromise, retryTimeoutPromise]);
+  const retryDuration = ((Date.now() - retryStart) / 1000).toFixed(1);
+
+  let retryResults: Array<{ name: string; result: any }> = [];
+  if (retryRace === "TIMEOUT") {
+    console.warn(`⏰ [RETRY] Retry also timed out after ${retryDuration}s — proceeding with whatever completed`);
+    existingReport.errors = [...(existingReport.errors || []), `Retry timeout after ${retryDuration}s`];
+  } else {
+    retryResults = retryRace;
+    console.log(`✅ [RETRY] Completed in ${retryDuration}s — ${retryResults.length} agents retried`);
+  }
+
+  // Merge retry results into existing report
+  // Map agent name → report field and type
+  const SCALAR_FIELD: Record<string, string> = {
+    Panchang: "panchang", Pillars: "pillars", Numerology: "numerology",
+    Career: "career", Marriage: "marriage", RahuKetu: "rahuKetu",
+    Remedies: "remedies", Spiritual: "spiritual", CharaKarakas: "charaKarakasDetailed",
+    Glossary: "glossary", RajYogs: "rajYogs", SadeSati: "sadeSati", Doshas: "doshas",
+  };
+  const ARRAY_AGENTS = new Set(["Planets", "Houses"]);
+  const DASHA_AGENTS = new Set(["DashaMahadasha", "DashaAntardasha"]);
+
+  let retryTokens = 0;
+  const succeededRetries: string[] = [];
+  const failedRetries: string[] = [];
+  let dashaMahaRetry: any = null;
+  let dashaAntarRetry: any = null;
+
+  for (const { name, result } of retryResults) {
+    if (ARRAY_AGENTS.has(name)) {
+      // Array agents (Planets, Houses) return arrays directly
+      if (Array.isArray(result) && result.length > 0) {
+        const field = name === "Planets" ? "planets" : "houses";
+        existingReport[field] = result;
+        succeededRetries.push(name);
+        console.log(`✅ [RETRY] Merged ${name}: ${result.length} items`);
+      } else {
+        failedRetries.push(name);
+      }
+    } else if (DASHA_AGENTS.has(name)) {
+      // Dasha agents — collect for special merge
+      if (name === "DashaMahadasha") dashaMahaRetry = result;
+      if (name === "DashaAntardasha") dashaAntarRetry = result;
+      if (result?.success) {
+        retryTokens += result.tokensUsed || 0;
+        succeededRetries.push(name);
+      } else {
+        failedRetries.push(name);
+      }
+    } else if (SCALAR_FIELD[name]) {
+      if (result?.success && result?.data) {
+        existingReport[SCALAR_FIELD[name]] = result.data;
+        retryTokens += result.tokensUsed || 0;
+        succeededRetries.push(name);
+        console.log(`✅ [RETRY] Merged ${name}`);
+      } else {
+        failedRetries.push(name);
+        console.warn(`⚠️ [RETRY] Agent ${name} failed: ${result?.error || 'unknown'}`);
+      }
+    }
+  }
+
+  // Handle Dasha merge specially (needs both Mahadasha + Antardasha)
+  if (dashaMahaRetry || dashaAntarRetry) {
+    // Use retry result if available, otherwise use existing report's data
+    const maha = dashaMahaRetry || { success: !!existingReport.dasha, data: existingReport.dasha };
+    const antar = dashaAntarRetry || { success: !!existingReport.dasha, data: existingReport.dasha };
+    const mergedDasha = mergeDashaResults(maha, antar);
+    if (mergedDasha.data) {
+      existingReport.dasha = enforceDashaSafety(mergedDasha.data, birthDate);
+    }
+  }
+
+  // Apply safety guards on retried sections
+  if (succeededRetries.includes("Career") && existingReport.career) {
+    existingReport.career = enforceCareerSafety(existingReport.career, birthDate, reportGeneratedAt);
+  }
+  if (succeededRetries.includes("Marriage") && existingReport.marriage) {
+    existingReport.marriage = enforceMarriageSafety(existingReport.marriage, normalizedMaritalStatus, birthDate, reportGeneratedAt);
+  }
+  if (succeededRetries.includes("Remedies") && existingReport.remedies) {
+    existingReport.remedies = enforceHealthSafety(existingReport.remedies, birthDate, reportGeneratedAt);
+  }
+
+  // Re-apply global safety on the merged report
+  const updatedReport = enforceGlobalPredictionSafety(existingReport, birthDate, reportGeneratedAt, normalizedMaritalStatus);
+
+  // Update metadata
+  updatedReport.tokensUsed = (updatedReport.tokensUsed || 0) + retryTokens;
+  // Remove the timeout error from errors since we retried
+  updatedReport.errors = [
+    ...(updatedReport.errors || []).filter((e: string) => !e.startsWith("Stage1 timeout")),
+    ...(failedRetries.length > 0 ? [`Retry failed for: ${failedRetries.join(', ')}`] : []),
+  ];
+  updatedReport.computationMeta = {
+    ...updatedReport.computationMeta,
+    retryPass: 2,
+    retriedAgents: failedAgentNames,
+    retrySucceeded: succeededRetries,
+    retryFailed: failedRetries,
+    failedAgents: failedRetries, // Only truly failed agents remain
+  };
+
+  console.log(`📊 [RETRY] Summary: ${succeededRetries.length} succeeded, ${failedRetries.length} still failed`);
+
+  // Save merged report
+  await supabase
+    .from("kundli_report_jobs")
+    .update({
+      status: "processing",
+      current_phase: succeededRetries.length > 0 ? "Retry complete — starting translation" : "Retry failed — starting translation with partial data",
+      progress_percent: 85,
+      report_data: updatedReport,
+      heartbeat_at: new Date().toISOString(),
+    })
+    .eq("id", jobId);
+
+  // Trigger Stage 2: translate
+  return triggerStage2AndReturn(supabase, jobId, corsHeaders);
+}
+
+/**
+ * Helper: trigger translate-kundli-report (Stage 2) and return HTTP response.
+ */
+async function triggerStage2AndReturn(
+  supabase: any,
+  jobId: string,
+  corsHeaders: Record<string, string>,
+): Promise<Response> {
+  const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/translate-kundli-report`;
+  const stage2Promise = fetch(stage2Url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+    },
+    body: JSON.stringify({ jobId }),
+  }).catch(err => {
+    console.error("⚠️ [RETRY→STAGE2] Failed to trigger Stage 2:", err);
+  });
+
+  // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+  if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+    // @ts-ignore
+    EdgeRuntime.waitUntil(stage2Promise);
+  }
+
+  console.log(`✅ [RETRY] Stage 2 (translate) triggered for job ${jobId}`);
+  return new Response(
+    JSON.stringify({ success: true, jobId, stage: "retry_complete" }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
 // ─── Chart SVG fetching ──────────────────────────────────────────────────────
 
 /**
@@ -641,7 +926,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     jobId = body.jobId;
-    console.log(`🔄 [PROCESS-JOB] Starting job: ${jobId}`);
+    const retryPass: number = body.retryPass || 0;
+    console.log(`🔄 [PROCESS-JOB] ${retryPass >= 2 ? 'RETRY PASS' : 'Starting'} job: ${jobId}`);
 
     const { data: job, error: fetchError } = await supabaseAdmin
       .from("kundli_report_jobs")
@@ -652,6 +938,15 @@ serve(async (req) => {
     if (fetchError || !job) {
       console.error("❌ [PROCESS-JOB] Job not found:", jobId);
       return new Response(JSON.stringify({ error: "Job not found" }), { status: 404 });
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // RETRY PASS: If this is a retry invocation, run ONLY failed agents, merge,
+    // save, and trigger Stage 2. Gets its own fresh 150s wall_clock_limit.
+    // ──────────────────────────────────────────────────────────────────────────
+    if (retryPass >= 2) {
+      const retryResponse = await handleAgentRetry(supabaseAdmin, job, corsHeaders);
+      return retryResponse;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -930,6 +1225,7 @@ serve(async (req) => {
         remediesResult: any, spiritualResult: any, charaKarakasResult: any, glossaryResult: any,
         rajYogsResult: any, sadeSatiResult: any, doshasResult: any;
     let agentsTimedOut = false;
+    let timedOutAgents: string[] = [];
 
     if (raceResult === "TIMEOUT") {
       agentsTimedOut = true;
@@ -937,15 +1233,14 @@ serve(async (req) => {
 
       // Log exactly which agents completed vs which are still running
       const completed: string[] = [];
-      const stillRunning: string[] = [];
       for (const [name, status] of agentTracker) {
         if (status.done) completed.push(`${name}(${(status.durationMs / 1000).toFixed(1)}s)`);
-        else stillRunning.push(name);
+        else timedOutAgents.push(name);
       }
       console.warn(`⏰ [PROCESS-JOB] TIMEOUT after ${elapsed}s`);
       console.warn(`   ✅ Completed (${completed.length}): ${completed.join(', ') || 'none'}`);
-      console.warn(`   🚨 TIMED OUT (${stillRunning.length}): ${stillRunning.join(', ') || 'none'}`);
-      errors.push(`Stage1 timeout after ${elapsed}s. Timed-out agents: ${stillRunning.join(', ') || 'none'}`);
+      console.warn(`   🚨 TIMED OUT (${timedOutAgents.length}): ${timedOutAgents.join(', ') || 'none'}`);
+      errors.push(`Stage1 timeout after ${elapsed}s. Timed-out agents: ${timedOutAgents.join(', ') || 'none'}`);
 
       // Salvage results from agents that finished before timeout; use empty for the rest
       const emptyAgent = { success: false, data: null, error: "Timed out", tokensUsed: 0 };
@@ -1077,6 +1372,7 @@ serve(async (req) => {
           languagePackVersion: activeLanguagePack.version,
           languagePipelineV2Enabled: useLanguagePipelineV2,
         },
+        ...(timedOutAgents.length > 0 ? { failedAgents: timedOutAgents } : {}),
       },
       generationMode: useLanguagePipelineV2 ? "native" : "legacy",
       languagePackVersion: activeLanguagePack.version,
@@ -1118,7 +1414,37 @@ serve(async (req) => {
       })
       .eq("id", jobId);
 
-    // Trigger Stage 2: translate-kundli-report (separate function, own 150s limit)
+    // ── Decide next step: self-retry failed agents OR proceed to Stage 2 ──
+    if (agentsTimedOut && timedOutAgents.length > 0) {
+      // Self-invoke for retry: gives failed agents a fresh 150s to complete.
+      // Only 1 retry attempt — retryPass:2 prevents infinite loops.
+      console.log(`🔄 [PROCESS-JOB] Triggering RETRY PASS for ${timedOutAgents.length} failed agents: ${timedOutAgents.join(', ')}`);
+      const retryUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-kundli-job`;
+      const retryPromise = fetch(retryUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({ jobId, retryPass: 2 }),
+      }).catch(err => {
+        console.error("⚠️ [PROCESS-JOB] Failed to trigger retry pass:", err);
+      });
+
+      // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+      if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+        // @ts-ignore
+        EdgeRuntime.waitUntil(retryPromise);
+      }
+
+      console.log("✅ [PROCESS-JOB] Stage 1 partial, retry pass triggered");
+      return new Response(
+        JSON.stringify({ success: true, jobId, stage: "generate_partial_retry_queued", failedAgents: timedOutAgents }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // No timeout (or no failed agents) — proceed directly to Stage 2: translate
     const stage2Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/translate-kundli-report`;
     const stage2Promise = fetch(stage2Url, {
       method: "POST",

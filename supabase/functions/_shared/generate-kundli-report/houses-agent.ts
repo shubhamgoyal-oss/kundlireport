@@ -1,6 +1,6 @@
 // Houses Agent - Generates detailed Bhavphal (12 house) analysis
 
-import { callAgent, type AgentResponse } from "./agent-base.ts";
+import { callAgent, type AgentResponse, getAgentLanguage } from "./agent-base.ts";
 import { getSignLord } from "./utils/dignity.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
 
@@ -23,10 +23,18 @@ export interface HouseAnalysis {
   timing: string;
 }
 
+// ── Language-specific dictionaries ───────────────────────────────────────────
+
 const HOUSE_HINDI: Record<number, string> = {
   1: "प्रथम भाव", 2: "द्वितीय भाव", 3: "तृतीय भाव", 4: "चतुर्थ भाव",
   5: "पंचम भाव", 6: "षष्ठ भाव", 7: "सप्तम भाव", 8: "अष्टम भाव",
   9: "नवम भाव", 10: "दशम भाव", 11: "एकादश भाव", 12: "द्वादश भाव"
+};
+
+const HOUSE_TELUGU: Record<number, string> = {
+  1: "మొదటి భావం", 2: "రెండవ భావం", 3: "మూడవ భావం", 4: "నాల్గవ భావం",
+  5: "ఐదవ భావం", 6: "ఆరవ భావం", 7: "ఏడవ భావం", 8: "ఎనిమిదవ భావం",
+  9: "తొమ్మిదవ భావం", 10: "పదవ భావం", 11: "పదకొండవ భావం", 12: "పన్నెండవ భావం"
 };
 
 const SIGN_HINDI: Record<string, string> = {
@@ -35,10 +43,42 @@ const SIGN_HINDI: Record<string, string> = {
   Sagittarius: "धनु", Capricorn: "मकर", Aquarius: "कुम्भ", Pisces: "मीन",
 };
 
+const SIGN_TELUGU: Record<string, string> = {
+  Aries: "మేషం", Taurus: "వృషభం", Gemini: "మిథునం", Cancer: "కర్కాటకం",
+  Leo: "సింహం", Virgo: "కన్య", Libra: "తుల", Scorpio: "వృశ్చికం",
+  Sagittarius: "ధనుస్సు", Capricorn: "మకరం", Aquarius: "కుంభం", Pisces: "మీనం",
+};
+
 const PLANET_HINDI: Record<string, string> = {
   Sun: "सूर्य", Moon: "चंद्र", Mars: "मंगल", Mercury: "बुध",
   Jupiter: "गुरु", Venus: "शुक्र", Saturn: "शनि", Rahu: "राहु", Ketu: "केतु",
 };
+
+const PLANET_TELUGU: Record<string, string> = {
+  Sun: "సూర్యుడు", Moon: "చంద్రుడు", Mars: "కుజుడు", Mercury: "బుధుడు",
+  Jupiter: "గురువు", Venus: "శుక్రుడు", Saturn: "శని", Rahu: "రాహువు", Ketu: "కేతువు",
+};
+
+// ── Language-aware lookups ───────────────────────────────────────────────────
+
+function houseName(n: number): string {
+  const lang = getAgentLanguage();
+  if (lang === "te") return HOUSE_TELUGU[n] || `భావం ${n}`;
+  if (lang === "hi") return HOUSE_HINDI[n] || `भाव ${n}`;
+  return HOUSE_HINDI[n] || `House ${n}`;  // English reports still show Hindi as before
+}
+
+function signLocal(key: string): string {
+  const lang = getAgentLanguage();
+  if (lang === "te") return SIGN_TELUGU[key] || key;
+  return SIGN_HINDI[key] || key;
+}
+
+function planetLocal(key: string): string {
+  const lang = getAgentLanguage();
+  if (lang === "te") return PLANET_TELUGU[key] || key;
+  return PLANET_HINDI[key] || key;
+}
 
 const HOUSE_SIGNIFICATIONS: Record<number, { name: string; areas: string; nature: string }> = {
   1: { name: "Lagna/Ascendant", areas: "Self, body, personality, health, vitality, appearance, general well-being, new beginnings", nature: "Kendra (Angular), Trikona" },
@@ -86,17 +126,21 @@ export async function generateHouseAnalysis(input: HouseInput): Promise<AgentRes
   const occupantNames = planets.map(p => p.name);
   const houseInfo = HOUSE_SIGNIFICATIONS[houseNumber];
 
+  const localHouseName = houseName(houseNumber);
+  const localSignName = signLocal(sign);
+  const localLordName = planetLocal(lord);
+
   const userPrompt = `Analyze House ${houseNumber} (${houseInfo.name}) in detail:
 
 **House Configuration:**
-- House Number: ${houseNumber} (${HOUSE_HINDI[houseNumber]})
-- Sign in House: ${sign} (${SIGN_HINDI[sign]})
-- House Lord: ${lord} (${PLANET_HINDI[lord]})
+- House Number: ${houseNumber} (${localHouseName})
+- Sign in House: ${sign} (${localSignName})
+- House Lord: ${lord} (${localLordName})
 - Lord's Position: House ${lordPlanet?.house || "N/A"} in ${lordPlanet?.sign || "N/A"}
 - Lord Retrograde: ${lordPlanet?.isRetro ? "Yes" : "No"}
 
 **Occupants in House ${houseNumber}:**
-${occupantNames.length > 0 ? occupantNames.map(p => `- ${p} (${PLANET_HINDI[p]})`).join("\n") : "- Empty (no planets)"}
+${occupantNames.length > 0 ? occupantNames.map(p => `- ${p} (${planetLocal(p)})`).join("\n") : "- Empty (no planets)"}
 
 **House Significations:**
 - Name: ${houseInfo.name}

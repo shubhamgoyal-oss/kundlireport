@@ -70,6 +70,106 @@ function stripAiDisclosure<T>(value: T): T {
   return value;
 }
 
+// ── English report gibberish cleanup ─────────────────────────────────────────
+
+/**
+ * Detect whether a string is mostly gibberish.
+ * Returns true if the text has hallmarks of AI-garbled output.
+ */
+function isGibberishText(text: string): boolean {
+  if (!text || text.length < 10) return false;
+
+  // 1. Excessive consecutive consonants (no language has 6+ consonants in a row)
+  if (/[bcdfghjklmnpqrstvwxyz]{6,}/i.test(text)) return true;
+
+  // 2. Same character repeated 4+ times
+  if (/(.)\1{3,}/.test(text)) return true;
+
+  // 3. Mostly non-ASCII non-Devanagari control/garbage characters
+  const controlChars = text.replace(/[\x20-\x7E\u0900-\u097F\u0C00-\u0C7F\n\r\t]/g, "");
+  if (controlChars.length > text.length * 0.3) return true;
+
+  return false;
+}
+
+/**
+ * Clean a single English text string:
+ *  - Strip Devanagari / Telugu script (shouldn't appear in English fields)
+ *  - Remove garbled character sequences
+ *  - Collapse excess whitespace
+ *  - Remove incomplete trailing sentences
+ */
+function cleanEnglishText(text: string, allowDevanagari = false): string {
+  if (!text || typeof text !== "string") return text;
+
+  let cleaned = text;
+
+  // Remove Devanagari (U+0900–U+097F) and Telugu (U+0C00–U+0C7F) from non-mantra fields
+  if (!allowDevanagari) {
+    cleaned = cleaned.replace(/[\u0900-\u097F\u0C00-\u0C7F]+/g, "").trim();
+  }
+
+  // Remove zero-width chars, soft hyphens, and other invisible Unicode
+  cleaned = cleaned.replace(/[\u200B-\u200F\u2028-\u202F\u00AD\uFEFF]/g, "");
+
+  // Remove sequences of random symbols (3+ non-word non-space chars in a row)
+  cleaned = cleaned.replace(/[^\w\s'".,;:!?()\-\/]{3,}/g, "");
+
+  // Remove same character repeated 4+ times
+  cleaned = cleaned.replace(/(.)\1{3,}/g, "$1$1");
+
+  // Collapse multiple spaces / newlines
+  cleaned = cleaned.replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+
+  // Remove incomplete sentence fragments at the end (ending mid-word or with trailing comma)
+  cleaned = cleaned.replace(/,\s*$/, ".").replace(/\s+\w{1,3}$/, ".");
+
+  return cleaned;
+}
+
+/** Keys whose string values may legitimately contain Devanagari (mantras) */
+const MANTRA_KEYS = new Set([
+  "mantra", "mantras", "pronunciation", "chant",
+  "termSanskrit", "scripturalSource", "scripturalReference",
+  "scripturalBasis", "consecrationMethod",
+]);
+
+/**
+ * Recursively clean all text fields in the English report.
+ * Preserves Devanagari in mantra-related fields.
+ */
+function cleanEnglishReport<T>(value: T, parentKey = ""): T {
+  if (typeof value === "string") {
+    const allowDev = MANTRA_KEYS.has(parentKey);
+    // If the entire string is gibberish, replace with empty string
+    if (isGibberishText(value) && !allowDev) {
+      const cleaned = cleanEnglishText(value, false);
+      // If after cleaning it's basically empty, return a placeholder
+      if (cleaned.length < 5) return "" as unknown as T;
+      return cleaned as unknown as T;
+    }
+    return cleanEnglishText(value, allowDev) as unknown as T;
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => cleanEnglishReport(item, parentKey))
+      .filter((item) => {
+        // Remove array entries that are empty strings after cleanup
+        if (typeof item === "string" && item.trim() === "") return false;
+        return true;
+      }) as unknown as T;
+  }
+  if (value && typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      out[key] = cleanEnglishReport(val, key);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 // ── Chart SVG fetching ──────────────────────────────────────────────────────
 
 function localizeChartSvgText(svg: string, language: string): string {
@@ -222,6 +322,15 @@ serve(async (req) => {
       report = sanitizeReportContent(report);
     }
     report.qa = qaResult;
+
+    // ── English gibberish cleanup ───────────────────────────────────────────
+    // For English reports: strip Devanagari/Telugu script from non-mantra fields,
+    // remove garbled character sequences, fix encoding artifacts.
+    if (requestedLanguage === "en") {
+      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Cleaning report text", 94, "progress");
+      report = cleanEnglishReport(report);
+      console.log("🧹 [FINALIZE-JOB] English report gibberish cleanup complete");
+    }
 
     // ── Localization + Language QC ──────────────────────────────────────────
     report = localizeStructuredReportTerms(report, requestedLanguage);

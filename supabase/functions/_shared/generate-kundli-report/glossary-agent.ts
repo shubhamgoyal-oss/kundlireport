@@ -100,8 +100,10 @@ Include both Parashari and Jaimini terminology.`;
 
 export async function generateGlossaryPrediction(language: string = "en"): Promise<AgentResponse<GlossaryPrediction>> {
   const langLabel = language === "hi" ? "हिन्दी" : language === "te" ? "తెలుగు" : "English";
-  const langInstruction = language !== "en"
-    ? `\n\nCRITICAL: Write ALL content (categories, descriptions, definitions, examples) in ${langLabel} script. Do NOT use English for any descriptive text. Sanskrit terms can remain in Devanagari.`
+  const langInstruction = language === "hi"
+    ? `\n\nCRITICAL: Write ALL content (categories, descriptions, definitions, examples) in हिन्दी (देवनागरी लिपि). Do NOT use English for any descriptive text. Sanskrit terms can remain in Devanagari.`
+    : language === "te"
+    ? `\n\nCRITICAL: Write ALL content (categories, descriptions, definitions, examples, pronunciation guides) in తెలుగు లిపి ONLY. Do NOT use English or Devanagari script anywhere. Sanskrit terms MUST be transliterated into Telugu script (e.g., use కుండలి not कुंडली, use గ్రహం not ग्रह). Pronunciation guides must also be in Telugu script.`
     : "";
 
   const userPrompt = `Generate a comprehensive glossary of Vedic astrology terms used in a Kundli report.${langInstruction}

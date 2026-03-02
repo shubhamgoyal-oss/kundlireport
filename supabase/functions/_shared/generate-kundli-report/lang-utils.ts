@@ -3,7 +3,7 @@
 // All data comes from the canonical language packs (language-packs/{en,hi,te}/).
 
 import { getLanguagePack } from "../language-packs/index.ts";
-import type { LanguagePack, LanguageSection } from "../language-packs/types.ts";
+import type { LanguagePack, LanguageSection, PlanetSignification } from "../language-packs/types.ts";
 import { getAgentLanguage } from "./agent-base.ts";
 
 /** Return the active language pack based on current agent language context. */
@@ -75,4 +75,31 @@ export function sectionPrompt(section: LanguageSection): string {
   return pack.agentPrompts?.[section]?.systemPrefix
     || pack.agentPrompts?.global?.systemPrefix
     || "";
+}
+
+// ── Template helpers (Phase 2) ──────────────────────────────────────────────
+
+/**
+ * Look up a keyed template string in the active language pack and substitute
+ * {placeholder} variables. Falls back to the key itself if not found.
+ */
+export function tmpl(key: string, vars?: Record<string, string>): string {
+  let text = activePack().templates?.[key] || key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.replaceAll(`{${k}}`, v);
+    }
+  }
+  return text;
+}
+
+/**
+ * Get planet signification (themes/opportunity/caution) in the active language.
+ * Used by dasha-agent for antardasha interpretation templates.
+ */
+export function planetSig(planet: string): PlanetSignification {
+  const pack = activePack();
+  const sigs = pack.significations?.planets;
+  const fallback: PlanetSignification = { themes: planet, opportunity: planet, caution: planet };
+  return sigs?.[planet] || fallback;
 }

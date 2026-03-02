@@ -2,7 +2,7 @@
 
 import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
-import { signName } from "./lang-utils.ts";
+import { signName, tmpl } from "./lang-utils.ts";
 
 type SadeSatiPhase = "rising" | "peak" | "setting" | "not_active";
 
@@ -125,48 +125,18 @@ function computePhase(moonSign: string, saturnSign: string): SadeSatiPhase {
   return "not_active";
 }
 
-/** Language-aware text helper — returns Hindi/Telugu/English based on agent language */
-function tx(en: string, hi: string, te?: string): string {
-  const lang = getAgentLanguage();
-  if (lang === "hi") return hi;
-  if (lang === "te") return te || en;
-  return en;
-}
-
 function phaseLabel(phase: SadeSatiPhase): string {
-  if (phase === "rising") return tx("Rising Phase (Udaya Charan)", "उदय चरण", "ఉదయ చరణం");
-  if (phase === "peak") return tx("Peak Phase (Shikhar Charan)", "शिखर चरण", "శిఖర చరణం");
-  if (phase === "setting") return tx("Setting Phase (Ast Charan)", "अस्त चरण", "అస్త చరణం");
-  return tx("Not Active", "सक्रिय नहीं", "క్రియాశీలం కాదు");
+  if (phase === "rising") return tmpl("sadeSati.phaseLabel.rising");
+  if (phase === "peak") return tmpl("sadeSati.phaseLabel.peak");
+  if (phase === "setting") return tmpl("sadeSati.phaseLabel.setting");
+  return tmpl("sadeSati.phaseLabel.notActive");
 }
 
 function phaseDescription(phase: SadeSatiPhase): string {
-  if (phase === "rising") {
-    return tx(
-      "Saturn is in the sign before your Moon sign. Responsibilities increase and restructuring starts gradually.",
-      "शनि आपकी चंद्र राशि से पहले की राशि में है। जिम्मेदारियां बढ़ती हैं और जीवन का पुनर्गठन धीरे-धीरे शुरू होता है।",
-      "శని మీ చంద్ర రాశికి ముందు రాశిలో ఉంది. బాధ్యతలు పెరుగుతాయి మరియు జీవితం క్రమంగా పునర్నిర్మాణం అవుతుంది."
-    );
-  }
-  if (phase === "peak") {
-    return tx(
-      "Saturn is transiting your Moon sign. Emotional pressure is highest and discipline must become non-negotiable.",
-      "शनि आपकी चंद्र राशि से गोचर कर रहा है। भावनात्मक दबाव सबसे अधिक होता है और अनुशासन अनिवार्य हो जाता है।",
-      "శని మీ చంద్ర రాశిలో గోచరిస్తోంది. భావోద్వేగ ఒత్తిడి అత్యధికంగా ఉంటుంది మరియు క్రమశిక్షణ తప్పనిసరి అవుతుంది."
-    );
-  }
-  if (phase === "setting") {
-    return tx(
-      "Saturn has moved to the sign after your Moon sign. Results mature, pending lessons close, and stability returns.",
-      "शनि आपकी चंद्र राशि के बाद की राशि में चला गया है। परिणाम परिपक्व होते हैं, शेष पाठ पूरे होते हैं और स्थिरता लौटती है।",
-      "శని మీ చంద్ర రాశి తర్వాత రాశికి చేరుకుంది. ఫలితాలు పరిపక్వమవుతాయి, మిగిలిన పాఠాలు పూర్తవుతాయి మరియు స్థిరత్వం తిరిగి వస్తుంది."
-    );
-  }
-  return tx(
-    "Saturn is not currently transiting the 12th, 1st, or 2nd sign from your natal Moon.",
-    "शनि वर्तमान में आपके जन्म चंद्र से 12वीं, 1ली या 2री राशि से गोचर नहीं कर रहा है।",
-    "శని ప్రస్తుతం మీ జన్మ చంద్రుని నుండి 12వ, 1వ లేదా 2వ రాశిలో గోచరించడం లేదు."
-  );
+  if (phase === "rising") return tmpl("sadeSati.phaseDesc.rising");
+  if (phase === "peak") return tmpl("sadeSati.phaseDesc.peak");
+  if (phase === "setting") return tmpl("sadeSati.phaseDesc.setting");
+  return tmpl("sadeSati.phaseDesc.notActive");
 }
 
 function buildPhaseYears(phase: SadeSatiPhase, currentYear: number): { start: number | null; end: number | null } {
@@ -214,17 +184,9 @@ function normalizeSadeSatiPrediction(
   const endYear = Number.isFinite(raw.endYear as number) ? (raw.endYear as number) : years.end;
   const moonLocalName = lang === "en" ? "" : signName(moonSign);
 
-  const currentPeriod = startYear && endYear ? `${startYear} - ${endYear}` : tx(
-    "Transit window based on current Saturn cycle",
-    "वर्तमान शनि चक्र के आधार पर गोचर अवधि",
-    "ప్రస్తుత శని చక్రం ఆధారంగా గోచర కాలం"
-  );
+  const currentPeriod = startYear && endYear ? `${startYear} - ${endYear}` : tmpl("sadeSati.transitWindowFallback");
   const nextStartYear = estimateNextStartYear(moonSign, saturnSign, currentYear);
-  const nextPeriod = nextStartYear ? `${nextStartYear} - ${nextStartYear + 8}` : tx(
-    "To be determined by future Saturn transits",
-    "भविष्य के शनि गोचर से निर्धारित होगा",
-    "భవిష్యత్తు శని గోచరాల ద్వారా నిర్ణయించబడుతుంది"
-  );
+  const nextPeriod = nextStartYear ? `${nextStartYear} - ${nextStartYear + 8}` : tmpl("sadeSati.nextPeriodFallback");
 
   const phaseAnchorYear = isActive ? (startYear ?? currentYear) : (nextStartYear ?? (currentYear + 1));
   const phaseAnchorMonth = 2; // March (approximate Saturn ingress anchor)
@@ -237,91 +199,67 @@ function normalizeSadeSatiPrediction(
 
   const phaseWindows: SadeSatiPhaseWindow[] = [
     {
-      phaseName: tx("Rising Phase (12th from Moon)", "उदय चरण (चंद्र से 12वां)", "ఉదయ చరణం (చంద్రుని నుండి 12వ)"),
+      phaseName: tmpl("sadeSati.window.rising.name"),
       saturnSign: signAtOffset(moonSign, -1),
       startMonth: MONTH_NAMES[phase0Start.monthIndex],
       startYear: phase0Start.year,
       endMonth: MONTH_NAMES[phase0End.monthIndex],
       endYear: phase0End.year,
       periodLabel: `${MONTH_NAMES[phase0Start.monthIndex]} ${phase0Start.year} to ${MONTH_NAMES[phase0End.monthIndex]} ${phase0End.year}`,
-      description: tx(
-        "Pressure builds through expenses, relocations, and mindset restructuring. This phase asks for discipline before visible gains.",
-        "खर्चों, स्थानांतरण और मानसिकता के पुनर्गठन से दबाव बढ़ता है। यह चरण दृश्य लाभ से पहले अनुशासन की मांग करता है।",
-        "ఖర్చులు, స్థానాంతరాలు మరియు ఆలోచనా విధానం పునర్నిర్మాణం ద్వారా ఒత్తిడి పెరుగుతుంది. ఈ దశ కనిపించే లాభాలకు ముందు క్రమశిక్షణను కోరుతుంది."
-      ),
+      description: tmpl("sadeSati.window.rising.desc"),
       challenges: [
-        tx("Rising expenses and responsibility load", "बढ़ते खर्च और जिम्मेदारियों का बोझ", "పెరుగుతున్న ఖర్చులు మరియు బాధ్యతల భారం"),
-        tx("Emotional restlessness and sleep disruption", "भावनात्मक बेचैनी और नींद में बाधा", "భావోద్వేగ అశాంతి మరియు నిద్ర అంతరాయం"),
-        tx("Need to reduce avoidable commitments", "अनावश्यक प्रतिबद्धताओं को कम करने की आवश्यकता", "అనవసర బాధ్యతలను తగ్గించాల్సిన అవసరం"),
+        tmpl("sadeSati.window.rising.challenge0"),
+        tmpl("sadeSati.window.rising.challenge1"),
+        tmpl("sadeSati.window.rising.challenge2"),
       ],
       hidden_blessings: [
-        tx("Early correction of weak routines", "कमज़ोर दिनचर्या में शीघ्र सुधार", "బలహీన దినచర్యలలో ముందస్తు సవరణ"),
-        tx("Long-term financial discipline", "दीर्घकालिक वित्तीय अनुशासन", "దీర్ఘకాలిక ఆర్థిక క్రమశిక్షణ"),
-        tx("Clearer boundary-setting in relationships", "संबंधों में स्पष्ट सीमाओं का निर्धारण", "సంబంధాలలో స్పష్టమైన హద్దులు నిర్ణయించడం"),
+        tmpl("sadeSati.window.rising.blessing0"),
+        tmpl("sadeSati.window.rising.blessing1"),
+        tmpl("sadeSati.window.rising.blessing2"),
       ],
-      advice: tx(
-        "Cut non-essential obligations, protect daily rhythm, and build reserves.",
-        "अनावश्यक दायित्वों को कम करें, दैनिक दिनचर्या की रक्षा करें और भंडार बनाएं।",
-        "అనవసర బాధ్యతలను తగ్గించండి, దైనందిన దినచర్యను రక్షించండి మరియు నిధులు సమకూర్చుకోండి."
-      ),
+      advice: tmpl("sadeSati.window.rising.advice"),
     },
     {
-      phaseName: tx("Peak Phase (Over Moon)", "शिखर चरण (चंद्र पर)", "శిఖర చరణం (చంద్రుని మీద)"),
+      phaseName: tmpl("sadeSati.window.peak.name"),
       saturnSign: moonSign,
       startMonth: MONTH_NAMES[phase1Start.monthIndex],
       startYear: phase1Start.year,
       endMonth: MONTH_NAMES[phase1End.monthIndex],
       endYear: phase1End.year,
       periodLabel: `${MONTH_NAMES[phase1Start.monthIndex]} ${phase1Start.year} to ${MONTH_NAMES[phase1End.monthIndex]} ${phase1End.year}`,
-      description: tx(
-        "This is the most psychologically intense phase. Saturn tests emotional maturity, accountability, and resilience.",
-        "यह मनोवैज्ञानिक रूप से सबसे तीव्र चरण है। शनि भावनात्मक परिपक्वता, जवाबदेही और सहनशीलता की परीक्षा लेता है।",
-        "ఇది మానసికంగా అత్యంత తీవ్రమైన దశ. శని భావోద్వేగ పరిపక్వత, జవాబుదారీతనం మరియు సహనశీలతను పరీక్షిస్తుంది."
-      ),
+      description: tmpl("sadeSati.window.peak.desc"),
       challenges: [
-        tx("Higher emotional pressure and self-doubt spikes", "अधिक भावनात्मक दबाव और आत्म-संदेह", "అధిక భావోద్వేగ ఒత్తిడి మరియు ఆత్మ-సందేహం"),
-        tx("Delays in expected outcomes", "अपेक्षित परिणामों में देरी", "ఆశించిన ఫలితాలలో ఆలస్యం"),
-        tx("Relationship strain if communication is reactive", "प्रतिक्रियात्मक संवाद से संबंधों में तनाव", "సంభాషణ ప్రతిస్పందనాత్మకంగా ఉంటే సంబంధాలలో ఒత్తిడి"),
+        tmpl("sadeSati.window.peak.challenge0"),
+        tmpl("sadeSati.window.peak.challenge1"),
+        tmpl("sadeSati.window.peak.challenge2"),
       ],
       hidden_blessings: [
-        tx("Deep emotional maturity", "गहरी भावनात्मक परिपक्वता", "లోతైన భావోద్వేగ పరిపక్వత"),
-        tx("Enduring career foundations", "स्थायी कैरियर की नींव", "స్థిరమైన వృత్తి పునాదులు"),
-        tx("Stronger judgment under pressure", "दबाव में बेहतर निर्णय क्षमता", "ఒత్తిడిలో మెరుగైన నిర్ణయ సామర్థ్యం"),
+        tmpl("sadeSati.window.peak.blessing0"),
+        tmpl("sadeSati.window.peak.blessing1"),
+        tmpl("sadeSati.window.peak.blessing2"),
       ],
-      advice: tx(
-        "Prioritize consistency over speed, avoid impulsive decisions, and maintain sober expectations.",
-        "गति से अधिक निरंतरता को प्राथमिकता दें, आवेगपूर्ण निर्णयों से बचें और संयमित अपेक्षाएं रखें।",
-        "వేగం కంటే స్థిరత్వానికి ప్రాధాన్యత ఇవ్వండి, తొందరపాటు నిర్ణయాలను నివారించండి మరియు సంయమనంతో అంచనాలు ఉంచుకోండి."
-      ),
+      advice: tmpl("sadeSati.window.peak.advice"),
     },
     {
-      phaseName: tx("Setting Phase (2nd from Moon)", "अस्त चरण (चंद्र से 2रा)", "అస్త చరణం (చంద్రుని నుండి 2వ)"),
+      phaseName: tmpl("sadeSati.window.setting.name"),
       saturnSign: signAtOffset(moonSign, 1),
       startMonth: MONTH_NAMES[phase2Start.monthIndex],
       startYear: phase2Start.year,
       endMonth: MONTH_NAMES[phase2End.monthIndex],
       endYear: phase2End.year,
       periodLabel: `${MONTH_NAMES[phase2Start.monthIndex]} ${phase2Start.year} to ${MONTH_NAMES[phase2End.monthIndex]} ${phase2End.year}`,
-      description: tx(
-        "Closure and consolidation phase. Earlier effort starts converting into durable results and karmic lessons settle.",
-        "समापन और समेकन का चरण। पहले के प्रयास स्थायी परिणामों में बदलने लगते हैं और कर्म के पाठ पूरे होते हैं।",
-        "ముగింపు మరియు సంఘటన దశ. మునుపటి ప్రయత్నాలు శాశ్వత ఫలితాలుగా మారడం ప్రారంభమవుతాయి మరియు కర్మ పాఠాలు పూర్తవుతాయి."
-      ),
+      description: tmpl("sadeSati.window.setting.desc"),
       challenges: [
-        tx("Family/finance restructuring decisions", "परिवार/वित्त पुनर्गठन के निर्णय", "కుటుంబం/ఆర్థిక పునర్నిర్మాణ నిర్ణయాలు"),
-        tx("Fatigue from prolonged pressure cycle", "लंबे दबाव चक्र से थकान", "సుదీర్ఘ ఒత్తిడి చక్రం వల్ల అలసట"),
-        tx("Need to close unresolved obligations", "अनसुलझे दायित्वों को पूरा करने की आवश्यकता", "పరిష్కరించని బాధ్యతలను పూర్తి చేయాల్సిన అవసరం"),
+        tmpl("sadeSati.window.setting.challenge0"),
+        tmpl("sadeSati.window.setting.challenge1"),
+        tmpl("sadeSati.window.setting.challenge2"),
       ],
       hidden_blessings: [
-        tx("Financial stabilization", "वित्तीय स्थिरता", "ఆర్థిక స్థిరీకరణ"),
-        tx("Improved practical judgment", "बेहतर व्यावहारिक निर्णय क्षमता", "మెరుగైన ఆచరణాత్మక నిర్ణయ సామర్థ్యం"),
-        tx("Release from unproductive patterns", "अनुत्पादक पैटर्न से मुक्ति", "అనుత్పాదక విధానాల నుండి విముక్తి"),
+        tmpl("sadeSati.window.setting.blessing0"),
+        tmpl("sadeSati.window.setting.blessing1"),
+        tmpl("sadeSati.window.setting.blessing2"),
       ],
-      advice: tx(
-        "Consolidate assets, complete pending commitments, and protect long-term harmony.",
-        "संपत्ति को समेकित करें, लंबित प्रतिबद्धताओं को पूरा करें और दीर्घकालिक सामंजस्य की रक्षा करें।",
-        "ఆస్తులను సంఘటితం చేయండి, పెండింగ్ బాధ్యతలను పూర్తి చేయండి మరియు దీర్ఘకాలిక సామరస్యాన్ని కాపాడండి."
-      ),
+      advice: tmpl("sadeSati.window.setting.advice"),
     },
   ];
 
@@ -332,62 +270,37 @@ function normalizeSadeSatiPrediction(
     ? String(raw.currentPhaseDescription)
     : phaseDescription(phase);
 
+  const activeStatus = isActive ? phaseLabel(phase) : tmpl("sadeSati.phaseLabel.notActive");
   const overview = !isWeakNarrative(raw.overview, 180)
     ? String(raw.overview)
-    : tx(
-        `Sade Sati is assessed by Saturn's transit relative to your natal Moon sign (${moonSign}). With current transit Saturn taken as ${saturnSign}, your present status is ${isActive ? `${phaseLabel(phase)} and active` : "not active"}. This period is not a punishment cycle; it is a long-form karmic restructuring phase that rewards discipline, realism, and consistent execution. Outcomes during this cycle usually come through patience, simplified priorities, and sustained effort rather than sudden luck.`,
-        `साढ़ेसाती का आकलन आपकी जन्म चंद्र राशि (${moonSign}) के सापेक्ष शनि के गोचर से किया जाता है। वर्तमान गोचर शनि ${saturnSign} में होने से, आपकी वर्तमान स्थिति ${isActive ? `${phaseLabel(phase)} और सक्रिय` : "सक्रिय नहीं"} है। यह अवधि कोई दंड चक्र नहीं है; यह एक दीर्घकालिक कर्म पुनर्गठन चरण है जो अनुशासन, यथार्थवाद और निरंतर प्रयास को पुरस्कृत करता है। इस चक्र के दौरान परिणाम आमतौर पर धैर्य, सरल प्राथमिकताओं और निरंतर प्रयास से आते हैं, अचानक भाग्य से नहीं।`,
-        `ఏడున్నర శని మీ జన్మ చంద్ర రాశి (${moonSign}) పట్ల శని గోచరం ద్వారా అంచనా వేయబడుతుంది. ప్రస్తుత గోచర శని ${saturnSign} లో ఉండటంతో, మీ ప్రస్తుత స్థితి ${isActive ? `${phaseLabel(phase)} మరియు క్రియాశీలం` : "క్రియాశీలం కాదు"}. ఈ కాలం శిక్షా చక్రం కాదు; ఇది క్రమశిక్షణ, వాస్తవికత మరియు నిరంతర ప్రయత్నాన్ని బహుమతిగా ఇచ్చే దీర్ఘకాలిక కర్మ పునర్నిర్మాణ దశ. ఈ చక్రంలో ఫలితాలు సాధారణంగా ధైర్యం, సరళ ప్రాధాన్యతలు మరియు నిరంతర కృషి ద్వారా వస్తాయి, ఆకస్మిక అదృష్టం ద్వారా కాదు.`
-      );
+    : tmpl("sadeSati.overview", { moonSign, saturnSign, activeStatus });
 
   const importanceExplanation = !isWeakNarrative(raw.importanceExplanation, 130)
     ? String(raw.importanceExplanation)
-    : tx(
-        "Sade Sati is important because it directly tests emotional stability (Moon) under Saturn's pressure. In practical terms, it can alter decision quality, risk tolerance, family dynamics, and financial behavior. The right approach is structured habits, fact-based planning, and emotional regulation. The stronger your discipline, the more constructive Saturn's results become.",
-        "साढ़ेसाती इसलिए महत्वपूर्ण है क्योंकि यह शनि के दबाव में भावनात्मक स्थिरता (चंद्र) की सीधी परीक्षा लेती है। व्यावहारिक रूप से, यह निर्णय की गुणवत्ता, जोखिम सहनशीलता, पारिवारिक गतिशीलता और वित्तीय व्यवहार को बदल सकती है। सही दृष्टिकोण है — संरचित आदतें, तथ्य-आधारित योजना और भावनात्मक संयम। आपका अनुशासन जितना मजबूत होगा, शनि के परिणाम उतने ही रचनात्मक होंगे।",
-        "ఏడున్నర శని ముఖ్యమైనది ఎందుకంటే ఇది శని ఒత్తిడిలో భావోద్వేగ స్థిరత్వాన్ని (చంద్రుడు) నేరుగా పరీక్షిస్తుంది. ఆచరణాత్మకంగా, ఇది నిర్ణయ నాణ్యత, రిస్క్ సహనం, కుటుంబ గతిశీలత మరియు ఆర్థిక ప్రవర్తనను మార్చగలదు. సరైన విధానం — నిర్మాణాత్మక అలవాట్లు, వాస్తవ-ఆధారిత ప్రణాళిక మరియు భావోద్వేగ నియంత్రణ. మీ క్రమశిక్షణ ఎంత బలంగా ఉంటే, శని ఫలితాలు అంత నిర్మాణాత్మకంగా ఉంటాయి."
-      );
+    : tmpl("sadeSati.importanceExplanation");
 
+  const houseWord = lang === "hi" ? "भाव" : lang === "te" ? "భావం" : "House";
+  const moonHouseClause = moon?.house ? ` (${houseWord} ${moon.house})` : "";
   const moonSaturnRelationship = !isWeakNarrative(raw.moonSaturnRelationship, 110)
     ? String(raw.moonSaturnRelationship)
-    : tx(
-        `Your natal Moon is in ${moonSign}${moon?.house ? ` (House ${moon.house})` : ""}, while transit Saturn is considered in ${saturnSign}. This Moon-Saturn relationship determines the phase intensity and the life domains where pressure is felt first. Emotionally, this combination demands maturity and pacing. Practically, the focus should be on consistent effort, realistic timelines, and low-reactivity decision making.`,
-        `आपका जन्म चंद्र ${moonSign}${moon?.house ? ` (भाव ${moon.house})` : ""} में है, जबकि गोचर शनि ${saturnSign} में माना गया है। यह चंद्र-शनि संबंध चरण की तीव्रता और उन जीवन क्षेत्रों को निर्धारित करता है जहां दबाव पहले महसूस होता है। भावनात्मक रूप से, यह संयोजन परिपक्वता और धैर्य की मांग करता है। व्यावहारिक रूप से, ध्यान निरंतर प्रयास, यथार्थवादी समय-सीमाओं और कम प्रतिक्रियात्मक निर्णय लेने पर होना चाहिए।`,
-        `మీ జన్మ చంద్రుడు ${moonSign}${moon?.house ? ` (భావం ${moon.house})` : ""} లో ఉన్నాడు, గోచర శని ${saturnSign} లో పరిగణించబడింది. ఈ చంద్ర-శని సంబంధం దశ తీవ్రతను మరియు ఒత్తిడి మొదట అనుభవమయ్యే జీవిత రంగాలను నిర్ణయిస్తుంది. భావోద్వేగపరంగా, ఈ కలయిక పరిపక్వత మరియు ధైర్యాన్ని కోరుతుంది. ఆచరణాత్మకంగా, నిరంతర ప్రయత్నం, వాస్తవిక కాల వ్యవధులు మరియు తక్కువ ప్రతిస్పందనాత్మక నిర్ణయాలపై దృష్టి పెట్టాలి.`
-      );
+    : tmpl("sadeSati.moonSaturnRelationship", { moonSign, moonHouseClause, saturnSign });
 
   const overallGuidance = !isWeakNarrative(raw.overallGuidance, 100)
     ? String(raw.overallGuidance)
-    : tx(
-        "Treat this cycle as a long-term discipline chapter: simplify commitments, preserve financial buffers, and execute priorities in sequence. Saturn rewards structure, integrity, and consistency.",
-        "इस चक्र को दीर्घकालिक अनुशासन के अध्याय के रूप में लें: प्रतिबद्धताओं को सरल करें, वित्तीय बफर बनाए रखें और प्राथमिकताओं को क्रमबद्ध रूप से पूरा करें। शनि संरचना, ईमानदारी और निरंतरता को पुरस्कृत करता है।",
-        "ఈ చక్రాన్ని దీర్ఘకాలిక క్రమశిక్షణ అధ్యాయంగా భావించండి: బాధ్యతలను సరళీకరించండి, ఆర్థిక నిధులను కాపాడండి మరియు ప్రాధాన్యతలను క్రమంలో అమలు చేయండి. శని నిర్మాణాత్మకత, నిజాయితీ మరియు స్థిరత్వాన్ని బహుమతిగా ఇస్తుంది."
-      );
+    : tmpl("sadeSati.overallGuidance");
 
   const stableRemedies = remedies.length > 0
     ? remedies
     : isActive
       ? [
-          tx("Maintain strict Saturday discipline: complete pending tasks and avoid avoidable conflicts.",
-            "शनिवार का सख्त अनुशासन बनाए रखें: लंबित कार्यों को पूरा करें और अनावश्यक विवादों से बचें।",
-            "శనివారం కఠినమైన క్రమశిక్షణ పాటించండి: పెండింగ్ పనులను పూర్తి చేయండి మరియు అనవసర వివాదాలను నివారించండి."),
-          tx("Offer sesame oil deepam or Shani prayer on Saturdays with consistency.",
-            "शनिवार को तिल के तेल का दीपक या शनि प्रार्थना नियमित रूप से करें।",
-            "శనివారాలలో నువ్వుల నూనె దీపం లేదా శని ప్రార్థనను క్రమంగా చేయండి."),
-          tx("Support service-oriented charity (especially for laborers/elderly) to balance Saturn karma.",
-            "शनि कर्म को संतुलित करने के लिए सेवा-उन्मुख दान (विशेषकर श्रमिकों/बुजुर्गों के लिए) करें।",
-            "శని కర్మను సమతుల్యం చేయడానికి సేవా-ఆధారిత దానం (ముఖ్యంగా కూలీలు/వృద్ధుల కోసం) చేయండి."),
+          tmpl("sadeSati.remedy.active.0"),
+          tmpl("sadeSati.remedy.active.1"),
+          tmpl("sadeSati.remedy.active.2"),
         ]
       : [
-          tx("Since Sade Sati is not active, intensive Shani remedies are not mandatory.",
-            "चूंकि साढ़ेसाती सक्रिय नहीं है, इसलिए गहन शनि उपाय अनिवार्य नहीं हैं।",
-            "ఏడున్నర శని క్రియాశీలంగా లేనందున, తీవ్రమైన శని పరిహారాలు తప్పనిసరి కాదు."),
-          tx("Maintain financial discipline and routine stability to stay prepared for future Saturn cycles.",
-            "भविष्य के शनि चक्रों के लिए तैयार रहने हेतु वित्तीय अनुशासन और दिनचर्या की स्थिरता बनाए रखें।",
-            "భవిష్యత్తు శని చక్రాల కోసం సిద్ధంగా ఉండటానికి ఆర్థిక క్రమశిక్షణ మరియు దినచర్య స్థిరత్వాన్ని కొనసాగించండి."),
-          tx("Keep weekly grounding practices (prayer/meditation/service) for long-term resilience.",
-            "दीर्घकालिक सहनशीलता के लिए साप्ताहिक प्रार्थना/ध्यान/सेवा की आदत बनाए रखें।",
-            "దీర్ఘకాలిక సహనశీలత కోసం వారపు ప్రార్థన/ధ్యానం/సేవ అలవాట్లను కొనసాగించండి."),
+          tmpl("sadeSati.remedy.inactive.0"),
+          tmpl("sadeSati.remedy.inactive.1"),
+          tmpl("sadeSati.remedy.inactive.2"),
         ];
 
   const historical = historicalCycles.length > 0
@@ -406,37 +319,19 @@ function normalizeSadeSatiPrediction(
         whatToExpect: effects.length >= 3
           ? effects
           : [
-              tx("Progress through disciplined, staged execution rather than sudden jumps.",
-                "अचानक छलांग के बजाय अनुशासित, चरणबद्ध कार्यान्वयन से प्रगति।",
-                "ఆకస్మిక ఎగుములు కాకుండా క్రమశిక్షణతో, దశలవారీ అమలు ద్వారా పురోగతి."),
-              tx("Higher accountability in family, career, and financial choices.",
-                "परिवार, कैरियर और वित्तीय विकल्पों में अधिक जवाबदेही।",
-                "కుటుంబం, వృత్తి మరియు ఆర్థిక ఎంపికలలో అధిక జవాబుదారీతనం."),
-              tx("Need for emotional regulation in sensitive conversations.",
-                "संवेदनशील बातचीत में भावनात्मक संयम की आवश्यकता।",
-                "సున్నితమైన సంభాషణలలో భావోద్వేగ నియంత్రణ అవసరం."),
+              tmpl("sadeSati.current.whatToExpect.0"),
+              tmpl("sadeSati.current.whatToExpect.1"),
+              tmpl("sadeSati.current.whatToExpect.2"),
             ],
         opportunities: [
-          tx("Build durable systems and repeatable routines.",
-            "टिकाऊ प्रणालियां और दोहराने योग्य दिनचर्या बनाएं।",
-            "మన్నికైన వ్యవస్థలు మరియు పునరావృత దినచర్యలను నిర్మించండి."),
-          tx("Improve long-term money discipline and risk filtering.",
-            "दीर्घकालिक धन अनुशासन और जोखिम छानबीन में सुधार करें।",
-            "దీర్ఘకాలిక ఆర్థిక క్రమశిక్షణ మరియు రిస్క్ వడపోతను మెరుగుపరచండి."),
-          tx("Mature leadership through patience and consistency.",
-            "धैर्य और निरंतरता के माध्यम से परिपक्व नेतृत्व विकसित करें।",
-            "ధైర్యం మరియు స్థిరత్వం ద్వారా పరిపక్వ నాయకత్వాన్ని అభివృద్ధి చేయండి."),
+          tmpl("sadeSati.current.opportunities.0"),
+          tmpl("sadeSati.current.opportunities.1"),
+          tmpl("sadeSati.current.opportunities.2"),
         ],
         whatNotToDo: [
-          tx("Do not force outcomes through impulsive decisions.",
-            "आवेगपूर्ण निर्णयों से परिणामों को बलपूर्वक प्राप्त करने का प्रयास न करें।",
-            "తొందరపాటు నిర్ణయాల ద్వారా ఫలితాలను బలవంతం చేయవద్దు."),
-          tx("Avoid over-commitment without execution bandwidth.",
-            "कार्यान्वयन क्षमता के बिना अत्यधिक प्रतिबद्धताओं से बचें।",
-            "అమలు సామర్థ్యం లేకుండా అధిక బాధ్యతలను స్వీకరించవద్దు."),
-          tx("Do not ignore sleep, recovery, and mental steadiness.",
-            "नींद, रिकवरी और मानसिक स्थिरता की उपेक्षा न करें।",
-            "నిద్ర, కోలుకోవడం మరియు మానసిక స్థిరత్వాన్ని విస్మరించవద్దు."),
+          tmpl("sadeSati.current.whatNotToDo.0"),
+          tmpl("sadeSati.current.whatNotToDo.1"),
+          tmpl("sadeSati.current.whatNotToDo.2"),
         ],
         advice: overallGuidance,
       }
@@ -446,28 +341,16 @@ function normalizeSadeSatiPrediction(
   const pastSadeSati = !isActive && pastCycle
     ? {
         period: `${pastCycle.startYear} - ${pastCycle.endYear}`,
-        keyLessons: tx(
-          "Previous Saturn cycles usually teach patience, accountability, and realistic planning. Repeating patterns from that period are often the key preparation for your next cycle.",
-          "पिछले शनि चक्र आमतौर पर धैर्य, जवाबदेही और यथार्थवादी योजना सिखाते हैं। उस अवधि के दोहराए जाने वाले पैटर्न अक्सर आपके अगले चक्र की मुख्य तैयारी होते हैं।",
-          "గత శని చక్రాలు సాధారణంగా ధైర్యం, జవాబుదారీతనం మరియు వాస్తవిక ప్రణాళికను నేర్పిస్తాయి. ఆ కాలంలోని పునరావృత విధానాలు తరచుగా మీ తదుపరి చక్రానికి ముఖ్య తయారీగా ఉంటాయి."
-        ),
-        lifeEvents: tx(
-          "Revisit the years of your previous cycle to identify themes in responsibility, finances, family duties, and emotional resilience; those patterns are your practical Saturn handbook.",
-          "अपने पिछले चक्र के वर्षों पर पुनर्विचार करें — जिम्मेदारी, वित्त, पारिवारिक कर्तव्यों और भावनात्मक सहनशीलता के पैटर्न पहचानें; ये पैटर्न आपकी व्यावहारिक शनि पुस्तिका हैं।",
-          "మీ గత చక్రంలోని సంవత్సరాలను పునఃపరిశీలించండి — బాధ్యత, ఆర్థికాలు, కుటుంబ విధులు మరియు భావోద్వేగ సహనశీలత విషయాలను గుర్తించండి; ఆ విధానాలు మీ ఆచరణాత్మక శని మార్గదర్శకం."
-        ),
+        keyLessons: tmpl("sadeSati.past.keyLessons"),
+        lifeEvents: tmpl("sadeSati.past.lifeEvents"),
       }
     : null;
 
   const nextSadeSati = !isActive
     ? {
         period: nextPeriod,
-        approximateStart: nextStartYear ? `${nextStartYear}` : tx("To be determined", "निर्धारित किया जाना बाकी", "నిర్ణయించబడాల్సి ఉంది"),
-        preparationAdvice: tx(
-          "Prepare 1-2 years before the next cycle: tighten finances, reduce avoidable liabilities, and build a stable routine so Saturn pressure converts into measurable progress.",
-          "अगले चक्र से 1-2 वर्ष पहले तैयारी करें: वित्त को मजबूत करें, अनावश्यक देनदारियों को कम करें, और एक स्थिर दिनचर्या बनाएं ताकि शनि का दबाव मापने योग्य प्रगति में बदल सके।",
-          "తదుపరి చక్రానికి 1-2 సంవత్సరాల ముందు సిద్ధం కావండి: ఆర్థికాలను బలపరచండి, అనవసర బాధ్యతలను తగ్గించండి మరియు స్థిరమైన దినచర్య నిర్మించండి, తద్వారా శని ఒత్తిడి కొలవగల పురోగతిగా మారుతుంది."
-        ),
+        approximateStart: nextStartYear ? `${nextStartYear}` : tmpl("sadeSati.next.approximateStartFallback"),
+        preparationAdvice: tmpl("sadeSati.next.preparationAdvice"),
       }
     : null;
 
@@ -480,15 +363,9 @@ function normalizeSadeSatiPrediction(
     endYear,
     currentPhaseDescription: currentPhaseInterpretation,
     effects: effects.length > 0 ? effects : [
-      tx("This period emphasizes responsibility, pacing, and emotional maturity.",
-        "यह अवधि जिम्मेदारी, धैर्य और भावनात्मक परिपक्वता पर बल देती है।",
-        "ఈ కాలం బాధ్యత, ధైర్యం మరియు భావోద్వేగ పరిపక్వతపై ప్రాధాన్యత ఇస్తుంది."),
-      tx("Progress requires consistency and structured planning.",
-        "प्रगति के लिए निरंतरता और संरचित योजना आवश्यक है।",
-        "పురోగతికి స్థిరత్వం మరియు నిర్మాణాత్మక ప్రణాళిక అవసరం."),
-      tx("Long-term stability improves when impulsive decisions are avoided.",
-        "आवेगपूर्ण निर्णयों से बचने पर दीर्घकालिक स्थिरता में सुधार होता है।",
-        "తొందరపాటు నిర్ణయాలను నివారించినప్పుడు దీర్ఘకాలిక స్థిరత్వం మెరుగుపడుతుంది."),
+      tmpl("sadeSati.effect.0"),
+      tmpl("sadeSati.effect.1"),
+      tmpl("sadeSati.effect.2"),
     ],
     remedies: stableRemedies,
     historicalCycles: historical,
@@ -506,47 +383,23 @@ function normalizeSadeSatiPrediction(
     nextSadeSati,
     spiritualSignificance: !isWeakNarrative(raw.spiritualSignificance, 100)
       ? String(raw.spiritualSignificance)
-      : tx(
-          "Spiritually, Sade Sati reduces ego-reactivity and strengthens inner steadiness. It rewards humility, service, disciplined habits, and truth-based living. The deeper gift is not comfort; it is character.",
-          "आध्यात्मिक रूप से, साढ़ेसाती अहंकार की प्रतिक्रियाशीलता को कम करती है और आंतरिक स्थिरता को मजबूत करती है। यह विनम्रता, सेवा, अनुशासित आदतों और सत्य-आधारित जीवन को पुरस्कृत करती है। इसका गहरा उपहार आराम नहीं, बल्कि चरित्र निर्माण है।",
-          "ఆధ్యాత్మికంగా, ఏడున్నర శని అహంకార ప్రతిస్పందనను తగ్గిస్తుంది మరియు అంతర్గత స్థిరత్వాన్ని బలపరుస్తుంది. ఇది వినయం, సేవ, క్రమశిక్షణాత్మక అలవాట్లు మరియు సత్యం-ఆధారిత జీవనాన్ని బహుమతిగా ఇస్తుంది. దీని లోతైన బహుమతి సుఖం కాదు; అది వ్యక్తిత్వ నిర్మాణం."
-        ),
+      : tmpl("sadeSati.spiritualSignificance"),
     mantras: Array.isArray(raw.mantras) && raw.mantras.length > 0
       ? raw.mantras
       : [
           {
             mantra: "ॐ शं शनैश्चराय नमः",
-            purpose: tx(
-              "Stabilize Saturn-related pressure and improve disciplined focus.",
-              "शनि संबंधी दबाव को स्थिर करें और अनुशासित ध्यान में सुधार करें।",
-              "శని సంబంధిత ఒత్తిడిని స్థిరపరచండి మరియు క్రమశిక్షణాత్మక దృష్టిని మెరుగుపరచండి."
-            ),
-            timing: tx(
-              "Saturdays, preferably during sunrise or sunset with steady repetition.",
-              "शनिवार को, अधिमानतः सूर्योदय या सूर्यास्त के समय नियमित जप करें।",
-              "శనివారాలలో, ప్రాధాన్యంగా సూర్యోదయం లేదా సూర్యాస్తమయం సమయంలో స్థిరమైన పునరావృత్తితో జపించండి."
-            ),
+            purpose: tmpl("sadeSati.mantra.shani.purpose"),
+            timing: tmpl("sadeSati.mantra.shani.timing"),
           },
           {
             mantra: "नीलांजन समाभासं रवि पुत्रं यमाग्रजम्",
-            purpose: tx(
-              "Traditional Shani stotra for patience, endurance, and karmic balance.",
-              "धैर्य, सहनशीलता और कर्म संतुलन के लिए पारंपरिक शनि स्तोत्र।",
-              "ధైర్యం, సహనశీలత మరియు కర్మ సమతుల్యత కోసం సంప్రదాయ శని స్తోత్రం."
-            ),
-            timing: tx(
-              "Saturdays after bath, 11/21 repetitions with calm breath.",
-              "शनिवार को स्नान के बाद, शांत श्वास के साथ 11/21 बार जप करें।",
-              "శనివారం స్నానం తర్వాత, ప్రశాంత శ్వాసతో 11/21 సార్లు జపించండి."
-            ),
+            purpose: tmpl("sadeSati.mantra.neelanjana.purpose"),
+            timing: tmpl("sadeSati.mantra.neelanjana.timing"),
           },
         ],
     famousPeopleThrivedDuringSadeSati: raw.famousPeopleThrivedDuringSadeSati
-      || tx(
-          "Many high achievers report that their major discipline, leadership, and legacy-building years happened during Saturn pressure cycles because long-term structure was forced into place.",
-          "कई सफल व्यक्तियों ने बताया है कि उनके प्रमुख अनुशासन, नेतृत्व और विरासत-निर्माण के वर्ष शनि के दबाव चक्रों के दौरान हुए क्योंकि दीर्घकालिक संरचना को स्थापित होने के लिए मजबूर किया गया।",
-          "అనేక ఉన్నత సాధకులు తమ ప్రధాన క్రమశిక్షణ, నాయకత్వ మరియు వారసత్వ-నిర్మాణ సంవత్సరాలు శని ఒత్తిడి చక్రాల సమయంలో జరిగాయని నివేదిస్తారు, ఎందుకంటే దీర్ఘకాలిక నిర్మాణం అమలులోకి రావడం తప్పనిసరి అయింది."
-        ),
+      || tmpl("sadeSati.famousPeople"),
   };
 }
 

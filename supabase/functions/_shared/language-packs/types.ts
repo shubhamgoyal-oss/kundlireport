@@ -41,6 +41,12 @@ export interface LanguageTypographyProfile {
   tableLineHeight: number;
 }
 
+export interface PlanetSignification {
+  themes: string;
+  opportunity: string;
+  caution: string;
+}
+
 export interface LanguagePack {
   code: SupportedLanguage;
   version: string;
@@ -55,6 +61,12 @@ export interface LanguagePack {
     nakshatras?: Record<string, string>;
     months?: Record<string, string>;
     misc?: Record<string, string>;
+  };
+  /** Keyed template strings with {placeholder} substitution (Phase 2) */
+  templates?: Record<string, string>;
+  /** Planet signification objects for dasha analysis */
+  significations?: {
+    planets?: Record<string, PlanetSignification>;
   };
   typography: LanguageTypographyProfile;
   qcRules: LanguageQcRules;

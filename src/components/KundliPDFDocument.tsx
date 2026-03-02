@@ -2894,6 +2894,8 @@ const styles = StyleSheet.create({
     borderColor: P.lightBorder,
     borderRadius: 3,
     overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chartGrid: {
     flexDirection: 'row',
@@ -4354,9 +4356,9 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <Text style={styles.chartTitle}>{chart.type}: {chartName(chart)}</Text>
             <View style={styles.chartContainer}>
               {chart.dataUrl ? (
-                <Image src={chart.dataUrl} style={{ width: 240, height: 240 }} />
+                <Image src={chart.dataUrl} style={{ width: 236, height: 236 }} />
               ) : chart.svg ? (
-                <SVGRenderer svgString={chart.svg} />
+                <SVGRenderer svgString={chart.svg} width={236} height={236} />
               ) : (
                 <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
                   {localizePdfUiText('Chart image unavailable for this section.')}

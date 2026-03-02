@@ -380,6 +380,30 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     // ── Glossary inline labels ──────────────────────────────────────────────
     'Example': 'उदाहरण',
     'Related': 'संबंधित',
+    // ── Planetary matrix abbreviations ─────────────────────────────────────
+    'RL': 'रा.स्वा.',
+    'NL': 'न.स्वा.',
+    'Sub': 'उप',
+    // ── Table misc ─────────────────────────────────────────────────────────
+    'Empty': 'खाली',
+    'Primary Gemstone': 'प्रमुख रत्न',
+    'Secondary Gemstone': 'गौण रत्न',
+    'Mukhi Rudraksha': 'मुखी रुद्राक्ष',
+    'Planetary Analysis': 'ग्रह विश्लेषण',
+    'Mahadasha Predictions': 'महादशा भविष्यवाणी',
+    'in': 'में',
+    // ── Compound Nakshatra names (must be phrases, not single words) ───────
+    'Purva Phalguni': 'पूर्वा फाल्गुनी',
+    'Uttara Phalguni': 'उत्तरा फाल्गुनी',
+    'Purva Ashadha': 'पूर्वाषाढ़ा',
+    'Uttara Ashadha': 'उत्तराषाढ़ा',
+    'Purva Bhadrapada': 'पूर्वा भाद्रपद',
+    'Uttara Bhadrapada': 'उत्तरा भाद्रपद',
+    // ── Aspect type translations ──────────────────────────────────────────
+    'Full Aspect': 'पूर्ण दृष्टि',
+    'Partial Aspect': 'आंशिक दृष्टि',
+    'Special Aspect': 'विशेष दृष्टि',
+    'Conjunction': 'युति',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'उपाय',
     'Significance': 'महत्व',
@@ -620,19 +644,6 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Current Antardasha': 'वर्तमान अंतर्दशा',
     'Mahadasha Predictions': 'महादशा भविष्यवाणी',
     'Antardasha Predictions': 'अंतर्दशा भविष्यवाणी',
-    'Current Career Phase': 'वर्तमान करियर चरण',
-    'How It Works': 'यह कैसे कार्य करता है',
-    'Quality Guidelines': 'गुणवत्ता दिशानिर्देश',
-    'Wearing Instructions': 'धारण निर्देश',
-    'How to Verify Authenticity': 'प्रामाणिकता कैसे सत्यापित करें',
-    'Scriptural Source': 'शास्त्रीय स्रोत',
-    'Vibrational Science': 'कंपन विज्ञान',
-    'Proper Method': 'उचित विधि',
-    'Geometric Significance': 'ज्यामितीय महत्व',
-    'Consecration Method': 'अभिषेक विधि',
-    'Scriptural Derivation': 'शास्त्रीय उत्पत्ति',
-    'Physiological Benefits': 'शारीरिक लाभ',
-    'Vastu Explanation': 'वास्तु व्याख्या',
     // ── InfoRow labels — Career section ────────────────────────────────────────
     'Ideal Work Environment': 'आदर्श कार्य वातावरण',
     'Is Switch Due Now?': 'क्या अभी बदलाव उचित है?',
@@ -722,6 +733,11 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Thank you for choosing Sri Mandir for your Kundli report. We hope this personalized Vedic astrology blueprint brings you clarity, guidance, and confidence on your life journey.': 'श्री मंदिर से कुंडली रिपोर्ट चुनने के लिए धन्यवाद। हमें आशा है कि यह वैदिक ज्योतिष रूपरेखा आपको जीवन यात्रा में स्पष्टता, मार्गदर्शन और आत्मविश्वास प्रदान करेगी।',
     'For personalized consultations with our expert astrologers': 'हमारे विशेषज्ञ ज्योतिषियों से व्यक्तिगत परामर्श के लिए',
     'May the stars guide your path': 'ग्रह आपके मार्ग को प्रकाशित करें',
+    // ── Hardcoded remedy intro paragraphs ──────────────────────────────────
+    'Mantras are sacred sound vibrations that connect the practitioner to cosmic energies. The science of Mantra Shastra explains how specific sound frequencies can influence planetary energies and transform consciousness.': 'मंत्र पवित्र ध्वनि कंपन हैं जो साधक को ब्रह्मांडीय ऊर्जाओं से जोड़ते हैं। मंत्र शास्त्र का विज्ञान बताता है कि विशिष्ट ध्वनि आवृत्तियां कैसे ग्रह ऊर्जाओं को प्रभावित कर सकती हैं और चेतना को रूपांतरित कर सकती हैं।',
+    'Rudraksha beads are sacred seeds from the Elaeocarpus ganitrus tree, revered for their spiritual and healing properties. Each Mukhi (face) of Rudraksha resonates with specific planetary energies.': 'रुद्राक्ष के मनके इलियोकार्पस गैनिट्रस वृक्ष के पवित्र बीज हैं, जो आध्यात्मिक और उपचारात्मक गुणों के लिए पूजित हैं। रुद्राक्ष के प्रत्येक मुखी (चेहरे) विशिष्ट ग्रह ऊर्जाओं के साथ अनुनाद करते हैं।',
+    'Yantras are sacred geometric diagrams that serve as focal points for meditation and planetary propitiation. Each Yantra embodies specific cosmic energies through precise mathematical proportions.': 'यंत्र पवित्र ज्यामितीय आरेख हैं जो ध्यान और ग्रह शांति के लिए केंद्र बिंदु के रूप में कार्य करते हैं। प्रत्येक यंत्र सटीक गणितीय अनुपातों के माध्यम से विशिष्ट ब्रह्मांडीय ऊर्जाओं को मूर्त रूप देता है।',
+    'Planetary Degree Matrix': 'ग्रह अंश सारणी',
   },
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
@@ -886,6 +902,30 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     // ── Glossary inline labels ──────────────────────────────────────────────
     'Example': 'ఉదాహరణ',
     'Related': 'సంబంధిత',
+    // ── Planetary matrix abbreviations ─────────────────────────────────────
+    'RL': 'రా.అధి.',
+    'NL': 'న.అధి.',
+    'Sub': 'ఉప',
+    // ── Table misc ─────────────────────────────────────────────────────────
+    'Empty': 'ఖాళీ',
+    'Primary Gemstone': 'ప్రాథమిక రత్నం',
+    'Secondary Gemstone': 'ద్వితీయ రత్నం',
+    'Mukhi Rudraksha': 'ముఖి రుద్రాక్ష',
+    'Planetary Analysis': 'గ్రహ విశ్లేషణ',
+    'Mahadasha Predictions': 'మహాదశ అంచనాలు',
+    'in': 'లో',
+    // ── Compound Nakshatra names (must be phrases, not single words) ───────
+    'Purva Phalguni': 'పూర్వ ఫల్గుని',
+    'Uttara Phalguni': 'ఉత్తర ఫల్గుని',
+    'Purva Ashadha': 'పూర్వాషాఢ',
+    'Uttara Ashadha': 'ఉత్తరాషాఢ',
+    'Purva Bhadrapada': 'పూర్వ భాద్రపద',
+    'Uttara Bhadrapada': 'ఉత్తర భాద్రపద',
+    // ── Aspect type translations ──────────────────────────────────────────
+    'Full Aspect': 'పూర్ణ దృష్టి',
+    'Partial Aspect': 'పాక్షిక దృష్టి',
+    'Special Aspect': 'ప్రత్యేక దృష్టి',
+    'Conjunction': 'యుతి',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'పరిహారాలు',
     'Significance': 'ప్రాముఖ్యత',
@@ -1206,6 +1246,11 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Thank you for choosing Sri Mandir for your Kundli report. We hope this personalized Vedic astrology blueprint brings you clarity, guidance, and confidence on your life journey.': 'మీ కుండ్లీ రిపోర్ట్ కోసం శ్రీ మందిర్‌ను ఎంచుకున్నందుకు ధన్యవాదాలు. ఈ వ్యక్తిగత వైదిక జ్యోతిష్య రూపరేఖ మీ జీవన ప్రయాణంలో స్పష్టత, మార్గదర్శనం మరియు ఆత్మవిశ్వాసాన్ని అందిస్తుందని ఆశిస్తున్నాము.',
     'For personalized consultations with our expert astrologers': 'మా నిపుణ జ్యోతిష్యులతో వ్యక్తిగత సంప్రదింపుల కోసం',
     'May the stars guide your path': 'నక్షత్రాలు మీ మార్గాన్ని ప్రకాశింపజేయాలని కోరుకుంటున్నాము',
+    // ── Hardcoded remedy intro paragraphs ──────────────────────────────────
+    'Mantras are sacred sound vibrations that connect the practitioner to cosmic energies. The science of Mantra Shastra explains how specific sound frequencies can influence planetary energies and transform consciousness.': 'మంత్రాలు సాధకుడిని విశ్వ శక్తులతో అనుసంధానం చేసే పవిత్ర ధ్వని కంపనాలు. మంత్ర శాస్త్ర విజ్ఞానం నిర్దిష్ట ధ్వని ఆవృత్తులు గ్రహ శక్తులను ఎలా ప్రభావితం చేయగలవో మరియు చైతన్యాన్ని ఎలా మార్చగలవో వివరిస్తుంది.',
+    'Rudraksha beads are sacred seeds from the Elaeocarpus ganitrus tree, revered for their spiritual and healing properties. Each Mukhi (face) of Rudraksha resonates with specific planetary energies.': 'రుద్రాక్ష పూసలు ఇలియోకార్పస్ గానిట్రస్ చెట్టు నుండి వచ్చే పవిత్ర విత్తనాలు, వాటి ఆధ్యాత్మిక మరియు వైద్య గుణాల కోసం పూజించబడతాయి. రుద్రాక్ష యొక్క ప్రతి ముఖి (ముఖం) నిర్దిష్ట గ్రహ శక్తులతో ప్రతిధ్వనిస్తుంది.',
+    'Yantras are sacred geometric diagrams that serve as focal points for meditation and planetary propitiation. Each Yantra embodies specific cosmic energies through precise mathematical proportions.': 'యంత్రాలు ధ్యానం మరియు గ్రహ శాంతి కోసం కేంద్ర బిందువులుగా పనిచేసే పవిత్ర జ్యామితీయ చిత్రాలు. ప్రతి యంత్రం ఖచ్చితమైన గణిత అనుపాతాల ద్వారా నిర్దిష్ట విశ్వ శక్తులను మూర్తీభవిస్తుంది.',
+    'Planetary Degree Matrix': 'గ్రహ అంశ సారణి',
   },
 };
 
@@ -1367,6 +1412,62 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     It: 'यह',
     What: 'क्या',
     to: 'को',
+    // ── Nakshatra names ───────────────────────────────────────────────────
+    Ashwini: 'अश्विनी',
+    Bharani: 'भरणी',
+    Krittika: 'कृत्तिका',
+    Rohini: 'रोहिणी',
+    Mrigashira: 'मृगशिरा',
+    Ardra: 'आर्द्रा',
+    Punarvasu: 'पुनर्वसु',
+    Pushya: 'पुष्य',
+    Ashlesha: 'आश्लेषा',
+    Magha: 'मघा',
+    Hasta: 'हस्त',
+    Chitra: 'चित्रा',
+    Swati: 'स्वाति',
+    Vishakha: 'विशाखा',
+    Anuradha: 'अनुराधा',
+    Jyeshtha: 'ज्येष्ठा',
+    Mula: 'मूल',
+    Shravana: 'श्रवण',
+    Dhanishta: 'धनिष्ठा',
+    Shatabhisha: 'शतभिषा',
+    Revati: 'रेवती',
+    // ── Dignity terms ─────────────────────────────────────────────────────
+    Exalted: 'उच्च',
+    Debilitated: 'नीच',
+    Mooltrikona: 'मूलत्रिकोण',
+    Friendly: 'मित्र',
+    Neutral: 'सम',
+    Enemy: 'शत्रु',
+    Own: 'स्वगृह',
+    // ── Short sign abbreviations ──────────────────────────────────────────
+    Ari: 'मेष',
+    Tau: 'वृष',
+    Gem: 'मिथ',
+    Can: 'कर्क',
+    Vir: 'कन्य',
+    Lib: 'तुला',
+    Sco: 'वृश्चि',
+    Sag: 'धनु',
+    Cap: 'मकर',
+    Aqu: 'कुंभ',
+    Pis: 'मीन',
+    // ── Misc ───────────────────────────────────────────────────────────────
+    Empty: 'खाली',
+    Nature: 'स्वभाव',
+    Benefic: 'शुभ',
+    Malefic: 'अशुभ',
+    Active: 'सक्रिय',
+    Inactive: 'निष्क्रिय',
+    Present: 'उपस्थित',
+    Absent: 'अनुपस्थित',
+    Strong: 'बलवान',
+    Weak: 'दुर्बल',
+    High: 'उच्च',
+    Medium: 'मध्यम',
+    Low: 'निम्न',
   },
   te: {
     Report: 'నివేదిక',
@@ -1486,6 +1587,62 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Instructions: 'సూచనలు',
     Partner: 'భాగస్వామి',
     Qualities: 'లక్షణాలు',
+    // ── Nakshatra names ───────────────────────────────────────────────────
+    Ashwini: 'అశ్విని',
+    Bharani: 'భరణి',
+    Krittika: 'కృత్తిక',
+    Rohini: 'రోహిణి',
+    Mrigashira: 'మృగశిర',
+    Ardra: 'ఆర్ద్ర',
+    Punarvasu: 'పునర్వసు',
+    Pushya: 'పుష్యమి',
+    Ashlesha: 'ఆశ్లేష',
+    Magha: 'మఘ',
+    Hasta: 'హస్త',
+    Chitra: 'చిత్త',
+    Swati: 'స్వాతి',
+    Vishakha: 'విశాఖ',
+    Anuradha: 'అనురాధ',
+    Jyeshtha: 'జ్యేష్ఠ',
+    Mula: 'మూల',
+    Shravana: 'శ్రవణం',
+    Dhanishta: 'ధనిష్ఠ',
+    Shatabhisha: 'శతభిషం',
+    Revati: 'రేవతి',
+    // ── Dignity terms ─────────────────────────────────────────────────────
+    Exalted: 'ఉచ్చ',
+    Debilitated: 'నీచ',
+    Mooltrikona: 'మూలత్రికోణం',
+    Friendly: 'మిత్ర',
+    Neutral: 'సమ',
+    Enemy: 'శత్రు',
+    Own: 'స్వగృహం',
+    // ── Short sign abbreviations ──────────────────────────────────────────
+    Ari: 'మేషం',
+    Tau: 'వృష',
+    Gem: 'మిథు',
+    Can: 'కర్కా',
+    Vir: 'కన్య',
+    Lib: 'తులా',
+    Sco: 'వృశ్చి',
+    Sag: 'ధనుస్సు',
+    Cap: 'మకరం',
+    Aqu: 'కుంభం',
+    Pis: 'మీనం',
+    // ── Misc ───────────────────────────────────────────────────────────────
+    Empty: 'ఖాళీ',
+    Nature: 'స్వభావం',
+    Benefic: 'శుభ',
+    Malefic: 'అశుభ',
+    Active: 'సక్రియ',
+    Inactive: 'నిష్క్రియ',
+    Present: 'ఉన్నది',
+    Absent: 'లేదు',
+    Strong: 'బలవంతం',
+    Weak: 'బలహీనం',
+    High: 'ఉన్నత',
+    Medium: 'మధ్యమ',
+    Low: 'తక్కువ',
   },
 };
 
@@ -3716,8 +3873,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </View>
             {report.planetaryPositions.map((planet: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{planet.name}</Text>
-                <Text style={styles.tableCell}>{planet.sign}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(planet.name)}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(planet.sign)}</Text>
                 <Text style={styles.tableCell}>{planet.house}</Text>
                 <Text style={styles.tableCell}>{planet.degree.toFixed(2)}°</Text>
                 <Text style={styles.tableCell}>{localizePdfUiText(planet.isRetro ? 'Retrograde' : 'Direct')}</Text>
@@ -3757,9 +3914,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.8 }]}>{localizePdfUiText('Nak')}</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('Pad')}</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('No.')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>RL</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>NL</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>Sub</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('RL')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('NL')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Sub')}</Text>
                 <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>{localizePdfUiText('Dignity')}</Text>
               </View>
               {detailedPlanetRows.map((row: any, idx: number) => (
@@ -3768,19 +3925,19 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   style={idx % 2 === 0 ? styles.advancedTableRow : styles.advancedTableRowAlt}
                   wrap={false}
                 >
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.name}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.name)}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.retro}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.combust}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.signShort}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.signShort)}</Text>
                   <Text style={[styles.advancedCellText, { flex: 1.3 }]}>{row.degreeText}</Text>
                   <Text style={[styles.advancedCellText, { flex: 1.2 }]}>{row.speed}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.8 }]}>{row.nakshatra}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.8 }]}>{localizePdfUiText(row.nakshatra)}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.pada}</Text>
                   <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.nakNo}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.rashiLord}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.nakLord}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{row.subLord}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.5 }]}>{row.dignity}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.rashiLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.nakLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.subLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: 1.5 }]}>{localizePdfUiText(row.dignity)}</Text>
                 </View>
               ))}
             </View>
@@ -3800,10 +3957,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </View>
             {report.charaKarakas.map((karaka: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
-                <Text style={styles.tableCell}>{karaka.karaka}</Text>
-                <Text style={styles.tableCell}>{karaka.planet}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(karaka.karaka)}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(karaka.planet)}</Text>
                 <Text style={styles.tableCell}>{karaka.degree.toFixed(2)}°</Text>
-                <Text style={styles.tableCell}>{karaka.signification}</Text>
+                <Text style={styles.tableCell}>{localizePdfUiText(karaka.signification)}</Text>
               </View>
             ))}
           </View>
@@ -3849,19 +4006,19 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               {localizePdfUiText('The three fundamental pillars—Moon Sign, Ascendant, and Birth Nakshatra—form the core identity markers of your horoscope, revealing your emotional nature, physical constitution, and life purpose.')}
             </Text>
 
-            <SubSection title={`Moon Sign (Rashi): ${report.pillars.moonSign?.sign || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Moon Sign (Rashi)')}: ${localizePdfUiText(report.pillars.moonSign?.sign || 'N/A')}`}>
               <Text style={styles.paragraph}>{report.pillars.moonSign?.interpretation || ''}</Text>
               <InfoRow label="Element" value={report.pillars.moonSign?.element || 'N/A'} />
               <InfoRow label="Emotional Nature" value={report.pillars.moonSign?.emotionalNature || 'N/A'} />
             </SubSection>
 
-            <SubSection title={`Ascendant (Lagna): ${report.pillars.ascendant?.sign || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Ascendant (Lagna)')}: ${localizePdfUiText(report.pillars.ascendant?.sign || 'N/A')}`}>
               <Text style={styles.paragraph}>{report.pillars.ascendant?.interpretation || ''}</Text>
               <InfoRow label="Ruling Planet" value={report.pillars.ascendant?.rulingPlanet || 'N/A'} />
               <InfoRow label="Personality" value={report.pillars.ascendant?.personality || 'N/A'} />
             </SubSection>
 
-            <SubSection title={`Birth Nakshatra: ${report.pillars.nakshatra?.name || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Birth Nakshatra')}: ${localizePdfUiText(report.pillars.nakshatra?.name || 'N/A')}`}>
               <Text style={styles.paragraph}>{report.pillars.nakshatra?.interpretation || ''}</Text>
               <InfoRow label="Deity" value={report.pillars.nakshatra?.deity || 'N/A'} />
             </SubSection>
@@ -3874,12 +4031,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <>
           {report.planets.map((planet: any, idx: number) => (
             <ContentPage key={idx} sectionName={`Planet: ${planet.planet}`}>
-              <Section title={`${planet.planet} - Planetary Analysis`}>
+              <Section title={`${localizePdfUiText(planet.planet)} - ${localizePdfUiText('Planetary Analysis')}`}>
                 <InfoStrip items={[
-                  { label: 'Sign', value: planet.sign || 'N/A' },
+                  { label: 'Sign', value: localizePdfUiText(planet.sign || 'N/A') },
                   { label: 'House', value: `${planet.house || 'N/A'}` },
-                  { label: 'Dignity', value: planet.dignity || 'N/A' },
-                  { label: 'Motion', value: planet.isRetrograde ? 'Retrograde' : 'Direct' },
+                  { label: 'Dignity', value: localizePdfUiText(planet.dignity || 'N/A') },
+                  { label: 'Motion', value: localizePdfUiText(planet.isRetrograde ? 'Retrograde' : 'Direct') },
                 ]} />
 
                 <SubSection title="Placement Analysis">
@@ -3895,7 +4052,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 {planet.aspects && planet.aspects.length > 0 && (
                   <SubSection title="Aspects">
                     {planet.aspects.map((aspect: any, aIdx: number) => (
-                      <Card key={aIdx} title={ACTIVE_PDF_LANGUAGE === 'en' ? `${aspect.aspectType} Aspect → House ${aspect.targetHouse}` : `${aspect.aspectType} → ${localizePdfUiText('House')} ${aspect.targetHouse}`}>
+                      <Card key={aIdx} title={`${localizePdfUiText(aspect.aspectType)} ${localizePdfUiText('Aspect')} → ${localizePdfUiText('House')} ${aspect.targetHouse}`}>
                         <Text style={styles.paragraph}>{aspect.interpretation || ''}</Text>
                       </Card>
                     ))}
@@ -3944,11 +4101,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   <Text style={styles.tableHeaderCell}>{localizePdfUiText('Occupants')}</Text>
                 </View>
                 {report.houses.map((house: any, idx: number) => {
-                  const houseSign = sanitizeText(String(house.sign || 'N/A')) || 'N/A';
-                  const houseLord = sanitizeText(String(house.lord || 'N/A')) || 'N/A';
+                  const houseSign = localizePdfUiText(sanitizeText(String(house.sign || 'N/A')) || 'N/A');
+                  const houseLord = localizePdfUiText(sanitizeText(String(house.lord || 'N/A')) || 'N/A');
                   const occupantsText = Array.isArray(house.occupants)
                     ? house.occupants
-                        .map((o: any) => sanitizeText(String(o || '')).trim())
+                        .map((o: any) => localizePdfUiText(sanitizeText(String(o || '')).trim()))
                         .filter(Boolean)
                         .join(', ')
                     : '';
@@ -3958,7 +4115,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                       <Text style={styles.tableCell}>{houseSign}</Text>
                       <Text style={styles.tableCell}>{houseLord}</Text>
                       <Text style={styles.tableCell}>H{house.lordHouse}</Text>
-                      <Text style={styles.tableCell}>{occupantsText || 'Empty'}</Text>
+                      <Text style={styles.tableCell}>{occupantsText || localizePdfUiText('Empty')}</Text>
                     </View>
                   );
                 })}
@@ -3970,9 +4127,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage key={idx} sectionName={`House ${house.house}`}>
               <Section title={`House ${house.house}${ACTIVE_PDF_LANGUAGE !== 'en' && house.houseHindi ? ' - ' + sanitizeText(house.houseHindi) : ''}`}>
                 <InfoStrip items={[
-                  { label: 'Sign', value: sanitizeText(String(house.sign || 'N/A')) || 'N/A' },
-                  { label: 'Lord', value: sanitizeText(String(house.lord || 'N/A')) || 'N/A' },
-                  { label: 'Nature', value: sanitizeText(String(house.houseNature || 'N/A')) || 'N/A' },
+                  { label: 'Sign', value: localizePdfUiText(sanitizeText(String(house.sign || 'N/A')) || 'N/A') },
+                  { label: 'Lord', value: localizePdfUiText(sanitizeText(String(house.lord || 'N/A')) || 'N/A') },
+                  { label: 'Nature', value: localizePdfUiText(sanitizeText(String(house.houseNature || 'N/A')) || 'N/A') },
                 ]} />
 
                 <SubSection title="Significance">
@@ -4341,13 +4498,13 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <Text style={styles.paragraph}>{report.dasha.vimshottariSystem || ''}</Text>
 
             <SubSection title="Birth Nakshatra">
-              <InfoRow label="Nakshatra" value={report.dasha.birthNakshatra?.name || 'N/A'} />
-              <InfoRow label="Lord" value={dashaTruth?.startLord || report.dasha.birthNakshatra?.lord || 'N/A'} />
-              <InfoRow label="Starting Dasha" value={dashaTruth?.startLord || report.dasha.birthNakshatra?.startingDasha || 'N/A'} />
+              <InfoRow label="Nakshatra" value={localizePdfUiText(report.dasha.birthNakshatra?.name || 'N/A')} />
+              <InfoRow label="Lord" value={localizePdfUiText(dashaTruth?.startLord || report.dasha.birthNakshatra?.lord || 'N/A')} />
+              <InfoRow label="Starting Dasha" value={localizePdfUiText(dashaTruth?.startLord || report.dasha.birthNakshatra?.startingDasha || 'N/A')} />
               <InfoRow label="Balance at Birth" value={dashaTruth ? `${dashaTruth.balanceYears.toFixed(2)} years` : (report.dasha.birthNakshatra?.balance || 'N/A')} />
             </SubSection>
 
-            <SubSection title={`Current Mahadasha: ${dashaTruth?.mahadasha || report.dasha.currentMahadasha?.planet || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Current Mahadasha')}: ${localizePdfUiText(dashaTruth?.mahadasha || report.dasha.currentMahadasha?.planet || 'N/A')}`}>
               <View style={styles.card}>
                 <InfoRow
                   label="Period"
@@ -4388,7 +4545,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               )}
             </SubSection>
 
-            <SubSection title={`Current Antardasha: ${dashaTruth?.antardasha || report.dasha.currentAntardasha?.planet || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Current Antardasha')}: ${localizePdfUiText(dashaTruth?.antardasha || report.dasha.currentAntardasha?.planet || 'N/A')}`}>
               <View style={styles.card}>
                 <InfoRow
                   label="Period"
@@ -4420,7 +4577,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <>
           {report.dasha.mahadashaPredictions.map((md: any, idx: number) => (
             <ContentPage key={`md-${idx}`} sectionName={`${md.planet} Mahadasha`}>
-              <Section title={`${md.planet} Mahadasha Predictions`}>
+              <Section title={`${localizePdfUiText(md.planet)} ${localizePdfUiText('Mahadasha Predictions')}`}>
                 {(() => {
                   const mdDates = resolveMdDates(md.planet, md.startDate, md.endDate);
                   return (
@@ -4494,7 +4651,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </Text>
             
             {report.dasha.antardashaPredictions.map((ad: any, idx: number) => (
-              <Card key={idx} title={`${formatDashaPair(ad.mahadasha, ad.antardasha)} (${ad.duration || ''})`}>
+              <Card key={idx} title={`${localizePdfUiText(formatDashaPair(ad.mahadasha, ad.antardasha))} (${ad.duration || ''})`}>
                 {(() => {
                   const adDates = resolveAdDates(ad.antardasha, ad.startDate, ad.endDate);
                   return <InfoRow label="Period" value={`${adDates.start} to ${adDates.end}`} />;
@@ -4568,9 +4725,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           <Section title="Yogini Dasha System">
             <Text style={styles.paragraph}>{report.dasha.yoginiDasha.systemExplanation || ''}</Text>
             
-            <SubSection title={`Current Yogini: ${report.dasha.yoginiDasha.currentYogini?.name || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Current Yogini')}: ${localizePdfUiText(report.dasha.yoginiDasha.currentYogini?.name || 'N/A')}`}>
               <View style={styles.card}>
-                <InfoRow label="Associated Planet" value={report.dasha.yoginiDasha.currentYogini?.planet || 'N/A'} />
+                <InfoRow label="Associated Planet" value={localizePdfUiText(report.dasha.yoginiDasha.currentYogini?.planet || 'N/A')} />
                 <InfoRow label="Duration" value={`${report.dasha.yoginiDasha.currentYogini?.years || 0} years`} />
                 <InfoRow label="Period" value={`${report.dasha.yoginiDasha.currentYogini?.startDate || ''} to ${report.dasha.yoginiDasha.currentYogini?.endDate || ''}`} />
               </View>
@@ -4597,16 +4754,16 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 </View>
                 {(report.dasha.yoginiDasha.upcomingYoginis || []).map((y: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
-                    <Text style={styles.tableCell}>{y.name}</Text>
-                    <Text style={styles.tableCell}>{y.planet}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(y.name)}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(y.planet)}</Text>
                     <Text style={styles.tableCell}>{y.years}</Text>
                     <Text style={styles.tableCell}>{y.approximatePeriod}</Text>
                   </View>
                 ))}
               </View>
-              
+
               {(report.dasha.yoginiDasha.upcomingYoginis || []).slice(0, 3).map((y: any, idx: number) => (
-                <Card key={idx} title={`${y.name} (${y.planet})`}>
+                <Card key={idx} title={`${localizePdfUiText(y.name)} (${localizePdfUiText(y.planet)})`}>
                   <Text style={styles.paragraph}>{y.briefPrediction}</Text>
                 </Card>
               ))}
@@ -4622,10 +4779,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 </View>
                 {(report.dasha.yoginiDasha.yoginiSequence || []).map((y: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
-                    <Text style={styles.tableCell}>{y.name}</Text>
-                    <Text style={styles.tableCell}>{y.planet}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(y.name)}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(y.planet)}</Text>
                     <Text style={styles.tableCell}>{y.years}</Text>
-                    <Text style={styles.tableCell}>{y.nature}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(y.nature)}</Text>
                   </View>
                 ))}
               </View>
@@ -4650,10 +4807,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   </View>
                   {report.dasha.upcomingDashas.map((dasha: any, idx: number) => (
                     <View key={idx} style={styles.tableRow}>
-                      <Text style={styles.tableCell}>{dasha.type}</Text>
-                      <Text style={styles.tableCell}>{dasha.planet}</Text>
+                      <Text style={styles.tableCell}>{localizePdfUiText(dasha.type)}</Text>
+                      <Text style={styles.tableCell}>{localizePdfUiText(dasha.planet)}</Text>
                       <Text style={styles.tableCell}>{dasha.period}</Text>
-                      <Text style={styles.tableCell}>{dasha.focus}</Text>
+                      <Text style={styles.tableCell}>{localizePdfUiText(dasha.focus)}</Text>
                     </View>
                   ))}
                 </View>
@@ -4670,10 +4827,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 </View>
                 {(report.dasha.dashaSequence || []).map((dasha: any, idx: number) => (
                   <View key={idx} style={styles.tableRow}>
-                    <Text style={styles.tableCell}>{dasha.planet}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(dasha.planet)}</Text>
                     <Text style={styles.tableCell}>{dasha.years}</Text>
                     <Text style={styles.tableCell}>{dasha.approximatePeriod}</Text>
-                    <Text style={styles.tableCell}>{dasha.lifeFocus}</Text>
+                    <Text style={styles.tableCell}>{localizePdfUiText(dasha.lifeFocus)}</Text>
                   </View>
                 ))}
               </View>
@@ -4776,10 +4933,10 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               <SubSection title="Major Doshas">
                 {majorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${dosha.name}${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? sanitizeText(dosha.nameHindi) : dosha.name}`}>
                     <InfoStrip items={[
-                      { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
-                      { label: 'Severity', value: dosha.severity?.toUpperCase() || 'N/A' },
+                      { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
+                      { label: 'Severity', value: localizePdfUiText(dosha.severity?.toUpperCase() || 'N/A') },
                     ]} />
                     
                     <Text style={styles.paragraph}>{dosha.description}</Text>
@@ -4820,9 +4977,9 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Minor Doshas">
               <Section title="Minor Doshas">
                 {minorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${dosha.name}${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? ' (' + sanitizeText(dosha.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? sanitizeText(dosha.nameHindi) : dosha.name}`}>
                     <InfoStrip items={[
-                      { label: 'Status', value: dosha.status?.toUpperCase() || 'N/A' },
+                      { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
                     ]} />
                     <Text style={styles.paragraph}>{dosha.description}</Text>
                     {dosha.cause && <Text style={styles.bodyText}>{localizePdfUiText('Cause')}: {dosha.cause}</Text>}
@@ -4913,7 +5070,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
 
               <SubSection title="Raja Yogas (Power & Success)">
                 {(report.rajYogs.rajYogas || []).filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                       { label: 'Activation', value: yoga.activationPeriod || 'N/A' },
@@ -4944,7 +5101,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Dhana Yogas">
               <Section title="Dhana Yogas (Wealth Combinations)">
                 {report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                     ]} />
@@ -5025,7 +5182,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                   The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.
                 </Text>
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${yoga.name}${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? ' (' + sanitizeText(yoga.nameHindi) + ')' : ''}`}>
+                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
                     <Text style={styles.bodyText}>{yoga.definition}</Text>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('In Your Chart')}</Text>
                     <Text style={styles.bodyText}>{yoga.formationInChart}</Text>
@@ -5380,11 +5537,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
       {report.remedies && (
         <ContentPage sectionName="Gemstone Therapy">
           <Section title="Gemstone Therapy (Ratna Shastra)">
-            <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.gemologyExplanation || 'Gemstones have been used in Vedic astrology for millennia to harness planetary energies and balance cosmic influences.'}</Text>
+            <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations?.gemologyExplanation || localizePdfUiText('Gemstones have been used in Vedic astrology for millennia to harness planetary energies and balance cosmic influences.')}</Text>
 
-            <SubSection title={`Primary Gemstone: ${report.remedies.gemstoneRecommendations?.primary?.stone || 'N/A'}`}>
+            <SubSection title={`${localizePdfUiText('Primary Gemstone')}: ${report.remedies.gemstoneRecommendations?.primary?.stone || 'N/A'}`}>
               <View style={styles.card}>
-                <InfoRow label="Planet" value={report.remedies.gemstoneRecommendations?.primary?.planet || 'N/A'} />
+                <InfoRow label="Planet" value={localizePdfUiText(report.remedies.gemstoneRecommendations?.primary?.planet || 'N/A')} />
                 <InfoRow label="Weight" value={report.remedies.gemstoneRecommendations?.primary?.weight || 'N/A'} />
                 <InfoRow label="Metal" value={report.remedies.gemstoneRecommendations?.primary?.metal || 'N/A'} />
                 <InfoRow label="Finger" value={report.remedies.gemstoneRecommendations?.primary?.finger || 'N/A'} />
@@ -5415,8 +5572,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             </SubSection>
 
             {report.remedies.gemstoneRecommendations?.secondary && (
-              <SubSection title={`Secondary Gemstone: ${report.remedies.gemstoneRecommendations.secondary.stone}`}>
-                <InfoRow label="Planet" value={report.remedies.gemstoneRecommendations.secondary.planet || 'N/A'} />
+              <SubSection title={`${localizePdfUiText('Secondary Gemstone')}: ${report.remedies.gemstoneRecommendations.secondary.stone}`}>
+                <InfoRow label="Planet" value={localizePdfUiText(report.remedies.gemstoneRecommendations.secondary.planet || 'N/A')} />
                 <Text style={styles.paragraph}>{report.remedies.gemstoneRecommendations.secondary.benefits || ''}</Text>
                 <Text style={styles.scriptural}>{report.remedies.gemstoneRecommendations.secondary.scripturalReference || ''}</Text>
               </SubSection>
@@ -5436,12 +5593,12 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Rudraksha Therapy">
           <Section title="Rudraksha Therapy">
             <Text style={styles.paragraph}>
-              Rudraksha beads are sacred seeds from the Elaeocarpus ganitrus tree, revered for their spiritual and healing properties. Each Mukhi (face) of Rudraksha resonates with specific planetary energies.
+              {localizePdfUiText('Rudraksha beads are sacred seeds from the Elaeocarpus ganitrus tree, revered for their spiritual and healing properties. Each Mukhi (face) of Rudraksha resonates with specific planetary energies.')}
             </Text>
 
             {report.remedies.rudrakshaRecommendations.map((rud: any, idx: number) => (
-              <Card key={idx} title={`${rud.mukhi} Mukhi Rudraksha - ${rud.name}`}>
-                <InfoRow label="Associated Planet" value={rud.planet} />
+              <Card key={idx} title={`${rud.mukhi} ${localizePdfUiText('Mukhi Rudraksha')} - ${rud.name}`}>
+                <InfoRow label="Associated Planet" value={localizePdfUiText(rud.planet)} />
                 
                 <Text style={styles.subSubHeader}>{localizePdfUiText('Benefits')}</Text>
                 <Text style={styles.paragraph}>{rud.benefits}</Text>
@@ -5470,11 +5627,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Mantra Therapy">
           <Section title="Mantra Therapy (Mantra Shastra)">
             <Text style={styles.paragraph}>
-              Mantras are sacred sound vibrations that connect the practitioner to cosmic energies. The science of Mantra Shastra explains how specific sound frequencies can influence planetary energies and transform consciousness.
+              {localizePdfUiText('Mantras are sacred sound vibrations that connect the practitioner to cosmic energies. The science of Mantra Shastra explains how specific sound frequencies can influence planetary energies and transform consciousness.')}
             </Text>
 
             {report.remedies.mantras.map((mantra: any, idx: number) => (
-              <Card key={idx} title={`${mantra.planet} Mantra`}>
+              <Card key={idx} title={`${localizePdfUiText(mantra.planet)} ${localizePdfUiText('Mantra')}`}>
                 <Text style={[styles.boldLabel, { color: '#c2410c', marginBottom: 2 }]}>{mantra.mantra}</Text>
                 
                 <View style={styles.row}>
@@ -5509,11 +5666,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             {report.remedies.yantras && report.remedies.yantras.length > 0 && (
               <SubSection title="Yantra Recommendations">
                 <Text style={styles.paragraph}>
-                  Yantras are sacred geometric diagrams that serve as focal points for meditation and planetary propitiation. Each Yantra embodies specific cosmic energies through precise mathematical proportions.
+                  {localizePdfUiText('Yantras are sacred geometric diagrams that serve as focal points for meditation and planetary propitiation. Each Yantra embodies specific cosmic energies through precise mathematical proportions.')}
                 </Text>
                 {report.remedies.yantras.map((yantra: any, idx: number) => (
-                  <Card key={idx} title={yantra.name}>
-                    <InfoRow label="Planet" value={yantra.planet} />
+                  <Card key={idx} title={localizePdfUiText(yantra.name)}>
+                    <InfoRow label="Planet" value={localizePdfUiText(yantra.planet)} />
                     <InfoRow label="Placement" value={yantra.placement} />
                     <Text style={styles.paragraph}>{yantra.benefits}</Text>
                     
@@ -5532,8 +5689,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             {report.remedies.pujaRecommendations && report.remedies.pujaRecommendations.length > 0 && (
               <SubSection title="Recommended Pujas">
                 {report.remedies.pujaRecommendations.map((puja: any, idx: number) => (
-                  <Card key={idx} title={puja.name}>
-                    <InfoRow label="Deity" value={puja.deity} />
+                  <Card key={idx} title={localizePdfUiText(puja.name)}>
+                    <InfoRow label="Deity" value={localizePdfUiText(puja.deity)} />
                     <InfoRow label="Purpose" value={puja.purpose} />
                     <InfoRow label="Frequency" value={puja.frequency} />
                     
@@ -5784,11 +5941,11 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
           {/* Detailed Karaka Interpretations */}
           {(report.charaKarakasDetailed.karakaInterpretations || []).map((karaka: any, idx: number) => (
             <ContentPage key={`karaka-${idx}`} sectionName={`${karaka.karaka}`}>
-              <Section title={`${karaka.karaka}: ${karaka.planet} in ${karaka.sign}`}>
+              <Section title={`${localizePdfUiText(karaka.karaka)}: ${localizePdfUiText(karaka.planet)} ${localizePdfUiText('in')} ${localizePdfUiText(karaka.sign)}`}>
                 <View style={styles.card}>
                   <InfoRow label="House" value={String(karaka.house)} />
                   <InfoRow label="Degree" value={`${karaka.degree?.toFixed(2) || 0}°`} />
-                  <InfoRow label="Signification" value={karaka.signification || ''} />
+                  <InfoRow label="Signification" value={localizePdfUiText(karaka.signification || '')} />
                 </View>
 
                 <SubSection title="Detailed Interpretation">

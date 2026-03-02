@@ -237,9 +237,45 @@ const KundliReportGenerator = () => {
       let consecutiveErrors = 0;
       const maxConsecutiveErrors = 5;
 
+      // ── Stall detection & auto-retry ──────────────────────────────────────
+      let lastProgressValue = -1;
+      let lastProgressChangeTime = Date.now();
+      let retriesAttempted = 0;
+      const maxRetries = 2;         // max number of auto-retriggers
+      const stallThresholdMs = 90_000; // 90s without progress change = stalled
+
+      const retriggerStalledStage = async (phase: string) => {
+        retriesAttempted++;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const serviceKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+        // Determine which stage to re-trigger based on current phase/progress
+        let functionName = 'translate-kundli-report'; // default: re-trigger translation
+        if (phase?.toLowerCase().includes('finaliz') || phase?.toLowerCase().includes('quality') || phase?.toLowerCase().includes('chart')) {
+          functionName = 'finalize-kundli-report';
+        } else if (phase?.toLowerCase().includes('translat')) {
+          functionName = 'translate-kundli-report';
+        }
+
+        console.log(`🔄 [KundliReportGenerator] Job stalled at "${phase}" — auto-retrigger ${retriesAttempted}/${maxRetries}: ${functionName}`);
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({ jobId }),
+          });
+        } catch (retriggerErr) {
+          console.warn('[KundliReportGenerator] Auto-retrigger failed:', retriggerErr);
+        }
+      };
+      // ───────────────────────────────────────────────────────────────────────
+
       const pollJob = async (): Promise<any> => {
         pollCount++;
-        
+
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
           {
@@ -249,7 +285,7 @@ const KundliReportGenerator = () => {
             },
           }
         );
-        
+
         if (!response.ok) {
           consecutiveErrors++;
           console.warn(`[KundliReportGenerator] Poll error (${consecutiveErrors}/${maxConsecutiveErrors}):`, response.status);
@@ -263,7 +299,7 @@ const KundliReportGenerator = () => {
         consecutiveErrors = 0;
         const jobStatus = await response.json();
         console.log('[KundliReportGenerator] Job status:', jobStatus.status, jobStatus.progressPercent + '%');
-        
+
         setJobProgress(jobStatus.progressPercent || 0);
         setJobPhase(jobStatus.currentPhase || '');
 
@@ -276,6 +312,24 @@ const KundliReportGenerator = () => {
         if (jobStatus.status === 'failed') {
           throw new Error(jobStatus.error || 'Report generation failed');
         }
+
+        // ── Stall detection ─────────────────────────────────────────────────
+        const currentProgress = jobStatus.progressPercent || 0;
+        if (currentProgress !== lastProgressValue) {
+          lastProgressValue = currentProgress;
+          lastProgressChangeTime = Date.now();
+        }
+
+        const stallDuration = Date.now() - lastProgressChangeTime;
+        if (
+          stallDuration > stallThresholdMs &&
+          retriesAttempted < maxRetries &&
+          jobStatus.status === 'processing'
+        ) {
+          await retriggerStalledStage(jobStatus.currentPhase || '');
+          lastProgressChangeTime = Date.now(); // reset stall timer after retrigger
+        }
+        // ────────────────────────────────────────────────────────────────────
 
         if (pollCount >= maxPolls) {
           throw new Error('Report generation timed out. Please try again.');

@@ -5,7 +5,11 @@
  * Gets its OWN 150s wall_clock_limit (Supabase Free tier) dedicated entirely
  * to translation. After completing, triggers finalize-kundli-report (Stage 3).
  *
- * Flow:  process-kundli-job → [this] → finalize-kundli-report
+ * SPLIT MODE: If the translation sweep needs > 12 Gemini batches, this function
+ * processes only the first 12 batches, saves partial results, and triggers ITSELF
+ * again for the remaining strings. This avoids Supabase's 150s timeout.
+ *
+ * Flow:  process-kundli-job → [this (pass 1)] → [this (pass 2, if needed)] → finalize-kundli-report
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -41,6 +45,8 @@ serve(async (req) => {
   // Safety timeout: trigger Stage 3 before Supabase kills us at 150s.
   // Give translation 120s, then bail and proceed with whatever we have.
   const TRANSLATION_TIMEOUT_MS = 120_000;
+  // Maximum Gemini batches per pass. If more are needed, we self-chain.
+  const MAX_BATCHES_PER_PASS = 12;
 
   let jobId: string | undefined;
   let report: Record<string, any> | undefined;
@@ -48,7 +54,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     jobId = body.jobId;
-    console.log(`🌐 [TRANSLATE-JOB] Starting translation for job: ${jobId}`);
+    const translationPass: number = body.translationPass || 1;
+    console.log(`🌐 [TRANSLATE-JOB] Starting translation pass ${translationPass} for job: ${jobId}`);
 
     // Load job record with partial report from Stage 1
     const { data: job, error: fetchError } = await supabaseAdmin
@@ -75,13 +82,22 @@ serve(async (req) => {
 
     let totalTokens = (report as any).tokensUsed || 0;
 
-    // ── Translation Sweep (with safety timeout) ─────────────────────────────
+    // ── Translation Sweep (with safety timeout + split support) ────────────
+    let needsSecondPass = false;
+
     if (effectiveGenLang !== "en") {
-      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Translating remaining content", 85, "progress");
+      const passLabel = translationPass > 1 ? ` (pass ${translationPass})` : "";
+      await updateJobStatus(supabaseAdmin, jobId!, "processing", `Translating remaining content${passLabel}`, translationPass === 1 ? 85 : 88, "progress");
 
       try {
+        // On pass 1, limit to MAX_BATCHES_PER_PASS to avoid timeout.
+        // On pass 2+, process everything remaining (no limit).
+        const sweepOptions = translationPass === 1
+          ? { maxBatches: MAX_BATCHES_PER_PASS }
+          : undefined;
+
         // Race translation against a safety timer
-        const translationPromise = runTranslationSweep(report!, effectiveGenLang);
+        const translationPromise = runTranslationSweep(report!, effectiveGenLang, sweepOptions);
         const timeoutPromise = new Promise<"TIMEOUT">((resolve) =>
           setTimeout(() => resolve("TIMEOUT"), TRANSLATION_TIMEOUT_MS)
         );
@@ -90,25 +106,35 @@ serve(async (req) => {
 
         if (raceResult === "TIMEOUT") {
           console.warn(`⏰ [TRANSLATE-JOB] Translation timed out after ${TRANSLATION_TIMEOUT_MS / 1000}s — proceeding with partial translation`);
-          report!.errors = [...(report!.errors || []), `TranslationSweep: Timed out after ${TRANSLATION_TIMEOUT_MS / 1000}s — partial translation applied`];
+          report!.errors = [...(report!.errors || []), `TranslationSweep: Timed out after ${TRANSLATION_TIMEOUT_MS / 1000}s — partial translation applied (pass ${translationPass})`];
           report!.computationMeta = {
             ...(report!.computationMeta || {}),
-            translationSweep: { timedOut: true, timeoutMs: TRANSLATION_TIMEOUT_MS },
+            translationSweep: { timedOut: true, timeoutMs: TRANSLATION_TIMEOUT_MS, pass: translationPass },
           };
         } else {
           const translationStats = raceResult;
-          console.log(`🌐 [TRANSLATE-JOB] Sweep: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings (${translationStats.stringsCached} cached, ${translationStats.batchesSent} Gemini batches)`);
+          console.log(`🌐 [TRANSLATE-JOB] Sweep pass ${translationPass}: ${translationStats.stringsTranslated}/${translationStats.stringsFound} strings (${translationStats.stringsCached} cached, ${translationStats.batchesSent} Gemini batches, ${translationStats.totalBatchesNeeded} total needed)`);
 
           if (translationStats.errors.length > 0) {
             report!.errors = [...(report!.errors || []), ...translationStats.errors.map((e: string) => `TranslationSweep: ${e}`)];
           }
+
+          // Check if we need a second pass (more batches than we processed)
+          if (translationPass === 1 && translationStats.totalBatchesNeeded > MAX_BATCHES_PER_PASS) {
+            needsSecondPass = true;
+            console.log(`📦 [TRANSLATE-JOB] Pass 1 processed ${translationStats.batchesSent}/${translationStats.totalBatchesNeeded} batches — will trigger pass 2 for remaining`);
+          }
+
+          const sweepKey = translationPass === 1 ? "translationSweep" : "translationSweepPass2";
           report!.computationMeta = {
             ...(report!.computationMeta || {}),
-            translationSweep: {
+            [sweepKey]: {
+              pass: translationPass,
               stringsFound: translationStats.stringsFound,
               stringsTranslated: translationStats.stringsTranslated,
               stringsCached: translationStats.stringsCached,
               batchesSent: translationStats.batchesSent,
+              totalBatchesNeeded: translationStats.totalBatchesNeeded,
               errorCount: translationStats.errors.length,
               remainingEnglish: translationStats.remainingEnglishCount,
               sectionBreakdown: translationStats.sectionBreakdown,
@@ -126,8 +152,19 @@ serve(async (req) => {
       console.log(`⏭️ [TRANSLATE-JOB] Skipping translation for English report`);
     }
 
-    // ── Save report and trigger Stage 3 ─────────────────────────────────────
+    // ── Save report and trigger next stage ───────────────────────────────────
     report!.tokensUsed = totalTokens;
+
+    if (needsSecondPass) {
+      // Self-chain: save partial results and trigger another translation pass
+      await saveAndTriggerSelf(supabaseAdmin, jobId!, report!, translationPass + 1);
+      console.log(`🔄 [TRANSLATE-JOB] Pass ${translationPass} complete — self-chaining to pass ${translationPass + 1}`);
+      return new Response(
+        JSON.stringify({ success: true, jobId, stage: `translate_pass_${translationPass}_complete`, nextPass: translationPass + 1 }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     await saveAndTriggerFinalize(supabaseAdmin, jobId!, report!, "Translation complete — finalizing");
 
     console.log("✅ [TRANSLATE-JOB] Translation complete, Stage 3 triggered");
@@ -173,6 +210,56 @@ serve(async (req) => {
     );
   }
 });
+
+/**
+ * Save current report state and trigger SELF for another translation pass.
+ * Used when the translation sweep has more batches than MAX_BATCHES_PER_PASS.
+ */
+async function saveAndTriggerSelf(
+  supabase: any,
+  jobId: string,
+  report: Record<string, any>,
+  nextPass: number,
+) {
+  try {
+    // Save partial translation results
+    await supabase
+      .from("kundli_report_jobs")
+      .update({
+        status: "processing",
+        current_phase: `Translation pass ${nextPass - 1} complete — continuing`,
+        progress_percent: 87,
+        report_data: report,
+        heartbeat_at: new Date().toISOString(),
+      })
+      .eq("id", jobId);
+
+    // Trigger SELF again with next pass number
+    const selfUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/translate-kundli-report`;
+    const selfPromise = fetch(selfUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+      },
+      body: JSON.stringify({ jobId, translationPass: nextPass }),
+    }).catch(err => {
+      console.error(`⚠️ [TRANSLATE-JOB] Failed to trigger self (pass ${nextPass}):`, err);
+    });
+
+    // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+    if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(selfPromise);
+    }
+
+    console.log(`📤 [TRANSLATE-JOB] Self-triggered for pass ${nextPass}`);
+  } catch (triggerErr) {
+    console.error("💥 [TRANSLATE-JOB] CRITICAL: Failed to self-chain:", triggerErr);
+    // Fallback: trigger finalize instead of leaving the job stuck
+    await saveAndTriggerFinalize(supabase, jobId, report, "Self-chain failed — skipping to finalize");
+  }
+}
 
 /**
  * Save current report state to DB and trigger Stage 3 (finalize).

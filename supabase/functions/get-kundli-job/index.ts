@@ -30,7 +30,7 @@ serve(async (req) => {
 
     const { data: job, error } = await supabaseAdmin
       .from("kundli_report_jobs")
-      .select("id, status, current_phase, progress_percent, report_data, error_message, created_at, completed_at, name")
+      .select("id, status, current_phase, progress_percent, report_data, error_message, created_at, completed_at, name, heartbeat_at")
       .eq("id", jobId)
       .single();
 
@@ -52,6 +52,7 @@ serve(async (req) => {
         error: job.error_message,
         createdAt: job.created_at,
         completedAt: job.completed_at,
+        heartbeatAt: job.heartbeat_at,
         name: job.name,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

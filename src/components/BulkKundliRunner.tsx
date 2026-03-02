@@ -491,6 +491,13 @@ export default function BulkKundliRunner() {
     const pollIntervalMs = 3000;
     const maxPolls = 360; // ~18 minutes
 
+    // ── Stall detection & auto-retry ──────────────────────────────────────
+    let lastProgress = -1;
+    let lastProgressChangeTime = Date.now();
+    let retriesAttempted = 0;
+    const maxRetries = 2;
+    const stallThresholdMs = 90_000; // 90s without progress change = stalled
+
     for (let i = 0; i < maxPolls; i++) {
       if (stopRequestedRef.current) {
         return { status: 'failed', error: 'Stopped by user' };
@@ -519,6 +526,32 @@ export default function BulkKundliRunner() {
       }
       if (payload.status === 'failed') {
         return { status: 'failed', error: payload.error || 'Job failed' };
+      }
+
+      // ── Stall detection: if progress stuck for 90s, re-trigger stalled stage ──
+      const currentProgress = payload.progressPercent || 0;
+      if (currentProgress !== lastProgress) {
+        lastProgress = currentProgress;
+        lastProgressChangeTime = Date.now();
+      }
+
+      const stallDuration = Date.now() - lastProgressChangeTime;
+      if (stallDuration > stallThresholdMs && retriesAttempted < maxRetries && payload.status === 'processing') {
+        retriesAttempted++;
+        const phase = (payload.currentPhase || '').toLowerCase();
+        let functionName = 'translate-kundli-report';
+        if (phase.includes('finaliz') || phase.includes('quality') || phase.includes('chart')) {
+          functionName = 'finalize-kundli-report';
+        }
+        console.log(`🔄 [BulkRunner] Job ${jobId} stalled at "${payload.currentPhase}" — auto-retrigger ${retriesAttempted}/${maxRetries}: ${functionName}`);
+        try {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+            body: JSON.stringify({ jobId }),
+          });
+        } catch (e) { console.warn('[BulkRunner] Retrigger failed:', e); }
+        lastProgressChangeTime = Date.now(); // reset stall timer
       }
 
       await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));

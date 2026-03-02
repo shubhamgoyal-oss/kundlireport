@@ -579,6 +579,151 @@ const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
   "overall": { hi: "समग्र", te: "మొత్తంగా" },
 };
 
+// ── Short-Term Translation Cache ──────────────────────────────────────────
+// Terms shorter than MIN_STRING_LENGTH (8 chars) that the general sweep skips.
+// Applied in a pre-sweep BEFORE the main Gemini batching.
+// These are exact-match translations for standalone short values.
+
+const SHORT_TERM_TRANSLATIONS: Record<string, { hi: string; te: string }> = {
+  // ── Planet names ──
+  "sun": { hi: "सूर्य", te: "సూర్యుడు" },
+  "moon": { hi: "चंद्रमा", te: "చంద్రుడు" },
+  "mars": { hi: "मंगल", te: "కుజుడు" },
+  "mercury": { hi: "बुध", te: "బుధుడు" },
+  "jupiter": { hi: "गुरु", te: "గురుడు" },
+  "venus": { hi: "शुक्र", te: "శుక్రుడు" },
+  "saturn": { hi: "शनि", te: "శని" },
+  "rahu": { hi: "राहु", te: "రాహు" },
+  "ketu": { hi: "केतु", te: "కేతు" },
+
+  // ── Zodiac signs ──
+  "aries": { hi: "मेष", te: "మేషం" },
+  "taurus": { hi: "वृषभ", te: "వృషభం" },
+  "gemini": { hi: "मिथुन", te: "మిథునం" },
+  "cancer": { hi: "कर्क", te: "కర్కాటకం" },
+  "leo": { hi: "सिंह", te: "సింహం" },
+  "virgo": { hi: "कन्या", te: "కన్య" },
+  "libra": { hi: "तुला", te: "తులా" },
+  "scorpio": { hi: "वृश्चिक", te: "వృశ్చికం" },
+  "pisces": { hi: "मीन", te: "మీనం" },
+  // sagittarius, capricorn, aquarius are ≥ 8 chars → in PHRASE_CACHE
+
+  // ── Nakshatra names (< 8 chars) ──
+  "ashwini": { hi: "अश्विनी", te: "అశ్విని" },
+  "bharani": { hi: "भरणी", te: "భరణి" },
+  "rohini": { hi: "रोहिणी", te: "రోహిణి" },
+  "ardra": { hi: "आर्द्रा", te: "ఆర్ద్ర" },
+  "pushya": { hi: "पुष्य", te: "పుష్యమి" },
+  "magha": { hi: "मघा", te: "మఘ" },
+  "hasta": { hi: "हस्त", te: "హస్త" },
+  "chitra": { hi: "चित्रा", te: "చిత్ర" },
+  "swati": { hi: "स्वाति", te: "స్వాతి" },
+  "moola": { hi: "मूल", te: "మూల" },
+  "revati": { hi: "रेवती", te: "రేవతి" },
+
+  // ── Dignity / status terms ──
+  "exalted": { hi: "उच्च", te: "ఉచ్చ" },
+  "own sign": { hi: "स्वराशि", te: "స్వరాశి" },
+  "neutral": { hi: "सम", te: "సమం" },
+  "enemy": { hi: "शत्रु", te: "శత్రు" },
+  "friend": { hi: "मित्र", te: "మిత్ర" },
+  "friendly": { hi: "मित्र", te: "మిత్ర" },
+  "direct": { hi: "मार्गी", te: "మార్గి" },
+
+  // ── Common short labels ──
+  "strong": { hi: "बलवान", te: "బలమైన" },
+  "weak": { hi: "कमज़ोर", te: "బలహీన" },
+  "active": { hi: "सक्रिय", te: "సక్రియం" },
+  "mixed": { hi: "मिश्रित", te: "మిశ్రమం" },
+  "present": { hi: "उपस्थित", te: "ఉన్నది" },
+  "absent": { hi: "अनुपस्थित", te: "లేదు" },
+  "high": { hi: "उच्च", te: "ఉన్నత" },
+  "low": { hi: "निम्न", te: "తక్కువ" },
+  "good": { hi: "शुभ", te: "శుభం" },
+  "mild": { hi: "हल्का", te: "తేలిక" },
+  "severe": { hi: "गंभीर", te: "తీవ్రం" },
+  "benefic": { hi: "शुभ", te: "శుభ" },
+  "malefic": { hi: "पाप", te: "పాప" },
+  "kendra": { hi: "केन्द्र", te: "కేంద్రం" },
+  "trikona": { hi: "त्रिकोण", te: "త్రికోణం" },
+  "dusthana": { hi: "दुस्थान", te: "దుస్థానం" },
+  "upachaya": { hi: "उपचय", te: "ఉపచయం" },
+  "maraka": { hi: "मारक", te: "మారకం" },
+
+  // ── Day names (< 8 chars) ──
+  "monday": { hi: "सोमवार", te: "సోమవారం" },
+  "tuesday": { hi: "मंगलवार", te: "మంగళవారం" },
+  "friday": { hi: "शुक्रवार", te: "శుక్రవారం" },
+  "sunday": { hi: "रविवार", te: "ఆదివారం" },
+
+  // ── Common terms that appear as standalone values ──
+  "career": { hi: "करियर", te: "వృత్తి" },
+  "health": { hi: "स्वास्थ्य", te: "ఆరోగ్యం" },
+  "wealth": { hi: "धन", te: "సంపద" },
+  "love": { hi: "प्रेम", te: "ప్రేమ" },
+  "yoga": { hi: "योग", te: "యోగం" },
+  "dosha": { hi: "दोष", te: "దోషం" },
+  "dasha": { hi: "दशा", te: "దశ" },
+  "graha": { hi: "ग्रह", te: "గ్రహం" },
+  "bhava": { hi: "भाव", te: "భావం" },
+  "lagna": { hi: "लग्न", te: "లగ్నం" },
+};
+
+/**
+ * Pre-sweep: translate known short terms that the general sweep skips due to MIN_STRING_LENGTH.
+ * Walks the entire report and replaces exact-match string values.
+ * This handles planet names, zodiac signs, nakshatras, dignity terms, etc.
+ * Runs BEFORE collectEnglishStrings() in the main sweep.
+ */
+function applyKnownTermTranslations(
+  report: Record<string, any>,
+  targetLanguage: string,
+): number {
+  if (targetLanguage === "en") return 0;
+  let count = 0;
+
+  function walk(obj: any, parentKey?: string, isTopLevel = false): void {
+    if (parentKey && SKIP_KEYS.has(parentKey)) return;
+
+    if (Array.isArray(obj)) {
+      for (let i = 0; i < obj.length; i++) {
+        if (typeof obj[i] === "string") {
+          const key = obj[i].trim().toLowerCase();
+          const cached = SHORT_TERM_TRANSLATIONS[key];
+          if (cached) {
+            const translation = targetLanguage === "hi" ? cached.hi : cached.te;
+            if (translation) { obj[i] = translation; count++; }
+          }
+        } else {
+          walk(obj[i], parentKey, false);
+        }
+      }
+      return;
+    }
+
+    if (obj && typeof obj === "object") {
+      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+        // Skip entire top-level subtrees
+        if (isTopLevel && SKIP_TOP_LEVEL.has(key)) continue;
+
+        if (typeof value === "string") {
+          const lookupKey = value.trim().toLowerCase();
+          const cached = SHORT_TERM_TRANSLATIONS[lookupKey];
+          if (cached) {
+            const translation = targetLanguage === "hi" ? cached.hi : cached.te;
+            if (translation) { (obj as any)[key] = translation; count++; }
+          }
+        } else {
+          walk(value, key, false);
+        }
+      }
+    }
+  }
+
+  walk(report, undefined, true);
+  return count;
+}
+
 // ── Detection heuristics ────────────────────────────────────────────────────
 
 /**
@@ -924,6 +1069,7 @@ export interface TranslationResult {
   stringsTranslated: number;
   stringsCached: number;       // How many resolved from phrase cache (zero API cost)
   batchesSent: number;
+  totalBatchesNeeded: number;  // Total Gemini batches needed (before any maxBatches limit)
   errors: string[];
   tokensUsed: number;
   remainingEnglishCount: number;
@@ -962,12 +1108,14 @@ function lookupPhraseCache(text: string, targetLanguage: string): string | null 
 export async function runTranslationSweep(
   report: Record<string, any>,
   targetLanguage: string,
+  options?: { maxBatches?: number },
 ): Promise<TranslationResult> {
   const stats: TranslationResult = {
     stringsFound: 0,
     stringsTranslated: 0,
     stringsCached: 0,
     batchesSent: 0,
+    totalBatchesNeeded: 0,
     errors: [],
     tokensUsed: 0,
     remainingEnglishCount: 0,
@@ -978,6 +1126,10 @@ export async function runTranslationSweep(
 
   const langLabel = targetLanguage === "hi" ? "Hindi" : "Telugu";
   console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, concurrency: ${CONCURRENCY}, retries: ${MAX_RETRIES}, cache: ${Object.keys(PHRASE_CACHE).length} phrases)...`);
+
+  // ── Step 0: Pre-sweep — translate known short terms (planet names, signs, etc.) ──
+  const shortTermCount = applyKnownTermTranslations(report, targetLanguage);
+  console.log(`⚡ [TRANSLATE] Pre-sweep: ${shortTermCount} short terms translated (planets, signs, nakshatras, etc.)`);
 
   // ── Step 1: Collect all English strings ────────────────────────────────────
   const entries: TranslationEntry[] = [];
@@ -1068,11 +1220,23 @@ export async function runTranslationSweep(
     });
   }
 
-  console.log(`📦 [TRANSLATE] ${allBatches.length} batches to translate via Gemini (${CONCURRENCY} concurrent)...`);
+  stats.totalBatchesNeeded = allBatches.length;
+
+  // If maxBatches is set, only process that many batches
+  const maxBatches = options?.maxBatches;
+  const batchesToProcess = maxBatches && allBatches.length > maxBatches
+    ? allBatches.slice(0, maxBatches)
+    : allBatches;
+
+  if (maxBatches && allBatches.length > maxBatches) {
+    console.log(`⚠️ [TRANSLATE] Limiting to ${maxBatches}/${allBatches.length} batches (split mode). Remaining will be processed in next pass.`);
+  }
+
+  console.log(`📦 [TRANSLATE] ${batchesToProcess.length} batches to translate via Gemini (${CONCURRENCY} concurrent)...`);
 
   // ── Step 5: Execute batches in PARALLEL waves of CONCURRENCY ──────────────
-  for (let waveStart = 0; waveStart < allBatches.length; waveStart += CONCURRENCY) {
-    const wave = allBatches.slice(waveStart, waveStart + CONCURRENCY);
+  for (let waveStart = 0; waveStart < batchesToProcess.length; waveStart += CONCURRENCY) {
+    const wave = batchesToProcess.slice(waveStart, waveStart + CONCURRENCY);
     const waveNum = Math.floor(waveStart / CONCURRENCY) + 1;
     console.log(`🚀 [TRANSLATE] Wave ${waveNum}: launching ${wave.length} batches in parallel...`);
 

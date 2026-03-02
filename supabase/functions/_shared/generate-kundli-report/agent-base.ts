@@ -191,8 +191,14 @@ export async function callAgent<T>(
     return { success: false, error: "GEMINI_API_KEY is not configured" };
   }
 
-  // Add honesty guidelines + language instruction to system prompt
-  const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES + getLanguageInstruction();
+  // ── Prompt order optimized for Gemini implicit caching ──────────────
+  // Gemini 2.5 Flash caches the longest matching PREFIX across requests
+  // at 90% input token discount (min 1,024 tokens).
+  // By placing shared content (HONESTY_GUIDELINES + language instruction)
+  // FIRST, all 36+ agent calls in a report share the same prefix,
+  // maximizing cache hits. Within the same agent type (houses ×12,
+  // planets ×9), the ENTIRE system prompt is identical → full cache hit.
+  const enhancedSystemPrompt = HONESTY_GUIDELINES + getLanguageInstruction() + "\n\n" + systemPrompt;
 
   try {
     let tokensUsed = 0;

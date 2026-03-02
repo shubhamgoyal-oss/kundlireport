@@ -135,8 +135,8 @@ export async function callAgent<T>(
     return { success: false, error: "GEMINI_API_KEY is not configured" };
   }
 
-  // Add honesty guidelines to system prompt
-  const enhancedSystemPrompt = systemPrompt + HONESTY_GUIDELINES;
+  // Prompt order optimized for Gemini implicit caching (shared prefix first)
+  const enhancedSystemPrompt = HONESTY_GUIDELINES + "\n\n" + systemPrompt;
 
   try {
     let tokensUsed = 0;

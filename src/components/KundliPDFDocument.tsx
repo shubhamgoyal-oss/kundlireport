@@ -3178,10 +3178,13 @@ interface ChartData {
 
 interface KundliPDFProps {
   report: any; // Full KundliReport type
+  /** Explicit language override — use this in bulk mode to avoid global-state races */
+  language?: 'en' | 'hi' | 'te';
 }
 
-export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
-  applyLanguageTypography(report?.language);
+export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
+  // Use explicit language prop if provided, otherwise fall back to report.language
+  applyLanguageTypography(language || report?.language);
 
   const parseBirthTime = (rawTime: unknown): { hour: number; minute: number } | null => {
     const input = String(rawTime ?? '').trim();

@@ -383,6 +383,9 @@ export default function BulkKundliRunner() {
     return response.json();
   };
 
+  // Mutex to prevent concurrent PDF generation which corrupts global language state
+  const pdfMutexRef = useRef(Promise.resolve());
+
   const preparePdfForRow = async (row: BulkRowState) => {
     if (!row.jobId) {
       toast.error(`Row ${row.rowNumber}: missing jobId`);
@@ -414,10 +417,14 @@ export default function BulkKundliRunner() {
         tzone: Number(report.birthDetails?.timezone || 5.5),
       };
 
-      const rowLang = row.language || bulkLanguage;
+      const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te';
       const charts = await fetchMultipleCharts(birthDetails, 'North', rowLang === 'te' ? 'en' : rowLang, PDF_CHARTS);
       const reportWithCharts = { ...report, charts };
-      const blob = await pdf(<KundliPDFDocument report={reportWithCharts} />).toBlob();
+      // Serialize PDF generation via mutex — global ACTIVE_PDF_LANGUAGE must not be
+      // corrupted by concurrent renders (e.g., Hindi overwriting Telugu mid-render).
+      const blob = await (pdfMutexRef.current = pdfMutexRef.current.then(() =>
+        pdf(<KundliPDFDocument report={reportWithCharts} language={rowLang} />).toBlob()
+      ));
       const downloadUrl = URL.createObjectURL(blob);
       blobUrlsRef.current.push(downloadUrl);
       const fileName = buildDownloadFileName(row.name, row.rowNumber);

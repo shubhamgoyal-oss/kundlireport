@@ -2,6 +2,7 @@
 
 import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
+import { signName } from "./lang-utils.ts";
 
 type SadeSatiPhase = "rising" | "peak" | "setting" | "not_active";
 
@@ -78,35 +79,9 @@ const SIGNS = [
   "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces",
 ];
 
-const SIGN_HINDI: Record<string, string> = {
-  Aries: "Mesha",
-  Taurus: "Vrishabha",
-  Gemini: "Mithuna",
-  Cancer: "Karka",
-  Leo: "Simha",
-  Virgo: "Kanya",
-  Libra: "Tula",
-  Scorpio: "Vrischika",
-  Sagittarius: "Dhanu",
-  Capricorn: "Makara",
-  Aquarius: "Kumbha",
-  Pisces: "Meena",
-};
-
-const SIGN_TELUGU: Record<string, string> = {
-  Aries: "మేషం",
-  Taurus: "వృషభం",
-  Gemini: "మిథునం",
-  Cancer: "కర్కాటకం",
-  Leo: "సింహం",
-  Virgo: "కన్య",
-  Libra: "తులా",
-  Scorpio: "వృశ్చికం",
-  Sagittarius: "ధనుస్సు",
-  Capricorn: "మకరం",
-  Aquarius: "కుంభం",
-  Pisces: "మీనం",
-};
+// SIGN_HINDI/SIGN_TELUGU deleted — now use signName() from lang-utils.ts
+// (Note: SIGN_HINDI previously used romanized names like "Mesha" which was a bug;
+//  the language pack has proper Devanagari "मेष" which is correct.)
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -237,7 +212,7 @@ function normalizeSadeSatiPrediction(
   const years = buildPhaseYears(phase, currentYear);
   const startYear = Number.isFinite(raw.startYear as number) ? (raw.startYear as number) : years.start;
   const endYear = Number.isFinite(raw.endYear as number) ? (raw.endYear as number) : years.end;
-  const moonLocalName = lang === "te" ? (SIGN_TELUGU[moonSign] || "") : (SIGN_HINDI[moonSign] || "");
+  const moonLocalName = lang === "en" ? "" : signName(moonSign);
 
   const currentPeriod = startYear && endYear ? `${startYear} - ${endYear}` : tx(
     "Transit window based on current Saturn cycle",

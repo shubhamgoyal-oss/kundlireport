@@ -16,30 +16,9 @@ export function getAgentLanguage(): string {
   return _agentLanguage;
 }
 
-function getLanguageInstruction(): string {
-  if (_agentLanguage === "hi") {
-    return `
-
-CRITICAL LANGUAGE REQUIREMENT — HINDI (हिन्दी):
-You MUST write ALL text content in Hindi using Devanagari script (हिन्दी).
-Every string value in your JSON response — descriptions, interpretations, predictions,
-effects, causes, benefits, remedies, recommendations — MUST be in Hindi.
-Technical Vedic terms (planet names, dosha names, yoga names) should appear in
-both Hindi and transliterated form where natural, e.g. "शनि (Saturn)".
-DO NOT write English sentences. The entire report is for a Hindi-speaking audience.`;
-  }
-  if (_agentLanguage === "te") {
-    return `
-
-CRITICAL LANGUAGE REQUIREMENT — TELUGU (తెలుగు):
-You MUST write ALL text content in Telugu using Telugu script (తెలుగు).
-Every string value in your JSON response — descriptions, interpretations, predictions,
-effects, causes, benefits, remedies, recommendations — MUST be in Telugu.
-Technical Vedic terms may appear in both Telugu and transliterated form.
-DO NOT write English sentences. The entire report is for a Telugu-speaking audience.`;
-  }
-  return "";
-}
+// getLanguageInstruction() now reads from the canonical language pack
+// instead of hardcoding per-language text. See lang-utils.ts.
+import { globalLanguageInstruction } from "./lang-utils.ts";
 
 // Core honesty guidelines added to ALL agent prompts
 export const HONESTY_GUIDELINES = `
@@ -198,7 +177,7 @@ export async function callAgent<T>(
   // FIRST, all 36+ agent calls in a report share the same prefix,
   // maximizing cache hits. Within the same agent type (houses ×12,
   // planets ×9), the ENTIRE system prompt is identical → full cache hit.
-  const enhancedSystemPrompt = HONESTY_GUIDELINES + getLanguageInstruction() + "\n\n" + systemPrompt;
+  const enhancedSystemPrompt = HONESTY_GUIDELINES + globalLanguageInstruction() + "\n\n" + systemPrompt;
 
   try {
     let tokensUsed = 0;

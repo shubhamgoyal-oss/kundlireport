@@ -3,6 +3,7 @@
 import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
 import { getNakshatraWithPada } from "./utils/nakshatra.ts";
+import { planetName, signName, term } from "./lang-utils.ts";
 
 export interface MahadashaPrediction {
   planet: string;
@@ -400,15 +401,7 @@ const PLANET_SIGNIFICATIONS_HI: Record<string, PlanetSig> = {
   Ketu: { themes: "वैराग्य, सुधार और आंतरिक पुनर्गठन", opportunity: "व्यर्थ को हटाकर आध्यात्मिक स्पष्टता लाएँ", caution: "अलगाव, भ्रम और उदासीनता" },
 };
 
-const PLANET_NAME_HI: Record<string, string> = {
-  Sun: "सूर्य", Moon: "चंद्रमा", Mars: "मंगल", Mercury: "बुध",
-  Jupiter: "गुरु", Venus: "शुक्र", Saturn: "शनि", Rahu: "राहु", Ketu: "केतु",
-};
-
-const PLANET_NAME_TE: Record<string, string> = {
-  Sun: "సూర్యుడు", Moon: "చంద్రుడు", Mars: "కుజుడు", Mercury: "బుధుడు",
-  Jupiter: "గురుడు", Venus: "శుక్రుడు", Saturn: "శని", Rahu: "రాహు", Ketu: "కేతు",
-};
+// PLANET_NAME_HI/TE deleted — now use planetName() from lang-utils.ts
 
 const PLANET_SIGNIFICATIONS_TE: Record<string, PlanetSig> = {
   Sun: { themes: "అధికారం, గుర్తింపు మరియు జీవిత దిశ", opportunity: "నాయకత్వం మరియు బాధ్యతలో ముందడుగు వేయండి", caution: "అహంకారం మరియు అధికార ఘర్షణలు" },
@@ -422,17 +415,7 @@ const PLANET_SIGNIFICATIONS_TE: Record<string, PlanetSig> = {
   Ketu: { themes: "వైరాగ్యం, సరిదిద్దుకోవడం మరియు అంతర్గత పునర్వ్యవస్థీకరణ", opportunity: "అనవసరాన్ని తొలగించి ఆధ్యాత్మిక స్పష్టతను పెంచండి", caution: "ఉపసంహరణ, గందరగోళం మరియు నిర్లిప్తత" },
 };
 
-const SIGN_NAME_HI: Record<string, string> = {
-  Aries: "मेष", Taurus: "वृषभ", Gemini: "मिथुन", Cancer: "कर्क",
-  Leo: "सिंह", Virgo: "कन्या", Libra: "तुला", Scorpio: "वृश्चिक",
-  Sagittarius: "धनु", Capricorn: "मकर", Aquarius: "कुम्भ", Pisces: "मीन",
-};
-
-const SIGN_NAME_TE: Record<string, string> = {
-  Aries: "మేషం", Taurus: "వృషభం", Gemini: "మిథునం", Cancer: "కర్కాటకం",
-  Leo: "సింహం", Virgo: "కన్య", Libra: "తులా", Scorpio: "వృశ్చికం",
-  Sagittarius: "ధనుస్సు", Capricorn: "మకరం", Aquarius: "కుంభం", Pisces: "మీనం",
-};
+// SIGN_NAME_HI/TE deleted — now use signName() from lang-utils.ts
 
 /** Get signification dict in the active language */
 function getPlanetSig(planet: string): PlanetSig {
@@ -445,19 +428,16 @@ function getPlanetSig(planet: string): PlanetSig {
 function planetContext(planet: string, allPlanets: SeerPlanet[]): string {
   const p = allPlanets.find((x) => x.name === planet);
   const lang = getAgentLanguage();
-  if (lang === "hi") {
-    const pName = PLANET_NAME_HI[planet] || planet;
-    if (!p) return `${pName} (स्थिति अनुपलब्ध)`;
-    const sign = SIGN_NAME_HI[p.sign] || p.sign;
-    return `${pName} ${sign} राशि में (भाव ${p.house})${p.isRetro ? ", वक्री" : ""}`;
+  const pName = planetName(planet);
+  if (!p) {
+    if (lang === "hi") return `${pName} (स्थिति अनुपलब्ध)`;
+    if (lang === "te") return `${pName} (స్థానం అందుబాటులో లేదు)`;
+    return `${planet} (placement unavailable)`;
   }
-  if (lang === "te") {
-    const pName = PLANET_NAME_TE[planet] || planet;
-    if (!p) return `${pName} (స్థానం అందుబాటులో లేదు)`;
-    const sign = SIGN_NAME_TE[p.sign] || p.sign;
-    return `${pName} ${sign} రాశిలో (భావం ${p.house})${p.isRetro ? ", వక్రి" : ""}`;
-  }
-  if (!p) return `${planet} (placement unavailable)`;
+  const sName = signName(p.sign);
+  const retro = p.isRetro ? `, ${term("Retrograde")}` : "";
+  if (lang === "hi") return `${pName} ${sName} राशि में (भाव ${p.house})${retro}`;
+  if (lang === "te") return `${pName} ${sName} రాశిలో (భావం ${p.house})${retro}`;
   return `${planet} in ${p.sign} (House ${p.house})${p.isRetro ? ", retrograde" : ""}`;
 }
 
@@ -505,13 +485,13 @@ function buildAntardashaInterpretation(
   const adCtx = planetContext(antardasha, allPlanets);
   const lang = getAgentLanguage();
   if (lang === "hi") {
-    const mdName = PLANET_NAME_HI[mahadasha] || mahadasha;
-    const adName = PLANET_NAME_HI[antardasha] || antardasha;
+    const mdName = planetName(mahadasha);
+    const adName = planetName(antardasha);
     return `${mdName}/${adName} का संयोग ${md.themes} और ${ad.themes} को जोड़ता है। इस कुंडली में ${mdCtx} और ${adCtx} मिलकर कार्य करते हैं, इसलिए परिणाम सुनियोजित प्रयासों से आते हैं। यह समय उन कार्यों के लिए सर्वोत्तम है जो जिम्मेदारी और समय को संतुलित करते हैं। ${md.caution} और ${ad.caution} से बचने के लिए निर्णय तथ्यों पर आधारित रखें।`;
   }
   if (lang === "te") {
-    const mdName = PLANET_NAME_TE[mahadasha] || mahadasha;
-    const adName = PLANET_NAME_TE[antardasha] || antardasha;
+    const mdName = planetName(mahadasha);
+    const adName = planetName(antardasha);
     return `${mdName}/${adName} కలయిక ${md.themes} మరియు ${ad.themes} ను అనుసంధానిస్తుంది. ఈ జాతకంలో ${mdCtx} మరియు ${adCtx} కలిసి పనిచేస్తాయి, కాబట్టి ఫలితాలు సుశిక్షిత ప్రయత్నాల ద్వారా వస్తాయి. ఈ సమయం బాధ్యత మరియు సమయాన్ని సమతుల్యం చేసే పనులకు అత్యంత అనుకూలం. ${md.caution} మరియు ${ad.caution} నుండి తప్పించుకోవడానికి నిర్ణయాలను వాస్తవాలపై ఆధారపరచండి.`;
   }
   return `${mahadasha}/${antardasha} combines ${md.themes} with ${ad.themes}. In this chart, ${mdCtx} works in tandem with ${adCtx}, so results come through intentional sequencing rather than sudden luck. This window is strongest for actions that align responsibility with timing: commit to high-value priorities, formalize key decisions, and keep execution measurable. If unmanaged, ${md.caution} can amplify ${ad.caution}, so avoid reactive decisions and keep your strategy grounded in facts.`;
@@ -522,8 +502,8 @@ function buildAntardashaFocusAreas(mahadasha: string, antardasha: string): strin
   const ad = getPlanetSig(antardasha);
   const lang = getAgentLanguage();
   if (lang === "hi") {
-    const mdName = PLANET_NAME_HI[mahadasha] || mahadasha;
-    const adName = PLANET_NAME_HI[antardasha] || antardasha;
+    const mdName = planetName(mahadasha);
+    const adName = planetName(antardasha);
     return [
       `${mdName} और ${adName} का संयोग — ${md.themes} तथा ${ad.themes} पर केंद्रित।`,
       `अवसर — ${md.opportunity}; ${ad.opportunity} द्वारा समर्थित।`,
@@ -531,8 +511,8 @@ function buildAntardashaFocusAreas(mahadasha: string, antardasha: string): strin
     ];
   }
   if (lang === "te") {
-    const mdName = PLANET_NAME_TE[mahadasha] || mahadasha;
-    const adName = PLANET_NAME_TE[antardasha] || antardasha;
+    const mdName = planetName(mahadasha);
+    const adName = planetName(antardasha);
     return [
       `${mdName} మరియు ${adName} కలయిక — ${md.themes} మరియు ${ad.themes} పై కేంద్రీకృతం.`,
       `అవకాశం — ${md.opportunity}; ${ad.opportunity} ద్వారా మద్దతు.`,
@@ -965,13 +945,13 @@ Focus on:
         predictions: useOrFallbackArray(aiAd?.predictions,
           lang === "hi"
             ? [
-                `${PLANET_NAME_HI[currentDasha.mahadasha] || currentDasha.mahadasha}/${PLANET_NAME_HI[adWindow.antardasha] || adWindow.antardasha} चरण कार्य और जिम्मेदारी संरचनाओं में प्राथमिकताओं को पुनर्निर्धारित कर सकता है।`,
+                `${planetName(currentDasha.mahadasha)}/${planetName(adWindow.antardasha)} चरण कार्य और जिम्मेदारी संरचनाओं में प्राथमिकताओं को पुनर्निर्धारित कर सकता है।`,
                 `जब प्रतिबद्धताओं को क्रमबद्ध और समीक्षित किया जाता है तो परिणाम बेहतर होते हैं।`,
                 `संबंध और वित्तीय निर्णय दीर्घकालिक स्थिरता के लिए मूल्यांकन करके लें।`,
               ]
             : lang === "te"
             ? [
-                `${PLANET_NAME_TE[currentDasha.mahadasha] || currentDasha.mahadasha}/${PLANET_NAME_TE[adWindow.antardasha] || adWindow.antardasha} దశ పని మరియు బాధ్యత నిర్మాణాలలో ప్రాధాన్యతలను పునర్నిర్ణయించగలదు.`,
+                `${planetName(currentDasha.mahadasha)}/${planetName(adWindow.antardasha)} దశ పని మరియు బాధ్యత నిర్మాణాలలో ప్రాధాన్యతలను పునర్నిర్ణయించగలదు.`,
                 `నిబద్ధతలను క్రమబద్ధంగా మరియు సమీక్షాపూర్వకంగా చేసినప్పుడు ఫలితాలు మెరుగుపడతాయి.`,
                 `సంబంధ మరియు ఆర్థిక నిర్ణయాలను దీర్ఘకాలిక స్థిరత్వం కోసం మూల్యాంకనం చేసి తీసుకోండి.`,
               ]
@@ -995,9 +975,9 @@ Focus on:
         startDate: formatDate(mdWindow.startDate),
         endDate: formatDate(mdWindow.endDate),
         overview: lang === "hi"
-          ? `${PLANET_NAME_HI[mdWindow.mahadasha] || mdWindow.mahadasha} महादशा ${getPlanetSig(mdWindow.mahadasha).themes} पर केंद्रित एक दीर्घकालिक कर्म अध्याय खोलती है। प्रत्येक अंतर्दशा गति, प्राथमिकताओं और जोखिम प्रोफ़ाइल को बदलती है। सर्वोत्तम रणनीति चरणबद्ध कार्यान्वयन है: उद्देश्य निर्धारित करें, प्रत्येक अंतर्दशा परिवर्तन पर पुनर्मूल्यांकन करें।`
+          ? `${planetName(mdWindow.mahadasha)} महादशा ${getPlanetSig(mdWindow.mahadasha).themes} पर केंद्रित एक दीर्घकालिक कर्म अध्याय खोलती है। प्रत्येक अंतर्दशा गति, प्राथमिकताओं और जोखिम प्रोफ़ाइल को बदलती है। सर्वोत्तम रणनीति चरणबद्ध कार्यान्वयन है: उद्देश्य निर्धारित करें, प्रत्येक अंतर्दशा परिवर्तन पर पुनर्मूल्यांकन करें।`
           : lang === "te"
-          ? `${PLANET_NAME_TE[mdWindow.mahadasha] || mdWindow.mahadasha} మహాదశ ${getPlanetSig(mdWindow.mahadasha).themes} పై కేంద్రీకృతమైన దీర్ఘకాలిక కర్మ అధ్యాయాన్ని ప్రారంభిస్తుంది. ప్రతి అంతర్దశ వేగం, ప్రాధాన్యతలు మరియు ఫలితాలను మారుస్తుంది. ఉత్తమ వ్యూహం దశల వారీగా అమలు చేయడం: లక్ష్యాలను ముందుగా నిర్ణయించి, ప్రతి అంతర్దశ మార్పులో పునఃమూల్యాంకనం చేయండి.`
+          ? `${planetName(mdWindow.mahadasha)} మహాదశ ${getPlanetSig(mdWindow.mahadasha).themes} పై కేంద్రీకృతమైన దీర్ఘకాలిక కర్మ అధ్యాయాన్ని ప్రారంభిస్తుంది. ప్రతి అంతర్దశ వేగం, ప్రాధాన్యతలు మరియు ఫలితాలను మారుస్తుంది. ఉత్తమ వ్యూహం దశల వారీగా అమలు చేయడం: లక్ష్యాలను ముందుగా నిర్ణయించి, ప్రతి అంతర్దశ మార్పులో పునఃమూల్యాంకనం చేయండి.`
           : `${mdWindow.mahadasha} Mahadasha opens a long-form karmic chapter centered on ${PLANET_SIGNIFICATIONS[mdWindow.mahadasha]?.themes || "structured life realignment"}. Each Antardasha modifies pace, priorities, and risk profile. The best strategy is phase-wise execution: define objectives early, re-evaluate at each Antardasha transition, and adjust commitments to preserve stability while compounding gains.`,
         antardashas: mdWindow.antardashas.map((adWindow) => {
           const deterministic = deterministicByAntardasha?.get(adWindow.antardasha);

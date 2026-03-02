@@ -104,6 +104,10 @@ export default function BulkKundliRunner() {
   const blobUrlsRef = useRef<string[]>([]);
   const restoredRef = useRef(false);  // prevent double-restore
 
+  // Live ref for bulkRows — avoids stale closure in async processing loops
+  const bulkRowsRef = useRef<BulkRowState[]>([]);
+  useEffect(() => { bulkRowsRef.current = bulkRows; }, [bulkRows]);
+
   // ── Restore persisted state on mount ──────────────────────────────────
   useEffect(() => {
     preloadCityDatabase();
@@ -202,11 +206,19 @@ export default function BulkKundliRunner() {
               const name = String(decoded?.name || '').trim();
               const place = String(decoded?.placeOfBirth || '').trim();
               setBulkRows((prev) =>
-                prev.map((br) =>
-                  br.rowNumber === r.rowNumber
-                    ? { ...br, gender: g, detectedGender: g, ...(name ? { name } : {}), ...(place ? { place } : {}) }
-                    : br,
-                ),
+                prev.map((br) => {
+                  if (br.rowNumber !== r.rowNumber) return br;
+                  // Only set gender if user hasn't manually overridden it
+                  // (first detection: detectedGender is undefined; re-detection: preserve user edits)
+                  const userOverrode = br.detectedGender !== undefined && br.gender !== br.detectedGender;
+                  return {
+                    ...br,
+                    detectedGender: g,
+                    ...(userOverrode ? {} : { gender: g }),
+                    ...(name ? { name } : {}),
+                    ...(place ? { place } : {}),
+                  };
+                }),
               );
             }
           } catch (err) {
@@ -643,7 +655,8 @@ export default function BulkKundliRunner() {
         }
 
         // Get current row state to read user's gender/language overrides
-        const currentRow = bulkRows.find((r) => r.rowNumber === row.rowNumber);
+        // Use ref to avoid stale closure — bulkRows captured at function start won't reflect later setState updates
+        const currentRow = bulkRowsRef.current.find((r) => r.rowNumber === row.rowNumber);
         const finalGender = currentRow?.gender || detectedGender;
         const finalLanguage = currentRow?.language || bulkLanguage;
 
@@ -745,7 +758,8 @@ export default function BulkKundliRunner() {
             throw new Error('Missing normalized values after decipher step');
           }
 
-          const currentRow = bulkRows.find((r) => r.rowNumber === row.rowNumber);
+          // Use ref to avoid stale closure in retry pass
+          const currentRow = bulkRowsRef.current.find((r) => r.rowNumber === row.rowNumber);
           const finalGender = currentRow?.gender || detectedGender;
           const finalLanguage = currentRow?.language || bulkLanguage;
 

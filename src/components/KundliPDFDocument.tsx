@@ -404,6 +404,13 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Partial Aspect': 'आंशिक दृष्टि',
     'Special Aspect': 'विशेष दृष्टि',
     'Conjunction': 'युति',
+    // ── Hardcoded paragraphs ──────────────────────────────────────────────
+    'Before exploring specific remedies, it is essential to understand the profound science and tradition behind Vedic Upayas (remedial measures). This section explains why these remedies work and how they have been validated through millennia of practice.': 'विशिष्ट उपायों का अध्ययन करने से पहले, वैदिक उपायों के पीछे के गहन विज्ञान और परंपरा को समझना आवश्यक है। यह खंड बताता है कि ये उपाय क्यों कार्य करते हैं और सहस्राब्दियों के अभ्यास से कैसे सिद्ध हुए हैं।',
+    'The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.': 'आपकी कुंडली में निम्नलिखित चुनौतीपूर्ण संयोजन मौजूद हैं। इनकी जागरूकता आपको कठिनाइयों से निपटने और उचित उपाय लागू करने में सहायता करती है।',
+    'Chart image unavailable for this section.': 'इस खंड के लिए चार्ट चित्र उपलब्ध नहीं है।',
+    'Gemstones have been used in Vedic astrology for millennia to harness planetary energies and balance cosmic influences.': 'वैदिक ज्योतिष में सहस्राब्दियों से ग्रह ऊर्जाओं को संतुलित करने और ब्रह्मांडीय प्रभावों को संतुलित करने के लिए रत्नों का उपयोग किया जाता रहा है।',
+    'Total Yogas Detected': 'कुल योग पाए गए',
+    'Overall Strength': 'समग्र शक्ति',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'उपाय',
     'Significance': 'महत्व',
@@ -926,6 +933,13 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Partial Aspect': 'పాక్షిక దృష్టి',
     'Special Aspect': 'ప్రత్యేక దృష్టి',
     'Conjunction': 'యుతి',
+    // ── Hardcoded paragraphs ──────────────────────────────────────────────
+    'Before exploring specific remedies, it is essential to understand the profound science and tradition behind Vedic Upayas (remedial measures). This section explains why these remedies work and how they have been validated through millennia of practice.': 'నిర్దిష్ట పరిహారాలను అన్వేషించే ముందు, వైదిక ఉపాయాల వెనుక ఉన్న లోతైన శాస్త్రం మరియు సంప్రదాయాన్ని అర్థం చేసుకోవడం అవసరం. ఈ విభాగం ఈ పరిహారాలు ఎందుకు పని చేస్తాయో మరియు సహస్రాబ్దాల అభ్యాసం ద్వారా ఎలా ధృవీకరించబడ్డాయో వివరిస్తుంది.',
+    'The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.': 'మీ జాతకంలో క్రింది సవాలు కలయికలు ఉన్నాయి. వీటి గురించి అవగాహన కలిగి ఉంటే కష్టాలను అధిగమించడంలో మరియు తగిన పరిహారాలను అమలు చేయడంలో మీకు సహాయపడుతుంది.',
+    'Chart image unavailable for this section.': 'ఈ విభాగానికి చార్ట్ చిత్రం అందుబాటులో లేదు.',
+    'Gemstones have been used in Vedic astrology for millennia to harness planetary energies and balance cosmic influences.': 'గ్రహ శక్తులను అదుపు చేయడానికి మరియు విశ్వ ప్రభావాలను సమతుల్యం చేయడానికి వైదిక జ్యోతిష్యంలో సహస్రాబ్దాలుగా రత్నాలు ఉపయోగించబడుతున్నాయి.',
+    'Total Yogas Detected': 'మొత్తం యోగాలు గుర్తించబడ్డాయి',
+    'Overall Strength': 'మొత్తం బలం',
     // ── SubSection titles ─────────────────────────────────────────────────────
     'Remedies': 'పరిహారాలు',
     'Significance': 'ప్రాముఖ్యత',
@@ -1454,6 +1468,53 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Cap: 'मकर',
     Aqu: 'कुंभ',
     Pis: 'मीन',
+    // ── Karaka type names ──────────────────────────────────────────────────
+    Atmakaraka: 'आत्मकारक',
+    Amatyakaraka: 'अमात्यकारक',
+    Bhratrikaraka: 'भ्रातृकारक',
+    Matrikaraka: 'मातृकारक',
+    Putrakaraka: 'पुत्रकारक',
+    Gnatikaraka: 'ज्ञातिकारक',
+    Darakaraka: 'दारकारक',
+    // ── Signification words ─────────────────────────────────────────────
+    Self: 'स्वयं',
+    soul: 'आत्मा',
+    life: 'जीवन',
+    purpose: 'उद्देश्य',
+    ego: 'अहंकार',
+    mind: 'मन',
+    advisors: 'सलाहकार',
+    Siblings: 'भाई-बहन',
+    siblings: 'भाई-बहन',
+    courage: 'साहस',
+    efforts: 'प्रयास',
+    Mother: 'माता',
+    mother: 'माता',
+    property: 'संपत्ति',
+    emotions: 'भावनाएं',
+    vehicles: 'वाहन',
+    Children: 'संतान',
+    children: 'संतान',
+    creativity: 'रचनात्मकता',
+    intelligence: 'बुद्धि',
+    Enemies: 'शत्रु',
+    enemies: 'शत्रु',
+    diseases: 'रोग',
+    debts: 'ऋण',
+    obstacles: 'बाधाएं',
+    partnerships: 'साझेदारी',
+    spouse: 'जीवनसाथी',
+    marriage: 'विवाह',
+    // ── Common English words appearing in reports ────────────────────────
+    Total: 'कुल',
+    Detected: 'पाया गया',
+    Overall: 'समग्र',
+    Rating: 'रेटिंग',
+    Severity: 'गंभीरता',
+    Chart: 'कुंडली',
+    image: 'चित्र',
+    unavailable: 'अनुपलब्ध',
+    section: 'खंड',
     // ── Misc ───────────────────────────────────────────────────────────────
     Empty: 'खाली',
     Nature: 'स्वभाव',
@@ -1629,6 +1690,53 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Cap: 'మకరం',
     Aqu: 'కుంభం',
     Pis: 'మీనం',
+    // ── Karaka type names ──────────────────────────────────────────────────
+    Atmakaraka: 'ఆత్మకారకం',
+    Amatyakaraka: 'అమాత్యకారకం',
+    Bhratrikaraka: 'భ్రాతృకారకం',
+    Matrikaraka: 'మాతృకారకం',
+    Putrakaraka: 'పుత్రకారకం',
+    Gnatikaraka: 'జ్ఞాతికారకం',
+    Darakaraka: 'దారకారకం',
+    // ── Signification words ─────────────────────────────────────────────
+    Self: 'ఆత్మ',
+    soul: 'ఆత్మ',
+    life: 'జీవితం',
+    purpose: 'ఉద్దేశ్యం',
+    ego: 'అహంకారం',
+    mind: 'మనస్సు',
+    advisors: 'సలహాదారులు',
+    Siblings: 'తోబుట్టువులు',
+    siblings: 'తోబుట్టువులు',
+    courage: 'ధైర్యం',
+    efforts: 'ప్రయత్నాలు',
+    Mother: 'తల్లి',
+    mother: 'తల్లి',
+    property: 'ఆస్తి',
+    emotions: 'భావాలు',
+    vehicles: 'వాహనాలు',
+    Children: 'పిల్లలు',
+    children: 'పిల్లలు',
+    creativity: 'సృజనాత్మకత',
+    intelligence: 'బుద్ధి',
+    Enemies: 'శత్రువులు',
+    enemies: 'శత్రువులు',
+    diseases: 'వ్యాధులు',
+    debts: 'అప్పులు',
+    obstacles: 'అడ్డంకులు',
+    partnerships: 'భాగస్వామ్యాలు',
+    spouse: 'భాగస్వామి',
+    marriage: 'వివాహం',
+    // ── Common English words appearing in reports ────────────────────────
+    Total: 'మొత్తం',
+    Detected: 'గుర్తించబడింది',
+    Overall: 'మొత్తం',
+    Rating: 'రేటింగ్',
+    Severity: 'తీవ్రత',
+    Chart: 'చార్ట్',
+    image: 'చిత్రం',
+    unavailable: 'అందుబాటులో లేదు',
+    section: 'విభాగం',
     // ── Misc ───────────────────────────────────────────────────────────────
     Empty: 'ఖాళీ',
     Nature: 'స్వభావం',
@@ -3798,7 +3906,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                 <SVGRenderer svgString={chart.svg} />
               ) : (
                 <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', paddingHorizontal: 8 }}>
-                  Chart image unavailable for this section.
+                  {localizePdfUiText('Chart image unavailable for this section.')}
                 </Text>
               )}
             </View>
@@ -4412,7 +4520,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             {report.marriage.mangalDosha?.present && (
               <SubSection title="Mangal Dosha">
                 <View style={styles.highlight}>
-                  <Text style={styles.bodyText}>Severity: {report.marriage.mangalDosha.severity}</Text>
+                  <Text style={styles.bodyText}>{localizePdfUiText('Severity')}: {report.marriage.mangalDosha.severity}</Text>
                 </View>
                 <BulletList items={report.marriage.mangalDosha.remedies || []} />
               </SubSection>
@@ -5062,8 +5170,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               <Text style={styles.paragraph}>{report.rajYogs.overview || ''}</Text>
               
               <View style={styles.highlight}>
-                <Text style={styles.boldLabel}>Total Yogas Detected: {report.rajYogs.totalYogasDetected || 0}</Text>
-                <Text style={styles.bodyText}>Overall Strength: {report.rajYogs.overallYogaStrength?.rating?.toUpperCase() || 'N/A'}</Text>
+                <Text style={styles.boldLabel}>{localizePdfUiText('Total Yogas Detected')}: {report.rajYogs.totalYogasDetected || 0}</Text>
+                <Text style={styles.bodyText}>{localizePdfUiText('Overall Strength')}: {localizePdfUiText(report.rajYogs.overallYogaStrength?.rating?.toUpperCase() || 'N/A')}</Text>
               </View>
               
               <Text style={styles.paragraph}>{report.rajYogs.overallYogaStrength?.description || ''}</Text>
@@ -5156,7 +5264,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
                         {report.rajYogs.yogaEnhancement.mantras.map((m: any, idx: number) => (
                           <View key={idx} style={{ marginBottom: 5 }}>
                             <Text style={styles.boldLabel}>{m.mantra}</Text>
-                            <Text style={styles.bodyText}>Purpose: {m.purpose} | Timing: {m.timing}</Text>
+                            <Text style={styles.bodyText}>{localizePdfUiText('Purpose')}: {m.purpose} | {localizePdfUiText('Timing')}: {m.timing}</Text>
                           </View>
                         ))}
                       </>
@@ -5179,7 +5287,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <ContentPage sectionName="Challenging Yogas">
               <Section title="Challenging Yogas (For Awareness)">
                 <Text style={styles.paragraph}>
-                  The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.
+                  {localizePdfUiText('The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.')}
                 </Text>
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
                   <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
@@ -5503,7 +5611,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
         <ContentPage sectionName="Vedic Remedies">
           <Section title="Understanding Vedic Remedies">
             <Text style={styles.paragraph}>
-              Before exploring specific remedies, it is essential to understand the profound science and tradition behind Vedic Upayas (remedial measures). This section explains why these remedies work and how they have been validated through millennia of practice.
+              {localizePdfUiText('Before exploring specific remedies, it is essential to understand the profound science and tradition behind Vedic Upayas (remedial measures). This section explains why these remedies work and how they have been validated through millennia of practice.')}
             </Text>
 
             <SubSection title="Vedic Foundation">
@@ -5751,7 +5859,7 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
               {(report.remedies.donations || []).map((don: any, idx: number) => (
                 <View key={idx} style={{ marginBottom: 5 }}>
                   <Text style={styles.boldLabel}>{don.day} - {don.item}</Text>
-                  <Text style={styles.bodyText}>Planet: {don.planet} | {don.reason}</Text>
+                  <Text style={styles.bodyText}>{localizePdfUiText('Planet')}: {localizePdfUiText(don.planet)} | {don.reason}</Text>
                   <Text style={styles.scriptural}>{don.scripturalReference || ''}</Text>
                   <Text style={styles.successText}>{don.karmaScience || ''}</Text>
                 </View>
@@ -5801,8 +5909,8 @@ export const KundliPDFDocument = ({ report }: KundliPDFProps) => {
             <SubSection title="Weak Planets Summary">
               {(report.remedies.weakPlanets || []).map((wp: any, idx: number) => (
                 <View key={idx} style={styles.row}>
-                  <Text style={styles.label}>{wp.planet}:</Text>
-                  <Text style={styles.value}>{wp.reason} (Severity: {wp.severity})</Text>
+                  <Text style={styles.label}>{localizePdfUiText(wp.planet)}:</Text>
+                  <Text style={styles.value}>{wp.reason} ({localizePdfUiText('Severity')}: {wp.severity})</Text>
                 </View>
               ))}
             </SubSection>

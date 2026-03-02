@@ -1529,6 +1529,110 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     High: 'उच्च',
     Medium: 'मध्यम',
     Low: 'निम्न',
+    // ── House/Yoga classification terms ──────────────────────────────────
+    Kendra: 'केन्द्र',
+    Trikona: 'त्रिकोण',
+    Dusthana: 'दुस्थान',
+    Upachaya: 'उपचय',
+    Maraka: 'मारक',
+    Panaphara: 'पणफर',
+    Apoklima: 'आपोक्लिम',
+    Trik: 'त्रिक',
+    Raj: 'राज',
+    Yoga: 'योग',
+    Yogas: 'योग',
+    // ── English terms in parentheticals from backend data ────────────────
+    Excellent: 'उत्कृष्ट',
+    Exceptional: 'असाधारण',
+    Moderate: 'मध्यम',
+    Severe: 'गंभीर',
+    Mild: 'हल्का',
+    Dominance: 'प्रभुत्व',
+    Defensive: 'रक्षात्मक',
+    Research: 'शोध',
+    Depression: 'अवसाद',
+    Insomnia: 'अनिद्रा',
+    Perfection: 'पूर्णता',
+    Nervous: 'तंत्रिका',
+    system: 'तंत्र',
+    disorders: 'विकार',
+    Consultancy: 'परामर्श',
+    Independent: 'स्वतंत्र',
+    Transitional: 'संक्रमणकालीन',
+    Property: 'संपत्ति',
+    Advertising: 'विज्ञापन',
+    Media: 'मीडिया',
+    Luxury: 'विलासिता',
+    Estate: 'संपदा',
+    Financial: 'आर्थिक',
+    Consulting: 'परामर्श',
+    Fashion: 'फैशन',
+    Design: 'डिजाइन',
+    Public: 'सार्वजनिक',
+    Relations: 'संबंध',
+    Foreign: 'विदेशी',
+    Trade: 'व्यापार',
+    Entertainment: 'मनोरंजन',
+    Industry: 'उद्योग',
+    Diplomacy: 'राजनय',
+    Mining: 'खनन',
+    Manual: 'शारीरिक',
+    Labor: 'श्रम',
+    Traditional: 'पारंपरिक',
+    Farming: 'कृषि',
+    Heavy: 'भारी',
+    Manufacturing: 'विनिर्माण',
+    Real: 'रियल',
+    Creative: 'रचनात्मक',
+    Management: 'प्रबंधन',
+    // ── Marriage/Relationship terms ──────────────────────────────────────
+    confirmed: 'पुष्टि',
+    unmarried: 'अविवाहित',
+    stability: 'स्थिरता',
+    unless: 'जब तक',
+    Apply: 'लागू',
+    only: 'केवल',
+    Follow: 'पालन',
+    the: '',
+    is: '',
+    // ── Report structural labels ────────────────────────────────────────
+    Matrix: 'सारणी',
+    Strength: 'बल',
+    Purpose: 'उद्देश्य',
+    Timing: 'समय',
+    Pillars: 'स्तंभ',
+    Three: 'तीन',
+    Connection: 'संबंध',
+    Combination: 'संयोग',
+    Fire: 'अग्नि',
+    Water: 'जल',
+    Earth: 'पृथ्वी',
+    Air: 'वायु',
+    Ether: 'आकाश',
+    Waxing: 'शुक्ल',
+    Waning: 'कृष्ण',
+    Behind: 'पीछे',
+    scenes: 'परदे',
+    vitality: 'जीवन शक्ति',
+    identity: 'पहचान',
+    profession: 'व्यवसाय',
+    intellect: 'बुद्धि',
+    communication: 'संवाद',
+    comfort: 'आराम',
+    happiness: 'सुख',
+    education: 'शिक्षा',
+    longevity: 'दीर्घायु',
+    transformation: 'परिवर्तन',
+    fortune: 'भाग्य',
+    karma: 'कर्म',
+    gains: 'लाभ',
+    liberation: 'मोक्ष',
+    losses: 'हानि',
+    foreign: 'विदेश',
+    Nullified: 'निष्प्रभावी',
+    nullified: 'निष्प्रभावी',
+    Detected: 'पाया गया',
+    Strength: 'बल',
   },
   te: {
     Report: 'నివేదిక',
@@ -1751,6 +1855,110 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     High: 'ఉన్నత',
     Medium: 'మధ్యమ',
     Low: 'తక్కువ',
+    // ── House/Yoga classification terms ──────────────────────────────────
+    Kendra: 'కేంద్రం',
+    Trikona: 'త్రికోణం',
+    Dusthana: 'దుస్థానం',
+    Upachaya: 'ఉపచయం',
+    Maraka: 'మారకం',
+    Panaphara: 'పణఫరం',
+    Apoklima: 'అపోక్లిమం',
+    Trik: 'త్రిక్',
+    Raj: 'రాజ',
+    Yoga: 'యోగం',
+    Yogas: 'యోగాలు',
+    // ── English terms in parentheticals from backend data ────────────────
+    Excellent: 'అద్భుతం',
+    Exceptional: 'అసాధారణ',
+    Moderate: 'మధ్యస్థం',
+    Severe: 'తీవ్రం',
+    Mild: 'తేలిక',
+    Dominance: 'ఆధిపత్యం',
+    Defensive: 'రక్షణాత్మక',
+    Research: 'పరిశోధన',
+    Depression: 'నిరాశ',
+    Insomnia: 'నిద్రలేమి',
+    Perfection: 'పరిపూర్ణత',
+    Nervous: 'నాడీ',
+    system: 'వ్యవస్థ',
+    disorders: 'రుగ్మతలు',
+    Consultancy: 'సలహా',
+    Independent: 'స్వతంత్ర',
+    Transitional: 'పరివర్తన',
+    Property: 'ఆస్తి',
+    Advertising: 'ప్రకటనలు',
+    Media: 'మీడియా',
+    Luxury: 'విలాసం',
+    Estate: 'ఎస్టేట్',
+    Financial: 'ఆర్థిక',
+    Consulting: 'సలహా',
+    Fashion: 'ఫ్యాషన్',
+    Design: 'డిజైన్',
+    Public: 'ప్రజా',
+    Relations: 'సంబంధాలు',
+    Foreign: 'విదేశీ',
+    Trade: 'వాణిజ్యం',
+    Entertainment: 'వినోదం',
+    Industry: 'పరిశ్రమ',
+    Diplomacy: 'దౌత్యం',
+    Mining: 'గనుల తవ్వకం',
+    Manual: 'శారీరక',
+    Labor: 'శ్రమ',
+    Traditional: 'సాంప్రదాయ',
+    Farming: 'వ్యవసాయం',
+    Heavy: 'భారీ',
+    Manufacturing: 'ఉత్పత్తి',
+    Real: 'రియల్',
+    Creative: 'సృజనాత్మక',
+    Management: 'నిర్వహణ',
+    // ── Marriage/Relationship terms ──────────────────────────────────────
+    confirmed: 'నిర్ధారించబడిన',
+    unmarried: 'అవివాహిత',
+    stability: 'స్థిరత్వం',
+    unless: 'తప్ప',
+    Apply: 'వర్తింపజేయండి',
+    only: 'మాత్రమే',
+    Follow: 'అనుసరించండి',
+    the: '',
+    is: '',
+    // ── Report structural labels ────────────────────────────────────────
+    Matrix: 'మాత్రిక',
+    Strength: 'బలం',
+    Purpose: 'ఉద్దేశ్యం',
+    Timing: 'సమయం',
+    Pillars: 'స్తంభాలు',
+    Three: 'మూడు',
+    Connection: 'సంబంధం',
+    Combination: 'కలయిక',
+    Fire: 'అగ్ని',
+    Water: 'నీరు',
+    Earth: 'భూమి',
+    Air: 'వాయువు',
+    Ether: 'ఆకాశం',
+    Waxing: 'శుక్ల',
+    Waning: 'కృష్ణ',
+    Behind: 'వెనుక',
+    scenes: 'తెర',
+    vitality: 'జీవశక్తి',
+    identity: 'గుర్తింపు',
+    profession: 'వృత్తి',
+    intellect: 'బుద్ధి',
+    communication: 'సంభాషణ',
+    comfort: 'సౌఖ్యం',
+    happiness: 'సుఖం',
+    education: 'విద్య',
+    longevity: 'దీర్ఘాయువు',
+    transformation: 'పరివర్తన',
+    fortune: 'అదృష్టం',
+    karma: 'కర్మ',
+    gains: 'లాభాలు',
+    liberation: 'మోక్షం',
+    losses: 'నష్టాలు',
+    foreign: 'విదేశం',
+    Nullified: 'నిరాకరించబడింది',
+    nullified: 'నిరాకరించబడింది',
+    Detected: 'గుర్తించబడింది',
+    Strength: 'బలం',
   },
 };
 
@@ -1851,6 +2059,22 @@ const localizePdfUiText = (raw: string | null | undefined): string => {
   if (phraseMap[input]) return phraseMap[input];
 
   let output = input;
+
+  // ── Step 1: Strip parenthetical English from backend data ────────────────
+  // Backend agents often add English references in parentheses:
+  //   "केन्द्र (Kendra)" → "केन्द्र"
+  //   "मंगल दोष (Mangal दोष)" → "मंगल दोष"
+  //   "उत्कृष्ट (Excellent)" → "उत्कृष्ट"
+  // Remove parenthetical content where >40% of letters are Latin.
+  output = output.replace(/\s*\(([^)]*)\)/g, (_match, inner: string) => {
+    const letters = inner.replace(/[\s\d\p{P}\p{S}]/gu, '');
+    if (letters.length === 0) return _match; // keep empty/symbol-only parens
+    const latinChars = (letters.match(/[A-Za-z]/g) || []).length;
+    if (latinChars / letters.length > 0.4) return ''; // strip English parentheticals
+    return _match; // keep Hindi/Telugu parentheticals
+  });
+
+  // ── Step 2: Phrase-level replacements (sorted longest first) ─────────────
   const phraseEntries = Object.entries(phraseMap).sort((a, b) => b[0].length - a[0].length);
   for (const [from, to] of phraseEntries) {
     const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1860,11 +2084,18 @@ const localizePdfUiText = (raw: string | null | undefined): string => {
     output = output.replace(re, to);
   }
 
+  // ── Step 3: Word-level replacements ──────────────────────────────────────
   for (const [from, to] of Object.entries(wordMap)) {
     const escaped = from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`\\b${escaped}\\b`, 'gi');
     output = output.replace(re, to);
   }
+
+  // ── Step 4: Cleanup ───────────────────────────────────────────────────────
+  // Clean up artifacts: double spaces, orphaned dashes, trailing/leading whitespace
+  output = output.replace(/\s*-\s*,/g, ',');       // "purpose-, " → ", "
+  output = output.replace(/\s{2,}/g, ' ').trim();
+  output = output.replace(/^[,\s]+|[,\s]+$/g, ''); // trim leading/trailing commas
 
   return output;
 };

@@ -71,7 +71,10 @@ const KundliReportGenerator = () => {
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
   const [jobProgress, setJobProgress] = useState(0);
   const [jobPhase, setJobPhase] = useState("");
-  const isHindi = (i18n.language ? i18n.language.toLowerCase() : '').startsWith('hi');
+  // Derive report language from i18n (supports en, hi, te)
+  const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
+  const reportLanguage: 'en' | 'hi' | 'te' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : 'en';
+  const isHindi = reportLanguage !== 'en'; // true for Hindi & Telugu — Indic UI labels
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -197,7 +200,7 @@ const KundliReportGenerator = () => {
             latitude: data.lat || 0,
             longitude: data.lon || 0,
             timezone: tzOffset,
-            language: isHindi ? 'hi' : 'en',
+            language: reportLanguage,
             gender: data.gender,
             visitorId,
             sessionId,

@@ -46,7 +46,8 @@ serve(async (req) => {
   // Give translation 120s, then bail and proceed with whatever we have.
   const TRANSLATION_TIMEOUT_MS = 120_000;
   // Maximum Gemini batches per pass. If more are needed, we self-chain.
-  const MAX_BATCHES_PER_PASS = 12;
+  // With CONCURRENCY=4, 15 batches = 4 waves ≈ 80-100s (well within 120s timeout).
+  const MAX_BATCHES_PER_PASS = 15;
 
   let jobId: string | undefined;
   let report: Record<string, any> | undefined;

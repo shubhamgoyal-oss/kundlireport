@@ -23,7 +23,7 @@ import { callAgent, type AgentResponse } from "./agent-base.ts";
 // ── Configuration ────────────────────────────────────────────────────────────
 
 const BATCH_SIZE = 40;          // Strings per Gemini call (bigger = fewer round-trips)
-const CONCURRENCY = 3;          // Run this many batches in parallel per wave
+const CONCURRENCY = 4;          // Run this many batches in parallel per wave
 const MAX_RETRIES = 1;          // Retry failed batches once (2 attempts total)
 const RETRY_DELAY_MS = 2_000;   // 2 seconds between retries
 const LATIN_RATIO_THRESHOLD = 0.15; // 15% Latin → needs translation (thorough)
@@ -480,6 +480,26 @@ const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
   "marriage indications": { hi: "विवाह संकेत", te: "వివాహ సూచనలు" },
   "ideal partner": { hi: "आदर्श जीवनसाथी", te: "ఆదర్శ భాగస్వామి" },
 
+  // ── Yogini Dasha section labels ──────────────────────────────────────────
+  "yogini dasha": { hi: "योगिनी दशा", te: "యోగినీ దశ" },
+  "yogini dasha system": { hi: "योगिनी दशा प्रणाली", te: "యోగినీ దశా విధానం" },
+  "yogini dasha analysis": { hi: "योगिनी दशा विश्लेषण", te: "యోగినీ దశ విశ్లేషణ" },
+  "current yogini": { hi: "वर्तमान योगिनी", te: "ప్రస్తుత యోగిని" },
+  "upcoming yoginis": { hi: "आगामी योगिनी", te: "రాబోయే యోగినీలు" },
+  "yogini sequence": { hi: "योगिनी क्रम", te: "యోగినీ వరుస" },
+  "yogini period": { hi: "योगिनी अवधि", te: "యోగినీ కాలం" },
+  "system explanation": { hi: "प्रणाली व्याख्या", te: "విధాన వివరణ" },
+  "bhramari": { hi: "भ्रामरी", te: "భ్రామరి" },
+  "bhadrika": { hi: "भद्रिका", te: "భద్రిక" },
+  "highly auspicious": { hi: "अत्यंत शुभ", te: "అత్యంత శుభప్రదం" },
+  "auspicious and benevolent": { hi: "शुभ और उदार", te: "శుభ మరియు దయాపరం" },
+  "challenging and transformative": { hi: "चुनौतीपूर्ण और परिवर्तनकारी", te: "సవాలుపూర్వకం మరియు పరివర్తనకారి" },
+  "destructive and intense": { hi: "विनाशकारी और तीव्र", te: "వినాశకరం మరియు తీవ్రం" },
+  "auspicious and fortunate": { hi: "शुभ और सौभाग्यशाली", te: "శుభ మరియు అదృష్టవంతం" },
+  "mixed and cautious": { hi: "मिश्रित और सतर्क", te: "మిశ్రమ మరియు జాగ్రత్త" },
+  "successful and luxurious": { hi: "सफल और विलासी", te: "విజయవంతం మరియు విలాసవంతం" },
+  "obstructive and karmic": { hi: "बाधाकारक और कर्मिक", te: "అడ్డంకికారక మరియు కర్మిక" },
+
   // ── Dasha section phrases ────────────────────────────────────────────────
   "focus areas": { hi: "मुख्य क्षेत्र", te: "ప్రధాన రంగాలు" },
   "life themes": { hi: "जीवन विषय", te: "జీవిత అంశాలు" },
@@ -629,6 +649,14 @@ const SHORT_TERM_TRANSLATIONS: Record<string, { hi: string; te: string }> = {
   "friend": { hi: "मित्र", te: "మిత్ర" },
   "friendly": { hi: "मित्र", te: "మిత్ర" },
   "direct": { hi: "मार्गी", te: "మార్గి" },
+
+  // ── Yogini names (proper nouns — transliterate, don't translate) ──
+  "mangala": { hi: "मंगला", te: "మంగళ" },
+  "pingala": { hi: "पिंगला", te: "పింగళ" },
+  "dhanya": { hi: "धान्य", te: "ధాన్య" },
+  "ulka": { hi: "उल्का", te: "ఉల్క" },
+  "siddha": { hi: "सिद्ध", te: "సిద్ధ" },
+  "sankata": { hi: "संकट", te: "సంకట" },
 
   // ── Common short labels ──
   "strong": { hi: "बलवान", te: "బలమైన" },
@@ -942,7 +970,10 @@ CRITICAL RULES:
 7. Preserve bullet points (•), dashes (—), and formatting markers.
 8. Use ${targetLanguage === "hi" ? "।" : "."} for sentence endings instead of periods.
 9. Do NOT add extra content, commentary, or explanations.
-10. Even parenthetical English like "(Saturn)" must become "(${targetLanguage === "hi" ? "शनि" : "శని"})".`;
+10. Even parenthetical English like "(Saturn)" must become "(${targetLanguage === "hi" ? "शनि" : "శని"})".
+11. PROPER NOUNS: Yogini names (Mangala, Pingala, Dhanya, Bhramari, Bhadrika, Ulka, Siddha, Sankata) must be transliterated to ${scriptName} script, NOT translated. They are names, not common nouns.
+12. "Nakshatra" means नक्षत्र/${targetLanguage === "hi" ? "नक्षत्र" : "నక్షత్రం"} — NEVER translate it as "constellations" or any other English word. Always use the ${scriptName} equivalent.
+13. NEVER repeat the same word multiple times. Every sentence must be a natural, fluent translation with varied vocabulary.`;
 
   const userPrompt = `Translate each numbered text below into ${langName}. Return a JSON object mapping the number to the translated text.
 
@@ -1007,6 +1038,19 @@ Return format: { "0": "translated text for [0]", "1": "translated text for [1]",
     if (translatedText.length < entries[idx].original.length * 0.15 && entries[idx].original.length > 30) {
       console.warn(`⚠️ [TRANSLATE] Rejected suspiciously short translation for "${entries[idx].path}": ${translatedText.length} vs ${entries[idx].original.length} chars`);
       continue;
+    }
+
+    // Validate: reject repeated-word hallucinations (e.g., "constellations constellations constellations...")
+    const translatedWords = translatedText.split(/\s+/).filter(w => w.length > 2);
+    if (translatedWords.length >= 6) {
+      const wordFreq = new Map<string, number>();
+      for (const w of translatedWords) wordFreq.set(w.toLowerCase(), (wordFreq.get(w.toLowerCase()) || 0) + 1);
+      const maxFreq = Math.max(...wordFreq.values());
+      if (maxFreq > Math.max(4, translatedWords.length * 0.4)) {
+        const repeatedWord = [...wordFreq.entries()].find(([, v]) => v === maxFreq)?.[0] || "?";
+        console.warn(`⚠️ [TRANSLATE] Rejected hallucinated translation for "${entries[idx].path}" — word "${repeatedWord}" repeated ${maxFreq}/${translatedWords.length} times`);
+        continue;
+      }
     }
 
     // Good translation

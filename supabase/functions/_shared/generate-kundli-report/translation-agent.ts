@@ -150,6 +150,37 @@ const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
   "physical health": { hi: "शारीरिक स्वास्थ्य", te: "శారీరక ఆరోగ్యం" },
   "wellness tips": { hi: "स्वास्थ्य सुझाव", te: "ఆరోగ్య చిట్కాలు" },
 
+  // ── Zodiac sign names (≥8 chars that pass MIN_STRING_LENGTH) ──
+  "aquarius": { hi: "कुम्भ", te: "కుంభం" },
+  "capricorn": { hi: "मकर", te: "మకరం" },
+  "sagittarius": { hi: "धनु", te: "ధనస్సు" },
+
+  // ── Dignity / placement terms (≥8 chars) ──
+  "own sign": { hi: "स्वराशि", te: "స్వరాశి" },
+  "own house": { hi: "स्वगृही", te: "స్వగృహం" },
+  "mooltrikona": { hi: "मूलत्रिकोण", te: "మూలత్రికోణం" },
+  "moolatrikona": { hi: "मूलत्रिकोण", te: "మూలత్రికోణం" },
+  "retrograde": { hi: "वक्री", te: "వక్రి" },
+  "ascendant": { hi: "लग्न", te: "లగ్నం" },
+
+  // ── Nakshatra names (≥8 chars that pass MIN_STRING_LENGTH) ──
+  "ashlesha": { hi: "आश्लेषा", te: "ఆశ్లేష" },
+  "krittika": { hi: "कृत्तिका", te: "కృత్తిక" },
+  "mrigashira": { hi: "मृगशिरा", te: "మృగశిర" },
+  "punarvasu": { hi: "पुनर्वसु", te: "పునర్వసు" },
+  "uttara phalguni": { hi: "उत्तर फाल्गुनी", te: "ఉత్తర ఫల్గుణి" },
+  "purva phalguni": { hi: "पूर्व फाल्गुनी", te: "పూర్వ ఫల్గుణి" },
+  "vishakha": { hi: "विशाखा", te: "విశాఖ" },
+  "anuradha": { hi: "अनुराधा", te: "అనురాధ" },
+  "jyeshtha": { hi: "ज्येष्ठा", te: "జ్యేష్ఠ" },
+  "purva ashadha": { hi: "पूर्वाषाढ़ा", te: "పూర్వాషాఢ" },
+  "uttara ashadha": { hi: "उत्तराषाढ़ा", te: "ఉత్తరాషాఢ" },
+  "shravana": { hi: "श्रवण", te: "శ్రవణం" },
+  "dhanishta": { hi: "धनिष्ठा", te: "ధనిష్ఠ" },
+  "shatabhisha": { hi: "शतभिषा", te: "శతభిషం" },
+  "purva bhadrapada": { hi: "पूर्वभाद्रपद", te: "పూర్వభాద్రపద" },
+  "uttara bhadrapada": { hi: "उत्तरभाद्रपद", te: "ఉత్తరభాద్రపద" },
+
   // ── Common adjectives/descriptors used as values ──
   "very strong": { hi: "बहुत मजबूत", te: "చాలా బలమైన" },
   "very weak": { hi: "बहुत कमज़ोर", te: "చాలా బలహీన" },
@@ -570,9 +601,12 @@ const SKIP_KEYS = new Set([
   "dateOfBirth", "timeOfBirth", "placeOfBirth",
   "city", "state", "country", "gender",
 
-  // ── Planetary data (structural / identifiers) ──
-  "planet", "sign", "house", "degree", "signIdx", "deg",
-  "nakshatra", "pada", "lord", "dignity", "speed",
+  // ── Planetary data (structural / numeric only) ──
+  // NOTE: "planet","sign","nakshatra","lord","dignity","name" REMOVED from skip list.
+  // Short values like "Sun","Mars","Aries" are naturally protected by MIN_STRING_LENGTH=8.
+  // Longer values like "Sagittarius","Uttara Phalguni","Atmakaraka" NEED translation.
+  "house", "degree", "signIdx", "deg",
+  "pada", "speed",
   "isRetro", "isRetrograde", "retrograde",
 
   // ── Dasha periods (dates/labels used as keys) ──
@@ -580,7 +614,8 @@ const SKIP_KEYS = new Set([
   "dashaLabel", "period",
 
   // ── Names / pre-localized labels ──
-  "name",       // planet/yoga names — handled by term maps
+  // NOTE: "name" REMOVED — it blocked translation of gemstone names, yoga names, etc.
+  // Short names (<8 chars) are safely ignored by needsTranslation().
   "nameHindi", "nameTelugu", "nameEnglish",
   "purposeHindi", "purposeTelugu",
 
@@ -592,8 +627,8 @@ const SKIP_KEYS = new Set([
   "score", "overallScore", "tokensUsed", "version",
 
   // ── Safety meta keys ──
-  "medicalDisclaimer", "statusAssumption", "safeguardPolicy",
-  "ageGroup", "whenApplicable",
+  // NOTE: "medicalDisclaimer","statusAssumption","safeguardPolicy" REMOVED — these
+  // are prose text that MUST be translated. "ageGroup","whenApplicable" also removed.
 ]);
 
 /**
@@ -603,8 +638,11 @@ const SKIP_TOP_LEVEL = new Set([
   "seerRawResponse", "seerRequest", "computationMeta",
   "charts", "qa", "languageQc", "errors",
   "birthDetails",         // technical birth info, not prose
-  "planetaryPositions", "ascendant", "charaKarakas",
-  "aspects", "conjunctions",
+  // NOTE: planetaryPositions, ascendant, charaKarakas, aspects, conjunctions
+  // were previously skipped here but they contain display text (karaka names,
+  // signification prose, planet/sign names, aspect descriptions) that MUST be
+  // translated. Short structural values (planet="Sun", degree=15.2) are safely
+  // ignored by needsTranslation() due to MIN_STRING_LENGTH=8.
   "translationSweep", "translationStats",
 ]);
 
@@ -626,6 +664,10 @@ const PRIORITY_KEYS = new Set([
   "introduction", "category", "categoryDescription",
   "briefDefinition", "detailedExplanation", "term",
   "relatedTerms", "furtherReading",
+  // ── Display fields previously blocked by SKIP_KEYS ──
+  "signification", "karaka", "planet", "sign", "name",
+  "lord", "dignity", "nakshatra",
+  "medicalDisclaimer", "statusAssumption", "safeguardPolicy",
 ]);
 
 /** Check if a string value needs translation */

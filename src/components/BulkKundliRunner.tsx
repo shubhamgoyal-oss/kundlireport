@@ -615,6 +615,7 @@ export default function BulkKundliRunner() {
           place: ex?.place || row.normalized.place_of_birth || '',
           status: 'pending' as BulkStatus,
           gender: ex?.gender || 'M',
+          detectedGender: ex?.detectedGender,   // MUST preserve — otherwise re-detection overwrites user's manual gender choice
           language: ex?.language || bulkLanguage,
         };
       });
@@ -659,6 +660,8 @@ export default function BulkKundliRunner() {
         const currentRow = bulkRowsRef.current.find((r) => r.rowNumber === row.rowNumber);
         const finalGender = currentRow?.gender || detectedGender;
         const finalLanguage = currentRow?.language || bulkLanguage;
+
+        console.log(`[Bulk] Row ${row.rowNumber} GENDER: ui=${currentRow?.gender}, detected=${detectedGender}, final=${finalGender}, detectedGenderField=${currentRow?.detectedGender}`);
 
         updateBulkRow(row.rowNumber, {
           name,

@@ -600,6 +600,13 @@ export default function BulkKundliRunner() {
       });
     });
 
+    // Log ALL genders for visibility — this is the exact gender being sent to the backend
+    const genderSummary = Array.from(genderSnapshot.entries())
+      .map(([rowNum, g]) => `Row ${rowNum}: ${g === 'F' ? 'Female' : 'Male'}`)
+      .join(', ');
+    console.log(`[Bulk] GENDER SNAPSHOT (final, sent to backend): ${genderSummary}`);
+    toast(`Gender: ${genderSummary}`);
+
     const { visitorId, sessionId } = getVisitorAndSessionIds();
 
     // Track which rows failed for the auto-retry pass

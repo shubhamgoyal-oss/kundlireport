@@ -968,6 +968,9 @@ serve(async (req) => {
       language = "en",
       gender = "M",
     } = job;
+
+    console.log(`🔎 [PROCESS-JOB] GENDER from DB: job.gender="${job.gender}" → after destructure="${gender}"`);
+
     const requestedLanguage = normalizeLanguage(language);
     const useLanguagePipelineV2 = isLanguagePipelineV2Enabled(requestedLanguage);
     const effectiveGenerationLanguage: SupportedLanguage = useLanguagePipelineV2 ? requestedLanguage : "en";
@@ -985,6 +988,7 @@ serve(async (req) => {
       : gender === "other" || gender === "O"
         ? "O"
         : "M";
+    console.log(`🔎 [PROCESS-JOB] GENDER normalized: "${normalizedGender}" (will be used in report.birthDetails.gender and marriage agent)`);
     const maritalStatusRaw = String(
       job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown"
     ).toLowerCase();

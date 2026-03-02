@@ -27,7 +27,6 @@ interface BulkRowState {
   status: BulkStatus;
   gender: 'M' | 'F';
   language: 'en' | 'hi' | 'te';
-  detectedGender?: string;
   jobId?: string;
   error?: string;
   source?: string;
@@ -37,6 +36,18 @@ interface BulkRowState {
   bucketSignedUrl?: string;
   pdfStorageBucket?: string;
   pdfStoragePath?: string;
+}
+
+/** Read gender directly from CSV normalized columns — no API call, no guessing */
+function parseGenderFromNormalized(normalized: Record<string, string>): 'M' | 'F' {
+  const candidates = ['gender', 'sex', 'male_female', 'm_f', 'gender_code', 'linga'];
+  for (const key of candidates) {
+    const val = (normalized[key] || '').trim().toLowerCase();
+    if (!val) continue;
+    if (['f', 'female', 'woman', 'girl', 'महिला', 'स्त्री', 'స్త్రీ'].includes(val)) return 'F';
+    if (['m', 'male', 'man', 'boy', 'पुरुष', 'పురుషుడు'].includes(val)) return 'M';
+  }
+  return 'M'; // default if no gender column found
 }
 
 const DEFAULT_SHEET_URL =
@@ -104,9 +115,6 @@ export default function BulkKundliRunner() {
   const blobUrlsRef = useRef<string[]>([]);
   const restoredRef = useRef(false);  // prevent double-restore
 
-  // Live ref for bulkRows — avoids stale closure in async processing loops
-  const bulkRowsRef = useRef<BulkRowState[]>([]);
-  useEffect(() => { bulkRowsRef.current = bulkRows; }, [bulkRows]);
 
   // ── Restore persisted state on mount ──────────────────────────────────
   useEffect(() => {
@@ -189,46 +197,8 @@ export default function BulkKundliRunner() {
     [LS_BULK_ROWS, LS_ALL_ROWS].forEach((k) => localStorage.removeItem(k));
   };
 
-  /** Run gender/name/place detection on the given sheet rows and update bulkRows */
-  const detectGendersForRows = async (filteredRows: LoadedSheetRow[]) => {
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < filteredRows.length; i += BATCH_SIZE) {
-      const batch = filteredRows.slice(i, i + BATCH_SIZE);
-      await Promise.allSettled(
-        batch.map(async (r) => {
-          try {
-            const { data: decoded, error: decErr } = await supabase.functions.invoke(
-              'decipher-kundli-input',
-              { body: { row: r.normalized } },
-            );
-            if (!decErr && decoded) {
-              const g: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
-              const name = String(decoded?.name || '').trim();
-              const place = String(decoded?.placeOfBirth || '').trim();
-              setBulkRows((prev) =>
-                prev.map((br) => {
-                  if (br.rowNumber !== r.rowNumber) return br;
-                  // Only set gender if user hasn't manually overridden it
-                  // (first detection: detectedGender is undefined; re-detection: preserve user edits)
-                  const userOverrode = br.detectedGender !== undefined && br.gender !== br.detectedGender;
-                  return {
-                    ...br,
-                    detectedGender: g,
-                    ...(userOverrode ? {} : { gender: g }),
-                    ...(name ? { name } : {}),
-                    ...(place ? { place } : {}),
-                  };
-                }),
-              );
-            }
-          } catch (err) {
-            console.warn(`[BulkKundliRunner] Gender detect failed for row ${r.rowNumber}:`, err);
-          }
-        }),
-      );
-    }
-    toast.success('Gender detection complete');
-  };
+  // Gender is read directly from CSV at load time via parseGenderFromNormalized().
+  // No automatic gender detection/reclassification — user's dropdown choice is final.
 
   /** Refresh all generated files: re-prepare PDFs for all completed rows */
   const [isRefreshingPdfs, setIsRefreshingPdfs] = useState(false);
@@ -290,14 +260,11 @@ export default function BulkKundliRunner() {
           name: r.normalized.offering_user_name || r.normalized.name || '',
           place: r.normalized.place_of_birth || '',
           status: 'pending' as BulkStatus,
-          gender: 'M' as const,
+          gender: parseGenderFromNormalized(r.normalized),
           language: bulkLanguage,
         })),
       );
-      toast.success(`Loaded ${filteredRows.length} rows. Detecting gender…`);
-
-      // Run gender/name/place detection
-      await detectGendersForRows(filteredRows);
+      toast.success(`Loaded ${filteredRows.length} rows.`);
     } catch (err) {
       console.error('[BulkKundliRunner] Failed loading sheet:', err);
       toast.error(err instanceof Error ? err.message : 'Failed to load Google Sheet');
@@ -602,30 +569,38 @@ export default function BulkKundliRunner() {
     setIsRunning(true);
     restoredRef.current = true; // ensure state gets persisted
 
-    // Reset status for selected rows but preserve gender/language edits
+    // ── GENDER / LANGUAGE SNAPSHOT ──────────────────────────────────────
+    // Capture gender & language at the exact same moment as the state reset.
+    // These plain JS Maps are immune to React timing / stale closures.
+    // Whatever the user sees in the dropdown IS what gets sent to the backend.
+    // React calls the functional updater synchronously, so the Maps are
+    // populated by the time setBulkRows() returns.
+    const genderSnapshot = new Map<number, 'M' | 'F'>();
+    const langSnapshot = new Map<number, 'en' | 'hi' | 'te'>();
+
     setBulkRows((prev) => {
-      const selectedNums = new Set(selectedRows.map((r) => r.rowNumber));
-      // Keep rows that are in the selected range, reset their status
       const existing = new Map(prev.map((r) => [r.rowNumber, r]));
       return selectedRows.map((row) => {
         const ex = existing.get(row.rowNumber);
+        const gender = ex?.gender || parseGenderFromNormalized(row.normalized);
+        const language = ex?.language || bulkLanguage;
+
+        // Populate snapshot inside the updater — guaranteed to match state
+        genderSnapshot.set(row.rowNumber, gender);
+        langSnapshot.set(row.rowNumber, language);
+
         return {
           rowNumber: row.rowNumber,
           name: ex?.name || row.normalized.offering_user_name || row.normalized.name || '',
           place: ex?.place || row.normalized.place_of_birth || '',
           status: 'pending' as BulkStatus,
-          gender: ex?.gender || 'M',
-          detectedGender: ex?.detectedGender,   // MUST preserve — otherwise re-detection overwrites user's manual gender choice
-          language: ex?.language || bulkLanguage,
+          gender,
+          language,
         };
       });
     });
 
     const { visitorId, sessionId } = getVisitorAndSessionIds();
-
-    // Run gender/name/place detection before processing
-    toast('Detecting gender for all rows…');
-    await detectGendersForRows(selectedRows);
 
     // Track which rows failed for the auto-retry pass
     const firstPassFailed = new Set<number>();
@@ -648,26 +623,23 @@ export default function BulkKundliRunner() {
         const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
         const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
         const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
-        const detectedGender: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
         const source = String(decoded?.source || 'deterministic');
 
         if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
           throw new Error('Missing normalized values after decipher step');
         }
 
-        // Get current row state to read user's gender/language overrides
-        // Use ref to avoid stale closure — bulkRows captured at function start won't reflect later setState updates
-        const currentRow = bulkRowsRef.current.find((r) => r.rowNumber === row.rowNumber);
-        const finalGender = currentRow?.gender || detectedGender;
-        const finalLanguage = currentRow?.language || bulkLanguage;
+        // Use the gender snapshot — NOT React state, NOT decipher API detection.
+        // The user's dropdown choice is the single source of truth.
+        const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
+        const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
 
-        console.log(`[Bulk] Row ${row.rowNumber} GENDER: ui=${currentRow?.gender}, detected=${detectedGender}, final=${finalGender}, detectedGenderField=${currentRow?.detectedGender}`);
+        console.log(`[Bulk] Row ${row.rowNumber} GENDER: snapshot=${finalGender} (from dropdown)`);
 
         updateBulkRow(row.rowNumber, {
           name,
           place: placeOfBirth,
           source,
-          detectedGender,
           status: 'geocoding',
         });
 
@@ -755,16 +727,14 @@ export default function BulkKundliRunner() {
           const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
           const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
           const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
-          const detectedGender: 'M' | 'F' = String(decoded?.gender || 'M').toUpperCase() === 'F' ? 'F' : 'M';
 
           if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
             throw new Error('Missing normalized values after decipher step');
           }
 
-          // Use ref to avoid stale closure in retry pass
-          const currentRow = bulkRowsRef.current.find((r) => r.rowNumber === row.rowNumber);
-          const finalGender = currentRow?.gender || detectedGender;
-          const finalLanguage = currentRow?.language || bulkLanguage;
+          // Use the same gender snapshot from before the loop — user's dropdown is truth
+          const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
+          const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
 
           updateBulkRow(row.rowNumber, { status: 'geocoding' });
 

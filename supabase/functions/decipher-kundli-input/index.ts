@@ -115,15 +115,42 @@ function parseTime(raw: string): string | null {
   return null;
 }
 
+/**
+ * Parse an explicit gender value from a CSV column.
+ * Returns "M", "F", or null if the value is unrecognizable.
+ */
+function parseExplicitGender(raw: string): GenderCode | null {
+  const v = String(raw || "").trim().toLowerCase();
+  if (!v) return null;
+
+  // Direct codes
+  if (v === "f" || v === "female" || v === "woman" || v === "girl" || v === "महिला" || v === "स्त्री" || v === "స్త్రీ") return "F";
+  if (v === "m" || v === "male" || v === "man" || v === "boy" || v === "पुरुष" || v === "पुरुष" || v === "పురుషుడు") return "M";
+
+  return null;
+}
+
 function guessGender(name: string): GenderCode {
   const first = String(name || "").trim().toLowerCase().split(/\s+/)[0] || "";
   if (!first) return "M";
 
   const femaleExact = new Set([
-    "neha", "pooja", "puja", "priya", "kavita", "sunita", "anita", "sneha", "tanvi", "kajal", "rani", "shreya", "isha", "ayushi", "ananya", "bhavna", "divya", "nisha", "muskan", "deepika", "shivani", "payal", "komal",
+    "neha", "pooja", "puja", "priya", "kavita", "sunita", "anita", "sneha", "tanvi", "kajal",
+    "rani", "shreya", "isha", "ayushi", "ananya", "bhavna", "divya", "nisha", "muskan", "deepika",
+    "shivani", "payal", "komal", "sakshi", "riya", "simran", "anjali", "swati", "meena", "sita",
+    "radha", "lakshmi", "gita", "geeta", "rekha", "shalini", "nandini", "pallavi", "madhuri",
+    "jyoti", "kiran", "mansi", "nikita", "arti", "aarti", "ritika", "megha", "tanya", "aditi",
+    "kriti", "radhika", "shweta", "preeti", "sapna", "rashmi", "shaivya", "srishti", "garima",
+    "varsha", "archana", "chitra", "harini", "keerthi", "lavanya", "mounika", "padma", "revathi",
+    "sirisha", "tulasi", "uma", "vasudha", "yamini",
   ]);
   const maleExact = new Set([
-    "rahul", "avinash", "shubham", "amit", "sumit", "raj", "rohit", "mohit", "vishal", "ankit", "prashant", "saurabh", "ajay", "vijay", "sachin", "manish", "rakesh", "sunil", "kapil", "deepak",
+    "rahul", "avinash", "shubham", "amit", "sumit", "raj", "rohit", "mohit", "vishal", "ankit",
+    "prashant", "saurabh", "ajay", "vijay", "sachin", "manish", "rakesh", "sunil", "kapil", "deepak",
+    "shashwat", "arjun", "krishna", "vikram", "suresh", "ramesh", "mahesh", "ganesh", "dinesh",
+    "naresh", "rajesh", "mukesh", "akhil", "nikhil", "varun", "tarun", "arun", "karan", "ravi",
+    "sanjay", "manoj", "vinod", "pramod", "ashok", "vivek", "abhishek", "harsh", "kartik",
+    "pranav", "gaurav", "tushar", "kunal", "sahil", "rohan", "aman", "neeraj", "pankaj",
   ]);
 
   if (femaleExact.has(first)) return "F";
@@ -142,9 +169,17 @@ function extractDeterministic(row: Record<string, unknown>) {
   const dobRaw = getField(row, ["dobyyyymmdd", "dob_yyyymmdd", "date_", "date", "dob"]);
   const timeRaw = getField(row, ["time_of_birth_in_24", "time_of_birth", "time_", "birth_time", "tob"]);
 
+  // ── Gender: check explicit CSV column FIRST, then fall back to name-guess ──
+  const genderRaw = getField(row, [
+    "gender", "sex", "male_female", "m_f", "gender_code",
+    "linga", "लिंग", "లింగం",
+  ]);
+  const explicitGender = parseExplicitGender(genderRaw);
+  const gender = explicitGender ?? guessGender(name);
+
   return {
     name,
-    gender: guessGender(name),
+    gender,
     dateOfBirth: parseDob(dobRaw),
     timeOfBirth: parseTime(timeRaw),
     placeOfBirth,

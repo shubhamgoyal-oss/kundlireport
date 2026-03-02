@@ -19,7 +19,7 @@ import { generateDoshasPrediction } from "../_shared/generate-kundli-report/dosh
 import { generateRajYogsPrediction } from "../_shared/generate-kundli-report/raj-yogs-agent.ts";
 import { generateSadeSatiPrediction } from "../_shared/generate-kundli-report/sade-sati-agent.ts";
 import { enforceAstrologyTruth } from "../_shared/generate-kundli-report/truth-guard.ts";
-import { setAgentLanguageContext } from "../_shared/generate-kundli-report/agent-base.ts";
+import { setAgentLanguageContext, setAgentNativeContext } from "../_shared/generate-kundli-report/agent-base.ts";
 import { getLanguagePack, normalizeLanguage } from "../_shared/language-packs/index.ts";
 import type { SupportedLanguage } from "../_shared/language-packs/types.ts";
 import { createJobEvent, touchJobHeartbeat } from "../_shared/job-events.ts";
@@ -555,7 +555,7 @@ async function handleAgentRetry(
 
   await updateJobStatus(supabase, jobId, "processing", `Retrying ${failedAgentNames.length} timed-out agents`, 82, "progress");
 
-  // Re-setup language context
+  // Re-setup language + native context
   const requestedLanguage = normalizeLanguage(job.language || "en");
   const effectiveGenerationLanguage: SupportedLanguage = isLanguagePipelineV2Enabled(requestedLanguage) ? requestedLanguage : "en";
   setAgentLanguageContext(effectiveGenerationLanguage);
@@ -576,6 +576,7 @@ async function handleAgentRetry(
   const birthDate = new Date(year, month - 1, day, hour, min);
   const reportGeneratedAt = new Date(existingReport.generatedAt);
   const normalizedGender = job.gender === "female" || job.gender === "F" ? "F" : job.gender === "other" || job.gender === "O" ? "O" : "M";
+  setAgentNativeContext(normalizedGender, birthDate, reportGeneratedAt);
   const maritalStatusRaw = String(job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown").toLowerCase();
   const normalizedMaritalStatus: NormalizedMaritalStatus = maritalStatusRaw === "married" ? "married" : maritalStatusRaw === "single" || maritalStatusRaw === "unmarried" ? "single" : "unknown";
 
@@ -988,7 +989,9 @@ serve(async (req) => {
       : gender === "other" || gender === "O"
         ? "O"
         : "M";
-    console.log(`🔎 [PROCESS-JOB] GENDER normalized: "${normalizedGender}" (will be used in report.birthDetails.gender and marriage agent)`);
+    console.log(`🔎 [PROCESS-JOB] GENDER normalized: "${normalizedGender}" (will be used in ALL agents via native context)`);
+    // Set native context so ALL agents receive gender + age in their system prompts
+    setAgentNativeContext(normalizedGender, birthDate, new Date());
     const maritalStatusRaw = String(
       job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown"
     ).toLowerCase();

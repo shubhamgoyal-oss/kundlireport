@@ -108,7 +108,7 @@ export const EN_TEMPLATES: Record<string, string> = {
   "dasha.antardasha.focusAreas.1": "Opportunity focus: {mdOpportunity}; supported by {adOpportunity}.",
   "dasha.antardasha.focusAreas.2": "Risk management: control {mdCaution} and {adCaution}.",
   "dasha.antardasha.advice": "Use this sub-period to pursue {mdOpportunity} while consciously channeling {adOpportunity}. Keep decisions paced, documented, and review-based so {mdCaution} and {adCaution} do not derail progress.",
-  "dasha.planetContext": "{planet} in {sign} (House {house}){retro}",
+  "dasha.planetContext": "{pName} in {sName} (House {house}){retro}",
   "dasha.planetContextRetro": ", retrograde",
   "dasha.planetContextUnavailable": "{pName} (placement unavailable)",
 

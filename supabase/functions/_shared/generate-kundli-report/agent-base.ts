@@ -16,9 +16,30 @@ export function getAgentLanguage(): string {
   return _agentLanguage;
 }
 
+// ─── Native context: gender + age for all agents ──────────────────────────
+// Set once in the orchestrator; injected into every agent's system prompt.
+interface NativeContext {
+  gender: string;    // "M" | "F" | "O"
+  birthDate: Date;
+  generatedAt: Date;
+}
+
+let _nativeContext: NativeContext | null = null;
+
+export function setAgentNativeContext(gender: string, birthDate: Date, generatedAt?: Date): void {
+  _nativeContext = { gender, birthDate, generatedAt: generatedAt || new Date() };
+  const age = Math.max(0, Math.floor((_nativeContext.generatedAt.getTime() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)));
+  const gLabel = gender === "F" ? "female" : gender === "O" ? "non-binary/gender-diverse" : "male";
+  console.log(`[AGENT] Native context set: ${gLabel}, age ~${age}`);
+}
+
+export function getAgentNativeContext(): NativeContext | null {
+  return _nativeContext;
+}
+
 // getLanguageInstruction() now reads from the canonical language pack
 // instead of hardcoding per-language text. See lang-utils.ts.
-import { globalLanguageInstruction } from "./lang-utils.ts";
+import { globalLanguageInstruction, nativeContextInstruction } from "./lang-utils.ts";
 
 // Core honesty guidelines added to ALL agent prompts
 export const HONESTY_GUIDELINES = `
@@ -138,7 +159,7 @@ async function runToolCallRequest(
   } catch (err: any) {
     clearTimeout(fetchTimeout);
     if (err?.name === "AbortError") {
-      return { ok: false, status: 408, errorText: "AI API request timed out after 90s" };
+      return { ok: false, status: 408, errorText: "AI API request timed out after 150s" };
     }
     throw err;
   }
@@ -173,11 +194,11 @@ export async function callAgent<T>(
   // ── Prompt order optimized for Gemini implicit caching ──────────────
   // Gemini 2.5 Flash caches the longest matching PREFIX across requests
   // at 90% input token discount (min 1,024 tokens).
-  // By placing shared content (HONESTY_GUIDELINES + language instruction)
+  // By placing shared content (HONESTY + language + native context)
   // FIRST, all 36+ agent calls in a report share the same prefix,
   // maximizing cache hits. Within the same agent type (houses ×12,
   // planets ×9), the ENTIRE system prompt is identical → full cache hit.
-  const enhancedSystemPrompt = HONESTY_GUIDELINES + globalLanguageInstruction() + "\n\n" + systemPrompt;
+  const enhancedSystemPrompt = HONESTY_GUIDELINES + nativeContextInstruction() + globalLanguageInstruction() + "\n\n" + systemPrompt;
 
   try {
     let tokensUsed = 0;

@@ -4,7 +4,7 @@
 
 import { getLanguagePack } from "../language-packs/index.ts";
 import type { LanguagePack, LanguageSection, PlanetSignification } from "../language-packs/types.ts";
-import { getAgentLanguage } from "./agent-base.ts";
+import { getAgentLanguage, getAgentNativeContext } from "./agent-base.ts";
 
 /** Return the active language pack based on current agent language context. */
 export function activePack(): LanguagePack {
@@ -102,4 +102,69 @@ export function planetSig(planet: string): PlanetSignification {
   const sigs = pack.significations?.planets;
   const fallback: PlanetSignification = { themes: planet, opportunity: planet, caution: planet };
   return sigs?.[planet] || fallback;
+}
+
+// ── Native context instruction (gender + age) ────────────────────────────────
+// Injected into every agent's system prompt so ALL predictions are gender-aware
+// and age-appropriate. Zero changes needed in individual agent files.
+
+const MAX_PREDICTION_AGE = 95;
+
+/**
+ * Build a native-context instruction block for the current native's gender,
+ * approximate age, and prediction horizon.
+ *
+ * Returns empty string if native context was never set (graceful no-op).
+ */
+export function nativeContextInstruction(): string {
+  const ctx = getAgentNativeContext();
+  if (!ctx) return "";
+
+  const ageYears = Math.max(
+    0,
+    Math.floor(
+      (ctx.generatedAt.getTime() - ctx.birthDate.getTime()) /
+        (365.25 * 24 * 60 * 60 * 1000)
+    )
+  );
+
+  const genderLabel =
+    ctx.gender === "F"
+      ? "female"
+      : ctx.gender === "O"
+        ? "non-binary / gender-diverse"
+        : "male";
+
+  const remainingYears = Math.max(5, MAX_PREDICTION_AGE - ageYears);
+
+  // Age-group label for the model
+  let ageGroup: string;
+  if (ageYears < 13) ageGroup = "child";
+  else if (ageYears < 20) ageGroup = "teenager";
+  else if (ageYears < 30) ageGroup = "young adult";
+  else if (ageYears < 50) ageGroup = "adult";
+  else if (ageYears < 65) ageGroup = "mature adult";
+  else ageGroup = "senior";
+
+  return `
+
+NATIVE CONTEXT (apply to ALL predictions):
+- Gender: ${genderLabel}
+- Approximate Age: ${ageYears} years (${ageGroup})
+- Maximum Prediction Horizon: ~${remainingYears} years from now (do NOT predict beyond age ${MAX_PREDICTION_AGE})
+
+GENDER SENSITIVITY RULES:
+1. Use gender-appropriate language throughout. For female natives, acknowledge women-specific life patterns (e.g. maternal health, career breaks, societal dynamics).
+2. For male natives, acknowledge men-specific patterns (e.g. provider pressure, emotional expression).
+3. For non-binary/gender-diverse natives, use fully inclusive language; avoid binary assumptions.
+4. Use "partner/spouse" by default; avoid rigid heteronormative or gender-role framing.
+5. Marriage, relationship, and family predictions must reflect the native's actual gender, not assume a default.
+
+AGE SENSITIVITY RULES:
+1. All future timelines MUST stay within the ~${remainingYears}-year horizon. Never predict events beyond age ${MAX_PREDICTION_AGE}.
+2. If the native is a child/teenager (under 20): focus on education, personal growth, family dynamics. Avoid career-switch timing, marriage timing, or financial speculation.
+3. If the native is a young adult (20-29): career entry, higher education, early relationships, and skill-building are appropriate focal points.
+4. If the native is a mature adult or senior (50+): emphasize health, legacy, mentorship, spiritual growth, and relationship deepening. Avoid "start a new career from scratch" or unrealistic long-range plans.
+5. Dasha/transit predictions that fall beyond the horizon should be truncated or noted as "beyond lifecycle scope."
+6. Remedies should be physically appropriate for the age group (e.g. no intense fasting for seniors or children, no heavy physical rituals for elderly).`;
 }

@@ -1593,8 +1593,7 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Apply: 'लागू',
     only: 'केवल',
     Follow: 'पालन',
-    the: '',
-    is: '',
+    // NOTE: 'the','is' too common to map — parenthetical stripping handles them
     // ── Report structural labels ────────────────────────────────────────
     Matrix: 'सारणी',
     Strength: 'बल',
@@ -1631,8 +1630,6 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     foreign: 'विदेश',
     Nullified: 'निष्प्रभावी',
     nullified: 'निष्प्रभावी',
-    Detected: 'पाया गया',
-    Strength: 'बल',
   },
   te: {
     Report: 'నివేదిక',
@@ -1919,8 +1916,7 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     Apply: 'వర్తింపజేయండి',
     only: 'మాత్రమే',
     Follow: 'అనుసరించండి',
-    the: '',
-    is: '',
+    // NOTE: 'the','is' too common to map — parenthetical stripping handles them
     // ── Report structural labels ────────────────────────────────────────
     Matrix: 'మాత్రిక',
     Strength: 'బలం',
@@ -1957,8 +1953,6 @@ const PDF_UI_WORD_MAP: Record<'hi' | 'te', Record<string, string>> = {
     foreign: 'విదేశం',
     Nullified: 'నిరాకరించబడింది',
     nullified: 'నిరాకరించబడింది',
-    Detected: 'గుర్తించబడింది',
-    Strength: 'బలం',
   },
 };
 

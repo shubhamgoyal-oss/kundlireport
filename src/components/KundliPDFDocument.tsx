@@ -5479,7 +5479,7 @@ const parseSvgElement = (element: Element, key: number): React.ReactNode | null 
       if (!attrs.points) return null;
       return <Polygon key={key} {...(attrs as any)} />;
     case 'text': {
-      attrs.fontFamily = 'DejaVuSans';
+      attrs.fontFamily = ACTIVE_PDF_FONT_FAMILY;
       const safeX = normalizeSvgCoordinate(attrs.x);
       const safeY = normalizeSvgCoordinate(attrs.y);
       if (safeX !== undefined) attrs.x = safeX; else delete attrs.x;
@@ -6794,22 +6794,44 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
         </Section>
 
         <Section title="Detailed Planetary Snapshot" keepWithNext={180}>
-          <View style={styles.card} wrap={false}>
-            <View style={styles.stableTwoCol}>
-              <View style={styles.stableCol}>
-                <InfoRow label="Lahiri Ayanamsha" value={ayanamshaText} />
-                <InfoRow label="Ishta (if available)" value={pickAstroValue('ishta', 'ishta_kaal', 'ishtkaal', 'isht')} />
-                <InfoRow label="Sunrise (if available)" value={pickAstroValue('sunrise', 'sun_rise')} />
-                <InfoRow label="Sunset (if available)" value={pickAstroValue('sunset', 'sun_set')} />
+          {/* Astro details — only render rows whose data the Seer API actually provides */}
+          {(() => {
+            const ishtaVal = pickAstroValue('ishta', 'ishta_kaal', 'ishtkaal', 'isht');
+            const sunriseVal = pickAstroValue('sunrise', 'sun_rise');
+            const sunsetVal = pickAstroValue('sunset', 'sun_set');
+            const lmtVal = pickAstroValue('local_mean_time', 'lmt');
+            const lstVal = pickAstroValue('sidereal_time', 'lst');
+            const tithiEndVal = pickAstroValue('tithi_ending_time', 'tithi_end_time');
+            const nakEndVal = pickAstroValue('nakshatra_ending_time', 'nakshatra_end_time');
+            const leftCol = [
+              { label: 'Lahiri Ayanamsha', value: ayanamshaText },
+              ...(ishtaVal !== 'N/A' ? [{ label: 'Ishta', value: ishtaVal }] : []),
+              ...(sunriseVal !== 'N/A' ? [{ label: 'Sunrise', value: sunriseVal }] : []),
+              ...(sunsetVal !== 'N/A' ? [{ label: 'Sunset', value: sunsetVal }] : []),
+            ];
+            const rightCol = [
+              ...(lmtVal !== 'N/A' ? [{ label: 'Local Mean Time', value: lmtVal }] : []),
+              ...(lstVal !== 'N/A' ? [{ label: 'Sidereal Time', value: lstVal }] : []),
+              ...(tithiEndVal !== 'N/A' ? [{ label: 'Tithi Ending Time', value: tithiEndVal }] : []),
+              ...(nakEndVal !== 'N/A' ? [{ label: 'Nakshatra Ending Time', value: nakEndVal }] : []),
+            ];
+            // Only render the card if there's at least one data row beyond Ayanamsha
+            const hasAstroData = leftCol.length > 1 || rightCol.length > 0;
+            return (
+              <View style={styles.card} wrap={false}>
+                <View style={styles.stableTwoCol}>
+                  <View style={styles.stableCol}>
+                    {leftCol.map((r, i) => <InfoRow key={`al${i}`} label={r.label} value={r.value} />)}
+                  </View>
+                  {rightCol.length > 0 && (
+                    <View style={styles.stableCol}>
+                      {rightCol.map((r, i) => <InfoRow key={`ar${i}`} label={r.label} value={r.value} />)}
+                    </View>
+                  )}
+                </View>
               </View>
-              <View style={styles.stableCol}>
-                <InfoRow label="Local Mean Time (if available)" value={pickAstroValue('local_mean_time', 'lmt')} />
-                <InfoRow label="Sidereal Time (if available)" value={pickAstroValue('sidereal_time', 'lst')} />
-                <InfoRow label="Tithi Ending Time (if available)" value={pickAstroValue('tithi_ending_time', 'tithi_end_time')} />
-                <InfoRow label="Nakshatra Ending Time (if available)" value={pickAstroValue('nakshatra_ending_time', 'nakshatra_end_time')} />
-              </View>
-            </View>
-          </View>
+            );
+          })()}
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{localizePdfUiText('Planetary Degree Matrix')}</Text>

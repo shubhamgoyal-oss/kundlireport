@@ -5305,7 +5305,7 @@ const applyLanguageTypography = (language: string | null | undefined) => {
   ACTIVE_PDF_BODY_LINE_HEIGHT = 1.45;
 };
 
-const localizePdfUiText = (raw: string | null | undefined): string => {
+const localizePdfUiText = (raw: string | null | undefined, maxWidthPt?: number): string => {
   const input = sanitizeText(String(raw || ''));
   if (!input || ACTIVE_PDF_LANGUAGE === 'en') return input;
 
@@ -5377,7 +5377,7 @@ const localizePdfUiText = (raw: string | null | undefined): string => {
   // Use browser canvas (HarfBuzz) to compute word-boundary line breaks.
   // This prevents react-pdf's Knuth-Plass breaker from splitting Devanagari/
   // Telugu/Kannada words mid-character. Short strings (<40 chars) pass through.
-  return wrapIndicSync(output, ACTIVE_PDF_LANGUAGE);
+  return wrapIndicSync(output, ACTIVE_PDF_LANGUAGE, maxWidthPt);
 };
 
 type SadeSatiPhaseKey = 'rising' | 'peak' | 'setting' | 'not_active';
@@ -6345,7 +6345,7 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
   </View>
 );
 
-const BulletList = ({ items }: { items: string[] }) => (
+const BulletList = ({ items, maxWidth }: { items: string[]; maxWidth?: number }) => (
   <View style={styles.list}>
     {items
       .map((item) => String(item ?? '').trim())
@@ -6353,7 +6353,7 @@ const BulletList = ({ items }: { items: string[] }) => (
       .map((item, idx) => (
         <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
           <Text style={styles.bullet}>•</Text>
-          <Text style={[styles.bodyText, { flex: 1 }]}>{localizePdfUiText(item)}</Text>
+          <Text style={[styles.bodyText, { flex: 1 }]}>{localizePdfUiText(item, maxWidth)}</Text>
         </View>
       ))}
   </View>
@@ -8088,13 +8088,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   {house.strengths && house.strengths.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Strengths')}</Text>
-                      <BulletList items={house.strengths} />
+                      <BulletList items={house.strengths} maxWidth={210} />
                     </View>
                   )}
                   {house.challenges && house.challenges.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
-                      <BulletList items={house.challenges} />
+                      <BulletList items={house.challenges} maxWidth={210} />
                     </View>
                   )}
                 </View>
@@ -8558,13 +8558,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   {md.opportunities && md.opportunities.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Opportunities')}</Text>
-                      <BulletList items={md.opportunities} />
+                      <BulletList items={md.opportunities} maxWidth={210} />
                     </View>
                   )}
                   {md.challenges && md.challenges.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
-                      <BulletList items={md.challenges} />
+                      <BulletList items={md.challenges} maxWidth={210} />
                     </View>
                   )}
                 </View>
@@ -9206,13 +9206,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                       {phase.challenges && phase.challenges.length > 0 && (
                         <View style={styles.gridItem}>
                           <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges to Navigate')}</Text>
-                          <BulletList items={phase.challenges} />
+                          <BulletList items={phase.challenges} maxWidth={210} />
                         </View>
                       )}
                       {phase.hidden_blessings && phase.hidden_blessings.length > 0 && (
                         <View style={styles.gridItem}>
                           <Text style={styles.subSubHeader}>{localizePdfUiText('Hidden Blessings')}</Text>
-                          <BulletList items={phase.hidden_blessings} />
+                          <BulletList items={phase.hidden_blessings} maxWidth={210} />
                         </View>
                       )}
                     </View>
@@ -9245,13 +9245,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                     {report.sadeSati.currentSadeSati.whatToExpect && (
                       <View style={styles.gridItem}>
                         <Text style={styles.subSubHeader}>{localizePdfUiText('What to Expect')}</Text>
-                        <BulletList items={report.sadeSati.currentSadeSati.whatToExpect} />
+                        <BulletList items={report.sadeSati.currentSadeSati.whatToExpect} maxWidth={210} />
                       </View>
                     )}
                     {report.sadeSati.currentSadeSati.opportunities && (
                       <View style={styles.gridItem}>
                         <Text style={styles.subSubHeader}>{localizePdfUiText('Unique Opportunities')}</Text>
-                        <BulletList items={report.sadeSati.currentSadeSati.opportunities} />
+                        <BulletList items={report.sadeSati.currentSadeSati.opportunities} maxWidth={210} />
                       </View>
                     )}
                   </View>
@@ -9898,13 +9898,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   {karaka.strengths && karaka.strengths.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Strengths')}</Text>
-                      <BulletList items={karaka.strengths} />
+                      <BulletList items={karaka.strengths} maxWidth={210} />
                     </View>
                   )}
                   {karaka.challenges && karaka.challenges.length > 0 && (
                     <View style={styles.gridItem}>
                       <Text style={styles.subSubHeader}>{localizePdfUiText('Challenges')}</Text>
-                      <BulletList items={karaka.challenges} />
+                      <BulletList items={karaka.challenges} maxWidth={210} />
                     </View>
                   )}
                 </View>

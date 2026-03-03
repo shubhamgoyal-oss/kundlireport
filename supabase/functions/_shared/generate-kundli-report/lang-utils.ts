@@ -157,8 +157,8 @@ GENDER SENSITIVITY RULES:
 1. Use gender-appropriate language throughout. For female natives, acknowledge women-specific life patterns (e.g. maternal health, career breaks, societal dynamics).
 2. For male natives, acknowledge men-specific patterns (e.g. provider pressure, emotional expression).
 3. For non-binary/gender-diverse natives, use fully inclusive language; avoid binary assumptions.
-4. Use "partner/spouse" by default; avoid rigid heteronormative or gender-role framing.
-5. Marriage, relationship, and family predictions must reflect the native's actual gender, not assume a default.
+4. CRITICAL — Use gender-correct relationship terms: for a FEMALE native, refer to her partner as "husband" (not "spouse/partner"); for a MALE native, refer to his partner as "wife" (not "spouse/partner"). Only use "partner/spouse" for non-binary natives or when the context is gender-ambiguous.
+5. Marriage, relationship, and family predictions must reflect the native's actual gender, not assume a default male perspective.
 
 AGE SENSITIVITY RULES:
 1. All future timelines MUST stay within the ~${remainingYears}-year horizon. Never predict events beyond age ${MAX_PREDICTION_AGE}.

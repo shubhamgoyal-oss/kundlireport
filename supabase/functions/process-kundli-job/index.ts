@@ -129,7 +129,35 @@ function clampPeriodText(raw: string, cutoffDate: Date, cutoffLabel: string): st
     : raw;
 }
 
+// Gender-aware partner term normalization.
+// For known binary genders, use the correct gendered terms (husband/wife).
+// For non-binary/unknown, neutralize to spouse/partner.
+let _partnerTermGender: string = "M"; // default, set before use
+
+function setPartnerTermGender(gender: string): void {
+  _partnerTermGender = gender;
+}
+
 function normalizePartnerTermsInText(text: string): string {
+  if (_partnerTermGender === "F") {
+    // Female native → her partner is "husband"; fix any wrong gendered terms
+    return text
+      .replace(/\bwives\b/gi, "spouses")   // "wives" doesn't apply to a female native's partner
+      .replace(/\bwife\b/gi, "spouse")      // AI shouldn't call the female native "wife" in 3rd person analysis
+      .replace(/\bgirlfriend\b/gi, "partner")
+      .replace(/\bboyfriend\b/gi, "partner");
+      // Keep "husband" as-is — correct term for female native's spouse
+  }
+  if (_partnerTermGender === "M") {
+    // Male native → his partner is "wife"; fix any wrong gendered terms
+    return text
+      .replace(/\bhusbands\b/gi, "spouses")
+      .replace(/\bhusband\b/gi, "spouse")
+      .replace(/\bboyfriend\b/gi, "partner")
+      .replace(/\bgirlfriend\b/gi, "partner");
+      // Keep "wife" as-is — correct term for male native's spouse
+  }
+  // Non-binary or unknown → neutralize all gendered terms
   return text
     .replace(/\bwives\b/gi, "spouses")
     .replace(/\bwife\b/gi, "spouse")
@@ -577,6 +605,7 @@ async function handleAgentRetry(
   const reportGeneratedAt = new Date(existingReport.generatedAt);
   const normalizedGender = job.gender === "female" || job.gender === "F" ? "F" : job.gender === "other" || job.gender === "O" ? "O" : "M";
   setAgentNativeContext(normalizedGender, birthDate, reportGeneratedAt);
+  setPartnerTermGender(normalizedGender);
   const maritalStatusRaw = String(job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown").toLowerCase();
   const normalizedMaritalStatus: NormalizedMaritalStatus = maritalStatusRaw === "married" ? "married" : maritalStatusRaw === "single" || maritalStatusRaw === "unmarried" ? "single" : "unknown";
 
@@ -992,6 +1021,7 @@ serve(async (req) => {
     console.log(`🔎 [PROCESS-JOB] GENDER normalized: "${normalizedGender}" (will be used in ALL agents via native context)`);
     // Set native context so ALL agents receive gender + age in their system prompts
     setAgentNativeContext(normalizedGender, birthDate, new Date());
+    setPartnerTermGender(normalizedGender);
     const maritalStatusRaw = String(
       job.marital_status ?? job.maritalStatus ?? job.marriage_status ?? "unknown"
     ).toLowerCase();

@@ -109,7 +109,7 @@ export const HI_TEMPLATES: Record<string, string> = {
   "dasha.antardasha.focusAreas.2": "सावधानी — {mdCaution} और {adCaution} पर नियंत्रण रखें।",
   "dasha.antardasha.advice": "इस अंतर्दशा में {mdOpportunity} पर ध्यान दें और {adOpportunity} का सचेत उपयोग करें। {mdCaution} और {adCaution} से बचने के लिए निर्णय संयमित और समीक्षा-आधारित रखें।",
   "dasha.planetContext": "{pName} {sName} राशि में (भाव {house}){retro}",
-  "dasha.planetContextRetro": "",
+  "dasha.planetContextRetro": ", वक्री",
   "dasha.planetContextUnavailable": "{pName} (स्थिति अनुपलब्ध)",
 
   // ── Glossary: System prompts ─────────────────────────────────────────────

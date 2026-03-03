@@ -109,7 +109,7 @@ export const KN_TEMPLATES: Record<string, string> = {
   "dasha.antardasha.focusAreas.2": "ಎಚ್ಚರಿಕೆ — {mdCaution} ಮತ್ತು {adCaution} ಮೇಲೆ ನಿಯಂತ್ರಣ ಇಡಿ.",
   "dasha.antardasha.advice": "ಈ ಅಂತರ್ದಶೆಯಲ್ಲಿ {mdOpportunity} ಮೇಲೆ ಗಮನ ಕೊಡಿ ಮತ್ತು {adOpportunity} ಅನ್ನು ಜಾಗರೂಕವಾಗಿ ಬಳಸಿ. {mdCaution} ಮತ್ತು {adCaution} ಅಡ್ಡಿಯಾಗದಂತೆ ನಿರ್ಧಾರಗಳನ್ನು ಪರಿಶೀಲನೆ ಆಧಾರದ ಮೇಲೆ ತೆಗೆದುಕೊಳ್ಳಿ.",
   "dasha.planetContext": "{pName} {sName} ರಾಶಿಯಲ್ಲಿ (ಭಾವ {house}){retro}",
-  "dasha.planetContextRetro": "",
+  "dasha.planetContextRetro": ", ವಕ್ರ",
   "dasha.planetContextUnavailable": "{pName} (ಸ್ಥಾನ ಲಭ್ಯವಿಲ್ಲ)",
 
   // ── Glossary: System prompts ─────────────────────────────────────────────

@@ -19,7 +19,7 @@ import { generateDoshasPrediction } from "../_shared/generate-kundli-report/dosh
 import { generateRajYogsPrediction } from "../_shared/generate-kundli-report/raj-yogs-agent.ts";
 import { generateSadeSatiPrediction } from "../_shared/generate-kundli-report/sade-sati-agent.ts";
 import { enforceAstrologyTruth } from "../_shared/generate-kundli-report/truth-guard.ts";
-import { setAgentLanguageContext, setAgentNativeContext } from "../_shared/generate-kundli-report/agent-base.ts";
+import { setAgentLanguageContext, setAgentNativeContext, getAgentLanguage } from "../_shared/generate-kundli-report/agent-base.ts";
 import { getLanguagePack, normalizeLanguage } from "../_shared/language-packs/index.ts";
 import type { SupportedLanguage } from "../_shared/language-packs/types.ts";
 import { createJobEvent, touchJobHeartbeat } from "../_shared/job-events.ts";
@@ -97,7 +97,10 @@ function addYears(date: Date, years: number): Date {
 }
 
 function formatMonthYear(date: Date): string {
-  return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  const lang = getAgentLanguage();
+  const localeMap: Record<string, string> = { hi: "hi-IN", te: "te-IN", kn: "kn-IN", mr: "mr-IN" };
+  const locale = localeMap[lang] || "en-IN";
+  return date.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
 function parseFlexibleMonthYear(raw: unknown): Date | null {
@@ -124,9 +127,12 @@ function clampPeriodText(raw: string, cutoffDate: Date, cutoffLabel: string): st
   const years = Array.from(raw.matchAll(/\b(19|20|21)\d{2}\b/g)).map((m) => Number(m[0]));
   if (years.length === 0) return raw;
   const maxYear = Math.max(...years);
-  return maxYear > cutoffDate.getFullYear()
-    ? `Future windows are capped at ${cutoffLabel} for lifecycle-safe predictions.`
-    : raw;
+  if (maxYear <= cutoffDate.getFullYear()) return raw;
+  // For non-English, preserve the agent's localized text — don't replace with English.
+  // The agent already respects age/lifecycle constraints via prompt instructions.
+  const lang = getAgentLanguage();
+  if (lang !== "en") return raw;
+  return `Future windows are capped at ${cutoffLabel} for lifecycle-safe predictions.`;
 }
 
 // Gender-aware partner term normalization.
@@ -233,7 +239,10 @@ function enforceCareerSafety(
   safe.careerTiming.upcomingOpportunities = (safe.careerTiming.upcomingOpportunities || [])
     .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
 
-  if (ageYears < CAREER_MIN_AGE) {
+  // Age-based career safety overrides — only inject English text for English reports.
+  // Non-English agents already handle age sensitivity via AGE SENSITIVITY RULES in the prompt.
+  const careerLang = getAgentLanguage();
+  if (ageYears < CAREER_MIN_AGE && careerLang === "en") {
     const adultYear = birthDate.getFullYear() + CAREER_MIN_AGE;
     safe.overview = `Career advice is age-calibrated. At age ${ageYears}, this section focuses on education, skills, and foundation building. Detailed switch/job timing should be interpreted from age ${CAREER_MIN_AGE} onward (from ${adultYear}).`;
     safe.careerSwitchInsights = {
@@ -252,7 +261,7 @@ function enforceCareerSafety(
       upcomingOpportunities: [`Structured career timing will open after age ${CAREER_MIN_AGE}.`],
       challenges: ["Avoid premature long-term career commitments before readiness."],
     };
-  } else if (ageYears >= MAX_PREDICTION_AGE) {
+  } else if (ageYears >= MAX_PREDICTION_AGE && careerLang === "en") {
     safe.careerSwitchInsights = {
       isSwitchDueNow: "No major career-switch forecasting is provided at this life stage.",
       nextSwitchWindow: `Future windows beyond ${cutoffLabel} are intentionally excluded.`,
@@ -287,13 +296,20 @@ function enforceMarriageSafety(
   const cutoffDate = addYears(birthDate, MAX_PREDICTION_AGE);
   const cutoffLabel = formatMonthYear(cutoffDate);
 
-  safe.maritalSafety = safe.maritalSafety || {
-    statusAssumption: `Input marital status treated as: ${maritalStatus}`,
-    safeguardPolicy: "Guidance avoids destabilizing existing committed relationships.",
-    alreadyMarriedGuidance: "If married, prioritize harmony, communication, and long-term trust building.",
-  };
+  // Marriage safety fallbacks — only inject English text for English reports.
+  // Non-English agents produce localized content; don't overwrite with English.
+  const marriageLang = getAgentLanguage();
+  const isEnMarriage = marriageLang === "en";
 
-  if (maritalStatus !== "single") {
+  if (isEnMarriage) {
+    safe.maritalSafety = safe.maritalSafety || {
+      statusAssumption: `Input marital status treated as: ${maritalStatus}`,
+      safeguardPolicy: "Guidance avoids destabilizing existing committed relationships.",
+      alreadyMarriedGuidance: "If married, prioritize harmony, communication, and long-term trust building.",
+    };
+  }
+
+  if (maritalStatus !== "single" && isEnMarriage) {
     safe.idealPartnerForUnmarried = {
       whenApplicable: maritalStatus === "married"
         ? "Not applicable for currently married natives."
@@ -311,18 +327,18 @@ function enforceMarriageSafety(
     relationshipStrengthening: [],
     conflictsToAvoid: [],
   };
-  if (marriedGuidance.focusAreas.length === 0) {
+  if (marriedGuidance.focusAreas.length === 0 && isEnMarriage) {
     marriedGuidance.focusAreas = ["Mutual respect, predictable communication, and shared responsibilities."];
   }
-  if (marriedGuidance.relationshipStrengthening.length === 0) {
+  if (marriedGuidance.relationshipStrengthening.length === 0 && isEnMarriage) {
     marriedGuidance.relationshipStrengthening = ["Weekly check-ins, gratitude practice, and calm conflict resolution."];
   }
-  if (marriedGuidance.conflictsToAvoid.length === 0) {
+  if (marriedGuidance.conflictsToAvoid.length === 0 && isEnMarriage) {
     marriedGuidance.conflictsToAvoid = ["Reactive arguments, emotional distancing, and third-party triangulation."];
   }
   safe.guidanceForMarriedNatives = marriedGuidance;
 
-  if (ageYears < MARRIAGE_MIN_AGE) {
+  if (ageYears < MARRIAGE_MIN_AGE && isEnMarriage) {
     const adultYear = birthDate.getFullYear() + MARRIAGE_MIN_AGE;
     safe.idealPartnerForUnmarried = {
       whenApplicable: `Applicable only after adulthood threshold (age ${MARRIAGE_MIN_AGE}, from ${adultYear}).`,
@@ -339,7 +355,7 @@ function enforceMarriageSafety(
     };
   }
 
-  if (ageYears >= MAX_PREDICTION_AGE) {
+  if (ageYears >= MAX_PREDICTION_AGE && isEnMarriage) {
     safe.idealPartnerForUnmarried = {
       whenApplicable: "Not applicable at this life stage under lifecycle safety policy.",
       keyQualities: [],
@@ -375,9 +391,12 @@ function enforceHealthSafety(
     return cleaned.length > 0 ? cleaned : fallback;
   };
 
+  const healthLang = getAgentLanguage();
+  const isEnHealth = healthLang === "en";
+
   safe.healthGuidance = safe.healthGuidance || {
     ageGroup: isSenior ? "senior" : "adult",
-    whyThisMatters: "Health routines should be aligned with age, recovery capacity, and medical context.",
+    whyThisMatters: isEnHealth ? "Health routines should be aligned with age, recovery capacity, and medical context." : "",
     safeMovement: [],
     nutritionAndHydration: [],
     recoveryAndSleep: [],
@@ -390,19 +409,21 @@ function enforceHealthSafety(
     safe.healthGuidance.ageGroup = "senior";
     safe.healthGuidance.safeMovement = filterRisky(
       safe.healthGuidance.safeMovement,
-      ["Prefer low-impact walking, gentle mobility, and medically appropriate stretching."]
+      isEnHealth ? ["Prefer low-impact walking, gentle mobility, and medically appropriate stretching."] : []
     );
     safe.dailyRoutine = filterRisky(
       safe.dailyRoutine,
-      ["Maintain a gentle daily movement routine based on energy and medical advice."]
+      isEnHealth ? ["Maintain a gentle daily movement routine based on energy and medical advice."] : []
     );
-    safe.healthGuidance.avoidOverstrain = [
-      ...(safe.healthGuidance.avoidOverstrain || []),
-      "Avoid high-impact running, sprinting, and heavy-strain workouts unless medically cleared.",
-    ];
+    if (isEnHealth) {
+      safe.healthGuidance.avoidOverstrain = [
+        ...(safe.healthGuidance.avoidOverstrain || []),
+        "Avoid high-impact running, sprinting, and heavy-strain workouts unless medically cleared.",
+      ];
+    }
   }
 
-  if (!safe.healthGuidance.medicalDisclaimer) {
+  if (!safe.healthGuidance.medicalDisclaimer && isEnHealth) {
     safe.healthGuidance.medicalDisclaimer = "This guidance is supportive, not a diagnosis or substitute for licensed medical care.";
   }
 
@@ -448,7 +469,10 @@ function enforceDashaSafety(
   if (!safe) return null;
 
   const periodRecommendations = Array.isArray(safe.periodRecommendations) ? safe.periodRecommendations : [];
-  if (!periodRecommendations.some((line) => line.includes("lifecycle-safe"))) {
+  // Only inject English lifecycle message for English reports.
+  // Non-English agents already handle lifecycle constraints via prompt instructions.
+  const dashaLang = getAgentLanguage();
+  if (dashaLang === "en" && !periodRecommendations.some((line) => line.includes("lifecycle-safe"))) {
     periodRecommendations.push(`Timelines are lifecycle-safe and capped at ${cutoffLabel}.`);
   }
   safe.periodRecommendations = periodRecommendations;

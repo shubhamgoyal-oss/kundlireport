@@ -109,7 +109,7 @@ export const TE_TEMPLATES: Record<string, string> = {
   "dasha.antardasha.focusAreas.2": "జాగ్రత్త — {mdCaution} మరియు {adCaution} పై నియంత్రణ ఉంచండి.",
   "dasha.antardasha.advice": "ఈ అంతర్దశలో {mdOpportunity} పై దృష్టి పెట్టండి మరియు {adOpportunity} ను సచేతనంగా ఉపయోగించుకోండి. {mdCaution} మరియు {adCaution} అడ్డుపడకుండా ఉండేందుకు నిర్ణయాలను సమీక్షాపూర్వకంగా తీసుకోండి.",
   "dasha.planetContext": "{pName} {sName} రాశిలో (భావం {house}){retro}",
-  "dasha.planetContextRetro": "",
+  "dasha.planetContextRetro": ", వక్ర",
   "dasha.planetContextUnavailable": "{pName} (స్థానం అందుబాటులో లేదు)",
 
   // ── Glossary: System prompts ─────────────────────────────────────────────

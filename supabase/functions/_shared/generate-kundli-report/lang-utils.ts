@@ -84,7 +84,8 @@ export function sectionPrompt(section: LanguageSection): string {
  * {placeholder} variables. Falls back to the key itself if not found.
  */
 export function tmpl(key: string, vars?: Record<string, string>): string {
-  let text = activePack().templates?.[key] || key;
+  const templates = activePack().templates;
+  let text = (templates && key in templates) ? templates[key] : key;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
       text = text.replaceAll(`{${k}}`, v);

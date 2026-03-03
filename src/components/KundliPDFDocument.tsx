@@ -5374,11 +5374,13 @@ const SectionDividerPage = ({ partNumber, title, subtitle }: { partNumber: strin
     </View>
     <View style={{ position: 'absolute', bottom: 40, left: 0, right: 0, alignItems: 'center' }}>
       <Text style={styles.dividerFooter}>
-        {ACTIVE_PDF_LANGUAGE === 'hi'
+        {ACTIVE_PDF_LANGUAGE === 'hi' || ACTIVE_PDF_LANGUAGE === 'mr'
           ? 'श्री मंदिर — धर्म, कर्म, ज्योतिष'
           : ACTIVE_PDF_LANGUAGE === 'te'
             ? 'శ్రీ మందిర్ — ధర్మ, కర్మ, జ్యోతిష్యం'
-            : 'Sri Mandir — Dharma, Karma, Jyotish'}
+            : ACTIVE_PDF_LANGUAGE === 'kn'
+              ? 'ಶ್ರೀ ಮಂದಿರ — ಧರ್ಮ, ಕರ್ಮ, ಜ್ಯೋತಿಷ'
+              : 'Sri Mandir — Dharma, Karma, Jyotish'}
       </Text>
     </View>
   </Page>
@@ -9031,7 +9033,11 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               ? 'कॉल या व्हाट्सऐप: 080 711 74417'
               : ACTIVE_PDF_LANGUAGE === 'te'
                 ? 'కాల్ లేదా వాట్సాప్: 080 711 74417'
-                : 'Call or WhatsApp: 080 711 74417'}
+                : ACTIVE_PDF_LANGUAGE === 'kn'
+                  ? 'ಕರೆ ಮಾಡಿ ಅಥವಾ ವಾಟ್ಸ್‌ಆ್ಯಪ್: 080 711 74417'
+                  : ACTIVE_PDF_LANGUAGE === 'mr'
+                    ? 'कॉल किंवा व्हॉट्सॲप: 080 711 74417'
+                    : 'Call or WhatsApp: 080 711 74417'}
           </Text>
         </View>
 

@@ -1,37 +1,54 @@
 diff --git a/node_modules/@react-pdf/textkit/lib/textkit.js b/node_modules/@react-pdf/textkit/lib/textkit.js
-index 4e1b193..ea32b07 100644
+index 4e1b193..c2bc128 100644
 --- a/node_modules/@react-pdf/textkit/lib/textkit.js
 +++ b/node_modules/@react-pdf/textkit/lib/textkit.js
-@@ -82,7 +82,27 @@ const wrapWords = (engines = {}, options = {}) => {
+@@ -57,24 +57,12 @@ const wrapWords = (engines = {}, options = {}) => {
+      * @returns Attributed string including syllables
+      */
+     return (attributedString) => {
+-        const syllables = [];
+         const fragments = [];
+-        const builtinHyphenate = engines.wordHyphenation?.() || defaultHyphenate;
+-        const hyphenate = options.hyphenationCallback || builtinHyphenate;
+         let offset = 0;
+         for (let i = 0; i < attributedString.runs.length; i += 1) {
+-            let string = '';
+             const run = attributedString.runs[i];
+-            const words = attributedString.string
+-                .slice(run.start, run.end)
+-                .split(/([ ]+)/g)
+-                .filter(Boolean);
+-            for (let j = 0; j < words.length; j += 1) {
+-                const word = words[j];
+-                const parts = hyphenate(word, builtinHyphenate).map(removeSoftHyphens);
+-                syllables.push(...parts);
+-                string += parts.join('');
+-            }
++            const rawChars = attributedString.string.slice(run.start, run.end);
++            const string = removeSoftHyphens(rawChars);
+             // Modify run start and end based on removed soft hyphens.
+             const runOffset = run.end - run.start - string.length;
+             const start = run.start - offset;
+@@ -82,8 +70,16 @@ const wrapWords = (engines = {}, options = {}) => {
              fragments.push({ ...run, start, end, string });
              offset += runOffset;
          }
 -        const result = { ...fromFragments(fragments), syllables };
-+        // Merge consecutive non-space syllables that were split by run boundaries.
-+        // Without this, fontSubstitution / scriptItemizer run splits can break
-+        // Indic (Devanagari, Kannada, Telugu) words mid-character because each
-+        // run fragment becomes a separate box node with penalty nodes between them,
-+        // allowing the line breaker to split words across lines.
-+        const mergedSyllables = [];
-+        for (let k = 0; k < syllables.length; k++) {
-+            if (syllables[k].trim() === '') {
-+                // Whitespace — always a separate entry (becomes a glue node)
-+                mergedSyllables.push(syllables[k]);
-+            } else if (
-+                mergedSyllables.length > 0 &&
-+                mergedSyllables[mergedSyllables.length - 1].trim() !== ''
-+            ) {
-+                // Consecutive non-space: merge into previous (same word)
-+                mergedSyllables[mergedSyllables.length - 1] += syllables[k];
-+            } else {
-+                mergedSyllables.push(syllables[k]);
-+            }
-+        }
-+        const result = { ...fromFragments(fragments), syllables: mergedSyllables };
-         return result;
+-        return result;
++        const attrStr = fromFragments(fragments);
++        // Create syllables from the FULL string, splitting only at ASCII spaces.
++        // This completely ignores run boundaries from fontSubstitution /
++        // scriptItemizer, guaranteeing every word is a single unbreakable
++        // syllable for the Knuth-Plass line breaker. Combined with the
++        // penalty node removal in getNodes(), line breaks can ONLY occur
++        // at spaces — Indic (Devanagari, Kannada, Telugu, Marathi) words
++        // are never split across lines.
++        const syllables = attrStr.string.split(/([ ]+)/g).filter(Boolean);
++        return { ...attrStr, syllables };
      };
  };
-@@ -2402,14 +2422,14 @@ const getNodes = (attributedString, { align }, options) => {
+ 
+@@ -2402,14 +2398,14 @@ const getNodes = (attributedString, { align }, options) => {
              acc.push(linebreak.glue(width, start, end, stretch, shrink));
          }
          else {

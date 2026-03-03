@@ -1,0 +1,33 @@
+diff --git a/node_modules/@react-pdf/textkit/lib/textkit.js b/node_modules/@react-pdf/textkit/lib/textkit.js
+index 4e1b193..e079760 100644
+--- a/node_modules/@react-pdf/textkit/lib/textkit.js
++++ b/node_modules/@react-pdf/textkit/lib/textkit.js
+@@ -82,7 +82,27 @@ const wrapWords = (engines = {}, options = {}) => {
+             fragments.push({ ...run, start, end, string });
+             offset += runOffset;
+         }
+-        const result = { ...fromFragments(fragments), syllables };
++        // Merge consecutive non-space syllables that were split by run boundaries.
++        // Without this, fontSubstitution / scriptItemizer run splits can break
++        // Indic (Devanagari, Kannada, Telugu) words mid-character because each
++        // run fragment becomes a separate box node with penalty nodes between them,
++        // allowing the line breaker to split words across lines.
++        const mergedSyllables = [];
++        for (let k = 0; k < syllables.length; k++) {
++            if (syllables[k].trim() === '') {
++                // Whitespace — always a separate entry (becomes a glue node)
++                mergedSyllables.push(syllables[k]);
++            } else if (
++                mergedSyllables.length > 0 &&
++                mergedSyllables[mergedSyllables.length - 1].trim() !== ''
++            ) {
++                // Consecutive non-space: merge into previous (same word)
++                mergedSyllables[mergedSyllables.length - 1] += syllables[k];
++            } else {
++                mergedSyllables.push(syllables[k]);
++            }
++        }
++        const result = { ...fromFragments(fragments), syllables: mergedSyllables };
+         return result;
+     };
+ };

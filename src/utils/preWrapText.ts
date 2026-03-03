@@ -46,9 +46,13 @@ const FONT_CONFIG: Record<string, { family: string; src: string; fontSize: numbe
 
 // Page layout constants (must match KundliPDFDocument.tsx styles)
 // A4 = 595pt wide. paddingLeft=42, paddingRight=42 → 511pt content area.
-// Paragraph text has paddingHorizontal=6 → 499pt text area.
-// Use a conservative width to account for nested containers with extra padding.
-const DEFAULT_MAX_WIDTH_PT = 460;
+// Standard card: padding 12 → 511 - 24 = 487pt.
+// Paragraph text has paddingHorizontal=6 → 487 - 12 = 475pt text area.
+const DEFAULT_MAX_WIDTH_PT = 475;
+
+// Safety margin to account for slight measurement differences between
+// browser Canvas API and react-pdf's internal text engine.
+const SAFETY_FACTOR = 0.97;
 
 /**
  * Core line-wrapping logic (synchronous — assumes font already loaded in canvas).
@@ -87,6 +91,22 @@ function wrapWithCanvas(
 }
 
 /**
+ * Wrap a single paragraph (no double-newlines). If the text already has
+ * single newlines from previous wrapping, collapse them to spaces first
+ * and re-wrap at the current width.
+ */
+function wrapParagraph(
+  text: string,
+  ctx: CanvasRenderingContext2D,
+  effectiveMax: number,
+): string {
+  // Collapse any existing single-newline line breaks to spaces
+  const unwrapped = text.replace(/\n/g, ' ').replace(/  +/g, ' ').trim();
+  if (unwrapped.length < 40) return unwrapped;
+  return wrapWithCanvas(unwrapped, ctx, effectiveMax);
+}
+
+/**
  * Pre-wrap a text string so that line breaks occur only at word boundaries.
  * Async version — loads font if not already loaded.
  */
@@ -107,7 +127,6 @@ export async function preWrapText(
   const ctx = canvas.getContext('2d');
   if (!ctx) return text;
 
-  const SAFETY_FACTOR = 0.92;
   const effectiveMax = maxWidthPt * SAFETY_FACTOR;
 
   ctx.font = `${fontSize}px "${config.family}"`;
@@ -131,9 +150,13 @@ export async function ensurePreWrapFontsLoaded(language: string): Promise<void> 
  * IMPORTANT: Call `ensurePreWrapFontsLoaded(language)` once before generating
  * the PDF so the font is already loaded in the browser when this runs.
  *
+ * Handles text that already contains '\n' from previous wrapping passes
+ * (e.g. preWrapReportTexts) by re-wrapping at the current width. Paragraph
+ * breaks ('\n\n') are preserved.
+ *
  * @param text       - The string to wrap.
  * @param language   - Language code ('hi', 'mr', 'te', 'kn'). English returns unchanged.
- * @param maxWidthPt - Available width in PDF points (default: 460).
+ * @param maxWidthPt - Available width in PDF points (default: 475).
  * @returns          - Text with '\n' at computed word-boundary break points.
  */
 export function wrapIndicSync(
@@ -143,8 +166,6 @@ export function wrapIndicSync(
 ): string {
   if (!text) return text || '';
   if (text.length < 40) return text;
-  // Already has newlines — already wrapped (or pre-formatted)
-  if (text.includes('\n')) return text;
 
   const config = FONT_CONFIG[language];
   if (!config) return text; // English — no wrapping needed
@@ -153,9 +174,16 @@ export function wrapIndicSync(
   const ctx = canvas.getContext('2d');
   if (!ctx) return text;
 
-  const SAFETY_FACTOR = 0.92;
   const effectiveMax = maxWidthPt * SAFETY_FACTOR;
   ctx.font = `${config.fontSize}px "${config.family}"`;
+
+  // If text has paragraph breaks (\n\n), split into paragraphs,
+  // wrap each independently, and rejoin with \n\n.
+  if (text.includes('\n')) {
+    const paragraphs = text.split(/\n{2,}/);
+    const rewrapped = paragraphs.map(p => wrapParagraph(p, ctx, effectiveMax));
+    return rewrapped.join('\n\n');
+  }
 
   return wrapWithCanvas(text, ctx, effectiveMax);
 }
@@ -169,7 +197,7 @@ export function wrapIndicSync(
  *
  * @param report    - The Kundli report JSON (will NOT be mutated; returns a deep clone).
  * @param language  - Language code ('hi', 'mr', 'te', 'kn'). English returns unchanged.
- * @param maxWidthPt - Available width in PDF points (default: 460).
+ * @param maxWidthPt - Available width in PDF points (default: 475).
  * @returns         - Deep clone of report with pre-wrapped text fields.
  */
 export function preWrapReportTexts(
@@ -184,7 +212,6 @@ export function preWrapReportTexts(
   const ctx = canvas.getContext('2d');
   if (!ctx) return report;
 
-  const SAFETY_FACTOR = 0.92;
   const effectiveMax = maxWidthPt * SAFETY_FACTOR;
   // Use the body font size from the language config
   ctx.font = `${config.fontSize}px "${config.family}"`;
@@ -196,8 +223,12 @@ export function preWrapReportTexts(
 
     if (typeof obj === 'string') {
       if (obj.length < MIN_LENGTH) return obj;
-      // Skip strings that already have newlines (e.g., pre-formatted)
-      if (obj.includes('\n')) return obj;
+      // If text has paragraph breaks, split and wrap each paragraph
+      if (obj.includes('\n')) {
+        const paragraphs = obj.split(/\n{2,}/);
+        const rewrapped = paragraphs.map(p => wrapParagraph(p, ctx!, effectiveMax));
+        return rewrapped.join('\n\n');
+      }
       return wrapWithCanvas(obj, ctx!, effectiveMax);
     }
 

@@ -210,6 +210,8 @@ const sanitizeText = (text: string | null | undefined): string => {
   return String(text)
     // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
+    // Convert literal escaped newlines from backend (\\n → real \n)
+    .replace(/\\n/g, '\n')
     .replace(/\s+,/g, ',')
     .replace(/\(\s*\)/g, '')
     // Collapse whitespace BUT preserve newlines (\n) — they are inserted by
@@ -6509,6 +6511,27 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
   // Use explicit language prop if provided, otherwise fall back to report.language
   applyLanguageTypography(language || report?.language);
 
+  // ── Dynamic font-size overrides for Indic languages ──────────────────────
+  // StyleSheet.create() is static (module-level). For non-English we need larger
+  // body text so the PDF rendering matches the Canvas measurement font size.
+  // English keeps the original 10.2 pt; Indic languages use ACTIVE_PDF_BODY_FONT_SIZE (11.2 pt).
+  if (ACTIVE_PDF_LANGUAGE !== 'en') {
+    (styles as Record<string, Record<string, unknown>>).paragraph.fontSize = ACTIVE_PDF_BODY_FONT_SIZE;
+    (styles as Record<string, Record<string, unknown>>).paragraph.lineHeight = ACTIVE_PDF_BODY_LINE_HEIGHT;
+    (styles as Record<string, Record<string, unknown>>).bodyText.fontSize = ACTIVE_PDF_BODY_FONT_SIZE;
+    (styles as Record<string, Record<string, unknown>>).bodyText.lineHeight = ACTIVE_PDF_BODY_LINE_HEIGHT;
+    (styles as Record<string, Record<string, unknown>>).scriptural.fontSize = 10.2;
+    (styles as Record<string, Record<string, unknown>>).scriptural.lineHeight = 1.5;
+  } else {
+    // Reset to English defaults in case a previous Indic render mutated them
+    (styles as Record<string, Record<string, unknown>>).paragraph.fontSize = 10.2;
+    (styles as Record<string, Record<string, unknown>>).paragraph.lineHeight = 1.45;
+    (styles as Record<string, Record<string, unknown>>).bodyText.fontSize = 10.2;
+    (styles as Record<string, Record<string, unknown>>).bodyText.lineHeight = 1.45;
+    (styles as Record<string, Record<string, unknown>>).scriptural.fontSize = 9.5;
+    (styles as Record<string, Record<string, unknown>>).scriptural.lineHeight = 1.4;
+  }
+
   const parseBirthTime = (rawTime: unknown): { hour: number; minute: number } | null => {
     const input = String(rawTime ?? '').trim();
     if (!input) return null;
@@ -7494,30 +7517,33 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           paddingHorizontal: 20,
           marginBottom: 14,
         }}>
+          {/* Available width: 595 - 42*2 page padding - 20*2 card padding - 6*2 text padding = 459pt */}
           {disc.paragraphs.slice(0, -1).map((para, idx) => (
             <Text key={`disc-p-${idx}`} style={{
-              fontSize: 10,
+              fontSize: ACTIVE_PDF_BODY_FONT_SIZE,
               color: P.bodyText,
-              lineHeight: 1.55,
+              lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT,
               marginBottom: 12,
               textAlign: 'left',
               paddingHorizontal: 6,
+              letterSpacing: ACTIVE_PDF_LANGUAGE !== 'en' ? 0.15 : 0,
             }}>
-              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE)}
+              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE, 459)}
             </Text>
           ))}
-          {/* Last paragraph — closing message, italic + centered */}
+          {/* Last paragraph — closing inspiration, italic + centered */}
           <Text style={{
-            fontSize: 10,
+            fontSize: ACTIVE_PDF_BODY_FONT_SIZE,
             color: P.mutedText,
-            lineHeight: 1.55,
+            lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT,
             fontStyle: 'italic',
             textAlign: 'center',
             marginTop: 4,
             marginBottom: 0,
             paddingHorizontal: 6,
+            letterSpacing: ACTIVE_PDF_LANGUAGE !== 'en' ? 0.15 : 0,
           }}>
-            {wrapIndicSync(disc.paragraphs[disc.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE)}
+            {wrapIndicSync(disc.paragraphs[disc.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE, 459)}
           </Text>
         </View>
       </Page>
@@ -7573,30 +7599,33 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           paddingHorizontal: 20,
           marginBottom: 14,
         }}>
+          {/* Available width: 595 - 42*2 page padding - 20*2 card padding - 6*2 text padding = 459pt */}
           {guide.paragraphs.slice(0, -1).map((para, idx) => (
             <Text key={`guide-p-${idx}`} style={{
-              fontSize: 10,
+              fontSize: ACTIVE_PDF_BODY_FONT_SIZE,
               color: P.bodyText,
-              lineHeight: 1.55,
+              lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT,
               marginBottom: 12,
               textAlign: 'left',
               paddingHorizontal: 6,
+              letterSpacing: ACTIVE_PDF_LANGUAGE !== 'en' ? 0.15 : 0,
             }}>
-              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE)}
+              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE, 459)}
             </Text>
           ))}
           {/* Last paragraph — closing inspiration, italic + centered */}
           <Text style={{
-            fontSize: 10,
+            fontSize: ACTIVE_PDF_BODY_FONT_SIZE,
             color: P.mutedText,
-            lineHeight: 1.55,
+            lineHeight: ACTIVE_PDF_BODY_LINE_HEIGHT,
             fontStyle: 'italic',
             textAlign: 'center',
             marginTop: 4,
             marginBottom: 0,
             paddingHorizontal: 6,
+            letterSpacing: ACTIVE_PDF_LANGUAGE !== 'en' ? 0.15 : 0,
           }}>
-            {wrapIndicSync(guide.paragraphs[guide.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE)}
+            {wrapIndicSync(guide.paragraphs[guide.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE, 459)}
           </Text>
         </View>
       </Page>

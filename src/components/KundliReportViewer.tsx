@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
 import { fetchMultipleCharts, PDF_CHARTS, ChartData, BirthDetails } from '@/utils/kundaliChart';
+import { ensurePreWrapFontsLoaded, preWrapReportTexts } from '@/utils/preWrapText';
 import { toast } from 'sonner';
 
 const PDF_SETTINGS_DB = 'kundli_pdf_settings';
@@ -214,7 +215,13 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     const convertedCharts = await chartsWithDataUrls(charts);
     const reportWithCharts = { ...report, charts: convertedCharts };
     const pdfLang = report.language || reportLang;
-    return pdf(<KundliPDFDocument report={reportWithCharts} language={pdfLang} />).toBlob();
+
+    // Pre-wrap Indic text using browser canvas (HarfBuzz) to prevent mid-word line breaks.
+    // react-pdf's Knuth-Plass line breaker can't handle Devanagari/Telugu/Kannada correctly.
+    await ensurePreWrapFontsLoaded(pdfLang);
+    const wrappedReport = preWrapReportTexts(reportWithCharts as Record<string, unknown>, pdfLang);
+
+    return pdf(<KundliPDFDocument report={wrappedReport} language={pdfLang} />).toBlob();
   }, [report, charts]);
 
   const saveBlobToConfiguredFolder = useCallback(async (blob: Blob, fileName: string) => {

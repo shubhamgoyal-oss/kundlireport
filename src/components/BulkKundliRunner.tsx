@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { preloadCityDatabase, searchPlaces } from '@/utils/geocoding';
-import { Loader2, Play, Square, Table2, RefreshCw, RotateCcw } from 'lucide-react';
+import { ensurePreWrapFontsLoaded, preWrapReportTexts } from '@/utils/preWrapText';
+import { Loader2, Play, Square, Table2, RefreshCw, RotateCcw, FastForward } from 'lucide-react';
 import { toast } from 'sonner';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
@@ -399,10 +400,13 @@ export default function BulkKundliRunner() {
       const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te' | 'kn' | 'mr';
       const charts = await fetchMultipleCharts(birthDetails, 'North', rowLang === 'te' ? 'en' : rowLang, PDF_CHARTS);
       const reportWithCharts = { ...report, charts };
+      // Pre-wrap Indic text to prevent mid-word line breaks in PDF.
+      await ensurePreWrapFontsLoaded(rowLang);
+      const wrappedReport = preWrapReportTexts(reportWithCharts as Record<string, unknown>, rowLang);
       // Serialize PDF generation via mutex — global ACTIVE_PDF_LANGUAGE must not be
       // corrupted by concurrent renders (e.g., Hindi overwriting Telugu mid-render).
       const blob = await (pdfMutexRef.current = pdfMutexRef.current.then(() =>
-        pdf(<KundliPDFDocument report={reportWithCharts} language={rowLang} />).toBlob()
+        pdf(<KundliPDFDocument report={wrappedReport} language={rowLang} />).toBlob()
       ));
       const downloadUrl = URL.createObjectURL(blob);
       blobUrlsRef.current.push(downloadUrl);
@@ -803,8 +807,194 @@ export default function BulkKundliRunner() {
     stopRequestedRef.current = true;
   };
 
+  /** Force-reset a stuck run: clears running state and resets in-flight rows to pending */
+  const forceResetRun = () => {
+    stopRequestedRef.current = true;
+    setIsRunning(false);
+    setBulkRows((prev) => sanitizeRestoredRows(prev));
+    toast('Run force-reset — in-flight rows set back to pending');
+  };
+
+  /** Continue from where we left off — skip completed rows, process pending/failed only */
+  const continueBulkGeneration = async () => {
+    // Find rows that still need processing (not completed)
+    const completedRowNums = new Set(
+      bulkRows.filter((r) => r.status === 'completed').map((r) => r.rowNumber)
+    );
+    const remainingSheetRows = selectedRows.filter((r) => !completedRowNums.has(r.rowNumber));
+
+    if (!remainingSheetRows.length) {
+      toast('All rows already completed — nothing to continue');
+      return;
+    }
+
+    stopRequestedRef.current = false;
+    setIsRunning(true);
+    restoredRef.current = true;
+
+    // Snapshot gender & language, reset only non-completed rows to pending
+    const genderSnapshot = new Map<number, 'M' | 'F'>();
+    const langSnapshot = new Map<number, 'en' | 'hi' | 'te' | 'kn' | 'mr'>();
+
+    setBulkRows((prev) => {
+      const existing = new Map(prev.map((r) => [r.rowNumber, r]));
+      // Keep ALL existing rows — only reset non-completed ones
+      const allRowNums = new Set([...prev.map((r) => r.rowNumber), ...selectedRows.map((r) => r.rowNumber)]);
+      return Array.from(allRowNums).sort((a, b) => a - b).map((rowNum) => {
+        const ex = existing.get(rowNum);
+        const sheetRow = selectedRows.find((r) => r.rowNumber === rowNum);
+        const gender = ex?.gender || (sheetRow ? parseGenderFromNormalized(sheetRow.normalized) : 'M' as const);
+        const language = ex?.language || bulkLanguage;
+
+        genderSnapshot.set(rowNum, gender);
+        langSnapshot.set(rowNum, language);
+
+        // Keep completed rows exactly as they are
+        if (ex?.status === 'completed') return ex;
+
+        return {
+          rowNumber: rowNum,
+          name: ex?.name || sheetRow?.normalized.offering_user_name || sheetRow?.normalized.name || '',
+          place: ex?.place || sheetRow?.normalized.place_of_birth || '',
+          status: 'pending' as BulkStatus,
+          gender,
+          language,
+          jobId: undefined,
+          error: undefined,
+        };
+      });
+    });
+
+    toast(`Continuing: ${remainingSheetRows.length} remaining rows (${completedRowNums.size} already done)`);
+
+    const { visitorId, sessionId } = getVisitorAndSessionIds();
+    const firstPassFailed = new Set<number>();
+
+    for (const row of remainingSheetRows) {
+      if (stopRequestedRef.current) break;
+
+      try {
+        updateBulkRow(row.rowNumber, { status: 'normalizing' });
+
+        const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', {
+          body: { row: row.normalized },
+        });
+
+        if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
+
+        const name = String(decoded?.name || '').trim();
+        const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
+        const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+        const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
+        const source = String(decoded?.source || 'deterministic');
+
+        if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
+          throw new Error('Missing normalized values after decipher step');
+        }
+
+        const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
+        const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
+
+        updateBulkRow(row.rowNumber, { name, place: placeOfBirth, source, status: 'geocoding' });
+
+        const n = row.normalized;
+        const rawLat = parseFloat(n.latitude || n.lat || '');
+        const rawLon = parseFloat(n.longitude || n.lng || n.lon || '');
+        const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
+
+        const coords = hasExcelCoords
+          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+          : await resolveCoordinates(placeOfBirth);
+
+        updateBulkRow(row.rowNumber, { status: 'queued' });
+
+        const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+          body: {
+            name, dateOfBirth, timeOfBirth,
+            placeOfBirth: coords.displayName,
+            latitude: coords.lat, longitude: coords.lon,
+            timezone: 5.5,
+            language: finalLanguage, gender: finalGender,
+            visitorId, sessionId,
+          },
+        });
+
+        if (startError || !startData?.jobId) throw new Error(startError?.message || 'Failed to start row job');
+
+        const jobId = String(startData.jobId);
+        updateBulkRow(row.rowNumber, { status: 'processing', jobId });
+
+        const result = await pollJobUntilDone(jobId, sessionId, visitorId);
+        if (result.status === 'completed') {
+          updateBulkRow(row.rowNumber, { status: 'completed' });
+          const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender, language: finalLanguage, jobId };
+          await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep failed for row ${row.rowNumber}:`, e));
+        } else {
+          firstPassFailed.add(row.rowNumber);
+          updateBulkRow(row.rowNumber, { status: 'failed', error: result.error || 'Job failed' });
+        }
+      } catch (err) {
+        firstPassFailed.add(row.rowNumber);
+        updateBulkRow(row.rowNumber, { status: 'failed', error: err instanceof Error ? err.message : 'Unknown error' });
+      }
+    }
+
+    // Auto-retry failed rows once
+    if (!stopRequestedRef.current && firstPassFailed.size > 0) {
+      const retryRows = remainingSheetRows.filter((r) => firstPassFailed.has(r.rowNumber));
+      toast(`Retrying ${retryRows.length} failed row(s)…`);
+
+      for (const row of retryRows) {
+        if (stopRequestedRef.current) break;
+        try {
+          updateBulkRow(row.rowNumber, { status: 'normalizing', error: undefined, jobId: undefined });
+          const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', { body: { row: row.normalized } });
+          if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
+          const name = String(decoded?.name || '').trim();
+          const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
+          const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+          const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
+          if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) throw new Error('Missing normalized values');
+          const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
+          const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
+          updateBulkRow(row.rowNumber, { status: 'geocoding' });
+          const rn = row.normalized;
+          const rawLat = parseFloat(rn.latitude || rn.lat || '');
+          const rawLon = parseFloat(rn.longitude || rn.lng || rn.lon || '');
+          const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
+          const coords = hasExcelCoords ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth } : await resolveCoordinates(placeOfBirth);
+          updateBulkRow(row.rowNumber, { status: 'queued' });
+          const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+            body: { name, dateOfBirth, timeOfBirth, placeOfBirth: coords.displayName, latitude: coords.lat, longitude: coords.lon, timezone: 5.5, language: finalLanguage, gender: finalGender, visitorId, sessionId },
+          });
+          if (startError || !startData?.jobId) throw new Error(startError?.message || 'Failed to start row job');
+          const jobId = String(startData.jobId);
+          updateBulkRow(row.rowNumber, { status: 'processing', jobId });
+          const result = await pollJobUntilDone(jobId, sessionId, visitorId);
+          if (result.status === 'completed') {
+            updateBulkRow(row.rowNumber, { status: 'completed', error: undefined });
+            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr', jobId };
+            await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep (retry) failed for row ${row.rowNumber}:`, e));
+          } else {
+            updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${result.error || 'Job failed'}` });
+          }
+        } catch (err) {
+          updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${err instanceof Error ? err.message : 'Unknown error'}` });
+        }
+      }
+    }
+
+    setIsRunning(false);
+    if (stopRequestedRef.current) {
+      toast('Bulk run stopped');
+    } else {
+      toast.success('Bulk run completed');
+    }
+  };
+
   const completedCount = bulkRows.filter((r) => r.status === 'completed').length;
   const failedCount = bulkRows.filter((r) => r.status === 'failed').length;
+  const pendingCount = bulkRows.filter((r) => r.status !== 'completed').length;
 
   return (
     <Card className="w-full max-w-4xl mx-auto mb-6 border-primary/20">
@@ -878,14 +1068,22 @@ export default function BulkKundliRunner() {
           Selected rows: <strong>{selectedRows.length}</strong> (range {startRowNum}-{endRowNum})
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button type="button" onClick={runBulkGeneration} disabled={isRunning || selectedRows.length === 0}>
             {isRunning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Play className="w-4 h-4 mr-2" />}
-            Start Sequential Generation
+            Start Fresh
+          </Button>
+          <Button type="button" variant="outline" onClick={continueBulkGeneration} disabled={isRunning || pendingCount === 0}>
+            <FastForward className="w-4 h-4 mr-2" />
+            Continue ({pendingCount})
           </Button>
           <Button type="button" variant="destructive" onClick={stopBulkRun} disabled={!isRunning}>
             <Square className="w-4 h-4 mr-2" />
             Stop
+          </Button>
+          <Button type="button" variant="destructive" onClick={forceResetRun} disabled={!isRunning}>
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Force Reset
           </Button>
           <Button type="button" variant="outline" onClick={refreshAllFiles} disabled={isRunning || isRefreshingPdfs || completedCount === 0}>
             {isRefreshingPdfs ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RotateCcw className="w-4 h-4 mr-2" />}

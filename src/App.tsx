@@ -15,6 +15,7 @@ import { LanguageWrapper } from "./components/LanguageWrapper";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { trackTrafficSource } from "./utils/trafficTracking";
+import PdfTest from "./pages/PdfTest";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,9 @@ const App = () => {
                 <Route path="category/:category" element={<CategoryPujas />} />
                 <Route path="kundli" element={<Kundli />} />
               </Route>
+
+              {/* Test route for PDF debugging */}
+              <Route path="/pdf-test" element={<PdfTest />} />
 
               {/* Admin login route */}
               <Route path="/admin/login" element={<AdminLogin />} />

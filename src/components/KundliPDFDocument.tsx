@@ -5552,7 +5552,7 @@ interface ChartData {
 interface KundliPDFProps {
   report: any; // Full KundliReport type
   /** Explicit language override — use this in bulk mode to avoid global-state races */
-  language?: 'en' | 'hi' | 'te';
+  language?: 'en' | 'hi' | 'te' | 'kn' | 'mr';
 }
 
 export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {

@@ -191,7 +191,8 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   const pdfBlobUrlRef = useRef<string | null>(null);
   const chartsFetchedRef = useRef(false);
   const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
-  const reportLang: 'en' | 'hi' | 'te' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : 'en';
+  const SUPPORTED_LANGS: Record<string, string> = { hi: 'hi', te: 'te', kn: 'kn', mr: 'mr' };
+  const reportLang = SUPPORTED_LANGS[langCode] || 'en';
   const isHindi = reportLang !== 'en';
   const supportsFolderSave = hasLocalFolderSupport();
 
@@ -212,7 +213,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     // (crashes with "Cannot read properties of null (reading 'xCoordinate')")
     const convertedCharts = await chartsWithDataUrls(charts);
     const reportWithCharts = { ...report, charts: convertedCharts };
-    const pdfLang = (report.language || reportLang) as 'en' | 'hi' | 'te';
+    const pdfLang = report.language || reportLang;
     return pdf(<KundliPDFDocument report={reportWithCharts} language={pdfLang} />).toBlob();
   }, [report, charts]);
 

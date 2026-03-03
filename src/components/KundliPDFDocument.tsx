@@ -222,6 +222,7 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
   hi: {
     'Sri Mandir Kundli Report': 'श्री मंदिर कुंडली रिपोर्ट',
     'Table of Contents': 'विषय सूची',
+    'Your Birth Chart': 'आपकी जन्म कुंडली',
     'Birth Details': 'जन्म विवरण',
     'YOUR': 'आपकी',
     'KUNDLI REPORT': 'कुंडली रिपोर्ट',
@@ -569,6 +570,18 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Years': 'वर्ष',
     'Nature': 'स्वभाव',
     // ── Section divider translations ────────────────────────────────────────
+    'Birth details, planetary positions, Panchang analysis, and the three foundational pillars of your horoscope': 'जन्म विवरण, ग्रह स्थितियां, पंचांग विश्लेषण, और आपकी कुंडली के तीन मूल स्तंभ',
+    'A detailed analysis of each planet\'s placement, dignity, and influence on every dimension of your life': 'प्रत्येक ग्रह की स्थिति, गरिमा और आपके जीवन के हर आयाम पर प्रभाव का विस्तृत विश्लेषण',
+    'A complete house-by-house analysis of every life domain — from self-identity to moksha': 'हर भाव का विस्तृत विश्लेषण — आत्म-पहचान से मोक्ष तक',
+    // ── TOC subtitle translations ────────────────────────────────────────────
+    'Birth details, Panchang, planetary positions, Chara Karakas, Three Pillars': 'जन्म विवरण, पंचांग, ग्रह स्थितियां, चर कारक, तीन स्तंभ',
+    'Detailed analysis of all 9 planets in your chart': 'आपकी कुंडली में सभी 9 ग्रहों का विस्तृत विश्लेषण',
+    'Complete house-by-house life domain analysis': 'संपूर्ण भाव-दर-भाव जीवन क्षेत्र विश्लेषण',
+    'Career, marriage, health — what the stars reveal': 'करियर, विवाह, स्वास्थ्य — ग्रह क्या बताते हैं',
+    'Vimshottari Mahadasha & Antardasha periods': 'विंशोत्तरी महादशा और अंतर्दशा काल',
+    'Rahu-Ketu axis, Raja Yogas, Dosha analysis, Sade Sati': 'राहु-केतु अक्ष, राज योग, दोष विश्लेषण, साढ़ेसाती',
+    'Sacred numbers, Atmakaraka, Ishta Devata, Dharma path': 'पवित्र अंक, आत्मकारक, इष्ट देवता, धर्म पथ',
+    'Gemstones, Rudraksha, Mantras, Yantras, Pujas, lifestyle guidance': 'रत्न, रुद्राक्ष, मंत्र, यंत्र, पूजा, जीवनशैली मार्गदर्शन',
     'Doshas, Yogas & Karma': 'दोष, योग और कर्म',
     'Karmic imbalances, auspicious combinations, and the Rahu-Ketu axis that defines your soul\'s evolutionary mission': 'कर्म असंतुलन, शुभ संयोजन, और राहु-केतु अक्ष जो आपकी आत्मा के विकास मार्ग को परिभाषित करता है',
     'Life Predictions': 'जीवन भविष्यवाणी',
@@ -749,6 +762,7 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
   te: {
     'Sri Mandir Kundli Report': 'శ్రీ మందిర్ కుండలి నివేదిక',
     'Table of Contents': 'విషయ సూచిక',
+    'Your Birth Chart': 'మీ జనన కుండలి',
     'Birth Details': 'జనన వివరాలు',
     'YOUR': 'మీ',
     'KUNDLI REPORT': 'కుండ్లీ రిపోర్ట్',
@@ -1098,6 +1112,18 @@ const PDF_UI_PHRASE_MAP: Record<'hi' | 'te', Record<string, string>> = {
     'Years': 'సంవత్సరాలు',
     'Nature': 'స్వభావం',
     // ── Section divider translations ────────────────────────────────────────
+    'Birth details, planetary positions, Panchang analysis, and the three foundational pillars of your horoscope': 'జనన వివరాలు, గ్రహ స్థానాలు, పంచాంగ విశ్లేషణ మరియు మీ జాతకంలోని మూడు ప్రాథమిక స్తంభాలు',
+    'A detailed analysis of each planet\'s placement, dignity, and influence on every dimension of your life': 'ప్రతి గ్రహం యొక్క స్థానం, గౌరవం మరియు మీ జీవితంలోని ప్రతి కోణంపై ప్రభావం యొక్క వివరణాత్మక విశ్లేషణ',
+    'A complete house-by-house analysis of every life domain — from self-identity to moksha': 'ప్రతి జీవిత రంగం యొక్క సంపూర్ణ భావ-వారీ విశ్లేషణ — ఆత్మ-గుర్తింపు నుండి మోక్షం వరకు',
+    // ── TOC subtitle translations ────────────────────────────────────────────
+    'Birth details, Panchang, planetary positions, Chara Karakas, Three Pillars': 'జనన వివరాలు, పంచాంగం, గ్రహ స్థానాలు, చర కారకాలు, మూడు స్తంభాలు',
+    'Detailed analysis of all 9 planets in your chart': 'మీ చార్ట్‌లోని అన్ని 9 గ్రహాల వివరణాత్మక విశ్లేషణ',
+    'Complete house-by-house life domain analysis': 'సంపూర్ణ భావ-వారీ జీవిత రంగ విశ్లేషణ',
+    'Career, marriage, health — what the stars reveal': 'వృత్తి, వివాహం, ఆరోగ్యం — నక్షత్రాలు ఏమి వెల్లడిస్తాయి',
+    'Vimshottari Mahadasha & Antardasha periods': 'విమ్‌శోత్తరి మహాదశ & అంతర్దశ కాలాలు',
+    'Rahu-Ketu axis, Raja Yogas, Dosha analysis, Sade Sati': 'రాహు-కేతు అక్షం, రాజ యోగాలు, దోష విశ్లేషణ, సాడే సాతి',
+    'Sacred numbers, Atmakaraka, Ishta Devata, Dharma path': 'పవిత్ర సంఖ్యలు, ఆత్మకారకం, ఇష్ట దేవత, ధర్మ మార్గం',
+    'Gemstones, Rudraksha, Mantras, Yantras, Pujas, lifestyle guidance': 'రత్నాలు, రుద్రాక్ష, మంత్రాలు, యంత్రాలు, పూజలు, జీవనశైలి మార్గదర్శకత్వం',
     'Doshas, Yogas & Karma': 'దోషాలు, యోగాలు & కర్మ',
     'Karmic imbalances, auspicious combinations, and the Rahu-Ketu axis that defines your soul\'s evolutionary mission': 'కర్మ అసమతుల్యతలు, శుభ సంయోగాలు, మరియు మీ ఆత్మ పరిణామ మిషన్‌ను నిర్వచించే రాహు-కేతు అక్షం',
     'Life Predictions': 'జీవిత అంచనాలు',
@@ -3464,22 +3490,109 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
     const n = typeof value === 'number' ? value : Number(value);
     if (!Number.isFinite(n)) return 'N/A';
     const abs = Math.abs(n).toFixed(4);
-    if (axis === 'lat') return `${abs}° ${n >= 0 ? 'North' : 'South'}`;
-    return `${abs}° ${n >= 0 ? 'East' : 'West'}`;
+    const dirMap: Record<string, Record<string, string>> = {
+      hi: { North: 'उत्तर', South: 'दक्षिण', East: 'पूर्व', West: 'पश्चिम' },
+      te: { North: 'ఉత్తరం', South: 'దక్షిణం', East: 'తూర్పు', West: 'పడమర' },
+    };
+    const dir = (key: string) => dirMap[ACTIVE_PDF_LANGUAGE]?.[key] || key;
+    if (axis === 'lat') return `${abs}° ${n >= 0 ? dir('North') : dir('South')}`;
+    return `${abs}° ${n >= 0 ? dir('East') : dir('West')}`;
   };
 
   const getWeekday = (dateStr: string): string => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleDateString('en-IN', { weekday: 'long' });
+    const localeMap: Record<string, string> = { hi: 'hi-IN', te: 'te-IN' };
+    return date.toLocaleDateString(localeMap[ACTIVE_PDF_LANGUAGE] || 'en-IN', { weekday: 'long' });
   };
 
   const formatDegreeInSign = (sign: unknown, degree: unknown): string => {
     const signText = String(sign || '').trim();
     const deg = Number(degree);
     if (!signText || !Number.isFinite(deg)) return 'N/A';
-    return `${signText} (${deg.toFixed(2)}°)`;
+    return `${localizePdfUiText(signText)} (${deg.toFixed(2)}°)`;
+  };
+
+  // ── Place-name transliteration for Hindi/Telugu birth details ─────────────
+  // Covers all 28 Indian states, 8 UTs, and common metro cities so the
+  // Birth Details section has zero English leakage for domestic reports.
+  const PLACE_TRANSLIT: Record<string, Record<string, string>> = {
+    hi: {
+      // Country
+      India: 'भारत',
+      // States
+      'Andhra Pradesh': 'आंध्र प्रदेश', 'Arunachal Pradesh': 'अरुणाचल प्रदेश',
+      Assam: 'असम', Bihar: 'बिहार', Chhattisgarh: 'छत्तीसगढ़',
+      Goa: 'गोवा', Gujarat: 'गुजरात', Haryana: 'हरियाणा',
+      'Himachal Pradesh': 'हिमाचल प्रदेश', Jharkhand: 'झारखंड',
+      Karnataka: 'कर्नाटक', Kerala: 'केरल',
+      'Madhya Pradesh': 'मध्य प्रदेश', Maharashtra: 'महाराष्ट्र',
+      Manipur: 'मणिपुर', Meghalaya: 'मेघालय', Mizoram: 'मिज़ोरम',
+      Nagaland: 'नागालैंड', Odisha: 'ओडिशा', Punjab: 'पंजाब',
+      Rajasthan: 'राजस्थान', Sikkim: 'सिक्किम', 'Tamil Nadu': 'तमिल नाडु',
+      Telangana: 'तेलंगाना', Tripura: 'त्रिपुरा',
+      'Uttar Pradesh': 'उत्तर प्रदेश', Uttarakhand: 'उत्तराखंड',
+      'West Bengal': 'पश्चिम बंगाल',
+      // UTs
+      'Andaman and Nicobar Islands': 'अंडमान और निकोबार द्वीपसमूह',
+      Chandigarh: 'चंडीगढ़',
+      'Dadra and Nagar Haveli and Daman and Diu': 'दादरा और नगर हवेली और दमन और दीव',
+      Delhi: 'दिल्ली', 'New Delhi': 'नई दिल्ली',
+      Jammu: 'जम्मू', Kashmir: 'कश्मीर', 'Jammu and Kashmir': 'जम्मू और कश्मीर',
+      Ladakh: 'लद्दाख', Lakshadweep: 'लक्षद्वीप', Puducherry: 'पुडुचेरी',
+      // Major cities
+      Mumbai: 'मुंबई', Pune: 'पुणे', Nagpur: 'नागपुर',
+      Bangalore: 'बेंगलुरु', Bengaluru: 'बेंगलुरु',
+      Chennai: 'चेन्नई', Hyderabad: 'हैदराबाद',
+      Kolkata: 'कोलकाता', Ahmedabad: 'अहमदाबाद',
+      Jaipur: 'जयपुर', Lucknow: 'लखनऊ', Kanpur: 'कानपुर',
+      Patna: 'पटना', Bhopal: 'भोपाल', Indore: 'इंदौर',
+      Varanasi: 'वाराणसी', Agra: 'आगरा', Surat: 'सूरत',
+      Dehradun: 'देहरादून', Haridwar: 'हरिद्वार', Rishikesh: 'ऋषिकेश',
+      Noida: 'नोएडा', Gurgaon: 'गुरुग्राम', Gurugram: 'गुरुग्राम',
+      Faridabad: 'फरीदाबाद', Ghaziabad: 'गाज़ियाबाद',
+      Coimbatore: 'कोयम्बटूर', Madurai: 'मदुरई',
+      Visakhapatnam: 'विशाखापत्तनम', Vijayawada: 'विजयवाड़ा',
+      Thiruvananthapuram: 'तिरुवनंतपुरम', Kochi: 'कोच्चि',
+      Bhubaneswar: 'भुवनेश्वर', Ranchi: 'रांची',
+      Raipur: 'रायपुर', Guwahati: 'गुवाहाटी',
+      Shimla: 'शिमला', Srinagar: 'श्रीनगर',
+      Amritsar: 'अमृतसर', Ludhiana: 'लुधियाना',
+      Jodhpur: 'जोधपुर', Udaipur: 'उदयपुर', Kota: 'कोटा',
+      Mysore: 'मैसूर', Mysuru: 'मैसूरु',
+      Nashik: 'नासिक', Aurangabad: 'औरंगाबाद',
+      Thane: 'ठाणे', 'Navi Mumbai': 'नवी मुंबई',
+      Vadodara: 'वडोदरा', Rajkot: 'राजकोट',
+      Allahabad: 'प्रयागराज', Prayagraj: 'प्रयागराज',
+      Meerut: 'मेरठ', Bareilly: 'बरेली', Aligarh: 'अलीगढ़',
+      Moradabad: 'मुरादाबाद', Gorakhpur: 'गोरखपुर',
+      Jabalpur: 'जबलपुर', Gwalior: 'ग्वालियर',
+      Tiruchirappalli: 'तिरुचिरापल्ली', Salem: 'सेलम',
+    },
+    te: {
+      India: 'భారతదేశం',
+      'Andhra Pradesh': 'ఆంధ్ర ప్రదేశ్', Telangana: 'తెలంగాణ',
+      Karnataka: 'కర్ణాటక', 'Tamil Nadu': 'తమిళనాడు', Kerala: 'కేరళ',
+      Maharashtra: 'మహారాష్ట్ర', Gujarat: 'గుజరాత్',
+      'Uttar Pradesh': 'ఉత్తర ప్రదేశ్', Rajasthan: 'రాజస్థాన్',
+      'Madhya Pradesh': 'మధ్య ప్రదేశ్', Bihar: 'బీహార్',
+      'West Bengal': 'పశ్చిమ బెంగాల్', Odisha: 'ఒడిశా',
+      Punjab: 'పంజాబ్', Haryana: 'హర్యానా',
+      Uttarakhand: 'ఉత్తరాఖండ్', Jharkhand: 'జార్ఖండ్',
+      Chhattisgarh: 'ఛత్తీస్‌గఢ్', Goa: 'గోవా', Assam: 'అస్సాం',
+      Delhi: 'ఢిల్లీ', 'New Delhi': 'న్యూ ఢిల్లీ',
+      Hyderabad: 'హైదరాబాద్', Visakhapatnam: 'విశాఖపట్నం',
+      Vijayawada: 'విజయవాడ', Chennai: 'చెన్నై',
+      Bangalore: 'బెంగళూరు', Bengaluru: 'బెంగళూరు',
+      Mumbai: 'ముంబై', Kolkata: 'కోల్‌కతా', Pune: 'పుణె',
+      Dehradun: 'డెహ్రాడూన్',
+    },
+  };
+
+  const translitPlace = (name: string): string => {
+    if (!name || ACTIVE_PDF_LANGUAGE === 'en') return name;
+    return PLACE_TRANSLIT[ACTIVE_PDF_LANGUAGE]?.[name] || name;
   };
 
   const parsePlaceDetails = (place: string, fallback: any) => {
@@ -3498,10 +3611,14 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
     const latLonFallback = hasCoords
       ? `${Math.abs(latNum).toFixed(4)}°${latDir}, ${Math.abs(lonNum).toFixed(4)}°${lonDir}`
       : (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A');
-    const city = String(fallback?.city || parts[0] || latLonFallback);
-    const state = String(fallback?.state || parts[1] || '');
-    const country = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : ''));
-    return { city, state, country };
+    const rawCity = String(fallback?.city || parts[0] || latLonFallback);
+    const rawState = String(fallback?.state || parts[1] || '');
+    const rawCountry = String(fallback?.country || (parts.length > 2 ? parts.slice(2).join(', ') : ''));
+    return {
+      city: translitPlace(rawCity),
+      state: translitPlace(rawState),
+      country: translitPlace(rawCountry),
+    };
   };
 
   const normalizeDegree360 = (degree: number): number => {
@@ -3985,23 +4102,14 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
   });
 
   const tocEntries = [
-    { num: '01', title: 'Birth Details & Planetary Positions', sub: 'Ascendant, planetary placements, Chara Karakas (Jaimini)' },
-    { num: '02', title: 'Panchang Analysis', sub: 'Vaar, Tithi, Nakshatra, Yoga, Karana at birth' },
-    { num: '03', title: 'Three Pillars of Your Chart', sub: 'Moon Sign, Ascendant, Birth Nakshatra' },
-    { num: '04', title: 'Personal Planetary Profiles', sub: 'Detailed analysis of all 9 planets' },
-    { num: '05', title: 'Bhavphal — The 12 Houses', sub: 'Complete house-by-house life analysis' },
-    { num: '06', title: 'Career & Professional Life', sub: 'Career calling, wealth potential, suitable fields' },
-    { num: '07', title: 'Love, Romance & Marriage', sub: 'Partner profile, marriage timing, compatibility' },
-    { num: '08', title: 'Health & Well-Being', sub: 'Age-aware lifestyle guidance and preventive care focus' },
-    { num: '09', title: 'Vimshottari Dasha Predictions', sub: 'Current & upcoming planetary periods' },
-    { num: '10', title: 'Rahu–Ketu Karmic Axis', sub: 'Past karma, future direction, Kaal Sarp Yoga' },
-    { num: '11', title: 'Raja Yogas & Auspicious Combinations', sub: 'Pancha Mahapurusha, Dhana Yogas and more' },
-    { num: '12', title: 'Dosha Analysis', sub: 'Mangal Dosha, Kaal Sarp and other planetary afflictions' },
-    { num: '13', title: 'Sade Sati — Saturn\'s 7.5-Year Transit', sub: 'Current status, phases, remedies' },
-    { num: '14', title: 'Numerology Analysis', sub: 'Birth number, destiny number, personal year' },
-    { num: '15', title: 'Spiritual Potential & Dharma', sub: 'Atmakaraka, Ishta Devata, Moksha path' },
-    { num: '16', title: 'Vedic Remedies', sub: 'Gemstones, Rudraksha, Mantras, Yantras, Pujas' },
-    { num: '17', title: 'Chara Karakas — Jaimini System', sub: 'Atmakaraka, Amatyakaraka, Darakaraka in depth' },
+    { num: '01', title: 'Your Birth Chart', sub: 'Birth details, Panchang, planetary positions, Chara Karakas, Three Pillars' },
+    { num: '02', title: 'Personal Planetary Profiles', sub: 'Detailed analysis of all 9 planets in your chart' },
+    { num: '03', title: 'Bhavphal — The 12 Houses', sub: 'Complete house-by-house life domain analysis' },
+    { num: '04', title: 'Life Predictions', sub: 'Career, marriage, health — what the stars reveal' },
+    { num: '05', title: 'Your Dasha Timeline', sub: 'Vimshottari Mahadasha & Antardasha periods' },
+    { num: '06', title: 'Doshas, Yogas & Karma', sub: 'Rahu-Ketu axis, Raja Yogas, Dosha analysis, Sade Sati' },
+    { num: '07', title: 'Numerology & Spiritual Potential', sub: 'Sacred numbers, Atmakaraka, Ishta Devata, Dharma path' },
+    { num: '08', title: 'Vedic Remedies', sub: 'Gemstones, Rudraksha, Mantras, Yantras, Pujas, lifestyle guidance' },
   ];
   const tocSplitIndex = Math.ceil(tocEntries.length / 2);
   const tocColumns = [tocEntries.slice(0, tocSplitIndex), tocEntries.slice(tocSplitIndex)];
@@ -4387,6 +4495,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           </ContentPage>
         ));
       })()}
+      {/* ═══════════════════════════════════════════════════════
+          PART 01 — YOUR BIRTH CHART
+          ═══════════════════════════════════════════════════════ */}
+      <SectionDividerPage
+        partNumber="01"
+        title="Your Birth Chart"
+        subtitle="Birth details, planetary positions, Panchang analysis, and the three foundational pillars of your horoscope"
+      />
+
       {/* Birth Details & Planetary Positions */}
       <ContentPage sectionName="Birth Details & Planetary Positions">
         <Section title="Birth Details" wrap={false}>
@@ -4398,7 +4515,12 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <InfoRow label="Date of Birth" value={formatBirthDate(birthDateValue) || birthDateValue || 'N/A'} />
                 <InfoRow label="Day" value={report?.panchang?.vaar?.day || getWeekday(birthDateValue)} />
                 <InfoRow label="Time of Birth" value={birthDetails.timeOfBirth || 'N/A'} />
-                <InfoRow label="Place of Birth" value={birthDetails.placeOfBirth || placeDetails.city || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A')} />
+                <InfoRow label="Place of Birth" value={(() => {
+                  const raw = birthDetails.placeOfBirth || '';
+                  if (!raw) return placeDetails.city || (ACTIVE_PDF_LANGUAGE === 'hi' ? 'उपलब्ध नहीं' : ACTIVE_PDF_LANGUAGE === 'te' ? 'అందుబాటులో లేదు' : 'N/A');
+                  // Transliterate each comma-separated segment of the place string
+                  return raw.split(',').map((s: string) => translitPlace(s.trim())).join(', ');
+                })()} />
                 <InfoRow label="City" value={placeDetails.city} />
                 <InfoRow label="State" value={placeDetails.state} />
                 <InfoRow label="Country" value={placeDetails.country} />
@@ -4409,7 +4531,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <InfoRow label="Longitude" value={formatCoordinate(birthDetails.longitude, 'lon')} />
                 <InfoRow label="Timezone" value={timezoneText} />
                 <InfoRow label="Tithi at Birth" value={tithiPaksha ? `${tithiName} (${tithiPaksha})` : tithiName} />
-                <InfoRow label="Nakshatra at Birth" value={nakshatraPada ? `${nakshatraName} (Pada ${nakshatraPada})` : nakshatraName} />
+                <InfoRow label="Nakshatra at Birth" value={nakshatraPada ? `${nakshatraName} (${localizePdfUiText('Pada')} ${nakshatraPada})` : nakshatraName} />
                 <InfoRow label="Yoga at Birth" value={yogaName} />
                 <InfoRow label="Karana at Birth" value={karanaName} />
                 <InfoRow
@@ -4589,6 +4711,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
         </ContentPage>
       )}
 
+      {/* ═══════════════════════════════════════════════════════
+          PART 02 — PERSONAL PLANETARY PROFILES
+          ═══════════════════════════════════════════════════════ */}
+      <SectionDividerPage
+        partNumber="02"
+        title="Personal Planetary Profiles"
+        subtitle="A detailed analysis of each planet's placement, dignity, and influence on every dimension of your life"
+      />
+
       {/* Planetary Profiles */}
       {report.planets && report.planets.length > 0 && (
         <>
@@ -4646,6 +4777,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           ))}
         </>
       )}
+
+      {/* ═══════════════════════════════════════════════════════
+          PART 03 — BHAVPHAL: THE 12 HOUSES
+          ═══════════════════════════════════════════════════════ */}
+      <SectionDividerPage
+        partNumber="03"
+        title="Bhavphal — The 12 Houses"
+        subtitle="A complete house-by-house analysis of every life domain — from self-identity to moksha"
+      />
 
       {/* House Analysis (Bhavphal) */}
       {report.houses && report.houses.length > 0 && (

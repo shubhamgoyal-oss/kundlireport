@@ -7629,7 +7629,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
         return chartPages.map((page, pageIdx) => (
           <ContentPage key={`chart-pg-${pageIdx}`} sectionName="Kundali Charts">
             <Section
-              title={pageIdx === 0 ? 'Kundali Charts (Divisional Charts)' : 'Divisional Charts (cont.)'}
+              title={pageIdx === 0 ? 'Kundali Charts (Divisional Charts)' : 'Additional Divisional Charts'}
               keepWithNext={260}
             >
               {pageIdx === 0 && (

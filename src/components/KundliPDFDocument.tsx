@@ -69,9 +69,9 @@ Font.register({
   family: 'NotoSansKannada',
   fonts: [
     { src: '/fonts/NotoSansKannada-Regular.ttf', fontWeight: 'normal', fontStyle: 'normal' },
-    { src: '/fonts/NotoSansKannada-Regular.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansKannada-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
     { src: '/fonts/NotoSansKannada-Regular.ttf', fontWeight: 'normal', fontStyle: 'italic' },
-    { src: '/fonts/NotoSansKannada-Regular.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+    { src: '/fonts/NotoSansKannada-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
   ],
 });
 

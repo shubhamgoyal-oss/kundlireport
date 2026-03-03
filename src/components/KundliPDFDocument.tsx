@@ -5704,12 +5704,17 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     color: P.bodyText,
     lineHeight: 1.45,
+    // Indic script glyphs (Devanagari, Kannada, Telugu) have matras & conjuncts
+    // that extend LEFT of the glyph origin (negative left-side bearing).
+    // Without this buffer the leftmost pixels get clipped at the Text element boundary.
+    paddingLeft: 3,
   },
   // Body text — same as paragraph but no margin/justify (for inside cards, highlights, callouts)
   bodyText: {
     fontSize: 10.2,
     color: P.bodyText,
     lineHeight: 1.45,
+    paddingLeft: 3,     // glyph-overhang buffer (see paragraph comment)
   },
   // Small italic muted text — for scriptural refs, disclaimers, cautions
   scriptural: {

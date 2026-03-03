@@ -22,6 +22,7 @@ import { enforceAstrologyTruth } from "../_shared/generate-kundli-report/truth-g
 import { setAgentLanguageContext, setAgentNativeContext, getAgentLanguage } from "../_shared/generate-kundli-report/agent-base.ts";
 import { getLanguagePack, normalizeLanguage } from "../_shared/language-packs/index.ts";
 import type { SupportedLanguage } from "../_shared/language-packs/types.ts";
+import { safetyText } from "../_shared/safety-i18n.ts";
 import { createJobEvent, touchJobHeartbeat } from "../_shared/job-events.ts";
 import { insertKundliApiCall, insertKundliApiCalls } from "../_shared/kundli-audit.ts";
 
@@ -128,11 +129,7 @@ function clampPeriodText(raw: string, cutoffDate: Date, cutoffLabel: string): st
   if (years.length === 0) return raw;
   const maxYear = Math.max(...years);
   if (maxYear <= cutoffDate.getFullYear()) return raw;
-  // For non-English, preserve the agent's localized text — don't replace with English.
-  // The agent already respects age/lifecycle constraints via prompt instructions.
-  const lang = getAgentLanguage();
-  if (lang !== "en") return raw;
-  return `Future windows are capped at ${cutoffLabel} for lifecycle-safe predictions.`;
+  return safetyText("clamp.capped", { cutoff: cutoffLabel });
 }
 
 // Gender-aware partner term normalization.
@@ -239,37 +236,35 @@ function enforceCareerSafety(
   safe.careerTiming.upcomingOpportunities = (safe.careerTiming.upcomingOpportunities || [])
     .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
 
-  // Age-based career safety overrides — only inject English text for English reports.
-  // Non-English agents already handle age sensitivity via AGE SENSITIVITY RULES in the prompt.
-  const careerLang = getAgentLanguage();
-  if (ageYears < CAREER_MIN_AGE && careerLang === "en") {
-    const adultYear = birthDate.getFullYear() + CAREER_MIN_AGE;
-    safe.overview = `Career advice is age-calibrated. At age ${ageYears}, this section focuses on education, skills, and foundation building. Detailed switch/job timing should be interpreted from age ${CAREER_MIN_AGE} onward (from ${adultYear}).`;
+  if (ageYears < CAREER_MIN_AGE) {
+    const adultYear = String(birthDate.getFullYear() + CAREER_MIN_AGE);
+    const v = { age: String(ageYears), minAge: String(CAREER_MIN_AGE), year: adultYear };
+    safe.overview = safetyText("career.youngOverview", v);
     safe.careerSwitchInsights = {
-      isSwitchDueNow: "No. Focus on learning-stage milestones first.",
-      nextSwitchWindow: `After age ${CAREER_MIN_AGE} (from ${adultYear}).`,
+      isSwitchDueNow: safetyText("career.youngSwitchNow"),
+      nextSwitchWindow: safetyText("career.youngNextWindow", v),
       oneOrTwoFutureChanges: [],
-      rationale: "Early high-stakes career transitions are intentionally suppressed for under-age natives.",
+      rationale: safetyText("career.youngRationale"),
       preparationPlan: [
-        "Build strong academic/technical fundamentals.",
-        "Develop communication and problem-solving through projects.",
-        "Reassess professional timing after reaching adulthood threshold.",
+        safetyText("career.youngPrep0"),
+        safetyText("career.youngPrep1"),
+        safetyText("career.youngPrep2"),
       ],
     };
     safe.careerTiming = {
-      currentPhase: `Foundation phase (age ${ageYears}).`,
-      upcomingOpportunities: [`Structured career timing will open after age ${CAREER_MIN_AGE}.`],
-      challenges: ["Avoid premature long-term career commitments before readiness."],
+      currentPhase: safetyText("career.youngPhase", v),
+      upcomingOpportunities: [safetyText("career.youngOpportunity", v)],
+      challenges: [safetyText("career.youngChallenge")],
     };
-  } else if (ageYears >= MAX_PREDICTION_AGE && careerLang === "en") {
+  } else if (ageYears >= MAX_PREDICTION_AGE) {
     safe.careerSwitchInsights = {
-      isSwitchDueNow: "No major career-switch forecasting is provided at this life stage.",
-      nextSwitchWindow: `Future windows beyond ${cutoffLabel} are intentionally excluded.`,
+      isSwitchDueNow: safetyText("career.maxSwitchNow"),
+      nextSwitchWindow: safetyText("career.maxNextWindow", { cutoff: cutoffLabel }),
       oneOrTwoFutureChanges: [],
-      rationale: "Long-range professional transitions are capped by lifecycle safety policy.",
+      rationale: safetyText("career.maxRationale"),
       preparationPlan: [
-        "Prioritize legacy planning and mentorship.",
-        "Preserve stable routines and workload balance.",
+        safetyText("career.maxPrep0"),
+        safetyText("career.maxPrep1"),
       ],
     };
   }
@@ -296,29 +291,22 @@ function enforceMarriageSafety(
   const cutoffDate = addYears(birthDate, MAX_PREDICTION_AGE);
   const cutoffLabel = formatMonthYear(cutoffDate);
 
-  // Marriage safety fallbacks — only inject English text for English reports.
-  // Non-English agents produce localized content; don't overwrite with English.
-  const marriageLang = getAgentLanguage();
-  const isEnMarriage = marriageLang === "en";
+  safe.maritalSafety = safe.maritalSafety || {
+    statusAssumption: safetyText("m.assumption", { status: maritalStatus }),
+    safeguardPolicy: safetyText("m.policy"),
+    alreadyMarriedGuidance: safetyText("m.marriedGuide"),
+  };
 
-  if (isEnMarriage) {
-    safe.maritalSafety = safe.maritalSafety || {
-      statusAssumption: `Input marital status treated as: ${maritalStatus}`,
-      safeguardPolicy: "Guidance avoids destabilizing existing committed relationships.",
-      alreadyMarriedGuidance: "If married, prioritize harmony, communication, and long-term trust building.",
-    };
-  }
-
-  if (maritalStatus !== "single" && isEnMarriage) {
+  if (maritalStatus !== "single") {
     safe.idealPartnerForUnmarried = {
       whenApplicable: maritalStatus === "married"
-        ? "Not applicable for currently married natives."
-        : "Apply only if the native is confirmed unmarried.",
+        ? safetyText("m.naMarried")
+        : safetyText("m.naUnknown"),
       keyQualities: [],
       cautionTraits: [],
       practicalAdvice: maritalStatus === "married"
-        ? "Focus on spouse harmony and relationship-strengthening guidance below."
-        : "Follow relationship-stability guidance unless unmarried status is confirmed.",
+        ? safetyText("m.adviceMarried")
+        : safetyText("m.adviceUnknown"),
     };
   }
 
@@ -327,44 +315,45 @@ function enforceMarriageSafety(
     relationshipStrengthening: [],
     conflictsToAvoid: [],
   };
-  if (marriedGuidance.focusAreas.length === 0 && isEnMarriage) {
-    marriedGuidance.focusAreas = ["Mutual respect, predictable communication, and shared responsibilities."];
+  if (marriedGuidance.focusAreas.length === 0) {
+    marriedGuidance.focusAreas = [safetyText("m.focus")];
   }
-  if (marriedGuidance.relationshipStrengthening.length === 0 && isEnMarriage) {
-    marriedGuidance.relationshipStrengthening = ["Weekly check-ins, gratitude practice, and calm conflict resolution."];
+  if (marriedGuidance.relationshipStrengthening.length === 0) {
+    marriedGuidance.relationshipStrengthening = [safetyText("m.strengthen")];
   }
-  if (marriedGuidance.conflictsToAvoid.length === 0 && isEnMarriage) {
-    marriedGuidance.conflictsToAvoid = ["Reactive arguments, emotional distancing, and third-party triangulation."];
+  if (marriedGuidance.conflictsToAvoid.length === 0) {
+    marriedGuidance.conflictsToAvoid = [safetyText("m.conflict")];
   }
   safe.guidanceForMarriedNatives = marriedGuidance;
 
-  if (ageYears < MARRIAGE_MIN_AGE && isEnMarriage) {
-    const adultYear = birthDate.getFullYear() + MARRIAGE_MIN_AGE;
+  if (ageYears < MARRIAGE_MIN_AGE) {
+    const adultYear = String(birthDate.getFullYear() + MARRIAGE_MIN_AGE);
+    const v = { minAge: String(MARRIAGE_MIN_AGE), year: adultYear };
     safe.idealPartnerForUnmarried = {
-      whenApplicable: `Applicable only after adulthood threshold (age ${MARRIAGE_MIN_AGE}, from ${adultYear}).`,
+      whenApplicable: safetyText("m.youngWhen", v),
       keyQualities: [],
       cautionTraits: [],
-      practicalAdvice: "At this stage, focus on emotional maturity, education, and healthy boundaries.",
+      practicalAdvice: safetyText("m.youngAdvice"),
     };
     safe.marriageTiming = {
-      favorablePeriods: [`Marriage timing is deferred until age ${MARRIAGE_MIN_AGE}+.`],
-      challengingPeriods: ["Avoid pressure-driven commitment decisions before full maturity."],
-      idealAgeRange: `After age ${MARRIAGE_MIN_AGE}`,
-      idealTimeForYoungNatives: `Reassess from ${adultYear} onward.`,
-      currentProspects: "Current stage is developmental; no immediate marriage timing is advised.",
+      favorablePeriods: [safetyText("m.youngFav", v)],
+      challengingPeriods: [safetyText("m.youngChallenge")],
+      idealAgeRange: `${MARRIAGE_MIN_AGE}+`,
+      idealTimeForYoungNatives: safetyText("m.youngTime", v),
+      currentProspects: safetyText("m.youngProspects"),
     };
   }
 
-  if (ageYears >= MAX_PREDICTION_AGE && isEnMarriage) {
+  if (ageYears >= MAX_PREDICTION_AGE) {
     safe.idealPartnerForUnmarried = {
-      whenApplicable: "Not applicable at this life stage under lifecycle safety policy.",
+      whenApplicable: safetyText("m.maxWhen"),
       keyQualities: [],
       cautionTraits: [],
-      practicalAdvice: "Focus on companionship quality, dignity, and emotional steadiness.",
+      practicalAdvice: safetyText("m.maxAdvice"),
     };
-    safe.marriageTiming.favorablePeriods = [`Time windows beyond ${cutoffLabel} are intentionally excluded.`];
+    safe.marriageTiming.favorablePeriods = [safetyText("m.maxFav", { cutoff: cutoffLabel })];
     safe.marriageTiming.challengingPeriods = [];
-    safe.marriageTiming.currentProspects = "Future long-range marriage timing is not projected at this stage.";
+    safe.marriageTiming.currentProspects = safetyText("m.maxProspects");
   } else {
     safe.marriageTiming.favorablePeriods = (safe.marriageTiming.favorablePeriods || [])
       .map((item) => clampPeriodText(item, cutoffDate, cutoffLabel));
@@ -391,12 +380,9 @@ function enforceHealthSafety(
     return cleaned.length > 0 ? cleaned : fallback;
   };
 
-  const healthLang = getAgentLanguage();
-  const isEnHealth = healthLang === "en";
-
   safe.healthGuidance = safe.healthGuidance || {
     ageGroup: isSenior ? "senior" : "adult",
-    whyThisMatters: isEnHealth ? "Health routines should be aligned with age, recovery capacity, and medical context." : "",
+    whyThisMatters: safetyText("h.why"),
     safeMovement: [],
     nutritionAndHydration: [],
     recoveryAndSleep: [],
@@ -409,22 +395,20 @@ function enforceHealthSafety(
     safe.healthGuidance.ageGroup = "senior";
     safe.healthGuidance.safeMovement = filterRisky(
       safe.healthGuidance.safeMovement,
-      isEnHealth ? ["Prefer low-impact walking, gentle mobility, and medically appropriate stretching."] : []
+      [safetyText("h.movement")]
     );
     safe.dailyRoutine = filterRisky(
       safe.dailyRoutine,
-      isEnHealth ? ["Maintain a gentle daily movement routine based on energy and medical advice."] : []
+      [safetyText("h.routine")]
     );
-    if (isEnHealth) {
-      safe.healthGuidance.avoidOverstrain = [
-        ...(safe.healthGuidance.avoidOverstrain || []),
-        "Avoid high-impact running, sprinting, and heavy-strain workouts unless medically cleared.",
-      ];
-    }
+    safe.healthGuidance.avoidOverstrain = [
+      ...(safe.healthGuidance.avoidOverstrain || []),
+      safetyText("h.overstrain"),
+    ];
   }
 
-  if (!safe.healthGuidance.medicalDisclaimer && isEnHealth) {
-    safe.healthGuidance.medicalDisclaimer = "This guidance is supportive, not a diagnosis or substitute for licensed medical care.";
+  if (!safe.healthGuidance.medicalDisclaimer) {
+    safe.healthGuidance.medicalDisclaimer = safetyText("h.disclaimer");
   }
 
   return safe;
@@ -469,11 +453,10 @@ function enforceDashaSafety(
   if (!safe) return null;
 
   const periodRecommendations = Array.isArray(safe.periodRecommendations) ? safe.periodRecommendations : [];
-  // Only inject English lifecycle message for English reports.
-  // Non-English agents already handle lifecycle constraints via prompt instructions.
-  const dashaLang = getAgentLanguage();
-  if (dashaLang === "en" && !periodRecommendations.some((line) => line.includes("lifecycle-safe"))) {
-    periodRecommendations.push(`Timelines are lifecycle-safe and capped at ${cutoffLabel}.`);
+  // Inject localized lifecycle-safety message for ALL languages.
+  const lifecycleMsg = safetyText("dasha.lifecycle", { cutoff: cutoffLabel });
+  if (!periodRecommendations.some((line) => line.includes("lifecycle") || line.includes(cutoffLabel))) {
+    periodRecommendations.push(lifecycleMsg);
   }
   safe.periodRecommendations = periodRecommendations;
   return safe;

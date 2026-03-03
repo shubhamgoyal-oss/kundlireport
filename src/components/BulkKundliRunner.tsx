@@ -28,6 +28,8 @@ interface BulkRowState {
   status: BulkStatus;
   gender: 'M' | 'F';
   language: 'en' | 'hi' | 'te' | 'kn' | 'mr';
+  dateOfBirth?: string; // YYYY-MM-DD or raw from sheet
+  timeOfBirth?: string; // HH:MM or raw from sheet
   jobId?: string;
   error?: string;
   source?: string;
@@ -49,6 +51,26 @@ function parseGenderFromNormalized(normalized: Record<string, string>): 'M' | 'F
     if (['m', 'male', 'man', 'boy', 'पुरुष', 'పురుషుడు'].includes(val)) return 'M';
   }
   return 'M'; // default if no gender column found
+}
+
+/** Read date-of-birth from CSV normalized columns */
+function parseDateOfBirthFromNormalized(normalized: Record<string, string>): string {
+  const candidates = ['date_of_birth', 'dob', 'birth_date', 'dateofbirth', 'date', 'janm_tithi', 'janma_tithi'];
+  for (const key of candidates) {
+    const val = (normalized[key] || '').trim();
+    if (val) return val;
+  }
+  return '';
+}
+
+/** Read time-of-birth from CSV normalized columns */
+function parseTimeOfBirthFromNormalized(normalized: Record<string, string>): string {
+  const candidates = ['time_of_birth', 'tob', 'birth_time', 'timeofbirth', 'time', 'janm_samay', 'janma_samay'];
+  for (const key of candidates) {
+    const val = (normalized[key] || '').trim();
+    if (val) return val;
+  }
+  return '';
 }
 
 const DEFAULT_SHEET_URL =
@@ -263,6 +285,8 @@ export default function BulkKundliRunner() {
           status: 'pending' as BulkStatus,
           gender: parseGenderFromNormalized(r.normalized),
           language: bulkLanguage,
+          dateOfBirth: parseDateOfBirthFromNormalized(r.normalized),
+          timeOfBirth: parseTimeOfBirthFromNormalized(r.normalized),
         })),
       );
       toast.success(`Loaded ${filteredRows.length} rows.`);
@@ -573,14 +597,14 @@ export default function BulkKundliRunner() {
     setIsRunning(true);
     restoredRef.current = true; // ensure state gets persisted
 
-    // ── GENDER / LANGUAGE SNAPSHOT ──────────────────────────────────────
-    // Capture gender & language at the exact same moment as the state reset.
+    // ── FIELD SNAPSHOTS ────────────────────────────────────────────────
+    // Capture user-editable fields at the exact same moment as the state reset.
     // These plain JS Maps are immune to React timing / stale closures.
-    // Whatever the user sees in the dropdown IS what gets sent to the backend.
-    // React calls the functional updater synchronously, so the Maps are
-    // populated by the time setBulkRows() returns.
+    // Whatever the user sees in the dropdowns/inputs IS what gets sent to the backend.
     const genderSnapshot = new Map<number, 'M' | 'F'>();
     const langSnapshot = new Map<number, 'en' | 'hi' | 'te' | 'kn' | 'mr'>();
+    const dobSnapshot = new Map<number, string>();
+    const tobSnapshot = new Map<number, string>();
 
     setBulkRows((prev) => {
       const existing = new Map(prev.map((r) => [r.rowNumber, r]));
@@ -588,10 +612,14 @@ export default function BulkKundliRunner() {
         const ex = existing.get(row.rowNumber);
         const gender = ex?.gender || parseGenderFromNormalized(row.normalized);
         const language = ex?.language || bulkLanguage;
+        const dob = ex?.dateOfBirth || parseDateOfBirthFromNormalized(row.normalized);
+        const tob = ex?.timeOfBirth || parseTimeOfBirthFromNormalized(row.normalized);
 
-        // Populate snapshot inside the updater — guaranteed to match state
+        // Populate snapshots inside the updater — guaranteed to match state
         genderSnapshot.set(row.rowNumber, gender);
         langSnapshot.set(row.rowNumber, language);
+        dobSnapshot.set(row.rowNumber, dob);
+        tobSnapshot.set(row.rowNumber, tob);
 
         return {
           rowNumber: row.rowNumber,
@@ -600,6 +628,8 @@ export default function BulkKundliRunner() {
           status: 'pending' as BulkStatus,
           gender,
           language,
+          dateOfBirth: dob,
+          timeOfBirth: tob,
         };
       });
     });
@@ -631,21 +661,27 @@ export default function BulkKundliRunner() {
         }
 
         const name = String(decoded?.name || '').trim();
-        const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
-        const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+        const decipheredDob = String(decoded?.dateOfBirth || '').trim();
+        const decipheredTob = String(decoded?.timeOfBirth || '').trim();
         const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
         const source = String(decoded?.source || 'deterministic');
+
+        // Use user-edited DoB/ToB from snapshot if non-empty; else fall back to decipher output
+        const userDob = dobSnapshot.get(row.rowNumber) || '';
+        const userTob = tobSnapshot.get(row.rowNumber) || '';
+        const dateOfBirth = userDob || decipheredDob;
+        const timeOfBirth = userTob || decipheredTob;
 
         if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
           throw new Error('Missing normalized values after decipher step');
         }
 
-        // Use the gender snapshot — NOT React state, NOT decipher API detection.
-        // The user's dropdown choice is the single source of truth.
+        // Use snapshots — NOT React state, NOT decipher API detection.
+        // The user's dropdown/input choices are the single source of truth.
         const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
         const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
 
-        console.log(`[Bulk] Row ${row.rowNumber} GENDER: snapshot=${finalGender} (from dropdown)`);
+        console.log(`[Bulk] Row ${row.rowNumber} GENDER=${finalGender} DOB=${dateOfBirth} TOB=${timeOfBirth}`);
 
         updateBulkRow(row.rowNumber, {
           name,
@@ -1106,6 +1142,8 @@ export default function BulkKundliRunner() {
                     <th className="text-left p-2">Row</th>
                     <th className="text-left p-2">Name</th>
                     <th className="text-left p-2">Place</th>
+                    <th className="text-left p-2">DoB</th>
+                    <th className="text-left p-2">ToB</th>
                     <th className="text-left p-2">Gender</th>
                     <th className="text-left p-2">Language</th>
                     <th className="text-left p-2">Status</th>
@@ -1121,6 +1159,32 @@ export default function BulkKundliRunner() {
                       <td className="p-2">{row.rowNumber}</td>
                       <td className="p-2">{row.name || '-'}</td>
                       <td className="p-2">{row.place || '-'}</td>
+                      <td className="p-2">
+                        {row.status === 'pending' ? (
+                          <input
+                            type="text"
+                            value={row.dateOfBirth || ''}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { dateOfBirth: e.target.value })}
+                            placeholder="YYYY-MM-DD"
+                            className="px-1 py-0.5 border border-input bg-background rounded text-xs w-24"
+                          />
+                        ) : (
+                          <span className="text-xs">{row.dateOfBirth || '-'}</span>
+                        )}
+                      </td>
+                      <td className="p-2">
+                        {row.status === 'pending' ? (
+                          <input
+                            type="text"
+                            value={row.timeOfBirth || ''}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { timeOfBirth: e.target.value })}
+                            placeholder="HH:MM"
+                            className="px-1 py-0.5 border border-input bg-background rounded text-xs w-16"
+                          />
+                        ) : (
+                          <span className="text-xs">{row.timeOfBirth || '-'}</span>
+                        )}
+                      </td>
                       <td className="p-2">
                         {row.status === 'pending' ? (
                           <select

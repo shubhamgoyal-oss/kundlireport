@@ -5678,6 +5678,7 @@ const styles = StyleSheet.create({
     color: P.primary,
     marginBottom: 9,
     paddingBottom: 6,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
     borderBottomWidth: 2,
     borderBottomColor: P.gold,
   },
@@ -5688,6 +5689,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 5,
     paddingBottom: 3,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
     borderBottomWidth: 1,
     borderBottomColor: P.goldLight,
   },
@@ -5697,6 +5699,7 @@ const styles = StyleSheet.create({
     color: P.primary,
     marginTop: 7,
     marginBottom: 4,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   paragraph: {
     fontSize: 10.2,
@@ -5705,16 +5708,17 @@ const styles = StyleSheet.create({
     color: P.bodyText,
     lineHeight: 1.45,
     // Indic script glyphs (Devanagari, Kannada, Telugu) have matras & conjuncts
-    // that extend LEFT of the glyph origin (negative left-side bearing).
-    // Without this buffer the leftmost pixels get clipped at the Text element boundary.
-    paddingLeft: 3,
+    // that extend BEYOND the glyph origin (negative side bearings).
+    // Without this buffer the edge pixels get clipped at the Text element boundary.
+    // Must be on BOTH sides — left matras overhang left, right vowels overhang right.
+    paddingHorizontal: 6,
   },
   // Body text — same as paragraph but no margin/justify (for inside cards, highlights, callouts)
   bodyText: {
     fontSize: 10.2,
     color: P.bodyText,
     lineHeight: 1.45,
-    paddingLeft: 3,     // glyph-overhang buffer (see paragraph comment)
+    paddingHorizontal: 6,  // glyph-overhang buffer (see paragraph comment)
   },
   // Small italic muted text — for scriptural refs, disclaimers, cautions
   scriptural: {
@@ -5723,6 +5727,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 3,
     lineHeight: 1.4,
+    paddingHorizontal: 5,  // Indic glyph-overhang buffer
   },
   // Bold label inside highlight/card
   boldLabel: {
@@ -5730,24 +5735,28 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     color: P.bodyText,
     lineHeight: 1.45,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // Accent text (orange, for emphasis)
   accentText: {
     fontSize: 10.5,
     color: '#ea580c',
     lineHeight: 1.45,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // Caution/warning text
   cautionText: {
     fontSize: 10,
     color: '#dc2626',
     lineHeight: 1.45,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // Success/positive text
   successText: {
     fontSize: 10,
     color: '#059669',
     lineHeight: 1.45,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   table: {
     width: '100%',
@@ -5776,12 +5785,12 @@ const styles = StyleSheet.create({
     color: P.white,
     fontWeight: 'bold',
     fontSize: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,  // extra for Indic glyph-overhang
   },
   tableCell: {
     flex: 1,
     fontSize: 10,
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,  // extra for Indic glyph-overhang
     color: P.bodyText,
   },
   advancedTable: {
@@ -5801,7 +5810,7 @@ const styles = StyleSheet.create({
     fontSize: 8.2,
     color: P.white,
     fontWeight: 'bold',
-    paddingHorizontal: 3,
+    paddingHorizontal: 5,  // extra for Indic glyph-overhang
     textAlign: 'center',
   },
   advancedTableRow: {
@@ -5822,13 +5831,14 @@ const styles = StyleSheet.create({
     lineHeight: 1.2,
     color: P.bodyText,
     textAlign: 'center',
-    paddingHorizontal: 3,
+    paddingHorizontal: 5,  // extra for Indic glyph-overhang
   },
   tinyNote: {
     fontSize: 8.2,
     color: P.mutedText,
     marginTop: 4,
     lineHeight: 1.35,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   card: {
     backgroundColor: P.cardBg,
@@ -5843,6 +5853,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: P.primary,
     marginBottom: 5,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // ── Professional info strip (replaces old pill badges) ────────
   infoStrip: {
@@ -5893,11 +5904,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: P.primary,
     fontSize: 10,
+    paddingHorizontal: 3,  // Indic glyph-overhang buffer
   },
   value: {
     flex: 1,
     color: P.bodyText,
     fontSize: 10,
+    paddingHorizontal: 3,  // Indic glyph-overhang buffer
   },
   list: {
     marginLeft: 6,
@@ -5971,6 +5984,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textAlign: 'center',
     width: '100%',
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   chartPurpose: {
     fontSize: 8,
@@ -5979,6 +5993,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
     width: '100%',
     maxLines: 2,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   divider: {
     borderBottomWidth: 1,
@@ -6003,6 +6018,7 @@ const styles = StyleSheet.create({
     fontSize: 11.2,
     color: P.bodyText,
     fontWeight: 'bold',
+    paddingRight: 4,  // Indic glyph-overhang buffer
   },
   tocSubtitle: {
     fontSize: 8.8,
@@ -6010,6 +6026,7 @@ const styles = StyleSheet.create({
     marginLeft: 26,
     marginTop: -2,
     marginBottom: 3,
+    paddingRight: 4,  // Indic glyph-overhang buffer
   },
   tocColumns: {
     flexDirection: 'row',
@@ -6041,6 +6058,7 @@ const styles = StyleSheet.create({
     color: P.bodyText,
     fontWeight: 'bold',
     lineHeight: 1.2,
+    paddingRight: 4,  // Indic glyph-overhang buffer
   },
   tocSubtitleCompact: {
     fontSize: 7.6,
@@ -6048,6 +6066,7 @@ const styles = StyleSheet.create({
     marginLeft: 22,
     marginTop: 1,
     lineHeight: 1.25,
+    paddingRight: 4,  // Indic glyph-overhang buffer
   },
   // ── Callout boxes ──────────────────────────────────────────
   calloutBox: {
@@ -6063,6 +6082,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#92400e',
     marginBottom: 4,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // ── Grid layout ─────────────────────────────────────────
   grid: {
@@ -6088,6 +6108,7 @@ const styles = StyleSheet.create({
     color: P.mutedText,
     fontStyle: 'normal',
     marginBottom: 7,
+    paddingHorizontal: 4,  // Indic glyph-overhang buffer
   },
   // ── Section intro italic ────────────────────────────────────
   sectionIntro: {
@@ -6099,6 +6120,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: P.gold,
     paddingLeft: 10,
+    paddingRight: 6,  // Indic glyph-overhang buffer on right side
   },
   // ── Info/Success/Warning boxes ──────────────────────────────
   infoBox: {
@@ -6160,6 +6182,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 14,
     lineHeight: 1.15,
+    paddingHorizontal: 8,  // Indic glyph-overhang buffer
   },
   dividerSubtitle: {
     fontSize: 11.2,
@@ -6167,6 +6190,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 1.4,
     opacity: 0.9,
+    paddingHorizontal: 6,  // Indic glyph-overhang buffer
   },
   dividerFooter: {
     fontSize: 8.8,
@@ -7470,6 +7494,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               lineHeight: 1.55,
               marginBottom: 12,
               textAlign: 'justify',
+              paddingHorizontal: 6,
             }}>
               {para}
             </Text>
@@ -7483,6 +7508,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             textAlign: 'center',
             marginTop: 4,
             marginBottom: 0,
+            paddingHorizontal: 6,
           }}>
             {disc.paragraphs[disc.paragraphs.length - 1]}
           </Text>
@@ -7547,6 +7573,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               lineHeight: 1.55,
               marginBottom: 12,
               textAlign: 'justify',
+              paddingHorizontal: 6,
             }}>
               {para}
             </Text>
@@ -7560,6 +7587,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             textAlign: 'center',
             marginTop: 4,
             marginBottom: 0,
+            paddingHorizontal: 6,
           }}>
             {guide.paragraphs[guide.paragraphs.length - 1]}
           </Text>

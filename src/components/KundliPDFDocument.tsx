@@ -6923,8 +6923,13 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
     const months = MONTH_NAMES_BY_LANGUAGE[ACTIVE_PDF_LANGUAGE] || MONTH_NAMES_BY_LANGUAGE.en;
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
   };
-  const formatMonthYear = (date: Date) =>
-    date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const formatMonthYear = (date: Date) => {
+    if (ACTIVE_PDF_LANGUAGE === 'en') {
+      return date.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    }
+    const months = MONTH_NAMES_BY_LANGUAGE[ACTIVE_PDF_LANGUAGE] || MONTH_NAMES_BY_LANGUAGE.en;
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  };
 
   const normalizeDashaToken = (value: unknown, which: "first" | "last" = "first") => {
     const raw = String(value || '').trim();
@@ -8797,7 +8802,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
               <SubSection title="Major Doshas">
                 {majorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? sanitizeText(dosha.nameHindi) : dosha.name}`}>
+                  <Card key={idx} title={`${localizePdfUiText(dosha.nameHindi || dosha.name)}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
                       { label: 'Severity', value: localizePdfUiText(dosha.severity?.toUpperCase() || 'N/A') },
@@ -8841,7 +8846,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <ContentPage sectionName="Minor Doshas">
               <Section title="Minor Doshas">
                 {minorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && dosha.nameHindi ? sanitizeText(dosha.nameHindi) : dosha.name}`}>
+                  <Card key={idx} title={`${localizePdfUiText(dosha.nameHindi || dosha.name)}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
                     ]} />
@@ -8934,7 +8939,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
               <SubSection title="Raja Yogas (Power & Success)">
                 {(report.rajYogs.rajYogas || []).filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                       { label: 'Activation', value: yoga.activationPeriod || 'N/A' },
@@ -8965,7 +8970,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <ContentPage sectionName="Dhana Yogas">
               <Section title="Dhana Yogas (Wealth Combinations)">
                 {report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                     ]} />
@@ -9046,7 +9051,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   {localizePdfUiText('The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.')}
                 </Text>
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${ACTIVE_PDF_LANGUAGE !== 'en' && yoga.nameHindi ? sanitizeText(yoga.nameHindi) : yoga.name}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
                     <Text style={styles.bodyText}>{localizePdfUiText(yoga.definition)}</Text>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('In Your Chart')}</Text>
                     <Text style={styles.bodyText}>{localizePdfUiText(yoga.formationInChart)}</Text>

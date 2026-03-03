@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  if (language === "hi" || language === "te") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return true;
   if (language === "en") return false;
   return false;
 }
@@ -85,8 +85,8 @@ function isGibberishText(text: string): boolean {
   // 2. Same character repeated 4+ times
   if (/(.)\1{3,}/.test(text)) return true;
 
-  // 3. Mostly non-ASCII non-Devanagari/Telugu control/garbage characters
-  const controlChars = text.replace(/[\x20-\x7E\u0900-\u097F\u0C00-\u0C7F\n\r\t]/g, "");
+  // 3. Mostly non-ASCII non-Devanagari/Telugu/Kannada control/garbage characters
+  const controlChars = text.replace(/[\x20-\x7E\u0900-\u097F\u0C00-\u0CFF\n\r\t]/g, "");
   if (controlChars.length > text.length * 0.3) return true;
 
   return false;
@@ -128,7 +128,7 @@ function cleanReportText(text: string): string {
 /**
  * Recursively clean all text fields in the report (any language).
  * Replaces em-dashes, removes invisible chars, fixes garbled sequences.
- * Does NOT remove valid script content (Devanagari, Telugu, Latin).
+ * Does NOT remove valid script content (Devanagari, Telugu, Kannada, Latin).
  */
 function cleanReportTexts<T>(value: T, parentKey = ""): T {
   if (typeof value === "string") {
@@ -162,7 +162,7 @@ function cleanReportTexts<T>(value: T, parentKey = ""): T {
 // ── Chart SVG fetching ──────────────────────────────────────────────────────
 
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te") return svg;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return svg;
   const replacements: [string, string][] = [
     ["\u0936\u0941", "VE"], ["\u092C\u0941", "ME"], ["\u092E\u0902", "MA"],
     ["\u091A\u0902", "MO"], ["\u0938\u0942", "SU"], ["\u0917\u0941", "JU"],
@@ -177,19 +177,19 @@ function localizeChartSvgText(svg: string, language: string): string {
 
 const PDF_CHART_TYPES = ["D1","D2","D3","D4","D7","D9","D10","D12","D20","D24","D27","D60"] as const;
 
-const CHART_INFO: Record<string, { name: string; nameHindi: string; purpose: string }> = {
-  D1:  { name: "Rashi (Birth Chart)",       nameHindi: "\u0930\u093E\u0936\u093F \u091A\u0915\u094D\u0930",         purpose: "Overall life assessment" },
-  D2:  { name: "Hora",                      nameHindi: "\u0939\u094B\u0930\u093E",               purpose: "Wealth and finances" },
-  D3:  { name: "Drekkana",                  nameHindi: "\u0926\u094D\u0930\u0947\u0915\u094D\u0915\u093E\u0923",          purpose: "Siblings and courage" },
-  D4:  { name: "Chaturthamsa",              nameHindi: "\u091A\u0924\u0941\u0930\u094D\u0925\u093E\u0902\u0936",          purpose: "Fortune and property" },
-  D7:  { name: "Saptamsa",                  nameHindi: "\u0938\u092A\u094D\u0924\u093E\u0902\u0936",            purpose: "Children and progeny" },
-  D9:  { name: "Navamsa",                   nameHindi: "\u0928\u0935\u093E\u0902\u0936",              purpose: "Marriage and spouse" },
-  D10: { name: "Dasamsa",                   nameHindi: "\u0926\u0936\u093E\u0902\u0936",              purpose: "Career and profession" },
-  D12: { name: "Dwadasamsa",                nameHindi: "\u0926\u094D\u0935\u093E\u0926\u0936\u093E\u0902\u0936",          purpose: "Parents and ancestry" },
-  D20: { name: "Vimsamsa",                  nameHindi: "\u0935\u093F\u0902\u0936\u093E\u0902\u0936",            purpose: "Spiritual progress" },
-  D24: { name: "Chaturvimsamsa",            nameHindi: "\u091A\u0924\u0941\u0930\u094D\u0935\u093F\u0902\u0936\u093E\u0902\u0936",       purpose: "Education and learning" },
-  D27: { name: "Bhamsa",                    nameHindi: "\u092D\u093E\u0902\u0936",               purpose: "Strength and weakness" },
-  D60: { name: "Shashtiamsa",               nameHindi: "\u0937\u0937\u094D\u091F\u094D\u092F\u0902\u0936",           purpose: "Past life karma" },
+const CHART_INFO: Record<string, { name: string; nameHindi: string; nameKannada: string; nameMarathi: string; purpose: string }> = {
+  D1:  { name: "Rashi (Birth Chart)",       nameHindi: "\u0930\u093E\u0936\u093F \u091A\u0915\u094D\u0930",         nameKannada: "\u0C9C\u0CA8\u0CCD\u0CAE \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",         nameMarathi: "\u091C\u0928\u094D\u092E \u0915\u0941\u0902\u0921\u0932\u0940",         purpose: "Overall life assessment" },
+  D2:  { name: "Hora",                      nameHindi: "\u0939\u094B\u0930\u093E",               nameKannada: "\u0CB9\u0CCB\u0CB0\u0CBE \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",         nameMarathi: "\u0939\u094B\u0930\u093E \u0915\u0941\u0902\u0921\u0932\u0940",         purpose: "Wealth and finances" },
+  D3:  { name: "Drekkana",                  nameHindi: "\u0926\u094D\u0930\u0947\u0915\u094D\u0915\u093E\u0923",          nameKannada: "\u0CA6\u0CCD\u0CB0\u0CC7\u0C95\u0CCD\u0C95\u0CBE\u0CA3 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",     nameMarathi: "\u0926\u094D\u0930\u0947\u0915\u094D\u0915\u093E\u0923 \u0915\u0941\u0902\u0921\u0932\u0940",     purpose: "Siblings and courage" },
+  D4:  { name: "Chaturthamsa",              nameHindi: "\u091A\u0924\u0941\u0930\u094D\u0925\u093E\u0902\u0936",          nameKannada: "\u0C9A\u0CA4\u0CC1\u0CB0\u0CCD\u0CA5\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",     nameMarathi: "\u091A\u0924\u0941\u0930\u094D\u0925\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",     purpose: "Fortune and property" },
+  D7:  { name: "Saptamsa",                  nameHindi: "\u0938\u092A\u094D\u0924\u093E\u0902\u0936",            nameKannada: "\u0CB8\u0CAA\u0CCD\u0CA4\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",       nameMarathi: "\u0938\u092A\u094D\u0924\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",       purpose: "Children and progeny" },
+  D9:  { name: "Navamsa",                   nameHindi: "\u0928\u0935\u093E\u0902\u0936",              nameKannada: "\u0CA8\u0CB5\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",         nameMarathi: "\u0928\u0935\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",         purpose: "Marriage and spouse" },
+  D10: { name: "Dasamsa",                   nameHindi: "\u0926\u0936\u093E\u0902\u0936",              nameKannada: "\u0CA6\u0CB6\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",         nameMarathi: "\u0926\u0936\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",         purpose: "Career and profession" },
+  D12: { name: "Dwadasamsa",                nameHindi: "\u0926\u094D\u0935\u093E\u0926\u0936\u093E\u0902\u0936",          nameKannada: "\u0CA6\u0CCD\u0CB5\u0CBE\u0CA6\u0CB6\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",     nameMarathi: "\u0926\u094D\u0935\u093E\u0926\u0936\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",     purpose: "Parents and ancestry" },
+  D20: { name: "Vimsamsa",                  nameHindi: "\u0935\u093F\u0902\u0936\u093E\u0902\u0936",            nameKannada: "\u0CB5\u0CBF\u0C82\u0CB6\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",       nameMarathi: "\u0935\u093F\u0902\u0936\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",       purpose: "Spiritual progress" },
+  D24: { name: "Chaturvimsamsa",            nameHindi: "\u091A\u0924\u0941\u0930\u094D\u0935\u093F\u0902\u0936\u093E\u0902\u0936",       nameKannada: "\u0C9A\u0CA4\u0CC1\u0CB0\u0CCD\u0CB5\u0CBF\u0C82\u0CB6\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF", nameMarathi: "\u091A\u0924\u0941\u0930\u094D\u0935\u093F\u0902\u0936\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940", purpose: "Education and learning" },
+  D27: { name: "Bhamsa",                    nameHindi: "\u092D\u093E\u0902\u0936",               nameKannada: "\u0CB8\u0CAA\u0CCD\u0CA4\u0CB5\u0CBF\u0C82\u0CB6\u0CBE\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",   nameMarathi: "\u0938\u092A\u094D\u0924\u0935\u093F\u0902\u0936\u093E\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",   purpose: "Strength and weakness" },
+  D60: { name: "Shashtiamsa",               nameHindi: "\u0937\u0937\u094D\u091F\u094D\u092F\u0902\u0936",           nameKannada: "\u0CB7\u0CB7\u0CCD\u0C9F\u0CCD\u0CAF\u0C82\u0CB6 \u0C95\u0CC1\u0C82\u0CA1\u0CB2\u0CBF",       nameMarathi: "\u0937\u0937\u094D\u091F\u094D\u092F\u0902\u0936 \u0915\u0941\u0902\u0921\u0932\u0940",       purpose: "Past life karma" },
 };
 
 async function fetchOneChartSvg(

@@ -857,7 +857,7 @@ async function triggerStage2AndReturn(
  * the single-char श (Shani/Saturn) to avoid partial replacement.
  */
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te") return svg; // keep Hindi labels for non-English
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return svg; // keep Hindi labels for non-English
   // For English (and any other language), replace Hindi → English abbreviations
   const replacements: [string, string][] = [
     ["शु", "VE"],   // Shukra  → Venus
@@ -879,19 +879,19 @@ function localizeChartSvgText(svg: string, language: string): string {
 
 const PDF_CHART_TYPES = ["D1","D2","D3","D4","D7","D9","D10","D12","D20","D24","D27","D60"] as const;
 
-const CHART_INFO: Record<string, { name: string; nameHindi: string; purpose: string }> = {
-  D1:  { name: "Rashi (Birth Chart)",       nameHindi: "राशि चक्र",         purpose: "Overall life assessment" },
-  D2:  { name: "Hora",                      nameHindi: "होरा",               purpose: "Wealth and finances" },
-  D3:  { name: "Drekkana",                  nameHindi: "द्रेक्काण",          purpose: "Siblings and courage" },
-  D4:  { name: "Chaturthamsa",              nameHindi: "चतुर्थांश",          purpose: "Fortune and property" },
-  D7:  { name: "Saptamsa",                  nameHindi: "सप्तांश",            purpose: "Children and progeny" },
-  D9:  { name: "Navamsa",                   nameHindi: "नवांश",              purpose: "Marriage and spouse" },
-  D10: { name: "Dasamsa",                   nameHindi: "दशांश",              purpose: "Career and profession" },
-  D12: { name: "Dwadasamsa",                nameHindi: "द्वादशांश",          purpose: "Parents and ancestry" },
-  D20: { name: "Vimsamsa",                  nameHindi: "विंशांश",            purpose: "Spiritual progress" },
-  D24: { name: "Chaturvimsamsa",            nameHindi: "चतुर्विंशांश",       purpose: "Education and learning" },
-  D27: { name: "Bhamsa",                    nameHindi: "भांश",               purpose: "Strength and weakness" },
-  D60: { name: "Shashtiamsa",               nameHindi: "षष्ट्यंश",           purpose: "Past life karma" },
+const CHART_INFO: Record<string, { name: string; nameHindi: string; nameKannada: string; nameMarathi: string; purpose: string }> = {
+  D1:  { name: "Rashi (Birth Chart)",       nameHindi: "राशि चक्र",         nameKannada: "ಜನ್ಮ ಕುಂಡಲಿ",         nameMarathi: "जन्म कुंडली",         purpose: "Overall life assessment" },
+  D2:  { name: "Hora",                      nameHindi: "होरा",               nameKannada: "ಹೋರಾ ಕುಂಡಲಿ",         nameMarathi: "होरा कुंडली",         purpose: "Wealth and finances" },
+  D3:  { name: "Drekkana",                  nameHindi: "द्रेक्काण",          nameKannada: "ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ",     nameMarathi: "द्रेक्काण कुंडली",     purpose: "Siblings and courage" },
+  D4:  { name: "Chaturthamsa",              nameHindi: "चतुर्थांश",          nameKannada: "ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ",     nameMarathi: "चतुर्थांश कुंडली",     purpose: "Fortune and property" },
+  D7:  { name: "Saptamsa",                  nameHindi: "सप्तांश",            nameKannada: "ಸಪ್ತಾಂಶ ಕುಂಡಲಿ",       nameMarathi: "सप्तांश कुंडली",       purpose: "Children and progeny" },
+  D9:  { name: "Navamsa",                   nameHindi: "नवांश",              nameKannada: "ನವಾಂಶ ಕುಂಡಲಿ",         nameMarathi: "नवांश कुंडली",         purpose: "Marriage and spouse" },
+  D10: { name: "Dasamsa",                   nameHindi: "दशांश",              nameKannada: "ದಶಾಂಶ ಕುಂಡಲಿ",         nameMarathi: "दशांश कुंडली",         purpose: "Career and profession" },
+  D12: { name: "Dwadasamsa",                nameHindi: "द्वादशांश",          nameKannada: "ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ",     nameMarathi: "द्वादशांश कुंडली",     purpose: "Parents and ancestry" },
+  D20: { name: "Vimsamsa",                  nameHindi: "विंशांश",            nameKannada: "ವಿಂಶಾಂಶ ಕುಂಡಲಿ",       nameMarathi: "विंशांश कुंडली",       purpose: "Spiritual progress" },
+  D24: { name: "Chaturvimsamsa",            nameHindi: "चतुर्विंशांश",       nameKannada: "ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ", nameMarathi: "चतुर्विंशांश कुंडली", purpose: "Education and learning" },
+  D27: { name: "Bhamsa",                    nameHindi: "भांश",               nameKannada: "ಸಪ್ತವಿಂಶಾಂಶ ಕುಂಡಲಿ",   nameMarathi: "सप्तविंशांश कुंडली",   purpose: "Strength and weakness" },
+  D60: { name: "Shashtiamsa",               nameHindi: "षष्ट्यंश",           nameKannada: "ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ",       nameMarathi: "षष्ट्यंश कुंडली",       purpose: "Past life karma" },
 };
 
 async function fetchOneChartSvg(

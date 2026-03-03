@@ -3569,6 +3569,18 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
       Moradabad: 'मुरादाबाद', Gorakhpur: 'गोरखपुर',
       Jabalpur: 'जबलपुर', Gwalior: 'ग्वालियर',
       Tiruchirappalli: 'तिरुचिरापल्ली', Salem: 'सेलम',
+      // Common suburbs / districts
+      'Mumbai Suburban': 'मुंबई उपनगर', 'Mumbai City': 'मुंबई शहर',
+      'South Delhi': 'दक्षिण दिल्ली', 'North Delhi': 'उत्तर दिल्ली',
+      'East Delhi': 'पूर्व दिल्ली', 'West Delhi': 'पश्चिम दिल्ली',
+      'Central Delhi': 'मध्य दिल्ली', 'North West Delhi': 'उत्तर पश्चिम दिल्ली',
+      'South West Delhi': 'दक्षिण पश्चिम दिल्ली', 'North East Delhi': 'उत्तर पूर्व दिल्ली',
+      'South East Delhi': 'दक्षिण पूर्व दिल्ली', 'New Mumbai': 'नवी मुंबई',
+      Andheri: 'अंधेरी', Bandra: 'बांद्रा', Borivali: 'बोरीवली',
+      Dadar: 'दादर', Malad: 'मालाड', Powai: 'पवई',
+      Worli: 'वर्ली', Juhu: 'जुहू', Goregaon: 'गोरेगांव',
+      Dwarka: 'द्वारका', Rohini: 'रोहिणी', Saket: 'साकेत',
+      'Greater Noida': 'ग्रेटर नोएडा', 'Navi Mumbai': 'नवी मुंबई',
     },
     te: {
       India: 'భారతదేశం',
@@ -3587,12 +3599,32 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
       Bangalore: 'బెంగళూరు', Bengaluru: 'బెంగళూరు',
       Mumbai: 'ముంబై', Kolkata: 'కోల్‌కతా', Pune: 'పుణె',
       Dehradun: 'డెహ్రాడూన్',
+      // Common suburbs / districts
+      'Mumbai Suburban': 'ముంబై సబర్బన్', 'Mumbai City': 'ముంబై నగరం',
+      Nagpur: 'నాగ్‌పూర్', Ahmedabad: 'అహ్మదాబాద్', Jaipur: 'జైపూర్',
+      Lucknow: 'లక్నో', Patna: 'పాట్నా', Bhopal: 'భోపాల్',
+      Noida: 'నోయిడా', Gurugram: 'గురుగ్రామ్', Gurgaon: 'గురుగ్రామ్',
+      Tirupati: 'తిరుపతి', Warangal: 'వరంగల్', Guntur: 'గుంటూరు',
+      Kakinada: 'కాకినాడ', Rajahmundry: 'రాజమహేంద్రవరం',
+      Nellore: 'నెల్లూరు', Kurnool: 'కర్నూలు', Kadapa: 'కడప',
+      Anantapur: 'అనంతపురం', Nizamabad: 'నిజామాబాద్', Karimnagar: 'కరీంనగర్',
+      Khammam: 'ఖమ్మం', Secunderabad: 'సికింద్రాబాద్',
     },
   };
 
   const translitPlace = (name: string): string => {
     if (!name || ACTIVE_PDF_LANGUAGE === 'en') return name;
-    return PLACE_TRANSLIT[ACTIVE_PDF_LANGUAGE]?.[name] || name;
+    const map = PLACE_TRANSLIT[ACTIVE_PDF_LANGUAGE];
+    if (!map) return name;
+    // Exact match first
+    if (map[name]) return map[name];
+    // Strip trailing punctuation/dashes (backend sometimes appends "-" or "।")
+    const cleaned = name.replace(/[-–—।.]+$/, '').trim();
+    if (cleaned && map[cleaned]) return map[cleaned];
+    // Try removing "District" / "Division" suffix (e.g., "Mumbai Suburban District" → "Mumbai Suburban")
+    const withoutSuffix = cleaned.replace(/\s+(District|Division|Region|Taluk|Tehsil)$/i, '').trim();
+    if (withoutSuffix && map[withoutSuffix]) return map[withoutSuffix];
+    return name;
   };
 
   const parsePlaceDetails = (place: string, fallback: any) => {

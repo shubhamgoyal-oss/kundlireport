@@ -1,5 +1,5 @@
 diff --git a/node_modules/@react-pdf/textkit/lib/textkit.js b/node_modules/@react-pdf/textkit/lib/textkit.js
-index 4e1b193..e079760 100644
+index 4e1b193..ea32b07 100644
 --- a/node_modules/@react-pdf/textkit/lib/textkit.js
 +++ b/node_modules/@react-pdf/textkit/lib/textkit.js
 @@ -82,7 +82,27 @@ const wrapWords = (engines = {}, options = {}) => {
@@ -31,3 +31,25 @@ index 4e1b193..e079760 100644
          return result;
      };
  };
+@@ -2402,14 +2422,14 @@ const getNodes = (attributedString, { align }, options) => {
+             acc.push(linebreak.glue(width, start, end, stretch, shrink));
+         }
+         else {
+-            const hyphenated = syllables[index + 1] !== ' ';
+             const end = start + s.length;
+-            // Add box node. Box nodes are used to represent words.
+-            acc.push(linebreak.box(width, start, end, hyphenated));
+-            if (syllables[index + 1] && hyphenated) {
+-                // Add penalty node. Penalty nodes are used to represent hyphenation points.
+-                acc.push(linebreak.penalty(hyphenWidth, hyphenPenalty, 1));
+-            }
++            // Never mark boxes as hyphenated and never add penalty nodes.
++            // Penalty nodes allowed mid-word breaks for Indic scripts (Devanagari,
++            // Kannada, Telugu, Marathi) where the text pipeline can split words
++            // into multiple syllables via font substitution / script itemization.
++            // Without penalty nodes, line breaks can ONLY occur at glue nodes
++            // (whitespace), guaranteeing words are never split across lines.
++            acc.push(linebreak.box(width, start, end, false));
+         }
+         start += s.length;
+         return acc;

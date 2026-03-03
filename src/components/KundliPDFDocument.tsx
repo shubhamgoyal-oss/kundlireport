@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet, Font, Svg, Path, G, Rect, Circle, Line, Polygon, Ellipse, Defs, ClipPath, LinearGradient, RadialGradient, Stop, Image } from '@react-pdf/renderer';
 import React from 'react';
+import { wrapIndicSync } from '@/utils/preWrapText';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Disable hyphenation to prevent character substitution issues
 Font.registerHyphenationCallback(word => [word]);
@@ -5367,10 +5368,14 @@ const localizePdfUiText = (raw: string | null | undefined): string => {
   // ── Step 4: Cleanup ───────────────────────────────────────────────────────
   // Clean up artifacts: double spaces, orphaned dashes, trailing/leading whitespace
   output = output.replace(/\s*-\s*,/g, ',');       // "purpose-, " → ", "
-  output = output.replace(/\s{2,}/g, ' ').trim();
+  output = output.replace(/[^\S\n]{2,}/g, ' ').trim();
   output = output.replace(/^[,\s]+|[,\s]+$/g, ''); // trim leading/trailing commas
 
-  return output;
+  // ── Step 5: Pre-wrap for Indic scripts ──────────────────────────────────
+  // Use browser canvas (HarfBuzz) to compute word-boundary line breaks.
+  // This prevents react-pdf's Knuth-Plass breaker from splitting Devanagari/
+  // Telugu/Kannada words mid-character. Short strings (<40 chars) pass through.
+  return wrapIndicSync(output, ACTIVE_PDF_LANGUAGE);
 };
 
 type SadeSatiPhaseKey = 'rising' | 'peak' | 'setting' | 'not_active';
@@ -7495,10 +7500,10 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               color: P.bodyText,
               lineHeight: 1.55,
               marginBottom: 12,
-              textAlign: 'justify',
+              textAlign: 'left',
               paddingHorizontal: 6,
             }}>
-              {para}
+              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE)}
             </Text>
           ))}
           {/* Last paragraph — closing message, italic + centered */}
@@ -7512,7 +7517,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             marginBottom: 0,
             paddingHorizontal: 6,
           }}>
-            {disc.paragraphs[disc.paragraphs.length - 1]}
+            {wrapIndicSync(disc.paragraphs[disc.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE)}
           </Text>
         </View>
       </Page>
@@ -7574,10 +7579,10 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               color: P.bodyText,
               lineHeight: 1.55,
               marginBottom: 12,
-              textAlign: 'justify',
+              textAlign: 'left',
               paddingHorizontal: 6,
             }}>
-              {para}
+              {wrapIndicSync(para, ACTIVE_PDF_LANGUAGE)}
             </Text>
           ))}
           {/* Last paragraph — closing inspiration, italic + centered */}
@@ -7591,7 +7596,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             marginBottom: 0,
             paddingHorizontal: 6,
           }}>
-            {guide.paragraphs[guide.paragraphs.length - 1]}
+            {wrapIndicSync(guide.paragraphs[guide.paragraphs.length - 1], ACTIVE_PDF_LANGUAGE)}
           </Text>
         </View>
       </Page>
@@ -7935,12 +7940,12 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 ]} />
 
                 <SubSection title="Placement Analysis">
-                  <Text style={styles.paragraph}>{planet.placementAnalysis || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(planet.placementAnalysis || '')}</Text>
                 </SubSection>
 
                 {planet.houseSignificance && (
                   <SubSection title="House Significance">
-                    <Text style={styles.paragraph}>{planet.houseSignificance}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(planet.houseSignificance)}</Text>
                   </SubSection>
                 )}
 
@@ -7948,7 +7953,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   <SubSection title="Aspects">
                     {planet.aspects.map((aspect: any, aIdx: number) => (
                       <Card key={aIdx} title={`${localizePdfUiText(aspect.aspectType)} ${localizePdfUiText('Aspect')} → ${localizePdfUiText('House')} ${aspect.targetHouse}`}>
-                        <Text style={styles.paragraph}>{aspect.interpretation || ''}</Text>
+                        <Text style={styles.paragraph}>{localizePdfUiText(aspect.interpretation || '')}</Text>
                       </Card>
                     ))}
                   </SubSection>
@@ -7957,14 +7962,14 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 {planet.retrogradeEffect && planet.isRetrograde && (
                   <SubSection title="Retrograde Effect">
                     <View style={styles.highlight}>
-                      <Text style={styles.bodyText}>{planet.retrogradeEffect}</Text>
+                      <Text style={styles.bodyText}>{localizePdfUiText(planet.retrogradeEffect)}</Text>
                     </View>
                   </SubSection>
                 )}
 
                 {planet.dashaInfluence && (
                   <SubSection title="Dasha Influence">
-                    <Text style={styles.paragraph}>{planet.dashaInfluence}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(planet.dashaInfluence)}</Text>
                   </SubSection>
                 )}
 
@@ -8037,11 +8042,11 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 ]} />
 
                 <SubSection title="Significance">
-                  <Text style={styles.paragraph}>{house.significance || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(house.significance || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Detailed Analysis">
-                  <Text style={styles.paragraph}>{house.interpretation || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(house.interpretation || '')}</Text>
                 </SubSection>
 
                 {house.predictions && house.predictions.length > 0 && (
@@ -8067,7 +8072,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
                 {house.timing && (
                   <SubSection title="Timing">
-                    <Text style={styles.paragraph}>{house.timing}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(house.timing)}</Text>
                   </SubSection>
                 )}
               </Section>
@@ -8492,26 +8497,26 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   );
                 })()}
                 
-                <Text style={styles.paragraph}>{md.overview || ''}</Text>
+                <Text style={styles.paragraph}>{localizePdfUiText(md.overview || '')}</Text>
 
                 <SubSection title="Career Impact">
-                  <Text style={styles.paragraph}>{md.careerImpact || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(md.careerImpact || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Relationship Impact">
-                  <Text style={styles.paragraph}>{md.relationshipImpact || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(md.relationshipImpact || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Health Impact">
-                  <Text style={styles.paragraph}>{md.healthImpact || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(md.healthImpact || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Financial Impact">
-                  <Text style={styles.paragraph}>{md.financialImpact || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(md.financialImpact || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Spiritual Growth">
-                  <Text style={styles.paragraph}>{md.spiritualGrowth || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(md.spiritualGrowth || '')}</Text>
                 </SubSection>
 
                 {md.keyEvents && md.keyEvents.length > 0 && (
@@ -8560,25 +8565,25 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   const adDates = resolveAdDates(ad.antardasha, ad.startDate, ad.endDate);
                   return <InfoRow label="Period" value={`${adDates.start} to ${adDates.end}`} />;
                 })()}
-                <Text style={styles.paragraph}>{ad.overview || ''}</Text>
-                
+                <Text style={styles.paragraph}>{localizePdfUiText(ad.overview || '')}</Text>
+
                 {ad.focusAreas && ad.focusAreas.length > 0 && (
                   <>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('Focus Areas')}</Text>
                     <BulletList items={ad.focusAreas} />
                   </>
                 )}
-                
+
                 {ad.predictions && ad.predictions.length > 0 && (
                   <>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('Predictions')}</Text>
                     <BulletList items={ad.predictions} />
                   </>
                 )}
-                
+
                 {ad.advice && (
                   <View style={styles.highlight}>
-                    <Text style={styles.bodyText}>{ad.advice}</Text>
+                    <Text style={styles.bodyText}>{localizePdfUiText(ad.advice)}</Text>
                   </View>
                 )}
               </Card>
@@ -8596,12 +8601,12 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <View style={styles.card}>
                   <InfoRow label="Mahadasha Period" value={`${mdGroup.startDate || ''} to ${mdGroup.endDate || ''}`} />
                 </View>
-                <Text style={styles.paragraph}>{mdGroup.overview || ''}</Text>
+                <Text style={styles.paragraph}>{localizePdfUiText(mdGroup.overview || '')}</Text>
 
                 {(mdGroup.antardashas || []).map((ad: any, idx: number) => (
                   <Card key={idx} title={`${mdGroup.mahadasha}/${ad.antardasha} (${ad.duration || ''})`}>
                     <InfoRow label="Period" value={`${ad.startDate || ''} to ${ad.endDate || ''}`} />
-                    <Text style={styles.paragraph}>{ad.interpretation || ''}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(ad.interpretation || '')}</Text>
 
                     {ad.focusAreas && ad.focusAreas.length > 0 && (
                       <>
@@ -8612,7 +8617,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
                     {ad.advice && (
                       <View style={styles.highlight}>
-                        <Text style={styles.bodyText}>{ad.advice}</Text>
+                        <Text style={styles.bodyText}>{localizePdfUiText(ad.advice)}</Text>
                       </View>
                     )}
                   </Card>
@@ -9853,11 +9858,11 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 </View>
 
                 <SubSection title="Detailed Interpretation">
-                  <Text style={styles.paragraph}>{karaka.detailedInterpretation || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(karaka.detailedInterpretation || '')}</Text>
                 </SubSection>
 
                 <SubSection title="Life Impact">
-                  <Text style={styles.paragraph}>{karaka.lifeImpact || ''}</Text>
+                  <Text style={styles.paragraph}>{localizePdfUiText(karaka.lifeImpact || '')}</Text>
                 </SubSection>
 
                 <View style={styles.grid2}>
@@ -9883,7 +9888,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
                 {karaka.timing && (
                   <SubSection title="Timing">
-                    <Text style={styles.paragraph}>{karaka.timing}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(karaka.timing)}</Text>
                   </SubSection>
                 )}
               </Section>
@@ -9920,15 +9925,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           {(report.glossary.sections || []).map((section: any, sIdx: number) => (
             <ContentPage key={`glossary-${sIdx}`} sectionName="Glossary">
               <Section title={section.category}>
-                <Text style={styles.paragraph}>{section.categoryDescription || ''}</Text>
+                <Text style={styles.paragraph}>{localizePdfUiText(section.categoryDescription || '')}</Text>
 
                 {(section.terms || []).map((term: any, tIdx: number) => (
                   <Card key={tIdx} title={`${term.term}${term.termSanskrit ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
                     <Text style={[styles.scriptural, { marginBottom: 4 }]}>{localizePdfUiText('Pronunciation')}: {term.pronunciation}</Text>
 
-                    <Text style={[styles.boldLabel, { marginBottom: 3 }]}>{term.definition}</Text>
+                    <Text style={[styles.boldLabel, { marginBottom: 3 }]}>{localizePdfUiText(term.definition)}</Text>
 
-                    <Text style={styles.paragraph}>{term.detailedExplanation}</Text>
+                    <Text style={styles.paragraph}>{localizePdfUiText(term.detailedExplanation)}</Text>
 
                     {term.example && (
                       <View style={styles.highlight}>

@@ -126,6 +126,41 @@ export async function ensurePreWrapFontsLoaded(language: string): Promise<void> 
 }
 
 /**
+ * Synchronous text wrapping for use at render time inside KundliPDFDocument.
+ *
+ * IMPORTANT: Call `ensurePreWrapFontsLoaded(language)` once before generating
+ * the PDF so the font is already loaded in the browser when this runs.
+ *
+ * @param text       - The string to wrap.
+ * @param language   - Language code ('hi', 'mr', 'te', 'kn'). English returns unchanged.
+ * @param maxWidthPt - Available width in PDF points (default: 460).
+ * @returns          - Text with '\n' at computed word-boundary break points.
+ */
+export function wrapIndicSync(
+  text: string | null | undefined,
+  language: string,
+  maxWidthPt: number = DEFAULT_MAX_WIDTH_PT,
+): string {
+  if (!text) return text || '';
+  if (text.length < 40) return text;
+  // Already has newlines — already wrapped (or pre-formatted)
+  if (text.includes('\n')) return text;
+
+  const config = FONT_CONFIG[language];
+  if (!config) return text; // English — no wrapping needed
+
+  const canvas = getCanvas();
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return text;
+
+  const SAFETY_FACTOR = 0.92;
+  const effectiveMax = maxWidthPt * SAFETY_FACTOR;
+  ctx.font = `${config.fontSize}px "${config.family}"`;
+
+  return wrapWithCanvas(text, ctx, effectiveMax);
+}
+
+/**
  * Pre-wrap ALL string fields in a report JSON object that are longer than
  * `minLength` characters. This deep-walks the object and modifies strings
  * in-place (on a shallow clone) so that react-pdf receives pre-broken text.

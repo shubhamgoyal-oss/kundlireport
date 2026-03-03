@@ -504,6 +504,7 @@ Also include a "Remedies Philosophy" section explaining:
     userPrompt,
     "generate_remedies_prediction",
     "Generate comprehensive astrological remedies with trust-building content",
-    toolSchema
+    toolSchema,
+    "remedies"
   );
 }

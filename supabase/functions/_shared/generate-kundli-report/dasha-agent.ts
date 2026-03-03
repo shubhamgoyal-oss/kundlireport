@@ -699,7 +699,8 @@ CRITICAL DEPTH REQUIREMENTS:
 
   const aiResult = await callAgent<DashaMahadashaResult>(
     MAHADASHA_SYSTEM_PROMPT, userPrompt,
-    "generate_mahadasha_prediction", "Generate Mahadasha and Yogini Dasha predictions", toolSchema
+    "generate_mahadasha_prediction", "Generate Mahadasha and Yogini Dasha predictions", toolSchema,
+    "dasha"
   );
 
   if (!aiResult.success || !aiResult.data) return aiResult;
@@ -831,7 +832,8 @@ Focus on:
 
   const aiResult = await callAgent<DashaAntardashaResult>(
     ANTARDASHA_SYSTEM_PROMPT, userPrompt,
-    "generate_antardasha_prediction", "Generate Antardasha sub-period predictions", toolSchema
+    "generate_antardasha_prediction", "Generate Antardasha sub-period predictions", toolSchema,
+    "dasha"
   );
 
   if (!aiResult.success || !aiResult.data) return aiResult;

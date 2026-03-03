@@ -454,6 +454,7 @@ Generate detailed, chart-aware Sade Sati analysis. Do not return one-liners. Eve
     "generate_sade_sati_prediction",
     "Generate Sade Sati analysis",
     toolSchema,
+    "sadeSati",
   );
 
   if (!aiResult.success || !aiResult.data) {

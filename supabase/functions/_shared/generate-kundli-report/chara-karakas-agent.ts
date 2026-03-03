@@ -210,6 +210,7 @@ Provide:
     userPrompt,
     "generate_chara_karakas_prediction",
     "Generate comprehensive Jaimini Chara Karaka analysis",
-    toolSchema
+    toolSchema,
+    "charaKarakas"
   );
 }

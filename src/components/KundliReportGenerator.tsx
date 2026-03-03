@@ -71,10 +71,10 @@ const KundliReportGenerator = () => {
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
   const [jobProgress, setJobProgress] = useState(0);
   const [jobPhase, setJobPhase] = useState("");
-  // Derive report language from i18n (supports en, hi, te)
+  // Derive report language from i18n (supports en, hi, te, kn, mr)
   const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
-  const reportLanguage: 'en' | 'hi' | 'te' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : 'en';
-  const isHindi = reportLanguage !== 'en'; // true for Hindi & Telugu — Indic UI labels
+  const reportLanguage: 'en' | 'hi' | 'te' | 'kn' | 'mr' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : langCode === 'kn' ? 'kn' : langCode === 'mr' ? 'mr' : 'en';
+  const isHindi = reportLanguage !== 'en'; // true for Hindi, Telugu, Kannada, Marathi — Indic UI labels
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -436,6 +436,8 @@ const KundliReportGenerator = () => {
                     <option value="en">English</option>
                     <option value="hi">हिंदी (Hindi)</option>
                     <option value="te">తెలుగు (Telugu)</option>
+                    <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    <option value="mr">मराठी (Marathi)</option>
                   </select>
                 </div>
 

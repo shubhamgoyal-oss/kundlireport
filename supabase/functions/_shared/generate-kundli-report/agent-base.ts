@@ -39,7 +39,7 @@ export function getAgentNativeContext(): NativeContext | null {
 
 // getLanguageInstruction() now reads from the canonical language pack
 // instead of hardcoding per-language text. See lang-utils.ts.
-import { globalLanguageInstruction, nativeContextInstruction } from "./lang-utils.ts";
+import { globalLanguageInstruction, nativeContextInstruction, sectionPrompt as lookupSectionLangPrompt } from "./lang-utils.ts";
 
 // Core honesty guidelines added to ALL agent prompts
 export const HONESTY_GUIDELINES = `
@@ -182,7 +182,8 @@ export async function callAgent<T>(
   userPrompt: string,
   toolName: string,
   toolDescription: string,
-  toolSchema: Record<string, any>
+  toolSchema: Record<string, any>,
+  section?: string
 ): Promise<AgentResponse<T>> {
   const API_KEY = Deno.env.get("GEMINI_API_KEY")
     || Deno.env.get("GOOGLE_API_KEY")
@@ -198,7 +199,26 @@ export async function callAgent<T>(
   // FIRST, all 36+ agent calls in a report share the same prefix,
   // maximizing cache hits. Within the same agent type (houses ×12,
   // planets ×9), the ENTIRE system prompt is identical → full cache hit.
-  const enhancedSystemPrompt = HONESTY_GUIDELINES + nativeContextInstruction() + globalLanguageInstruction() + "\n\n" + systemPrompt;
+
+  // ── Section-specific language reinforcement ────────────────────────
+  // When a section name is provided (e.g. "career", "marriage") and the
+  // language is non-English, we append the language-pack's section-specific
+  // prompt at the END of the system prompt (strongest recency position)
+  // and add a language-reminder suffix to the user prompt.
+  let sectionLangSuffix = "";
+  let userLangSuffix = "";
+  if (section && _agentLanguage !== "en") {
+    const sp = lookupSectionLangPrompt(section as any);
+    if (sp) {
+      sectionLangSuffix = `\n\nSECTION LANGUAGE RULE:\n${sp}\nREMINDER: Every value in your JSON response must use the target language script. Zero English words in narrative fields.`;
+    }
+    const langLabel = _agentLanguage === "hi" ? "Hindi (Devanagari)" : _agentLanguage === "te" ? "Telugu" : _agentLanguage === "kn" ? "Kannada" : _agentLanguage === "mr" ? "Marathi (Devanagari)" : "";
+    if (langLabel) {
+      userLangSuffix = `\n\nIMPORTANT: Your ENTIRE response must be in ${langLabel} script. Translate ALL English words — including profession names, personality traits, technical terms, and descriptive words. Zero English in output.`;
+    }
+  }
+  const enhancedSystemPrompt = HONESTY_GUIDELINES + nativeContextInstruction() + globalLanguageInstruction() + "\n\n" + systemPrompt + sectionLangSuffix;
+  const finalUserPrompt = userPrompt + userLangSuffix;
 
   try {
     let tokensUsed = 0;
@@ -206,7 +226,7 @@ export async function callAgent<T>(
     const first = await runToolCallRequest(
       API_KEY,
       enhancedSystemPrompt,
-      userPrompt,
+      finalUserPrompt,
       toolName,
       toolDescription,
       toolSchema,
@@ -229,7 +249,7 @@ export async function callAgent<T>(
       return { success: true, data: firstPayload, tokensUsed };
     }
 
-    const retryPrompt = `${userPrompt}
+    const retryPrompt = `${finalUserPrompt}
 
 CRITICAL RESPONSE FORMAT:
 - You MUST respond via function call "${toolName}" only.

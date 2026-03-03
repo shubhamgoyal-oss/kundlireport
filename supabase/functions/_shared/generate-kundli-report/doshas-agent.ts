@@ -340,6 +340,7 @@ Important: Do NOT include Shani Sade Sati in major/minor doshas or remedies.`;
     userPrompt,
     "generate_doshas_prediction",
     "Generate comprehensive dosha analysis with standardized template",
-    toolSchema
+    toolSchema,
+    "doshas"
   );
 }

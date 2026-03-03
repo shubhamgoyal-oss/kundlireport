@@ -198,6 +198,7 @@ Provide comprehensive interpretations for each pillar and synthesize them into a
     userPrompt,
     "generate_pillars_prediction",
     "Generate deep analysis of Moon Sign, Ascendant, and Birth Nakshatra",
-    toolSchema
+    toolSchema,
+    "pillars"
   );
 }

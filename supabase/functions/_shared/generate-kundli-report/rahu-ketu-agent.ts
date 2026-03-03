@@ -266,6 +266,7 @@ Provide detailed karmic analysis with:
     userPrompt,
     "generate_rahu_ketu_prediction",
     "Generate comprehensive Rahu-Ketu karmic analysis",
-    toolSchema
+    toolSchema,
+    "rahuKetu"
   );
 }

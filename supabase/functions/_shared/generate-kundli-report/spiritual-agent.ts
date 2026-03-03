@@ -276,6 +276,7 @@ Provide detailed spiritual analysis with:
     userPrompt,
     "generate_spiritual_prediction",
     "Generate comprehensive spiritual potential analysis",
-    toolSchema
+    toolSchema,
+    "spiritual"
   );
 }

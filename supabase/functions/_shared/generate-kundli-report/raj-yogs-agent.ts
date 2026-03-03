@@ -355,6 +355,7 @@ Provide a comprehensive yoga analysis with:
     userPrompt,
     "generate_raj_yogs_prediction",
     "Generate comprehensive Raja Yoga analysis with standardized template",
-    toolSchema
+    toolSchema,
+    "rajYogs"
   );
 }

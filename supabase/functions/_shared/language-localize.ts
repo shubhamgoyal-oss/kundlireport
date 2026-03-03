@@ -46,14 +46,14 @@ function shouldSkipLocalizationForValue(value: string, parentKey?: string): bool
   return false;
 }
 
-function normalizeEnding(value: string, language: "en" | "hi" | "te"): string {
+function normalizeEnding(value: string, language: string): string {
   if (!value || value.length < 40) return value;
   if (/[।॥.!?]\s*$/.test(value)) return value;
   if (language === "en") return `${value}.`;
   return `${value}।`;
 }
 
-function replaceCommonLatin(value: string, language: "en" | "hi" | "te"): string {
+function replaceCommonLatin(value: string, language: string): string {
   if (language === "en") return value;
   const hiMap: Array<[RegExp, string]> = [
     // ── Strength / severity / status ──
@@ -462,8 +462,104 @@ function replaceCommonLatin(value: string, language: "en" | "hi" | "te"): string
     [/\bSankata\b/g, "సంకటా"],
   ];
 
+  const knMap: Array<[RegExp, string]> = [
+    // ── Strength / severity / status ──
+    [/\bhigh\b/gi, "ಅಧಿಕ"], [/\bmedium\b/gi, "ಮಧ್ಯಮ"], [/\blow\b/gi, "ಕಡಿಮೆ"],
+    [/\bnone\b/gi, "ಇಲ್ಲ"], [/\bpresent\b/gi, "ಇದೆ"], [/\babsent\b/gi, "ಇಲ್ಲ"],
+    [/\bnullified\b/gi, "ನಿರಾಕರಿಸಲಾಗಿದೆ"], [/\bpartial\b/gi, "ಆಂಶಿಕ"],
+    [/\bstrong\b/gi, "ಬಲವಾದ"], [/\bmoderate\b/gi, "ಮಧ್ಯಮ"], [/\bweak\b/gi, "ದುರ್ಬಲ"],
+    [/\bactive\b/gi, "ಸಕ್ರಿಯ"], [/\bstrength\b/gi, "ಬಲ"], [/\bseverity\b/gi, "ತೀವ್ರತೆ"],
+    [/\bintensity\b/gi, "ತೀವ್ರತೆ"],
+    // ── Time / period ──
+    [/\bphase\b/gi, "ಹಂತ"], [/\bperiod\b/gi, "ಅವಧಿ"], [/\byears?\b/gi, "ವರ್ಷ"],
+    [/\bmonths?\b/gi, "ತಿಂಗಳು"], [/\bdays?\b/gi, "ದಿನ"], [/\bcurrent\b/gi, "ಪ್ರಸ್ತುತ"],
+    [/\bprevious\b/gi, "ಹಿಂದಿನ"], [/\bduration\b/gi, "ಅವಧಿ"], [/\btiming\b/gi, "ಸಮಯ"],
+    // ── Jyotish core terms ──
+    [/\bhouse\b/gi, "ಭಾವ"], [/\bhouses\b/gi, "ಭಾವಗಳು"], [/\bsign\b/gi, "ರಾಶಿ"],
+    [/\bsigns\b/gi, "ರಾಶಿಗಳು"], [/\bplanet\b/gi, "ಗ್ರಹ"], [/\bplanets\b/gi, "ಗ್ರಹಗಳು"],
+    [/\bdosha\b/gi, "ದೋಷ"], [/\byoga\b/gi, "ಯೋಗ"], [/\byogas\b/gi, "ಯೋಗಗಳು"],
+    [/\bdasha\b/gi, "ದಶೆ"], [/\bnative\b/gi, "ಜಾತಕ"], [/\bascendant\b/gi, "ಲಗ್ನ"],
+    [/\bnakshatra\b/gi, "ನಕ್ಷತ್ರ"], [/\bcycle\b/gi, "ಚಕ್ರ"], [/\bkarma\b/gi, "ಕರ್ಮ"],
+    [/\bvedic\b/gi, "ವೈದಿಕ"], [/\bkundli\b/gi, "ಕುಂಡಲಿ"], [/\bhoroscope\b/gi, "ಜಾತಕ"],
+    [/\bjapa\b/gi, "ಜಪ"], [/\bmantra\b/gi, "ಮಂತ್ರ"], [/\bmantras\b/gi, "ಮಂತ್ರಗಳು"],
+    // ── People / gender ──
+    [/\bmale\b/gi, "ಪುರುಷ"], [/\bfemale\b/gi, "ಮಹಿಳೆ"], [/\byoung\b/gi, "ಯುವ"],
+    [/\badult\b/gi, "ವಯಸ್ಕ"], [/\bsenior\b/gi, "ಹಿರಿಯ"], [/\bminor\b/gi, "ಅಪ್ರಾಪ್ತ"],
+    [/\bspouse\b/gi, "ಜೀವನಸಂಗಾತಿ"], [/\bpartner\b/gi, "ಸಂಗಾತಿ"],
+    // ── Life areas & sections ──
+    [/\bhealth\b/gi, "ಆರೋಗ್ಯ"], [/\bcareer\b/gi, "ವೃತ್ತಿ"], [/\bmarriage\b/gi, "ವಿವಾಹ"],
+    [/\bguidance\b/gi, "ಮಾರ್ಗದರ್ಶನ"], [/\banalysis\b/gi, "ವಿಶ್ಲೇಷಣೆ"],
+    [/\bremedy\b/gi, "ಪರಿಹಾರ"], [/\bremedies\b/gi, "ಪರಿಹಾರಗಳು"],
+    [/\bprediction\b/gi, "ಭವಿಷ್ಯವಾಣಿ"], [/\bpredictions\b/gi, "ಭವಿಷ್ಯವಾಣಿ"],
+    [/\boverview\b/gi, "ಅವಲೋಕನ"], [/\bsummary\b/gi, "ಸಾರಾಂಶ"],
+    [/\bbenefits\b/gi, "ಲಾಭಗಳು"], [/\beffects\b/gi, "ಪ್ರಭಾವಗಳು"],
+    [/\bimpact\b/gi, "ಪ್ರಭಾವ"], [/\binsight\b/gi, "ಒಳನೋಟ"],
+    [/\bdescription\b/gi, "ವಿವರಣೆ"], [/\binterpretation\b/gi, "ವ್ಯಾಖ್ಯಾನ"],
+    [/\bexplanation\b/gi, "ವಿವರಣೆ"], [/\bsignificance\b/gi, "ಮಹತ್ವ"],
+    // ── Remedy-related terms ──
+    [/\bgemstones?\b/gi, "ರತ್ನ"], [/\brecommended\b/gi, "ಶಿಫಾರಸು"],
+    [/\bpronunciation\b/gi, "ಉಚ್ಚಾರಣೆ"], [/\bfasting\b/gi, "ಉಪವಾಸ"],
+    [/\bdonation\b/gi, "ದಾನ"], [/\bcharity\b/gi, "ದಾನ"],
+    [/\brudraksha\b/gi, "ರುದ್ರಾಕ್ಷ"], [/\byantra\b/gi, "ಯಂತ್ರ"],
+    [/\bworship\b/gi, "ಪೂಜೆ"], [/\bpuja\b/gi, "ಪೂಜೆ"],
+    [/\bprayer\b/gi, "ಪ್ರಾರ್ಥನೆ"], [/\bmeditation\b/gi, "ಧ್ಯಾನ"],
+    [/\bchanting\b/gi, "ಜಪ"], [/\brecitation\b/gi, "ಪಠಣ"],
+    // ── Lucky / unlucky ──
+    [/\blucky\b/gi, "ಶುಭ"], [/\bunlucky\b/gi, "ಅಶುಭ"],
+    [/\bcolou?rs?\b/gi, "ಬಣ್ಣ"], [/\bnumbers?\b/gi, "ಸಂಖ್ಯೆ"],
+    [/\bdirections?\b/gi, "ದಿಕ್ಕು"],
+    // ── Yoga / marriage / career terms ──
+    [/\bdetected\b/gi, "ಕಂಡುಬಂದಿದೆ"], [/\bactivation\b/gi, "ಸಕ್ರಿಯಗೊಳಿಸುವಿಕೆ"],
+    [/\battraction\b/gi, "ಆಕರ್ಷಣೆ"], [/\blove\b/gi, "ಪ್ರೇಮ"],
+    [/\bswitch\b/gi, "ಬದಲಾವಣೆ"], [/\bdue\b/gi, "ನಿರೀಕ್ಷಿತ"],
+    [/\btotal\b/gi, "ಒಟ್ಟು"], [/\benvironment\b/gi, "ವಾತಾವರಣ"],
+    [/\bideal\b/gi, "ಆದರ್ಶ"], [/\bwork\b/gi, "ಕಾರ್ಯ"],
+    [/\bcompatibility\b/gi, "ಹೊಂದಾಣಿಕೆ"], [/\brelationship\b/gi, "ಸಂಬಂಧ"],
+    [/\bprofession\b/gi, "ವೃತ್ತಿ"], [/\boccupation\b/gi, "ಉದ್ಯೋಗ"],
+    [/\bfinancial\b/gi, "ಆರ್ಥಿಕ"], [/\bwealth\b/gi, "ಸಂಪತ್ತು"],
+    [/\bprosperity\b/gi, "ಸಮೃದ್ಧಿ"], [/\bsuccess\b/gi, "ಯಶಸ್ಸು"],
+    [/\bgrowth\b/gi, "ಬೆಳವಣಿಗೆ"], [/\bopportunity\b/gi, "ಅವಕಾಶ"],
+    [/\bopportunities\b/gi, "ಅವಕಾಶಗಳು"], [/\bchallenge\b/gi, "ಸವಾಲು"],
+    [/\bchallenges\b/gi, "ಸವಾಲುಗಳು"], [/\bfavorable\b/gi, "ಅನುಕೂಲ"],
+    [/\bunfavorable\b/gi, "ಪ್ರತಿಕೂಲ"], [/\bauspicious\b/gi, "ಶುಭ"],
+    [/\binauspicious\b/gi, "ಅಶುಭ"],
+    // ── Sade Sati / transit ──
+    [/\btransit\b/gi, "ಗೋಚಾರ"], [/\brising\b/gi, "ಉದಯ"], [/\bpeak\b/gi, "ಶಿಖರ"],
+    [/\bsetting\b/gi, "ಅಸ್ತ"], [/\binfluence\b/gi, "ಪ್ರಭಾವ"],
+    [/\bexalted\b/gi, "ಉಚ್ಚ"], [/\bdebilitated\b/gi, "ನೀಚ"],
+    [/\bretrograde\b/gi, "ವಕ್ರಿ"], [/\bcombust\b/gi, "ಅಸ್ತ"],
+    [/\bdignity\b/gi, "ಬಲ"], [/\baspect\b/gi, "ದೃಷ್ಟಿ"], [/\bconjunction\b/gi, "ಯುತಿ"],
+    // ── Common adjectives / descriptors ──
+    [/\bpositive\b/gi, "ಸಕಾರಾತ್ಮಕ"], [/\bnegative\b/gi, "ನಕಾರಾತ್ಮಕ"],
+    [/\bnatural\b/gi, "ನೈಸರ್ಗಿಕ"], [/\bspiritual\b/gi, "ಆಧ್ಯಾತ್ಮಿಕ"],
+    [/\bmental\b/gi, "ಮಾನಸಿಕ"], [/\bphysical\b/gi, "ಶಾರೀರಿಕ"],
+    [/\bemotional\b/gi, "ಭಾವನಾತ್ಮಕ"], [/\bpractical\b/gi, "ಪ್ರಾಯೋಗಿಕ"],
+    [/\bimportant\b/gi, "ಮಹತ್ವಪೂರ್ಣ"], [/\bsignificant\b/gi, "ಮಹತ್ವಪೂರ್ಣ"],
+    [/\bbeneficial\b/gi, "ಲಾಭಕಾರಿ"], [/\bharmful\b/gi, "ಹಾನಿಕಾರಕ"],
+    [/\bprotective\b/gi, "ರಕ್ಷಣಾತ್ಮಕ"], [/\bpowerful\b/gi, "ಶಕ್ತಿಶಾಲಿ"],
+    // ── Misc common words ──
+    [/\bcharacteristics\b/gi, "ವಿಶೇಷತೆಗಳು"], [/\bqualities\b/gi, "ಗುಣಗಳು"],
+    [/\bnature\b/gi, "ಸ್ವಭಾವ"], [/\btype\b/gi, "ಪ್ರಕಾರ"],
+    [/\bresult\b/gi, "ಫಲಿತಾಂಶ"], [/\bresults\b/gi, "ಫಲಿತಾಂಶಗಳು"],
+    [/\bcaution\b/gi, "ಎಚ್ಚರಿಕೆ"], [/\bwarning\b/gi, "ಎಚ್ಚರಿಕೆ"],
+    [/\badvice\b/gi, "ಸಲಹೆ"], [/\brecommendation\b/gi, "ಶಿಫಾರಸು"],
+    [/\brecommendations\b/gi, "ಶಿಫಾರಸುಗಳು"], [/\bformation\b/gi, "ನಿರ್ಮಾಣ"],
+    [/\bcriteria\b/gi, "ಮಾನದಂಡ"], [/\barea\b/gi, "ಕ್ಷೇತ್ರ"], [/\bareas\b/gi, "ಕ್ಷೇತ್ರಗಳು"],
+    [/\bfocus\b/gi, "ಕೇಂದ್ರ"], [/\bpath\b/gi, "ಮಾರ್ಗ"],
+    [/\bgeneral\b/gi, "ಸಾಮಾನ್ಯ"], [/\bspecific\b/gi, "ನಿರ್ದಿಷ್ಟ"],
+    [/\boverall\b/gi, "ಒಟ್ಟಾರೆ"], [/\bdetailed\b/gi, "ವಿವರವಾದ"],
+    [/\bbased\b/gi, "ಆಧಾರಿತ"], [/\baccording\b/gi, "ಪ್ರಕಾರ"],
+    [/\bthrough\b/gi, "ಮೂಲಕ"], [/\brelated\b/gi, "ಸಂಬಂಧಿತ"],
+    [/\brespective\b/gi, "ಸಂಬಂಧಿತ"],
+  ];
+
   let out = value;
-  const rules = language === "hi" ? hiMap : teMap;
+  // Marathi uses Devanagari with vocabulary very close to Hindi — reuse hiMap.
+  // Kannada has its own script — use knMap.
+  const rules = language === "hi" || language === "mr" ? hiMap
+    : language === "te" ? teMap
+    : language === "kn" ? knMap
+    : hiMap; // fallback
   for (const [re, to] of rules) {
     out = out.replace(re, to);
   }
@@ -479,7 +575,7 @@ function replaceCommonLatin(value: string, language: "en" | "hi" | "te"): string
 function walk(
   value: unknown,
   replacements: Array<{ from: string; to: string }>,
-  language: "en" | "hi" | "te",
+  language: string,
   parentKey?: string,
 ): unknown {
   if (typeof value === "string") {

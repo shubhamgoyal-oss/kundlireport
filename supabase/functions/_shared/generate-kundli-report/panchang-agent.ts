@@ -178,6 +178,7 @@ Provide detailed, personalized interpretations for each Panchang element. Focus 
     userPrompt,
     "generate_panchang_prediction",
     "Generate detailed Panchang interpretation based on birth time elements",
-    toolSchema
+    toolSchema,
+    "panchang"
   );
 }

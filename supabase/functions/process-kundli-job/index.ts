@@ -41,8 +41,8 @@ function isTruthyFlag(raw: string | undefined): boolean {
 }
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  // Hindi/Telugu must always run native pipeline to prevent silent English fallback.
-  if (language === "hi" || language === "te") return true;
+  // Hindi/Telugu/Kannada/Marathi must always run native pipeline to prevent silent English fallback.
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return true;
   // English remains flag-gated for stability lock rollout.
   if (language === "en") return isTruthyFlag(Deno.env.get("LANG_PIPELINE_V2_EN"));
   return false;

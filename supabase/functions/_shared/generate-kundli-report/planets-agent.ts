@@ -164,7 +164,8 @@ Provide a comprehensive analysis covering placement meaning, house effects, aspe
     userPrompt,
     "generate_planet_profile",
     "Generate detailed planetary profile analysis",
-    toolSchema
+    toolSchema,
+    "planets"
   );
 }
 

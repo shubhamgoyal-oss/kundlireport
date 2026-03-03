@@ -26,7 +26,7 @@ interface BulkRowState {
   place: string;
   status: BulkStatus;
   gender: 'M' | 'F';
-  language: 'en' | 'hi' | 'te';
+  language: 'en' | 'hi' | 'te' | 'kn' | 'mr';
   jobId?: string;
   error?: string;
   source?: string;
@@ -108,7 +108,7 @@ export default function BulkKundliRunner() {
   const [isLoadingSheet, setIsLoadingSheet] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [bulkRows, setBulkRows] = useState<BulkRowState[]>([]);
-  const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te'>('en');
+  const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te' | 'kn' | 'mr'>('en');
 
   const stopRequestedRef = useRef(false);
   const placeCacheRef = useRef<Map<string, { lat: number; lon: number; displayName: string }>>(new Map());
@@ -151,8 +151,8 @@ export default function BulkKundliRunner() {
       if (savedUrl) setSheetUrl(savedUrl);
       if (savedStart) setStartRow(savedStart);
       if (savedEnd) setEndRow(savedEnd);
-      if (savedLang && ['en', 'hi', 'te'].includes(savedLang)) {
-        setBulkLanguage(savedLang as 'en' | 'hi' | 'te');
+      if (savedLang && ['en', 'hi', 'te', 'kn', 'mr'].includes(savedLang)) {
+        setBulkLanguage(savedLang as 'en' | 'hi' | 'te' | 'kn' | 'mr');
       }
     } catch (err) {
       console.warn('[BulkKundliRunner] Failed to restore from localStorage:', err);
@@ -396,7 +396,7 @@ export default function BulkKundliRunner() {
         tzone: Number(report.birthDetails?.timezone || 5.5),
       };
 
-      const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te';
+      const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te' | 'kn' | 'mr';
       const charts = await fetchMultipleCharts(birthDetails, 'North', rowLang === 'te' ? 'en' : rowLang, PDF_CHARTS);
       const reportWithCharts = { ...report, charts };
       // Serialize PDF generation via mutex — global ACTIVE_PDF_LANGUAGE must not be
@@ -576,7 +576,7 @@ export default function BulkKundliRunner() {
     // React calls the functional updater synchronously, so the Maps are
     // populated by the time setBulkRows() returns.
     const genderSnapshot = new Map<number, 'M' | 'F'>();
-    const langSnapshot = new Map<number, 'en' | 'hi' | 'te'>();
+    const langSnapshot = new Map<number, 'en' | 'hi' | 'te' | 'kn' | 'mr'>();
 
     setBulkRows((prev) => {
       const existing = new Map(prev.map((r) => [r.rowNumber, r]));
@@ -777,7 +777,7 @@ export default function BulkKundliRunner() {
           if (result.status === 'completed') {
             updateBulkRow(row.rowNumber, { status: 'completed', error: undefined });
             // Auto-prepare PDF for retried row
-            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te', jobId };
+            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr', jobId };
             await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep (retry) failed for row ${row.rowNumber}:`, e));
           } else {
             updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${result.error || 'Job failed'}` });
@@ -851,7 +851,7 @@ export default function BulkKundliRunner() {
               id="bulk-language"
               value={bulkLanguage}
               onChange={(e) => {
-                const lang = e.target.value as 'en' | 'hi' | 'te';
+                const lang = e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr';
                 setBulkLanguage(lang);
                 // Update all pending rows to the new default language
                 setBulkRows((prev) => prev.map((r) => r.status === 'pending' ? { ...r, language: lang } : r));
@@ -862,6 +862,8 @@ export default function BulkKundliRunner() {
               <option value="en">English</option>
               <option value="hi">Hindi</option>
               <option value="te">Telugu</option>
+              <option value="kn">Kannada</option>
+              <option value="mr">Marathi</option>
             </select>
           </div>
           <div className="flex items-end gap-2">
@@ -939,15 +941,17 @@ export default function BulkKundliRunner() {
                         {row.status === 'pending' ? (
                           <select
                             value={row.language}
-                            onChange={(e) => updateBulkRow(row.rowNumber, { language: e.target.value as 'en' | 'hi' | 'te' })}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { language: e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr' })}
                             className="px-1 py-0.5 border border-input bg-background rounded text-xs w-18"
                           >
                             <option value="en">EN</option>
                             <option value="hi">HI</option>
                             <option value="te">TE</option>
+                            <option value="kn">KN</option>
+                            <option value="mr">MR</option>
                           </select>
                         ) : (
-                          <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : 'EN'}</span>
+                          <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : row.language === 'kn' ? 'KN' : row.language === 'mr' ? 'MR' : 'EN'}</span>
                         )}
                       </td>
                       <td className="p-2">

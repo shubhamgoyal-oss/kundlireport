@@ -250,6 +250,7 @@ Provide detailed numerological analysis with:
     userPrompt,
     "generate_numerology_prediction",
     "Generate comprehensive numerology analysis",
-    toolSchema
+    toolSchema,
+    "numerology"
   );
 }

@@ -130,7 +130,8 @@ Provide comprehensive Bhavphal analysis with:
     userPrompt,
     "generate_house_analysis",
     "Generate detailed Bhavphal house analysis",
-    toolSchema
+    toolSchema,
+    "houses"
   );
 }
 

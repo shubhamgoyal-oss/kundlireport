@@ -324,6 +324,7 @@ Also answer explicitly:
     userPrompt,
     "generate_marriage_prediction",
     "Generate comprehensive marriage and relationship analysis",
-    toolSchema
+    toolSchema,
+    "marriage"
   );
 }

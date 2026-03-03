@@ -149,6 +149,7 @@ Provide clear, educational definitions suitable for readers new to Vedic astrolo
     userPrompt,
     "generate_glossary",
     `Generate comprehensive Vedic astrology glossary (${langLabel})`,
-    toolSchema
+    toolSchema,
+    "glossary"
   );
 }

@@ -38,7 +38,7 @@ const MIN_LETTER_COUNT = 4;     // Minimum non-space/digit/punct letters
 // Key format: lowercase trimmed English string
 // Value format: { hi: Hindi translation, te: Telugu translation }
 
-const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
+const PHRASE_CACHE: Record<string, { hi: string; te: string; kn?: string; mr?: string }> = {
   // ── Section headings & titles ──
   "overview": { hi: "अवलोकन", te: "అవలోకనం" },
   "interpretation": { hi: "व्याख्या", te: "వ్యాఖ్యానం" },
@@ -604,97 +604,97 @@ const PHRASE_CACHE: Record<string, { hi: string; te: string }> = {
 // Applied in a pre-sweep BEFORE the main Gemini batching.
 // These are exact-match translations for standalone short values.
 
-const SHORT_TERM_TRANSLATIONS: Record<string, { hi: string; te: string }> = {
+const SHORT_TERM_TRANSLATIONS: Record<string, { hi: string; te: string; kn?: string; mr?: string }> = {
   // ── Planet names ──
-  "sun": { hi: "सूर्य", te: "సూర్యుడు" },
-  "moon": { hi: "चंद्रमा", te: "చంద్రుడు" },
-  "mars": { hi: "मंगल", te: "కుజుడు" },
-  "mercury": { hi: "बुध", te: "బుధుడు" },
-  "jupiter": { hi: "गुरु", te: "గురుడు" },
-  "venus": { hi: "शुक्र", te: "శుక్రుడు" },
-  "saturn": { hi: "शनि", te: "శని" },
-  "rahu": { hi: "राहु", te: "రాహు" },
-  "ketu": { hi: "केतु", te: "కేతు" },
+  "sun": { hi: "सूर्य", te: "సూర్యుడు", kn: "ಸೂರ್ಯ", mr: "सूर्य" },
+  "moon": { hi: "चंद्रमा", te: "చంద్రుడు", kn: "ಚಂದ್ರ", mr: "चंद्र" },
+  "mars": { hi: "मंगल", te: "కుజుడు", kn: "ಕುಜ", mr: "मंगळ" },
+  "mercury": { hi: "बुध", te: "బుధుడు", kn: "ಬುಧ", mr: "बुध" },
+  "jupiter": { hi: "गुरु", te: "గురుడు", kn: "ಗುರು", mr: "गुरु" },
+  "venus": { hi: "शुक्र", te: "శుక్రుడు", kn: "ಶುಕ್ರ", mr: "शुक्र" },
+  "saturn": { hi: "शनि", te: "శని", kn: "ಶನಿ", mr: "शनि" },
+  "rahu": { hi: "राहु", te: "రాహు", kn: "ರಾಹು", mr: "राहु" },
+  "ketu": { hi: "केतु", te: "కేతు", kn: "ಕೇತು", mr: "केतु" },
 
   // ── Zodiac signs ──
-  "aries": { hi: "मेष", te: "మేషం" },
-  "taurus": { hi: "वृषभ", te: "వృషభం" },
-  "gemini": { hi: "मिथुन", te: "మిథునం" },
-  "cancer": { hi: "कर्क", te: "కర్కాటకం" },
-  "leo": { hi: "सिंह", te: "సింహం" },
-  "virgo": { hi: "कन्या", te: "కన్య" },
-  "libra": { hi: "तुला", te: "తులా" },
-  "scorpio": { hi: "वृश्चिक", te: "వృశ్చికం" },
-  "pisces": { hi: "मीन", te: "మీనం" },
+  "aries": { hi: "मेष", te: "మేషం", kn: "ಮೇಷ", mr: "मेष" },
+  "taurus": { hi: "वृषभ", te: "వృషభం", kn: "ವೃಷಭ", mr: "वृषभ" },
+  "gemini": { hi: "मिथुन", te: "మిథునం", kn: "ಮಿಥುನ", mr: "मिथुन" },
+  "cancer": { hi: "कर्क", te: "కర్కాటకం", kn: "ಕರ್ಕಾಟಕ", mr: "कर्क" },
+  "leo": { hi: "सिंह", te: "సింహం", kn: "ಸಿಂಹ", mr: "सिंह" },
+  "virgo": { hi: "कन्या", te: "కన్య", kn: "ಕನ್ಯಾ", mr: "कन्या" },
+  "libra": { hi: "तुला", te: "తులా", kn: "ತುಲಾ", mr: "तूळ" },
+  "scorpio": { hi: "वृश्चिक", te: "వృశ్చికం", kn: "ವೃಶ್ಚಿಕ", mr: "वृश्चिक" },
+  "pisces": { hi: "मीन", te: "మీనం", kn: "ಮೀನ", mr: "मीन" },
   // sagittarius, capricorn, aquarius are ≥ 8 chars → in PHRASE_CACHE
 
   // ── Nakshatra names (< 8 chars) ──
-  "ashwini": { hi: "अश्विनी", te: "అశ్విని" },
-  "bharani": { hi: "भरणी", te: "భరణి" },
-  "rohini": { hi: "रोहिणी", te: "రోహిణి" },
-  "ardra": { hi: "आर्द्रा", te: "ఆర్ద్ర" },
-  "pushya": { hi: "पुष्य", te: "పుష్యమి" },
-  "magha": { hi: "मघा", te: "మఘ" },
-  "hasta": { hi: "हस्त", te: "హస్త" },
-  "chitra": { hi: "चित्रा", te: "చిత్ర" },
-  "swati": { hi: "स्वाति", te: "స్వాతి" },
-  "moola": { hi: "मूल", te: "మూల" },
-  "revati": { hi: "रेवती", te: "రేవతి" },
+  "ashwini": { hi: "अश्विनी", te: "అశ్విని", kn: "ಅಶ್ವಿನಿ", mr: "अश्विनी" },
+  "bharani": { hi: "भरणी", te: "భరణి", kn: "ಭರಣಿ", mr: "भरणी" },
+  "rohini": { hi: "रोहिणी", te: "రోహిణి", kn: "ರೋಹಿಣಿ", mr: "रोहिणी" },
+  "ardra": { hi: "आर्द्रा", te: "ఆర్ద్ర", kn: "ಆರ್ದ್ರಾ", mr: "आर्द्रा" },
+  "pushya": { hi: "पुष्य", te: "పుష్యమి", kn: "ಪುಷ್ಯ", mr: "पुष्य" },
+  "magha": { hi: "मघा", te: "మఘ", kn: "ಮಘಾ", mr: "मघा" },
+  "hasta": { hi: "हस्त", te: "హస్త", kn: "ಹಸ್ತ", mr: "हस्त" },
+  "chitra": { hi: "चित्रा", te: "చిత్ర", kn: "ಚಿತ್ರಾ", mr: "चित्रा" },
+  "swati": { hi: "स्वाति", te: "స్వాతి", kn: "ಸ್ವಾತಿ", mr: "स्वाती" },
+  "moola": { hi: "मूल", te: "మూల", kn: "ಮೂಲಾ", mr: "मूळ" },
+  "revati": { hi: "रेवती", te: "రేవతి", kn: "ರೇವತಿ", mr: "रेवती" },
 
   // ── Dignity / status terms ──
-  "exalted": { hi: "उच्च", te: "ఉచ్చ" },
-  "own sign": { hi: "स्वराशि", te: "స్వరాశి" },
-  "neutral": { hi: "सम", te: "సమం" },
-  "enemy": { hi: "शत्रु", te: "శత్రు" },
-  "friend": { hi: "मित्र", te: "మిత్ర" },
-  "friendly": { hi: "मित्र", te: "మిత్ర" },
-  "direct": { hi: "मार्गी", te: "మార్గి" },
+  "exalted": { hi: "उच्च", te: "ఉచ్చ", kn: "ಉಚ್ಚ", mr: "उच्च" },
+  "own sign": { hi: "स्वराशि", te: "స్వరాశి", kn: "ಸ್ವರಾಶಿ", mr: "स्वराशी" },
+  "neutral": { hi: "सम", te: "సమం", kn: "ಸಮ", mr: "सम" },
+  "enemy": { hi: "शत्रु", te: "శత్రు", kn: "ಶತ್ರು", mr: "शत्रु" },
+  "friend": { hi: "मित्र", te: "మిత్ర", kn: "ಮಿತ್ರ", mr: "मित्र" },
+  "friendly": { hi: "मित्र", te: "మిత్ర", kn: "ಮಿತ್ರ", mr: "मित्र" },
+  "direct": { hi: "मार्गी", te: "మార్గి", kn: "ಮಾರ್ಗಿ", mr: "मार्गी" },
 
   // ── Yogini names (proper nouns — transliterate, don't translate) ──
-  "mangala": { hi: "मंगला", te: "మంగళ" },
-  "pingala": { hi: "पिंगला", te: "పింగళ" },
-  "dhanya": { hi: "धान्य", te: "ధాన్య" },
-  "ulka": { hi: "उल्का", te: "ఉల్క" },
-  "siddha": { hi: "सिद्ध", te: "సిద్ధ" },
-  "sankata": { hi: "संकट", te: "సంకట" },
+  "mangala": { hi: "मंगला", te: "మంగళ", kn: "ಮಂಗಳಾ", mr: "मंगला" },
+  "pingala": { hi: "पिंगला", te: "పింగళ", kn: "ಪಿಂಗಳಾ", mr: "पिंगला" },
+  "dhanya": { hi: "धान्य", te: "ధాన్య", kn: "ಧಾನ್ಯ", mr: "धान्य" },
+  "ulka": { hi: "उल्का", te: "ఉల్క", kn: "ಉಲ್ಕಾ", mr: "उल्का" },
+  "siddha": { hi: "सिद्ध", te: "సిద్ధ", kn: "ಸಿದ್ಧ", mr: "सिद्ध" },
+  "sankata": { hi: "संकट", te: "సంకట", kn: "ಸಂಕಟ", mr: "संकट" },
 
   // ── Common short labels ──
-  "strong": { hi: "बलवान", te: "బలమైన" },
-  "weak": { hi: "कमज़ोर", te: "బలహీన" },
-  "active": { hi: "सक्रिय", te: "సక్రియం" },
-  "mixed": { hi: "मिश्रित", te: "మిశ్రమం" },
-  "present": { hi: "उपस्थित", te: "ఉన్నది" },
-  "absent": { hi: "अनुपस्थित", te: "లేదు" },
-  "high": { hi: "उच्च", te: "ఉన్నత" },
-  "low": { hi: "निम्न", te: "తక్కువ" },
-  "good": { hi: "शुभ", te: "శుభం" },
-  "mild": { hi: "हल्का", te: "తేలిక" },
-  "severe": { hi: "गंभीर", te: "తీవ్రం" },
-  "benefic": { hi: "शुभ", te: "శుభ" },
-  "malefic": { hi: "पाप", te: "పాప" },
-  "kendra": { hi: "केन्द्र", te: "కేంద్రం" },
-  "trikona": { hi: "त्रिकोण", te: "త్రికోణం" },
-  "dusthana": { hi: "दुस्थान", te: "దుస్థానం" },
-  "upachaya": { hi: "उपचय", te: "ఉపచయం" },
-  "maraka": { hi: "मारक", te: "మారకం" },
+  "strong": { hi: "बलवान", te: "బలమైన", kn: "ಬಲಶಾಲಿ", mr: "बलवान" },
+  "weak": { hi: "कमज़ोर", te: "బలహీన", kn: "ದುರ್ಬಲ", mr: "कमकुवत" },
+  "active": { hi: "सक्रिय", te: "సక్రియం", kn: "ಸಕ್ರಿಯ", mr: "सक्रिय" },
+  "mixed": { hi: "मिश्रित", te: "మిశ్రమం", kn: "ಮಿಶ್ರ", mr: "मिश्र" },
+  "present": { hi: "उपस्थित", te: "ఉన్నది", kn: "ಇದೆ", mr: "उपस्थित" },
+  "absent": { hi: "अनुपस्थित", te: "లేదు", kn: "ಇಲ್ಲ", mr: "अनुपस्थित" },
+  "high": { hi: "उच्च", te: "ఉన్నత", kn: "ಉನ್ನತ", mr: "उच्च" },
+  "low": { hi: "निम्न", te: "తక్కువ", kn: "ಕಡಿಮೆ", mr: "कमी" },
+  "good": { hi: "शुभ", te: "శుభం", kn: "ಶುಭ", mr: "शुभ" },
+  "mild": { hi: "हल्का", te: "తేలిక", kn: "ಸೌಮ್ಯ", mr: "सौम्य" },
+  "severe": { hi: "गंभीर", te: "తీవ్రం", kn: "ತೀವ್ರ", mr: "गंभीर" },
+  "benefic": { hi: "शुभ", te: "శుభ", kn: "ಶುಭ", mr: "शुभ" },
+  "malefic": { hi: "पाप", te: "పాప", kn: "ಪಾಪ", mr: "पाप" },
+  "kendra": { hi: "केन्द्र", te: "కేంద్రం", kn: "ಕೇಂದ್ರ", mr: "केंद्र" },
+  "trikona": { hi: "त्रिकोण", te: "త్రికోణం", kn: "ತ್ರಿಕೋಣ", mr: "त्रिकोण" },
+  "dusthana": { hi: "दुस्थान", te: "దుస్థానం", kn: "ದುಸ್ಥಾನ", mr: "दुस्थान" },
+  "upachaya": { hi: "उपचय", te: "ఉపచయం", kn: "ಉಪಚಯ", mr: "उपचय" },
+  "maraka": { hi: "मारक", te: "మారకం", kn: "ಮಾರಕ", mr: "मारक" },
 
   // ── Day names (< 8 chars) ──
-  "monday": { hi: "सोमवार", te: "సోమవారం" },
-  "tuesday": { hi: "मंगलवार", te: "మంగళవారం" },
-  "friday": { hi: "शुक्रवार", te: "శుక్రవారం" },
-  "sunday": { hi: "रविवार", te: "ఆదివారం" },
+  "monday": { hi: "सोमवार", te: "సోమవారం", kn: "ಸೋಮವಾರ", mr: "सोमवार" },
+  "tuesday": { hi: "मंगलवार", te: "మంగళవారం", kn: "ಮಂಗಳವಾರ", mr: "मंगळवार" },
+  "friday": { hi: "शुक्रवार", te: "శుక్రవారం", kn: "ಶುಕ್ರವಾರ", mr: "शुक्रवार" },
+  "sunday": { hi: "रविवार", te: "ఆదివారం", kn: "ಭಾನುವಾರ", mr: "रविवार" },
 
   // ── Common terms that appear as standalone values ──
-  "career": { hi: "करियर", te: "వృత్తి" },
-  "health": { hi: "स्वास्थ्य", te: "ఆరోగ్యం" },
-  "wealth": { hi: "धन", te: "సంపద" },
-  "love": { hi: "प्रेम", te: "ప్రేమ" },
-  "yoga": { hi: "योग", te: "యోగం" },
-  "dosha": { hi: "दोष", te: "దోషం" },
-  "dasha": { hi: "दशा", te: "దశ" },
-  "graha": { hi: "ग्रह", te: "గ్రహం" },
-  "bhava": { hi: "भाव", te: "భావం" },
-  "lagna": { hi: "लग्न", te: "లగ్నం" },
+  "career": { hi: "करियर", te: "వృత్తి", kn: "ವೃತ್ತಿ", mr: "करिअर" },
+  "health": { hi: "स्वास्थ्य", te: "ఆరోగ్యం", kn: "ಆರೋಗ್ಯ", mr: "आरोग्य" },
+  "wealth": { hi: "धन", te: "సంపద", kn: "ಧನ", mr: "धन" },
+  "love": { hi: "प्रेम", te: "ప్రేమ", kn: "ಪ್ರೇಮ", mr: "प्रेम" },
+  "yoga": { hi: "योग", te: "యోగం", kn: "ಯೋಗ", mr: "योग" },
+  "dosha": { hi: "दोष", te: "దోషం", kn: "ದೋಷ", mr: "दोष" },
+  "dasha": { hi: "दशा", te: "దశ", kn: "ದಶಾ", mr: "दशा" },
+  "graha": { hi: "ग्रह", te: "గ్రహం", kn: "ಗ್ರಹ", mr: "ग्रह" },
+  "bhava": { hi: "भाव", te: "భావం", kn: "ಭಾವ", mr: "भाव" },
+  "lagna": { hi: "लग्न", te: "లగ్నం", kn: "ಲಗ್ನ", mr: "लग्न" },
 };
 
 /**
@@ -719,7 +719,7 @@ function applyKnownTermTranslations(
           const key = obj[i].trim().toLowerCase();
           const cached = SHORT_TERM_TRANSLATIONS[key];
           if (cached) {
-            const translation = targetLanguage === "hi" ? cached.hi : cached.te;
+            const translation = targetLanguage === "hi" ? cached.hi : targetLanguage === "te" ? cached.te : targetLanguage === "kn" ? (cached.kn ?? null) : targetLanguage === "mr" ? (cached.mr ?? cached.hi) : null;
             if (translation) { obj[i] = translation; count++; }
           }
         } else {
@@ -738,7 +738,7 @@ function applyKnownTermTranslations(
           const lookupKey = value.trim().toLowerCase();
           const cached = SHORT_TERM_TRANSLATIONS[lookupKey];
           if (cached) {
-            const translation = targetLanguage === "hi" ? cached.hi : cached.te;
+            const translation = targetLanguage === "hi" ? cached.hi : targetLanguage === "te" ? cached.te : targetLanguage === "kn" ? (cached.kn ?? null) : targetLanguage === "mr" ? (cached.mr ?? cached.hi) : null;
             if (translation) { (obj as any)[key] = translation; count++; }
           }
         } else {
@@ -858,7 +858,7 @@ function needsTranslation(text: string): boolean {
   if (/^[~≈]?\d+(\.\d+)?\s*(months?|years?|days?|hrs?)?$/i.test(text)) return false;
   if (/^(true|false|null|undefined|none|yes|no|active|inactive)$/i.test(text)) return false;
   if (/^[MFO]$/.test(text)) return false;
-  if (/^(en|hi|te|native|legacy)$/i.test(text)) return false;
+  if (/^(en|hi|te|kn|mr|native|legacy)$/i.test(text)) return false;
 
   // Count actual letters (strip spaces, digits, punctuation, symbols)
   const letters = text.replace(/[\s\d\p{P}\p{S}]/gu, "");
@@ -946,11 +946,24 @@ async function translateBatch(
   targetLanguage: string,
   sectionContext: string,
 ): Promise<BatchResult> {
-  const langName = targetLanguage === "hi" ? "Hindi (हिन्दी)" : "Telugu (తెలుగు)";
-  const scriptName = targetLanguage === "hi" ? "Devanagari" : "Telugu";
+  const langName = targetLanguage === "hi" ? "Hindi (हिन्दी)"
+    : targetLanguage === "te" ? "Telugu (తెలుగు)"
+    : targetLanguage === "kn" ? "Kannada (ಕನ್ನಡ)"
+    : targetLanguage === "mr" ? "Marathi (मराठी)"
+    : "Hindi (हिन्दी)";
+  const scriptName = targetLanguage === "hi" || targetLanguage === "mr" ? "Devanagari"
+    : targetLanguage === "te" ? "Telugu"
+    : targetLanguage === "kn" ? "Kannada"
+    : "Devanagari";
 
   // Build numbered list for Gemini — use double newline for clarity
   const numberedTexts = entries.map((e, i) => `[${i}] ${e.original}`).join("\n\n");
+
+  // Helper to pick the correct term by language
+  const t = (hi: string, te: string, kn: string, mr: string): string =>
+    targetLanguage === "hi" ? hi : targetLanguage === "te" ? te : targetLanguage === "kn" ? kn : mr;
+
+  const sentenceEnding = targetLanguage === "hi" || targetLanguage === "mr" ? "।" : ".";
 
   const systemPrompt = `You are an expert Vedic astrology translator specializing in ${langName}.
 Your task is to translate English text into natural, fluent ${langName} using ${scriptName} script.
@@ -959,20 +972,20 @@ These strings are from the "${sectionContext}" section of a Vedic astrology (Jyo
 CRITICAL RULES:
 1. Output MUST be entirely in ${scriptName} script — ZERO Latin/English characters whatsoever.
 2. Vedic astrology terms must use their traditional ${langName} equivalents:
-   - Planets: Sun→${targetLanguage === "hi" ? "सूर्य" : "సూర్యుడు"}, Moon→${targetLanguage === "hi" ? "चंद्रमा" : "చంద్రుడు"}, Mars→${targetLanguage === "hi" ? "मंगल" : "కుజుడు"}, Mercury→${targetLanguage === "hi" ? "बुध" : "బుధుడు"}, Jupiter→${targetLanguage === "hi" ? "गुरु" : "గురుడు"}, Venus→${targetLanguage === "hi" ? "शुक्र" : "శుక్రుడు"}, Saturn→${targetLanguage === "hi" ? "शनि" : "శని"}, Rahu→${targetLanguage === "hi" ? "राहु" : "రాహు"}, Ketu→${targetLanguage === "hi" ? "केतु" : "కేతు"}
-   - Signs: Aries→${targetLanguage === "hi" ? "मेष" : "మేషం"}, Taurus→${targetLanguage === "hi" ? "वृषभ" : "వృషభం"}, Gemini→${targetLanguage === "hi" ? "मिथुन" : "మిథునం"}, Cancer→${targetLanguage === "hi" ? "कर्क" : "కర్కాటకం"}, Leo→${targetLanguage === "hi" ? "सिंह" : "సింహం"}, Virgo→${targetLanguage === "hi" ? "कन्या" : "కన్య"}, Libra→${targetLanguage === "hi" ? "तुला" : "తుల"}, Scorpio→${targetLanguage === "hi" ? "वृश्चिक" : "వృశ్చికం"}, Sagittarius→${targetLanguage === "hi" ? "धनु" : "ధనుస్సు"}, Capricorn→${targetLanguage === "hi" ? "मकर" : "మకరం"}, Aquarius→${targetLanguage === "hi" ? "कुम्भ" : "కుంభం"}, Pisces→${targetLanguage === "hi" ? "मीन" : "మీనం"}
-   - Terms: Mahadasha→${targetLanguage === "hi" ? "महादशा" : "మహాదశ"}, Antardasha→${targetLanguage === "hi" ? "अंतर्दशा" : "అంతర్దశ"}, Yoga→${targetLanguage === "hi" ? "योग" : "యోగం"}, Dosha→${targetLanguage === "hi" ? "दोष" : "దోషం"}, Nakshatra→${targetLanguage === "hi" ? "नक्षत्र" : "నక్షత్రం"}, House→${targetLanguage === "hi" ? "भाव" : "భావం"}, Ascendant→${targetLanguage === "hi" ? "लग्न" : "లగ్నం"}
-   - Life areas: Career→${targetLanguage === "hi" ? "करियर" : "వృత్తి"}, Marriage→${targetLanguage === "hi" ? "विवाह" : "వివాహం"}, Health→${targetLanguage === "hi" ? "स्वास्थ्य" : "ఆరోగ్యం"}, Prediction→${targetLanguage === "hi" ? "भविष्यवाणी" : "భవిష్యవాణి"}, Opportunity→${targetLanguage === "hi" ? "अवसर" : "అవకాశం"}, Challenge→${targetLanguage === "hi" ? "चुनौती" : "సవాలు"}, Impact→${targetLanguage === "hi" ? "प्रभाव" : "ప్రభావం"}, Remedy→${targetLanguage === "hi" ? "उपाय" : "పరిహారం"}, Mantra→${targetLanguage === "hi" ? "मंत्र" : "మంత్రం"}, Gemstone→${targetLanguage === "hi" ? "रत्न" : "రత్నం"}
+   - Planets: Sun→${t("सूर्य", "సూర్యుడు", "ಸೂರ್ಯ", "सूर्य")}, Moon→${t("चंद्रमा", "చంద్రుడు", "ಚಂದ್ರ", "चंद्र")}, Mars→${t("मंगल", "కుజుడు", "ಕುಜ", "मंगळ")}, Mercury→${t("बुध", "బుధుడు", "ಬುಧ", "बुध")}, Jupiter→${t("गुरु", "గురుడు", "ಗುರು", "गुरु")}, Venus→${t("शुक्र", "శుక్రుడు", "ಶುಕ್ರ", "शुक्र")}, Saturn→${t("शनि", "శని", "ಶನಿ", "शनि")}, Rahu→${t("राहु", "రాహు", "ರಾಹು", "राहु")}, Ketu→${t("केतु", "కేతు", "ಕೇತು", "केतु")}
+   - Signs: Aries→${t("मेष", "మేషం", "ಮೇಷ", "मेष")}, Taurus→${t("वृषभ", "వృషభం", "ವೃಷಭ", "वृषभ")}, Gemini→${t("मिथुन", "మిథునం", "ಮಿಥುನ", "मिथुन")}, Cancer→${t("कर्क", "కర్కాటకం", "ಕರ್ಕಾಟಕ", "कर्क")}, Leo→${t("सिंह", "సింహం", "ಸಿಂಹ", "सिंह")}, Virgo→${t("कन्या", "కన్య", "ಕನ್ಯಾ", "कन्या")}, Libra→${t("तुला", "తులా", "ತುಲಾ", "तूळ")}, Scorpio→${t("वृश्चिक", "వృశ్చికం", "ವೃಶ್ಚಿಕ", "वृश्चिक")}, Sagittarius→${t("धनु", "ధనుస్సు", "ಧನು", "धनु")}, Capricorn→${t("मकर", "మకరం", "ಮಕರ", "मकर")}, Aquarius→${t("कुम्भ", "కుంభం", "ಕುಂಭ", "कुंभ")}, Pisces→${t("मीन", "మీనం", "ಮೀನ", "मीन")}
+   - Terms: Mahadasha→${t("महादशा", "మహాదశ", "ಮಹಾದಶಾ", "महादशा")}, Antardasha→${t("अंतर्दशा", "అంతర్దశ", "ಅಂತರ್ದಶಾ", "अंतर्दशा")}, Yoga→${t("योग", "యోగం", "ಯೋಗ", "योग")}, Dosha→${t("दोष", "దోషం", "ದೋಷ", "दोष")}, Nakshatra→${t("नक्षत्र", "నక్షత్రం", "ನಕ್ಷತ್ರ", "नक्षत्र")}, House→${t("भाव", "భావం", "ಭಾವ", "भाव")}, Ascendant→${t("लग्न", "లగ్నం", "ಲಗ್ನ", "लग्न")}
+   - Life areas: Career→${t("करियर", "వృత్తి", "ವೃತ್ತಿ", "करिअर")}, Marriage→${t("विवाह", "వివాహం", "ವಿವಾಹ", "विवाह")}, Health→${t("स्वास्थ्य", "ఆరోగ్యం", "ಆರೋಗ್ಯ", "आरोग्य")}, Prediction→${t("भविष्यवाणी", "భవిష్యవాణి", "ಭವಿಷ್ಯವಾಣಿ", "भविष्यवाणी")}, Opportunity→${t("अवसर", "అవకాశం", "ಅವಕಾಶ", "संधी")}, Challenge→${t("चुनौती", "సవాలు", "ಸವಾಲು", "आव्हान")}, Impact→${t("प्रभाव", "ప్రభావం", "ಪ್ರಭಾವ", "प्रभाव")}, Remedy→${t("उपाय", "పరిహారం", "ಪರಿಹಾರ", "उपाय")}, Mantra→${t("मंत्र", "మంత్రం", "ಮಂತ್ರ", "मंत्र")}, Gemstone→${t("रत्न", "రత్నం", "ರತ್ನ", "रत्न")}
 3. If text mixes ${scriptName} and English, translate ONLY the English portions — preserve existing ${scriptName} text.
 4. Keep numbers as Arabic numerals (1, 2, 3...) and dates in their original format.
 5. Use natural ${langName} sentence structure — NOT word-by-word translation.
 6. Maintain the same meaning, tone, detail level, and paragraph structure.
 7. Preserve bullet points (•), dashes (—), and formatting markers.
-8. Use ${targetLanguage === "hi" ? "।" : "."} for sentence endings instead of periods.
+8. Use ${sentenceEnding} for sentence endings instead of periods.
 9. Do NOT add extra content, commentary, or explanations.
-10. Even parenthetical English like "(Saturn)" must become "(${targetLanguage === "hi" ? "शनि" : "శని"})".
+10. Even parenthetical English like "(Saturn)" must become "(${t("शनि", "శని", "ಶನಿ", "शनि")})".
 11. PROPER NOUNS: Yogini names (Mangala, Pingala, Dhanya, Bhramari, Bhadrika, Ulka, Siddha, Sankata) must be transliterated to ${scriptName} script, NOT translated. They are names, not common nouns.
-12. "Nakshatra" means नक्षत्र/${targetLanguage === "hi" ? "नक्षत्र" : "నక్షత్రం"} — NEVER translate it as "constellations" or any other English word. Always use the ${scriptName} equivalent.
+12. "Nakshatra" means ${t("नक्षत्र", "నక్షత్రం", "ನಕ್ಷತ್ರ", "नक्षत्र")} — NEVER translate it as "constellations" or any other English word. Always use the ${scriptName} equivalent.
 13. NEVER repeat the same word multiple times. Every sentence must be a natural, fluent translation with varied vocabulary.`;
 
   const userPrompt = `Translate each numbered text below into ${langName}. Return a JSON object mapping the number to the translated text.
@@ -1131,7 +1144,11 @@ function lookupPhraseCache(text: string, targetLanguage: string): string | null 
   const key = text.trim().toLowerCase();
   const entry = PHRASE_CACHE[key];
   if (!entry) return null;
-  return targetLanguage === "hi" ? entry.hi : targetLanguage === "te" ? entry.te : null;
+  if (targetLanguage === "hi") return entry.hi;
+  if (targetLanguage === "te") return entry.te;
+  if (targetLanguage === "kn") return entry.kn ?? null; // uncached → Gemini will handle
+  if (targetLanguage === "mr") return entry.mr ?? entry.hi; // Marathi falls back to Hindi (Devanagari, similar vocabulary)
+  return null;
 }
 
 /**
@@ -1168,7 +1185,7 @@ export async function runTranslationSweep(
 
   if (targetLanguage === "en") return stats;
 
-  const langLabel = targetLanguage === "hi" ? "Hindi" : "Telugu";
+  const langLabel = targetLanguage === "hi" ? "Hindi" : targetLanguage === "te" ? "Telugu" : targetLanguage === "kn" ? "Kannada" : targetLanguage === "mr" ? "Marathi" : targetLanguage;
   console.log(`🌐 [TRANSLATE] Starting ${langLabel} translation sweep (threshold: ${(LATIN_RATIO_THRESHOLD * 100).toFixed(0)}%, batch: ${BATCH_SIZE}, concurrency: ${CONCURRENCY}, retries: ${MAX_RETRIES}, cache: ${Object.keys(PHRASE_CACHE).length} phrases)...`);
 
   // ── Step 0: Pre-sweep — translate known short terms (planet names, signs, etc.) ──

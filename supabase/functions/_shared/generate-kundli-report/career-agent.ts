@@ -231,6 +231,7 @@ Use practical, realistic timing windows (not absolute guarantees).`;
     userPrompt,
     "generate_career_prediction",
     "Generate comprehensive career analysis",
-    toolSchema
+    toolSchema,
+    "career"
   );
 }

@@ -3,6 +3,7 @@ import type { LanguagePack, LanguageQcResult, LanguageQcSectionResult, Supported
 
 const DEVANAGARI_RE = /[\u0900-\u097F]/g;
 const TELUGU_RE = /[\u0C00-\u0C7F]/g;
+const KANNADA_RE = /[\u0C80-\u0CFF]/g;
 const LATIN_RE = /[A-Za-z]/g;
 
 function countMatches(text: string, re: RegExp): number {
@@ -61,9 +62,12 @@ function getScriptCounts(text: string, language: SupportedLanguage): { scriptCha
     };
   }
 
-  const scriptChars = language === "hi"
-    ? countMatches(text, DEVANAGARI_RE)
-    : countMatches(text, TELUGU_RE);
+  const scriptRe = language === "hi" || language === "mr"
+    ? DEVANAGARI_RE
+    : language === "te"
+      ? TELUGU_RE
+      : KANNADA_RE;
+  const scriptChars = countMatches(text, scriptRe);
 
   const totalLetters = scriptChars + latinChars;
   return { scriptChars, latinChars, totalLetters };

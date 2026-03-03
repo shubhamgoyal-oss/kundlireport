@@ -211,7 +211,9 @@ const sanitizeText = (text: string | null | undefined): string => {
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
     .replace(/\s+,/g, ',')
     .replace(/\(\s*\)/g, '')
-    .replace(/\s+/g, ' ')
+    // Collapse whitespace BUT preserve newlines (\n) — they are inserted by
+    // preWrapReportTexts() to prevent Indic word-breaking in PDFs.
+    .replace(/[^\S\n]+/g, ' ')
     .trim();
 };
 

@@ -30,6 +30,28 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Gemini connectivity test
+app.get('/test-gemini', async (_req, res) => {
+  try {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return res.status(500).json({ error: 'GEMINI_API_KEY not set' });
+    const url = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+    const start = Date.now();
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'gemini-2.5-flash', messages: [{ role: 'user', content: 'Say hello in Tamil, one word only' }] }),
+    });
+    const elapsed = Date.now() - start;
+    const data = await resp.json();
+    if (!resp.ok) return res.json({ ok: false, elapsed, status: resp.status, error: data });
+    const msg = (data as any).choices?.[0]?.message?.content || '';
+    res.json({ ok: true, elapsed, message: msg });
+  } catch (err: any) {
+    res.json({ ok: false, error: err.message, type: err.constructor?.name });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

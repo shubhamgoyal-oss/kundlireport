@@ -77,7 +77,9 @@ Font.register({
 Font.register({
   family: 'NotoSansTamil',
   fonts: [
-    { src: '/fonts/NotoSansTamil-Regular.ttf', fontWeight: 400 },
-    { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 700 },
+    { src: '/fonts/NotoSansTamil-Regular.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansTamil-Regular.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
   ],
 });

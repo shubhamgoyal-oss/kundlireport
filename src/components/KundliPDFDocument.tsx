@@ -3223,7 +3223,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
               <SubSection title="Major Doshas">
                 {majorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${localizePdfUiText(dosha.nameHindi || dosha.name)}`}>
+                  <Card key={idx} title={`${localizePdfUiText(dosha.name || dosha.nameHindi)}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
                       { label: 'Severity', value: localizePdfUiText(dosha.severity?.toUpperCase() || 'N/A') },
@@ -3267,7 +3267,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <ContentPage sectionName="Minor Doshas">
               <Section title="Minor Doshas">
                 {minorDoshasFiltered.map((dosha: any, idx: number) => (
-                  <Card key={idx} title={`${localizePdfUiText(dosha.nameHindi || dosha.name)}`}>
+                  <Card key={idx} title={`${localizePdfUiText(dosha.name || dosha.nameHindi)}`}>
                     <InfoStrip items={[
                       { label: 'Status', value: localizePdfUiText(dosha.status?.toUpperCase() || 'N/A') },
                     ]} />
@@ -3360,7 +3360,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
               <SubSection title="Raja Yogas (Power & Success)">
                 {(report.rajYogs.rajYogas || []).filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.name || yoga.nameHindi)}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                       { label: 'Activation', value: yoga.activationPeriod || 'N/A' },
@@ -3391,7 +3391,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <ContentPage sectionName="Dhana Yogas">
               <Section title="Dhana Yogas (Wealth Combinations)">
                 {report.rajYogs.dhanaYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.name || yoga.nameHindi)}`}>
                     <InfoStrip items={[
                       { label: 'Strength', value: yoga.strength?.toUpperCase() || 'N/A' },
                     ]} />
@@ -3472,7 +3472,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   {localizePdfUiText('The following challenging combinations are present in your chart. Awareness of these helps you navigate difficulties and apply appropriate remedies.')}
                 </Text>
                 {report.rajYogs.challengingYogas.filter((y: any) => y.isPresent).map((yoga: any, idx: number) => (
-                  <Card key={idx} title={`${localizePdfUiText(yoga.nameHindi || yoga.name)}`}>
+                  <Card key={idx} title={`${localizePdfUiText(yoga.name || yoga.nameHindi)}`}>
                     <Text style={styles.bodyText}>{localizePdfUiText(yoga.definition)}</Text>
                     <Text style={styles.subSubHeader}>{localizePdfUiText('In Your Chart')}</Text>
                     <Text style={styles.bodyText}>{localizePdfUiText(yoga.formationInChart)}</Text>
@@ -4309,7 +4309,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <Text style={styles.paragraph}>{localizePdfUiText(section.categoryDescription || '')}</Text>
 
                 {(section.terms || []).map((term: any, tIdx: number) => (
-                  <Card key={tIdx} title={`${term.term}${term.termSanskrit ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
+                  <Card key={tIdx} title={`${term.term}${term.termSanskrit && (getActivePdfLanguage() === 'hi' || getActivePdfLanguage() === 'mr') ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
                     <Text style={[styles.scriptural, { marginBottom: 4 }]}>{localizePdfUiText('Pronunciation')}: {term.pronunciation}</Text>
 
                     <Text style={[styles.boldLabel, { marginBottom: 3 }]}>{localizePdfUiText(term.definition)}</Text>

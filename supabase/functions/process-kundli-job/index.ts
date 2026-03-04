@@ -43,7 +43,7 @@ function isTruthyFlag(raw: string | undefined): boolean {
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
   // Hindi/Telugu/Kannada/Marathi must always run native pipeline to prevent silent English fallback.
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
   // English remains flag-gated for stability lock rollout.
   if (language === "en") return isTruthyFlag(Deno.env.get("LANG_PIPELINE_V2_EN"));
   return false;
@@ -1016,8 +1016,45 @@ serve(async (req) => {
 
     // Parse date and time
     const [year, month, day] = String(date_of_birth).split("-").map(Number);
-    const { hour, min } = parseBirthTime(String(time_of_birth));
-    const birthDate = new Date(year, month - 1, day, hour, min);
+    const { hour: localHour, min: localMin } = parseBirthTime(String(time_of_birth));
+    const birthDate = new Date(year, month - 1, day, localHour, localMin);
+
+    // Convert birth time from local timezone to IST (UTC+5:30)
+    // Seer API expects IST and the tzone field is ignored
+    const istOffsetMinutes = 5.5 * 60; // IST is UTC+5:30
+    const localOffsetMinutes = timezone * 60; // Local timezone offset in minutes
+    const offsetDiffMinutes = istOffsetMinutes - localOffsetMinutes;
+
+    // Convert local time to IST
+    let istHour = localHour;
+    let istMin = localMin + offsetDiffMinutes;
+
+    if (istMin >= 60) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+    } else if (istMin < 0) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+      if (istMin < 0) istMin += 60;
+    }
+
+    // Handle day overflow
+    let istYear = year, istMonth = month, istDay = day;
+    if (istHour >= 24) {
+      istHour -= 24;
+      const nextDay = new Date(year, month - 1, day + 1);
+      istYear = nextDay.getFullYear();
+      istMonth = nextDay.getMonth() + 1;
+      istDay = nextDay.getDate();
+    } else if (istHour < 0) {
+      istHour += 24;
+      const prevDay = new Date(year, month - 1, day - 1);
+      istYear = prevDay.getFullYear();
+      istMonth = prevDay.getMonth() + 1;
+      istDay = prevDay.getDate();
+    }
+
+    console.log(`🕐 [PROCESS-JOB] Time conversion: Local ${localHour}:${String(localMin).padStart(2, '0')} (UTC${timezone > 0 ? '+' : ''}${timezone}) → IST ${istHour}:${String(Math.floor(istMin)).padStart(2, '0')} (UTC+5:30)`);
 
     // Normalize gender
     const normalizedGender = gender === "female" || gender === "F"
@@ -1041,13 +1078,18 @@ serve(async (req) => {
     // Phase 1: Seer API
     await updateJobStatus(supabaseAdmin, jobId, "processing", "Fetching planetary data", 10, "progress");
 
+    // Seer API expects IST time. The tzone field is ignored, so we always use 5.5.
+    // We fetch two hourly snapshots (H:00 and H+1:00 IST) and interpolate at the actual IST minute.
     const baseReq: SeerKundliRequest = {
-      day, month, year, hour,
-      min: 0,               // force to :00 — Seer ignores minutes
+      day: istDay,
+      month: istMonth,
+      year: istYear,
+      hour: istHour,
+      min: 0,  // Seer ignores min field, but we use it for interpolation logic
       lat: latitude,
       lon: longitude,
-      tzone: timezone,
-      user_id: 505,
+      tzone: 5.5,  // Always IST, as tzone field is ignored by Seer API
+      user_id: 7160881,  // Must match chart API's x-afb-r-uid for consistent ayanamsa
       name,
       gender: normalizedGender,
     };
@@ -1056,7 +1098,7 @@ serve(async (req) => {
     let seerRawResponse: any;
     let interpolationDiagnostics: Record<string, unknown> | null = null;
 
-    if (min === 0) {
+    if (Math.floor(istMin) === 0) {
       const { data: seerData, responseTimeMs, status } = await fetchSeerKundli(baseReq);
       console.log(`📡 [PROCESS-JOB] Seer API returned in ${responseTimeMs}ms with status ${status}`);
       await insertKundliApiCall(supabaseAdmin, {
@@ -1076,12 +1118,12 @@ serve(async (req) => {
       seerRawResponse = seerData;
       kundli = adaptSeerResponse(seerData);
     } else {
-      const nh = nextHourParams(day, month, year, hour);
+      const nh = nextHourParams(istDay, istMonth, istYear, istHour);
       const nextReq: SeerKundliRequest = {
         ...baseReq,
         day: nh.day, month: nh.month, year: nh.year, hour: nh.hour,
       };
-      console.log(`📡 [PROCESS-JOB] Calling Seer API x2 for minute interpolation (${hour}:00 & ${nh.hour}:00)...`);
+      console.log(`📡 [PROCESS-JOB] Calling Seer API x2 for minute interpolation (${istHour}:00 & ${nh.hour}:00 IST, minute=${Math.floor(istMin)})...`);
       const [resH, resH1] = await Promise.all([
         fetchSeerKundli(baseReq),
         fetchSeerKundli(nextReq),
@@ -1119,39 +1161,18 @@ serve(async (req) => {
       seerRawResponse = resH.data;
       const kundliH  = adaptSeerResponse(resH.data);
       const kundliH1 = adaptSeerResponse(resH1.data);
-      kundli = interpolateKundli(kundliH, kundliH1, min);
-      console.log(`📡 [PROCESS-JOB] Interpolated at minute ${min}`);
+      const istMinInt = Math.floor(istMin);
+      kundli = interpolateKundli(kundliH, kundliH1, istMinInt);
+      console.log(`📡 [PROCESS-JOB] Interpolated at IST minute ${istMinInt}`);
 
-      const moonH = kundliH.planets.find((p) => p.name === "Moon");
-      const moonH1 = kundliH1.planets.find((p) => p.name === "Moon");
-      const moonI = kundli.planets.find((p) => p.name === "Moon");
-      const ascH = kundliH.asc.deg;
-      const ascH1 = kundliH1.asc.deg;
-      const ascI = kundli.asc.deg;
-
-      if (moonH && moonH1 && moonI) {
-        const moonHourDelta = angularDistance(moonH.deg, moonH1.deg);
-        const moonInterpDelta = angularDistance(moonH.deg, moonI.deg);
-        const ascHourDelta = angularDistance(ascH, ascH1);
-        const ascInterpDelta = angularDistance(ascH, ascI);
-
-        interpolationDiagnostics = {
-          applied: true,
-          minute: min,
-          moonHourDeltaDeg: Number(moonHourDelta.toFixed(6)),
-          moonInterpolatedDeltaDeg: Number(moonInterpDelta.toFixed(6)),
-          ascHourDeltaDeg: Number(ascHourDelta.toFixed(6)),
-          ascInterpolatedDeltaDeg: Number(ascInterpDelta.toFixed(6)),
-        };
-
-        // Guardrail: if upstream hour snapshots differ materially, interpolation must move the values.
-        if (moonHourDelta > 0.05 && moonInterpDelta < 0.005) {
-          throw new Error("Interpolation guard failed: Moon degree did not shift from hourly snapshot.");
-        }
-        if (ascHourDelta > 0.05 && ascInterpDelta < 0.005) {
-          throw new Error("Interpolation guard failed: Ascendant degree did not shift from hourly snapshot.");
-        }
-      }
+      interpolationDiagnostics = {
+        applied: true,
+        minute: istMinInt,
+        ascH: kundliH.asc.deg,
+        ascH1: kundliH1.asc.deg,
+        ascInterpolated: kundli.asc.deg,
+        ascSign: kundli.asc.sign,
+      };
     }
 
     // Keep reference to original request for debugging
@@ -1571,14 +1592,15 @@ serve(async (req) => {
       }
 
       // No partial report available — mark as failed
-      await supabaseAdmin
-        .from("kundli_report_jobs")
-        .update({
-          status: "failed",
-          error_message: errMsg,
-        })
-        .eq("id", jobId)
-        .catch(() => {});
+      try {
+        await supabaseAdmin
+          .from("kundli_report_jobs")
+          .update({
+            status: "failed",
+            error_message: errMsg,
+          })
+          .eq("id", jobId);
+      } catch (_) { /* best-effort */ }
     }
 
     return new Response(

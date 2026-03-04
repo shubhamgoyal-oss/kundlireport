@@ -36,7 +36,47 @@ function parseDob(raw: string): string | null {
   const value = String(raw || "").trim();
   if (!value) return null;
 
-  const compact = value.replace(/\D/g, "");
+  // Already YYYY-MM-DD? — also validate year is in sensible range for birth dates
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const yr = Number(value.slice(0, 4));
+    if (yr >= 1900 && yr <= 2100) return value;
+    // Year like 0200 (=200) is suspicious; fix by extracting last 2 digits
+    if (yr > 0 && yr < 1900) {
+      const twoDigit = yr % 100;
+      const fixed = twoDigit > 50 ? 1900 + twoDigit : 2000 + twoDigit;
+      return `${fixed}${value.slice(4)}`;
+    }
+  }
+
+  // Already YYYY-MM-DD with extra (e.g., "2002-07-05T00:00:00.000Z")?
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ]/);
+  if (isoMatch) {
+    const isoYear = Number(isoMatch[1]);
+    if (isoYear >= 1900 && isoYear <= 2100) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    // Bad year — fall through to other parsers
+  }
+
+  // Excel serial date number (e.g., 37442 = July 5, 2002)
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue) && numericValue > 365 && numericValue < 100000 && /^\d+(\.\d+)?$/.test(value)) {
+    const serial = Math.floor(numericValue);
+    const adjustedSerial = serial > 60 ? serial - 1 : serial;
+    const msPerDay = 86400000;
+    const excelEpochMs = -2209075200000; // Date.UTC(1900, 0, 1)
+    const dateMs = excelEpochMs + adjustedSerial * msPerDay;
+    const d = new Date(dateMs);
+    const y = d.getUTCFullYear();
+    const m = d.getUTCMonth() + 1;
+    const day = d.getUTCDate();
+    if (y >= 1900 && y <= 2100) {
+      return `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+  }
+
+  // Strip ordinal suffixes ("5th July 2002" → "5 July 2002")
+  const stripped = value.replace(/(\d+)(st|nd|rd|th)\b/gi, "$1");
+
+  const compact = stripped.replace(/\D/g, "");
   if (compact.length === 8) {
     const yearFirst = Number(compact.slice(0, 4));
     if (yearFirst >= 1900 && yearFirst <= 2100) {
@@ -54,7 +94,8 @@ function parseDob(raw: string): string | null {
     }
   }
 
-  const sep = value.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/);
+  // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const sep = stripped.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
   if (sep) {
     const d = Number(sep[1]);
     const m = Number(sep[2]);
@@ -65,13 +106,27 @@ function parseDob(raw: string): string | null {
     }
   }
 
-  const parsed = new Date(value);
+  // Natural language: "21 Aug 1984", "5 July 2002", etc. (use stripped version for ordinals)
+  const parsed = new Date(stripped);
   if (!Number.isNaN(parsed.getTime())) {
     const y = parsed.getUTCFullYear();
     const m = parsed.getUTCMonth() + 1;
     const d = parsed.getUTCDate();
     if (y >= 1900 && y <= 2100) {
       return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+
+  // Also try original value in case stripping broke something
+  if (stripped !== value) {
+    const parsed2 = new Date(value);
+    if (!Number.isNaN(parsed2.getTime())) {
+      const y = parsed2.getUTCFullYear();
+      const m = parsed2.getUTCMonth() + 1;
+      const d = parsed2.getUTCDate();
+      if (y >= 1900 && y <= 2100) {
+        return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      }
     }
   }
 
@@ -166,8 +221,17 @@ function guessGender(name: string): GenderCode {
 function extractDeterministic(row: Record<string, unknown>) {
   const name = getField(row, ["offering_user_name", "name", "user_name", "full_name"]);
   const placeOfBirth = getField(row, ["place_of_birth", "birth_place", "pob", "place"]);
-  const dobRaw = getField(row, ["dobyyyymmdd", "dob_yyyymmdd", "date_", "date", "dob"]);
-  const timeRaw = getField(row, ["time_of_birth_in_24", "time_of_birth", "time_", "birth_time", "tob"]);
+  const dobRaw = getField(row, [
+    "dobyyyymmdd", "dob_yyyymmdd",          // primary keys
+    "date_of_birth", "dateofbirth",          // common explicit names
+    "birth_date", "dob",                     // abbreviations
+    "janm_tithi", "janma_tithi",             // Hindi
+  ]);
+  const timeRaw = getField(row, [
+    "time_of_birth_in_24", "time_of_birth",  // primary keys
+    "birth_time", "timeofbirth", "tob",       // common names
+    "janm_samay", "janma_samay",              // Hindi
+  ]);
 
   // ── Gender: check explicit CSV column FIRST, then fall back to name-guess ──
   const genderRaw = getField(row, [

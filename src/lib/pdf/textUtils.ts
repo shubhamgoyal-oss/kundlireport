@@ -18,6 +18,23 @@ export const sanitizeText = (text: string | null | undefined): string => {
     .trim();
 };
 
+/**
+ * Strip all non-Latin/non-ASCII script characters (Devanagari, Telugu, Kannada, Tamil, etc.)
+ * Use this when the active PDF font cannot render Indic scripts (e.g., English NotoSans).
+ */
+export const stripIndicChars = (text: string | null | undefined): string => {
+  if (!text) return '';
+  return String(text)
+    // Remove Devanagari (U+0900–U+097F), Telugu (U+0C00–U+0C7F),
+    // Kannada (U+0C80–U+0CFF), Tamil (U+0B80–U+0BFF), Bengali (U+0980–U+09FF),
+    // Gujarati (U+0A80–U+0AFF), Gurmukhi (U+0A00–U+0A7F), Oriya (U+0B00–U+0B7F),
+    // Malayalam (U+0D00–U+0D7F), Vedic Extensions (U+1CD0–U+1CFF)
+    .replace(/[\u0900-\u0D7F\u1CD0-\u1CFF]/g, '')
+    .replace(/\(\s*\)/g, '')  // Clean up empty parentheses left behind
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 export const normalizeChartLabel = (raw: string): string => {
   const text = String(raw || "").trim();
   if (!text) return "";

@@ -1,7 +1,7 @@
 import { wrapIndicSync } from '@/utils/preWrapText';
 import { PDF_UI_PHRASE_MAP } from './i18n/phrases';
 import { PDF_UI_WORD_MAP } from './i18n/words';
-import { sanitizeText } from './textUtils';
+import { sanitizeText, stripIndicChars } from './textUtils';
 import type { PdfLanguage } from './types';
 
 // ── Module-level globals for PDF rendering ──────────────────────────────────
@@ -78,7 +78,9 @@ export const applyLanguageTypography = (language: string | null | undefined) => 
  */
 export const localizePdfUiText = (raw: string | null | undefined, maxWidthPt?: number): string => {
   const input = sanitizeText(String(raw || ''));
-  if (!input || ACTIVE_PDF_LANGUAGE === 'en') return input;
+  // English PDFs use NotoSans which cannot render Devanagari/Indic scripts.
+  // Strip ALL Indic characters to prevent gibberish like ()**#M!2@
+  if (!input || ACTIVE_PDF_LANGUAGE === 'en') return stripIndicChars(input);
 
   const phraseMap = PDF_UI_PHRASE_MAP[ACTIVE_PDF_LANGUAGE] || {};
   const wordMap = PDF_UI_WORD_MAP[ACTIVE_PDF_LANGUAGE] || {};

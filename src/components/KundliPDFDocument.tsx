@@ -9,7 +9,7 @@ import {
   SIGN_TO_INDEX, SIGN_SHORT, SIGN_LORDS,
   NAKSHATRA_SPAN, NAKSHATRA_PADA_SPAN, NAKSHATRAS,
   DASHA_ORDER, DASHA_YEARS, CHART_LABEL_MAP, SATURN_TRANSIT_FALLBACK_SIGN, SIGNS,
-  sanitizeText, normalizeChartLabel,
+  sanitizeText, stripIndicChars, normalizeChartLabel,
   getActivePdfLanguage, getActivePdfFontFamily,
   getActivePdfBodyFontSize, getActivePdfBodyLineHeight,
   applyLanguageTypography, localizePdfUiText,

@@ -10,7 +10,7 @@ export {
   DASHA_ORDER, DASHA_YEARS,
   CHART_LABEL_MAP, SATURN_TRANSIT_FALLBACK_SIGN, SIGNS,
 } from './astroData';
-export { sanitizeText, normalizeChartLabel } from './textUtils';
+export { sanitizeText, stripIndicChars, normalizeChartLabel } from './textUtils';
 export {
   getActivePdfLanguage, getActivePdfFontFamily,
   getActivePdfBodyFontSize, getActivePdfBodyLineHeight,

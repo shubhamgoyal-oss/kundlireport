@@ -16,6 +16,7 @@ interface JobRequest {
   timezone: number;
   language?: "en" | "hi" | "te" | "kn" | "mr" | "ta";
   gender?: "M" | "F" | "O";
+  hasTime?: boolean; // false when birth time is unknown (default: true)
   visitorId: string;
   sessionId: string;
 }
@@ -29,8 +30,8 @@ serve(async (req) => {
     const body: JobRequest = await req.json();
     console.log("📝 [START-JOB] Creating Kundli report job for:", body.name, "| GENDER received from frontend:", JSON.stringify(body.gender), "| raw body keys:", Object.keys(body).join(","));
 
-    const { name, dateOfBirth, timeOfBirth, placeOfBirth, latitude, longitude, timezone, language = "en", gender = "M", visitorId, sessionId } = body;
-    console.log(`📝 [START-JOB] GENDER after destructure: "${gender}" (body.gender was: "${body.gender}")`);
+    const { name, dateOfBirth, timeOfBirth, placeOfBirth, latitude, longitude, timezone, language = "en", gender = "M", hasTime = true, visitorId, sessionId } = body;
+    console.log(`📝 [START-JOB] GENDER after destructure: "${gender}" (body.gender was: "${body.gender}") hasTime=${hasTime}`);
 
 
     // Validate required fields
@@ -62,6 +63,7 @@ serve(async (req) => {
         timezone,
         language,
         gender,
+        has_time: hasTime !== false, // Default true; false when time is unknown
         status: "pending",
         progress_percent: 0,
       })

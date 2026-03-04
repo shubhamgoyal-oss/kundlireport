@@ -20,10 +20,14 @@ function normalizeKey(key: string): string {
     .replace(/_+/g, "_");
 }
 
+function stripQuotes(s: string): string {
+  return s.replace(/^"+|"+$/g, "").trim();
+}
+
 function getField(row: Record<string, unknown>, candidates: string[]): string {
   const mapped: Record<string, string> = {};
   for (const [k, v] of Object.entries(row || {})) {
-    mapped[normalizeKey(k)] = String(v ?? "").trim();
+    mapped[normalizeKey(k)] = stripQuotes(String(v ?? "").trim());
   }
   for (const key of candidates) {
     const v = mapped[normalizeKey(key)];
@@ -137,6 +141,7 @@ function parseTime(raw: string): string | null {
   const value = String(raw || "").trim().toLowerCase();
   if (!value) return null;
 
+  // Excel decimal (0.0 – 0.999…) e.g. 0.999305 = 23:59
   const numeric = Number(value);
   if (Number.isFinite(numeric) && numeric >= 0 && numeric < 1) {
     const totalMinutes = Math.round(numeric * 24 * 60);
@@ -145,19 +150,22 @@ function parseTime(raw: string): string | null {
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
-  const hhmm = value.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+  // HH:MM or HH:MM:SS (with optional fractional seconds like .000)
+  const hhmm = value.match(/^([01]?\d|2[0-3])[:.h]([0-5]\d)(?:[:.]\d+(?:\.\d+)?)?$/);
   if (hhmm) {
     return `${String(Number(hhmm[1])).padStart(2, "0")}:${hhmm[2]}`;
   }
 
-  const ampm = value.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  // 12h: HH:MM AM/PM or HH:MM:SS AM/PM (with optional seconds)
+  const ampm = value.match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2})(?:\.\d+)?)?\s*(am|pm)$/i);
   if (ampm) {
     let h = Number(ampm[1]) % 12;
     const m = Number(ampm[2] || "0");
-    if (ampm[3].toLowerCase() === "pm") h += 12;
+    if (ampm[4].toLowerCase() === "pm") h += 12;
     return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   }
 
+  // 4-digit compact: 2359 → 23:59
   const four = value.match(/^(\d{2})(\d{2})$/);
   if (four) {
     const h = Number(four[1]);
@@ -227,11 +235,67 @@ function extractDeterministic(row: Record<string, unknown>) {
     "birth_date", "dob",                     // abbreviations
     "janm_tithi", "janma_tithi",             // Hindi
   ]);
-  const timeRaw = getField(row, [
+  // Build mapped keys → values once for all time searches
+  const _mapped: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row || {})) _mapped[normalizeKey(k)] = stripQuotes(String(v ?? "").trim());
+  console.log(`🔍 [DECIPHER] All normalized column keys: ${Object.keys(_mapped).join(", ")}`);
+
+  // Step 1: Exact match with known column names
+  let timeRaw = getField(row, [
     "time_of_birth_in_24", "time_of_birth",  // primary keys
     "birth_time", "timeofbirth", "tob",       // common names
     "janm_samay", "janma_samay",              // Hindi
+    "time",                                    // generic
   ]);
+  if (timeRaw) console.log(`🕐 [DECIPHER] Time found via exact match: "${timeRaw}"`);
+
+  // Step 2: Prefix match — any column STARTING WITH known time prefixes
+  if (!timeRaw) {
+    const timePrefixes = ["time_of_birth", "tob", "birth_time", "janm_samay", "janma_samay"];
+    for (const [key, val] of Object.entries(_mapped)) {
+      if (val && timePrefixes.some(prefix => key.startsWith(prefix))) {
+        const parsed = parseTime(val);
+        if (parsed) {
+          timeRaw = val;
+          console.log(`🕐 [DECIPHER] Time found via prefix match: key="${key}" val="${val}"`);
+          break;
+        }
+      }
+    }
+  }
+
+  // Step 3: Fuzzy match — column containing 'tob' or ('birth' + 'time'), VALIDATED with parseTime
+  if (!timeRaw) {
+    for (const [key, val] of Object.entries(_mapped)) {
+      if ((key.includes("tob") || (key.includes("birth") && key.includes("time"))) && val) {
+        const parsed = parseTime(val);
+        if (parsed) {
+          timeRaw = val;
+          console.log(`🕐 [DECIPHER] Time found via fuzzy match: key="${key}" val="${val}"`);
+          break;
+        } else {
+          console.log(`⚠️ [DECIPHER] Fuzzy matched key="${key}" but val="${val}" is not parseable as time`);
+        }
+      }
+    }
+  }
+
+  // Step 4: Last resort — scan ALL columns for a parseable time value
+  if (!timeRaw) {
+    for (const [key, val] of Object.entries(_mapped)) {
+      if (val && parseTime(val) && !key.includes("date") && !key.includes("dob") && !key.includes("zone") && !key.includes("country")) {
+        // Only pick columns that look like they could be time (avoid date/tz columns)
+        const p = parseTime(val);
+        if (p) {
+          console.log(`🕐 [DECIPHER] Time found via brute-force scan: key="${key}" val="${val}" → parsed="${p}"`);
+          timeRaw = val;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!timeRaw) console.log(`⚠️ [DECIPHER] NO time found. All column values: ${JSON.stringify(_mapped)}`);
 
   // ── Gender: check explicit CSV column FIRST, then fall back to name-guess ──
   const genderRaw = getField(row, [
@@ -241,11 +305,13 @@ function extractDeterministic(row: Record<string, unknown>) {
   const explicitGender = parseExplicitGender(genderRaw);
   const gender = explicitGender ?? guessGender(name);
 
+  const parsedTime = parseTime(timeRaw);
   return {
     name,
     gender,
     dateOfBirth: parseDob(dobRaw),
-    timeOfBirth: parseTime(timeRaw),
+    timeOfBirth: parsedTime,
+    hasTime: parsedTime !== null, // true when time was actually found in CSV
     placeOfBirth,
   };
 }
@@ -323,28 +389,35 @@ serve(async (req) => {
     }
 
     const deterministic = extractDeterministic(row);
+    console.log(`📋 [DECIPHER] Deterministic result: name="${deterministic.name}" dob="${deterministic.dateOfBirth}" tob="${deterministic.timeOfBirth}" hasTime=${deterministic.hasTime} place="${deterministic.placeOfBirth}" gender="${deterministic.gender}"`);
+
     const hasAll = Boolean(
       deterministic.name && deterministic.placeOfBirth && deterministic.dateOfBirth && deterministic.timeOfBirth,
     );
 
     if (hasAll) {
+      console.log(`✅ [DECIPHER] All fields found deterministically. Returning tob="${deterministic.timeOfBirth}"`);
       return new Response(
         JSON.stringify({
           ...deterministic,
+          // If time was found, use it; otherwise default to 12:00 (noon)
+          timeOfBirth: deterministic.timeOfBirth || "12:00",
           source: "deterministic",
           confidence: 0.95,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    console.log(`⚠️ [DECIPHER] Not all fields found deterministically, falling back to Gemini. Missing: ${!deterministic.name ? 'name ' : ''}${!deterministic.placeOfBirth ? 'place ' : ''}${!deterministic.dateOfBirth ? 'dob ' : ''}${!deterministic.timeOfBirth ? 'tob ' : ''}`);
 
     const ai = await decipherWithGemini(row);
     const name = String(ai?.name || deterministic.name || "").trim();
     const placeOfBirth = String(ai?.placeOfBirth || deterministic.placeOfBirth || "").trim();
     const dateOfBirth = parseDob(String(ai?.dateOfBirth || deterministic.dateOfBirth || ""));
-    // If the original row had no time, always default to 00:00 (12 AM) — don't trust AI's guess
+    // If the original row had no time, default to 12:00 (noon) — don't trust AI's guess
     const deterministicTime = parseTime(String(deterministic.timeOfBirth || ""));
-    const timeOfBirth = deterministicTime || "00:00"; // Default to 12 AM if missing
+    const timeOfBirth = deterministicTime || "12:00"; // Default to noon if missing
+    const foundTime = deterministicTime !== null;
     const gender = String(ai?.gender || deterministic.gender || "M").toUpperCase() === "F" ? "F" : "M";
 
     if (!name || !placeOfBirth || !dateOfBirth) {
@@ -357,6 +430,7 @@ serve(async (req) => {
         gender,
         dateOfBirth,
         timeOfBirth,
+        hasTime: foundTime,
         placeOfBirth,
         source: "gemini_fallback",
         confidence: Number(ai?.confidence || 0.7),

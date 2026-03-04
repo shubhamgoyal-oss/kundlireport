@@ -26,7 +26,7 @@ const corsHeaders = {
 };
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
   if (language === "en") return false;
   return false;
 }
@@ -162,7 +162,7 @@ function cleanReportTexts<T>(value: T, parentKey = ""): T {
 // ── Chart SVG fetching ──────────────────────────────────────────────────────
 
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return svg;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return svg;
   const replacements: [string, string][] = [
     ["\u0936\u0941", "VE"], ["\u092C\u0941", "ME"], ["\u092E\u0902", "MA"],
     ["\u091A\u0902", "MO"], ["\u0938\u0942", "SU"], ["\u0917\u0941", "JU"],

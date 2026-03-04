@@ -44,7 +44,7 @@ export const applyLanguageTypography = (language: string | null | undefined) => 
   }
   if (code.startsWith('kn') || code.startsWith('kan')) {
     ACTIVE_PDF_LANGUAGE = 'kn';
-    // NotoSansKannada uses original Google Fonts (GPOS intact). fontkit null-anchor patch handles GPOS.
+    // NotoSansKannada — GPOS+GDEF tables stripped (same fix as Hindi/Telugu) to prevent broken rendering.
     ACTIVE_PDF_FONT_FAMILY = 'NotoSansKannada';
     ACTIVE_PDF_BODY_FONT_SIZE = 11.2;
     ACTIVE_PDF_BODY_LINE_HEIGHT = 1.62;

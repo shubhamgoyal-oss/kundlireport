@@ -273,21 +273,20 @@ const MULTI_TZ_COUNTRIES: Record<string, TzZone[]> = {
 // ─── Core functions ─────────────────────────────────────────────────────────
 
 /**
- * Compute DST-aware UTC offset (in fractional hours) for a given IANA timezone.
- * Uses Intl.DateTimeFormat with 'shortOffset' to get the actual offset including DST.
+ * Compute UTC offset (in fractional hours) for a given IANA timezone at a specific date.
+ * Uses Intl.DateTimeFormat with 'shortOffset'.
  *
  * @param ianaTimezone - e.g. 'America/New_York'
- * @param date - the date for DST calculation (defaults to now)
+ * @param date - the date for offset calculation (defaults to now)
  * @returns UTC offset in hours (e.g. -5, 5.5, 5.75)
  */
-export function getUtcOffsetHours(ianaTimezone: string, date?: Date): number {
-  const d = date || new Date();
+function _getOffsetAtDate(ianaTimezone: string, date: Date): number {
   try {
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: ianaTimezone,
       timeZoneName: 'shortOffset',
     });
-    const parts = formatter.formatToParts(d);
+    const parts = formatter.formatToParts(date);
     const tzPart = parts.find((p) => p.type === 'timeZoneName');
     if (tzPart) {
       // Format: "GMT+5:30", "GMT-5", "GMT+10", "GMT"
@@ -302,8 +301,18 @@ export function getUtcOffsetHours(ianaTimezone: string, date?: Date): number {
   } catch (e) {
     console.warn(`[timezone] Failed to compute offset for ${ianaTimezone}:`, e);
   }
-  // Fallback: rough estimation from IANA name
   return 0;
+}
+
+/**
+ * Compute DST-aware UTC offset for a given IANA timezone at a specific date.
+ *
+ * @param ianaTimezone - e.g. 'America/New_York'
+ * @param date - the date for DST calculation (defaults to now)
+ * @returns UTC offset in hours (e.g. -5, -4, 5.5)
+ */
+export function getUtcOffsetHours(ianaTimezone: string, date?: Date): number {
+  return _getOffsetAtDate(ianaTimezone, date || new Date());
 }
 
 /**
@@ -338,12 +347,13 @@ export interface TimezoneResult {
 
 /**
  * Detect timezone for a birth place.
+ * Returns DST-aware UTC offset at the birth date/time.
  *
  * @param country - Country name from geocoding (e.g. "India", "Kenya", "United States")
  * @param lat - Latitude (used for multi-tz countries)
  * @param lon - Longitude (used for multi-tz countries)
- * @param birthDate - Birth date string "YYYY-MM-DD" (for DST calculation)
- * @param birthTime - Birth time string "HH:MM" (optional, for DST precision)
+ * @param birthDate - Birth date "YYYY-MM-DD" for DST calculation
+ * @param birthTime - Birth time "HH:MM" for DST precision
  */
 export function detectTimezone(
   country: string,
@@ -354,7 +364,7 @@ export function detectTimezone(
 ): TimezoneResult {
   const countryLower = country.toLowerCase().trim();
 
-  // Build a reference date for DST calculation
+  // Build reference date for DST-aware offset calculation
   let refDate: Date | undefined;
   if (birthDate) {
     const [y, m, d] = birthDate.split('-').map(Number);

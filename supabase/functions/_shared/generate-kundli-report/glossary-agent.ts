@@ -33,7 +33,7 @@ export interface GlossaryPrediction {
 // getGlossarySystemPrompt() deleted — now uses tmpl("glossary.systemPrompt")
 
 export async function generateGlossaryPrediction(language: string = "en"): Promise<AgentResponse<GlossaryPrediction>> {
-  const langLabel = language === "hi" ? "हिन्दी" : language === "te" ? "తెలుగు" : "English";
+  const langLabel = language === "hi" ? "हिन्दी" : language === "te" ? "తెలుగు" : language === "kn" ? "ಕನ್ನಡ" : language === "mr" ? "मराठी" : language === "ta" ? "தமிழ்" : "English";
   const langInstruction = tmpl("glossary.langInstruction");
 
   const userPrompt = `Generate a comprehensive glossary of Vedic astrology terms used in a Kundli report.${langInstruction}

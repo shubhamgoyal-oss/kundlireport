@@ -116,7 +116,9 @@ serve(async (req) => {
         const raw: Record<string, string> = {};
         const normalized: Record<string, string> = {};
         for (let i = 0; i < header.length; i++) {
-          const value = String(values[i] ?? "").trim();
+          // Strip surrounding double-quote characters that some Google Sheet cells
+          // embed as literal data (e.g. cell contains "23:59" with quotes).
+          const value = String(values[i] ?? "").trim().replace(/^"+|"+$/g, "").trim();
           const rawKey = header[i] || `column_${i + 1}`;
           const normalizedKey = normalizedHeader[i] || `column_${i + 1}`;
           raw[rawKey] = value;

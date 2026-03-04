@@ -857,7 +857,7 @@ async function triggerStage2AndReturn(
  * the single-char श (Shani/Saturn) to avoid partial replacement.
  */
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr") return svg; // keep Hindi labels for non-English
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return svg; // keep Hindi labels for non-English
   // For English (and any other language), replace Hindi → English abbreviations
   const replacements: [string, string][] = [
     ["शु", "VE"],   // Shukra  → Venus
@@ -1004,9 +1004,10 @@ serve(async (req) => {
       timezone,
       language = "en",
       gender = "M",
+      has_time = true,
     } = job;
 
-    console.log(`🔎 [PROCESS-JOB] GENDER from DB: job.gender="${job.gender}" → after destructure="${gender}"`);
+    console.log(`🔎 [PROCESS-JOB] GENDER from DB: job.gender="${job.gender}" → after destructure="${gender}" has_time=${has_time}`);
 
     const requestedLanguage = normalizeLanguage(language);
     const useLanguagePipelineV2 = isLanguagePipelineV2Enabled(requestedLanguage);
@@ -1392,6 +1393,7 @@ serve(async (req) => {
         longitude,
         timezone,
         gender: normalizedGender,
+        ...(has_time === false ? { unknownTime: true } : {}),
       },
       // Store raw Seer API response for debugging dasha calculations
       seerRawResponse,

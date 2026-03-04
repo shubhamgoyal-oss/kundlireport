@@ -4,6 +4,7 @@ import type { LanguagePack, LanguageQcResult, LanguageQcSectionResult, Supported
 const DEVANAGARI_RE = /[\u0900-\u097F]/g;
 const TELUGU_RE = /[\u0C00-\u0C7F]/g;
 const KANNADA_RE = /[\u0C80-\u0CFF]/g;
+const TAMIL_RE = /[\u0B80-\u0BFF]/g;
 const LATIN_RE = /[A-Za-z]/g;
 
 function countMatches(text: string, re: RegExp): number {
@@ -66,7 +67,9 @@ function getScriptCounts(text: string, language: SupportedLanguage): { scriptCha
     ? DEVANAGARI_RE
     : language === "te"
       ? TELUGU_RE
-      : KANNADA_RE;
+      : language === "kn"
+        ? KANNADA_RE
+        : TAMIL_RE;
   const scriptChars = countMatches(text, scriptRe);
 
   const totalLetters = scriptChars + latinChars;

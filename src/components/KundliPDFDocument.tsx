@@ -9,7 +9,7 @@ import {
   SIGN_TO_INDEX, SIGN_SHORT, SIGN_LORDS,
   NAKSHATRA_SPAN, NAKSHATRA_PADA_SPAN, NAKSHATRAS,
   DASHA_ORDER, DASHA_YEARS, CHART_LABEL_MAP, SATURN_TRANSIT_FALLBACK_SIGN, SIGNS,
-  sanitizeText, stripIndicChars, normalizeChartLabel,
+  sanitizeText, stripIndicChars, normalizeChartLabel, splitIntoParagraphs, dedupConsecutiveLines,
   getActivePdfLanguage, getActivePdfFontFamily,
   getActivePdfBodyFontSize, getActivePdfBodyLineHeight,
   applyLanguageTypography, localizePdfUiText,
@@ -922,7 +922,7 @@ const ContentPage = ({ sectionName, children, pageKey }: { sectionName?: string;
 const SectionDividerPage = ({ partNumber, title, subtitle }: { partNumber: string; title: string; subtitle: string }) => (
   <Page size="A4" style={[styles.dividerPage, { fontFamily: getActivePdfFontFamily() }]}>
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 60 }}>
-      <Text style={styles.dividerKicker}>{localizePdfUiText(`PART ${partNumber}`)}</Text>
+      <Text style={[styles.dividerKicker, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText(`PART ${partNumber}`)}</Text>
       <View style={{ width: 60, height: 2, backgroundColor: '#ffffff', marginBottom: 24, opacity: 0.6 }} />
       <Text style={styles.dividerTitle}>{localizePdfUiText(title)}</Text>
       <Text style={styles.dividerSubtitle}>{localizePdfUiText(subtitle)}</Text>
@@ -955,6 +955,7 @@ const BulletList = ({ items, maxWidth }: { items: string[]; maxWidth?: number })
     {items
       .map((item) => String(item ?? '').trim())
       .filter((item) => item.length > 0)
+      .filter((item, idx, arr) => idx === 0 || item !== arr[idx - 1]) // dedup consecutive duplicates
       .map((item, idx) => (
         <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
           <Text style={styles.bullet}>•</Text>
@@ -1765,9 +1766,9 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
         </View>
 
         <View style={{ marginTop: 22, alignItems: 'center', width: '100%' }}>
-          <Text style={styles.coverKicker}>{localizePdfUiText('YOUR')}</Text>
-          <Text style={styles.coverMark}>{localizePdfUiText('KUNDLI REPORT')}</Text>
-          <Text style={styles.coverSubtitle}>{localizePdfUiText('A Personalized Vedic Astrology Blueprint')}</Text>
+          <Text style={[styles.coverKicker, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('YOUR')}</Text>
+          <Text style={[styles.coverMark, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('KUNDLI REPORT')}</Text>
+          <Text style={[styles.coverSubtitle, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('A Personalized Vedic Astrology Blueprint')}</Text>
         </View>
 
         <View style={styles.coverDividerRow}>
@@ -1780,15 +1781,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           <Text style={styles.coverName}>{report.birthDetails.name}</Text>
           <View style={styles.coverInfoBlock}>
             <View style={styles.coverInfoRow}>
-              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Date of Birth')}</Text>
+              <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Date of Birth')}</Text>
               <Text style={styles.coverInfoValue}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
             </View>
             <View style={styles.coverInfoRow}>
-              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Time of Birth')}</Text>
+              <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Time of Birth')}</Text>
               <Text style={styles.coverInfoValue}>{report.birthDetails.unknownTime ? localizePdfUiText('Time not available') : report.birthDetails.timeOfBirth}</Text>
             </View>
             <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
-              <Text style={styles.coverInfoLabel}>{localizePdfUiText('Place of Birth')}</Text>
+              <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Place of Birth')}</Text>
               <Text style={styles.coverInfoValue}>{placeDetails.city || report.birthDetails.placeOfBirth || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : 'N/A')}</Text>
             </View>
           </View>
@@ -2321,7 +2322,9 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 ]} />
 
                 <SubSection title="Placement Analysis">
-                  <Text style={styles.paragraph}>{localizePdfUiText(planet.placementAnalysis || '')}</Text>
+                  {splitIntoParagraphs(planet.placementAnalysis || '').map((para, pi) => (
+                    <Text key={pi} style={[styles.paragraph, pi > 0 ? { marginTop: 6 } : {}]}>{localizePdfUiText(para)}</Text>
+                  ))}
                 </SubSection>
 
                 {planet.houseSignificance && (
@@ -2413,13 +2416,21 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             </Section>
           </ContentPage>
 
-          {report.houses.map((house: any, idx: number) => (
-            <ContentPage key={idx} sectionName={`House ${house.house}`}>
-              <Section title={`House ${house.house}${getActivePdfLanguage() !== 'en' && house.houseHindi ? ' - ' + sanitizeText(house.houseHindi) : ''}`}>
+          {report.houses.map((house: any, idx: number) => {
+            // Build localized house title: for non-English use local name (e.g., "முதல் பாவம்")
+            const localHouseTitle = getActivePdfLanguage() !== 'en' && house.houseHindi
+              ? sanitizeText(house.houseHindi)
+              : `House ${house.house}`;
+            const sectionLabel = getActivePdfLanguage() !== 'en' && house.houseHindi
+              ? sanitizeText(house.houseHindi)
+              : `House ${house.house}`;
+            return (
+            <ContentPage key={idx} sectionName={sectionLabel}>
+              <Section title={localHouseTitle}>
                 <InfoStrip items={[
-                  { label: 'Sign', value: localizePdfUiText(sanitizeText(String(house.sign || 'N/A')) || 'N/A') },
-                  { label: 'Lord', value: localizePdfUiText(sanitizeText(String(house.lord || 'N/A')) || 'N/A') },
-                  { label: 'Nature', value: localizePdfUiText(sanitizeText(String(house.houseNature || 'N/A')) || 'N/A') },
+                  { label: localizePdfUiText('Sign'), value: localizePdfUiText(sanitizeText(String(house.sign || 'N/A')) || 'N/A') },
+                  { label: localizePdfUiText('Lord'), value: localizePdfUiText(sanitizeText(String(house.lord || 'N/A')) || 'N/A') },
+                  { label: localizePdfUiText('Nature'), value: localizePdfUiText(sanitizeText(String(house.houseNature || 'N/A')) || 'N/A') },
                 ]} />
 
                 <SubSection title="Significance">
@@ -2427,7 +2438,9 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 </SubSection>
 
                 <SubSection title="Detailed Analysis">
-                  <Text style={styles.paragraph}>{localizePdfUiText(house.interpretation || '')}</Text>
+                  {splitIntoParagraphs(dedupConsecutiveLines(house.interpretation || '')).map((para, pi) => (
+                    <Text key={pi} style={[styles.paragraph, pi > 0 ? { marginTop: 6 } : {}]}>{localizePdfUiText(para)}</Text>
+                  ))}
                 </SubSection>
 
                 {house.predictions && house.predictions.length > 0 && (
@@ -2458,7 +2471,8 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 )}
               </Section>
             </ContentPage>
-          ))}
+          );
+          })}
         </>
       )}
 
@@ -4351,7 +4365,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           color: '#ffffff',
           textAlign: 'center',
           marginBottom: 8,
-          letterSpacing: 2,
+          letterSpacing: getActivePdfLanguage() !== 'en' ? 0 : 2,
         }}>
           {localizePdfUiText('THANK YOU')}
         </Text>
@@ -4390,7 +4404,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           <Text style={{ fontSize: 10, color: '#fcd34d', marginBottom: 8, opacity: 0.85 }}>
             {localizePdfUiText('For personalized consultations with our expert astrologers')}
           </Text>
-          <Text style={{ fontSize: 13, color: '#ffffff', fontWeight: 'bold', letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: 13, color: '#ffffff', fontWeight: 'bold', letterSpacing: getActivePdfLanguage() !== 'en' ? 0 : 0.5 }}>
             {getActivePdfLanguage() === 'hi'
               ? 'कॉल या व्हाट्सऐप: 080 711 74417'
               : getActivePdfLanguage() === 'te'
@@ -4422,7 +4436,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           fontWeight: 'bold',
           fontStyle: 'italic',
           opacity: 0.85,
-          letterSpacing: 0.4,
+          letterSpacing: getActivePdfLanguage() !== 'en' ? 0 : 0.4,
         }}>
           {localizePdfUiText('May the stars guide your path')}
         </Text>

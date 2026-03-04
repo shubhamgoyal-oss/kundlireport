@@ -16,10 +16,11 @@ import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
-import { useIndianCitiesAutocomplete } from '@/hooks/useIndianCitiesAutocomplete';
+import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { mirrorJobStartToFirebase, updateJobStatusInFirebaseFromPolling } from '@/integrations/firebase/dual-write-hook';
 import { getJobFromFirebase } from '@/integrations/firebase/client';
+import { detectTimezone, getUtcOffsetHours } from '@/utils/timezone';
 
 // Form validation schema
 const birthInputSchema = z
@@ -64,7 +65,7 @@ type BirthInput = z.infer<typeof birthInputSchema>;
 
 const KundliReportGenerator = () => {
   const { t: _t } = useTranslation();
-  const { predictions, searchPlaces, getPlaceDetails, clearPredictions } = useIndianCitiesAutocomplete();
+  const { predictions, searchPlaces, getPlaceDetails, clearPredictions } = useGooglePlacesAutocomplete();
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [kundliReport, setKundliReport] = useState<any>(null);
@@ -111,25 +112,28 @@ const KundliReportGenerator = () => {
       await searchPlaces(searchTerm);
       setShowPlaceResults(true);
       setSelectedPlaceIndex(-1);
-    }, 150);
+    }, 300);
 
     setSearchTimer(timer);
   };
 
-  const handlePlaceSelect = async (cityId: string, displayName: string) => {
-    const details = await getPlaceDetails(cityId);
-    
+  const handlePlaceSelect = async (placeId: string, displayName: string) => {
+    const details = await getPlaceDetails(placeId);
+
     if (details) {
       setValue('place', details.display_name);
       setValue('lat', details.lat);
       setValue('lon', details.lng);
-      setValue('tz', 'Asia/Kolkata');
+      // Detect timezone from country + city coordinates (handles multi-tz countries like USA)
+      const tzResult = detectTimezone(details.country || '', details.lat, details.lng);
+      setValue('tz', tzResult.ianaTimezone);
+      console.log(`[KundliReportGenerator] Timezone: ${tzResult.displayLabel} (country="${details.country}", lat=${details.lat}, lon=${details.lng})`);
       toast.success(isHindi ? 'स्थान चुना गया' : 'Location selected');
     } else {
       setValue('place', displayName);
       toast.error(isHindi ? 'स्थान निर्देशांक प्राप्त नहीं हो सके' : 'Could not get location coordinates');
     }
-    
+
     setShowPlaceResults(false);
     clearPredictions();
     setSelectedPlaceIndex(-1);
@@ -151,7 +155,7 @@ const KundliReportGenerator = () => {
         e.preventDefault();
         if (selectedPlaceIndex >= 0 && selectedPlaceIndex < predictions.length) {
           const selected = predictions[selectedPlaceIndex];
-          handlePlaceSelect(selected.id, selected.displayName);
+          handlePlaceSelect(selected.place_id, selected.description);
         }
         break;
       case 'Escape':
@@ -173,17 +177,19 @@ const KundliReportGenerator = () => {
     setIsGenerating(true);
     
     try {
+      // Compute DST-aware timezone offset from stored IANA timezone + birth date
       let tzOffset = 5.5;
       if (data.tz) {
         try {
-          const now = new Date();
-          const utc = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
-          const local = new Date(now.toLocaleString('en-US', { timeZone: data.tz }));
-          tzOffset = (local.getTime() - utc.getTime()) / (1000 * 60 * 60);
+          const [y, m, d] = data.date.split('-').map(Number);
+          const [hh, mm] = (data.time || '12:00').split(':').map(Number);
+          const refDate = new Date(Date.UTC(y, m - 1, d, hh || 12, mm || 0));
+          tzOffset = getUtcOffsetHours(data.tz, refDate);
         } catch (e) {
           console.warn('[KundliReportGenerator] Failed to calculate timezone offset:', e);
         }
       }
+      console.log(`[KundliReportGenerator] Timezone offset: ${tzOffset} (iana=${data.tz})`);
 
       const visitorId = localStorage.getItem('visitor_id') || crypto.randomUUID();
       const sessionId = localStorage.getItem('session_id') || crypto.randomUUID();
@@ -205,6 +211,7 @@ const KundliReportGenerator = () => {
             timezone: tzOffset,
             language: reportLanguage,
             gender: data.gender,
+            hasTime: !data.unknownTime,
             visitorId,
             sessionId,
           },
@@ -589,14 +596,15 @@ const KundliReportGenerator = () => {
                       <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {predictions.map((prediction, idx) => (
                           <button
-                            key={prediction.id}
+                            key={prediction.place_id}
                             type="button"
                             className={`w-full text-left px-4 py-3 hover:bg-accent/50 transition-colors ${
                               idx === selectedPlaceIndex ? 'bg-accent' : ''
                             }`}
-                            onClick={() => handlePlaceSelect(prediction.id, prediction.displayName)}
+                            onClick={() => handlePlaceSelect(prediction.place_id, prediction.description)}
                           >
-                            <span className="text-sm">{prediction.displayName}</span>
+                            <div className="text-sm font-medium">{prediction.structured_formatting.main_text}</div>
+                            <div className="text-xs text-muted-foreground">{prediction.structured_formatting.secondary_text}</div>
                           </button>
                         ))}
                       </div>

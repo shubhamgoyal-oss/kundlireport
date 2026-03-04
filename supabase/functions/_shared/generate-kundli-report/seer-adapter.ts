@@ -77,6 +77,7 @@ export async function fetchSeerKundli(req: SeerKundliRequest): Promise<{ data: a
     method: "POST",
     headers: {
       "x-fe-server": "true",
+      "x-afb-r-uid": "7160881",
       "Content-Type": "application/json"
     },
     body: JSON.stringify(req)
@@ -208,7 +209,10 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
     warnings.push(warning);
   }
 
-  console.log(`✅ [SEER] Adaptation complete: ${planets.length} planets + Asc`);
+  // Use Seer's original house values (Whole-Sign / Rashi houses).
+  // Seer assigns houses based on sign: House 1 = Ascendant sign, House 2 = next sign, etc.
+  // This matches the D1 chart image from the Seer Chart API.
+  console.log(`✅ [SEER] Adaptation complete: ${planets.length} planets + Asc (using Seer whole-sign houses)`);
   if (warnings.length > 0) {
     console.log(`⚠️ [SEER] ${warnings.length} warning(s):`, warnings);
   }
@@ -218,15 +222,23 @@ export function adaptSeerResponse(seerData: any): SeerKundli {
     planets,
     notes: [
       "Seer sidereal (Lahiri) snapshot consumed",
-      "Houses taken from Seer (whole-sign-equivalent)",
+      "Houses: Whole-Sign (Rashi = House), matching Seer chart images",
       ...warnings
     ]
   };
 }
 
-// Helper: Calculate house from reference sign index
+/// Helper: Calculate house from reference sign index (Whole Sign — kept for backward compat)
 export function houseFrom(refSignIdx: number, targetSignIdx: number): number {
   return ((targetSignIdx - refSignIdx + 12) % 12) + 1;
+}
+
+// Bhava Chalit (Equal House): house based on degree distance from Ascendant.
+// Asc degree = start of 1st house. Each house spans exactly 30°.
+// This matches the D1 chart from the Seer Chart API.
+export function bhavaCharitHouse(planetDeg: number, ascDeg: number): number {
+  const normalized = ((planetDeg - ascDeg + 360) % 360);
+  return Math.floor(normalized / 30) + 1;
 }
 
 // Helper: Minimal angular separation
@@ -251,7 +263,11 @@ export function nextHourParams(day: number, month: number, year: number, hour: n
   return { day: d.getDate(), month: d.getMonth() + 1, year: d.getFullYear(), hour: 0 };
 }
 
-// Linear interpolation between two kundli snapshots at H:00 and (H+1):00
+// Linear interpolation between two kundli snapshots at H:00 and (H+1):00.
+// Degrees are interpolated linearly. Houses are taken from the Seer snapshots
+// directly (when both snapshots agree) to avoid errors from non-linear ascendant
+// movement. Only when snapshots disagree on a house do we fall back to
+// degree-based Whole-Sign calculation.
 export function interpolateKundli(k0: SeerKundli, k1: SeerKundli, minute: number): SeerKundli {
   const t = minute / 60;
 
@@ -277,8 +293,18 @@ export function interpolateKundli(k0: SeerKundli, k1: SeerKundli, minute: number
 
     const deg = lerpDeg(p0.deg, p1.deg);
     const s = signFromDeg(deg);
-    const ascIdx = ascSign.signIdx;
-    const house = ((s.signIdx - ascIdx + 12) % 12) + 1;
+
+    // Use Seer's house directly when both snapshots agree (most common case).
+    // When houses differ, recalculate based on interpolated planet and ascendant positions
+    // using the Whole-Sign house formula, not "closest time" logic.
+    let house: number;
+    if (p0.house === p1.house) {
+      house = p0.house;
+    } else {
+      // Snapshots disagree — recalculate house from interpolated positions
+      house = houseFrom(ascSign.signIdx, s.signIdx);
+      console.log(`⚠️ [INTERPOLATE] ${p0.name} house changed between snapshots: H${p0.house} → H${p1.house}, recalculated to H${house} (asc=${ascSign.sign}, deg=${deg.toFixed(2)}°, t=${t.toFixed(2)})`);
+    }
 
     return {
       name: p0.name,
@@ -290,8 +316,18 @@ export function interpolateKundli(k0: SeerKundli, k1: SeerKundli, minute: number
     };
   });
 
+  // Ascendant house is always 1. Use Seer's ascendant sign when both snapshots agree,
+  // otherwise use the sign derived from the interpolated ascendant degree.
+  const ascSignFinal = (k0.asc.signIdx === k1.asc.signIdx)
+    ? { signIdx: k0.asc.signIdx, sign: k0.asc.sign }
+    : ascSign;  // Use sign from interpolated degree, not "closest" snapshot
+
+  if (k0.asc.signIdx !== k1.asc.signIdx) {
+    console.log(`⚠️ [INTERPOLATE] Ascendant sign changed between snapshots: ${k0.asc.sign} → ${k1.asc.sign}, using ${ascSignFinal.sign} (t=${t.toFixed(2)})`);
+  }
+
   return {
-    asc: { ...k0.asc, deg: ascDeg, sign: ascSign.sign, signIdx: ascSign.signIdx, house: 1 },
+    asc: { ...k0.asc, deg: ascDeg, sign: ascSignFinal.sign, signIdx: ascSignFinal.signIdx, house: 1 },
     planets,
     notes: [...k0.notes, `Interpolated at minute ${minute} (t=${t.toFixed(4)})`],
   };

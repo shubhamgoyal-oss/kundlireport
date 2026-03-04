@@ -1429,7 +1429,7 @@ serve(async (req) => {
       errors,
       tokensUsed: totalTokens,
       computationMeta: {
-        interpolation: interpolationDiagnostics || { applied: min !== 0, minute: min },
+        interpolation: interpolationDiagnostics || { applied: localMin !== 0, minute: localMin },
         languagePipeline: {
           requestedLanguage,
           effectiveGenerationLanguage,

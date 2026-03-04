@@ -18,6 +18,8 @@ import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useIndianCitiesAutocomplete } from '@/hooks/useIndianCitiesAutocomplete';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { mirrorJobStartToFirebase, updateJobStatusInFirebaseFromPolling } from '@/integrations/firebase/dual-write-hook';
+import { getJobFromFirebase } from '@/integrations/firebase/client';
 
 // Form validation schema
 const birthInputSchema = z
@@ -211,6 +213,28 @@ const KundliReportGenerator = () => {
         if (!result.error) {
           jobData = result.data;
           startError = null;
+
+          // Dual-write to Firebase (non-blocking)
+          if (jobData?.jobId) {
+            mirrorJobStartToFirebase({
+              jobId: jobData.jobId,
+              name: data.name.trim(),
+              dateOfBirth: data.date,
+              timeOfBirth: data.time || '12:00',
+              placeOfBirth: data.place,
+              latitude: data.lat || 0,
+              longitude: data.lon || 0,
+              timezone: tzOffset,
+              language: reportLanguage,
+              gender: data.gender,
+              visitorId,
+              sessionId,
+            }).catch(err => {
+              // Fail silently — Supabase is primary
+              console.warn('[KundliReportGenerator] Dual-write failed:', err);
+            });
+          }
+
           break;
         }
 
@@ -288,6 +312,22 @@ const KundliReportGenerator = () => {
         );
 
         if (!response.ok) {
+          // Try Firebase fallback if Supabase is down
+          if (response.status >= 500 && import.meta.env.VITE_ENABLE_FIREBASE_FALLBACK === 'true') {
+            try {
+              const firebaseJob = await getJobFromFirebase(jobId);
+              if (firebaseJob) {
+                console.log('[KundliReportGenerator] Supabase failed, using Firebase fallback');
+                return {
+                  status: firebaseJob.status || 'failed',
+                  error: firebaseJob.errorMessage
+                };
+              }
+            } catch (fallbackErr) {
+              console.warn('[KundliReportGenerator] Firebase fallback also failed:', fallbackErr);
+            }
+          }
+
           consecutiveErrors++;
           console.warn(`[KundliReportGenerator] Poll error (${consecutiveErrors}/${maxConsecutiveErrors}):`, response.status);
           if (consecutiveErrors >= maxConsecutiveErrors) {
@@ -300,6 +340,19 @@ const KundliReportGenerator = () => {
         consecutiveErrors = 0;
         const jobStatus = await response.json();
         console.log('[KundliReportGenerator] Job status:', jobStatus.status, jobStatus.progressPercent + '%');
+
+        // Dual-write status update to Firebase
+        if (jobId && (import.meta.env.VITE_ENABLE_DUAL_WRITE === 'true')) {
+          updateJobStatusInFirebaseFromPolling(
+            jobId,
+            jobStatus.status || 'processing',
+            jobStatus.currentPhase || 'pending',
+            jobStatus.progressPercent || 0,
+            jobStatus.error || jobStatus.errorMessage
+          ).catch(() => {
+            // Fail silently
+          });
+        }
 
         setJobProgress(jobStatus.progressPercent || 0);
         setJobPhase(jobStatus.currentPhase || '');

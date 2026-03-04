@@ -727,10 +727,6 @@ export default function BulkKundliRunner() {
       }
 
       const report = payload.report;
-      // Mark unknown time so PDF shows "Time not available"
-      if (!(row.timeOfBirth || '').trim() && report?.birthDetails) {
-        report.birthDetails.unknownTime = true;
-      }
       // CRITICAL LOG: capture exactly what the backend returned for birth details
       console.log(`[Bulk PDF] Row ${row.rowNumber} REPORT birthDetails:`, JSON.stringify(report.birthDetails));
       const [year, month, day] = String(report.birthDetails?.dateOfBirth || '').split('-').map(Number);

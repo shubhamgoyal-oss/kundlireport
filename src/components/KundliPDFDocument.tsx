@@ -1785,7 +1785,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             </View>
             <View style={styles.coverInfoRow}>
               <Text style={styles.coverInfoLabel}>{localizePdfUiText('Time of Birth')}</Text>
-              <Text style={styles.coverInfoValue}>{report.birthDetails.timeOfBirth}</Text>
+              <Text style={styles.coverInfoValue}>{report.birthDetails.unknownTime ? localizePdfUiText('Time not available') : report.birthDetails.timeOfBirth}</Text>
             </View>
             <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
               <Text style={styles.coverInfoLabel}>{localizePdfUiText('Place of Birth')}</Text>
@@ -2079,7 +2079,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <InfoRow label="Sex" value={sex} />
                 <InfoRow label="Date of Birth" value={formatBirthDate(birthDateValue) || birthDateValue || 'N/A'} />
                 <InfoRow label="Day" value={report?.panchang?.vaar?.day || getWeekday(birthDateValue)} />
-                <InfoRow label="Time of Birth" value={birthDetails.timeOfBirth || 'N/A'} />
+                <InfoRow label="Time of Birth" value={birthDetails.unknownTime ? localizePdfUiText('Time not available') : (birthDetails.timeOfBirth || 'N/A')} />
                 <InfoRow label="Place of Birth" value={(() => {
                   const raw = birthDetails.placeOfBirth || '';
                   if (!raw) return placeDetails.city || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : 'N/A');

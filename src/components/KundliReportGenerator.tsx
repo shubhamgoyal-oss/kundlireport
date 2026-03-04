@@ -394,7 +394,12 @@ const KundliReportGenerator = () => {
       };
 
       const report = await pollJob();
-      
+
+      // Mark unknown time so PDF shows "Time not available"
+      if (data.unknownTime && report?.birthDetails) {
+        report.birthDetails.unknownTime = true;
+      }
+
       setKundliReport(report);
       setIsFormCollapsed(true);
       

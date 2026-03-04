@@ -726,6 +726,11 @@ export default function BulkKundliRunner() {
       }
 
       const report = payload.report;
+      // Mark unknown time so PDF shows "Time not available"
+      const originalTob = tobSnapshot.get(row.rowNumber) || '';
+      if (!originalTob.trim() && report?.birthDetails) {
+        report.birthDetails.unknownTime = true;
+      }
       // CRITICAL LOG: capture exactly what the backend returned for birth details
       console.log(`[Bulk PDF] Row ${row.rowNumber} REPORT birthDetails:`, JSON.stringify(report.birthDetails));
       const [year, month, day] = String(report.birthDetails?.dateOfBirth || '').split('-').map(Number);
@@ -998,7 +1003,7 @@ export default function BulkKundliRunner() {
         const normalizedDob = normalizeDateToYMD(userDob);
         const normalizedTob = normalizeTimeToHHMM(userTob);
         const dateOfBirth = normalizedDob || decipheredDob;
-        const timeOfBirth = normalizedTob || decipheredTob;
+        const timeOfBirth = normalizedTob || decipheredTob || '12:00';
 
         // DETAILED LOGGING to debug date/gender issues
         console.log(`[Bulk] Row ${row.rowNumber} DATE TRACE: userDob="${userDob}" → normalized="${normalizedDob}" | decipheredDob="${decipheredDob}" → FINAL="${dateOfBirth}"`);
@@ -1115,7 +1120,7 @@ export default function BulkKundliRunner() {
           const userDob = dobSnapshot.get(row.rowNumber) || '';
           const userTob = tobSnapshot.get(row.rowNumber) || '';
           const dateOfBirth = normalizeDateToYMD(userDob) || decipheredDob;
-          const timeOfBirth = normalizeTimeToHHMM(userTob) || decipheredTob;
+          const timeOfBirth = normalizeTimeToHHMM(userTob) || decipheredTob || '12:00';
 
           if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
             throw new Error('Missing normalized values after decipher step');
@@ -1283,7 +1288,7 @@ export default function BulkKundliRunner() {
         const normalizedDob = normalizeDateToYMD(userDob);
         const normalizedTob = normalizeTimeToHHMM(userTob);
         const dateOfBirth = normalizedDob || decipheredDob;
-        const timeOfBirth = normalizedTob || decipheredTob;
+        const timeOfBirth = normalizedTob || decipheredTob || '12:00';
 
         console.log(`[Bulk] CONTINUE Row ${row.rowNumber} DATE TRACE: userDob="${userDob}" → normalized="${normalizedDob}" | decipheredDob="${decipheredDob}" → FINAL="${dateOfBirth}"`);
 
@@ -1362,7 +1367,7 @@ export default function BulkKundliRunner() {
           const userDob2 = dobSnapshot.get(row.rowNumber) || '';
           const userTob2 = tobSnapshot.get(row.rowNumber) || '';
           const dateOfBirth = normalizeDateToYMD(userDob2) || decipheredDob2;
-          const timeOfBirth = normalizeTimeToHHMM(userTob2) || decipheredTob2;
+          const timeOfBirth = normalizeTimeToHHMM(userTob2) || decipheredTob2 || '12:00';
           if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) throw new Error('Missing normalized values');
           const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
           const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;

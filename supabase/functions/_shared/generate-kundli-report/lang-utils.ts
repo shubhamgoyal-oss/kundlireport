@@ -167,5 +167,11 @@ AGE SENSITIVITY RULES:
 3. If the native is a young adult (20-29): career entry, higher education, early relationships, and skill-building are appropriate focal points.
 4. If the native is a mature adult or senior (50+): emphasize health, legacy, mentorship, spiritual growth, and relationship deepening. Avoid "start a new career from scratch" or unrealistic long-range plans.
 5. Dasha/transit predictions that fall beyond the horizon should be truncated or noted as "beyond lifecycle scope."
-6. Remedies should be physically appropriate for the age group (e.g. no intense fasting for seniors or children, no heavy physical rituals for elderly).`;
+6. Remedies should be physically appropriate for the age group (e.g. no intense fasting for seniors or children, no heavy physical rituals for elderly).
+
+CRITICAL WRITING STYLE RULE — DO NOT REPEAT AGE/GENDER:
+- The age and gender above are BACKGROUND CONTEXT for you to shape predictions appropriately. They are NOT to be stated or repeated in the output.
+- NEVER write phrases like "As a 55-year-old man", "At your age of 55", "Being a male native of 55 years", "For someone your age", or any variation that explicitly calls out the native's age or gender.
+- Simply write predictions that are implicitly appropriate for the native's life stage. The reader already knows their own age and gender.
+- This is a professional astrology report, not a conversation. Write in a confident, direct third-person analytical tone without referencing demographic details.`;
 }

@@ -728,8 +728,7 @@ export default function BulkKundliRunner() {
 
       const report = payload.report;
       // Mark unknown time so PDF shows "Time not available"
-      const originalTob = tobSnapshot.get(row.rowNumber) || '';
-      if (!originalTob.trim() && report?.birthDetails) {
+      if (!(row.timeOfBirth || '').trim() && report?.birthDetails) {
         report.birthDetails.unknownTime = true;
       }
       // CRITICAL LOG: capture exactly what the backend returned for birth details

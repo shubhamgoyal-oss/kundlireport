@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
 import { fetchMultipleCharts, PDF_CHARTS, BirthDetails } from '@/utils/kundaliChart';
+import { detectTimezone, extractCountryFromPlace } from '@/utils/timezone';
 
 type BulkStatus = 'pending' | 'normalizing' | 'geocoding' | 'queued' | 'processing' | 'completed' | 'failed';
 
@@ -27,7 +28,7 @@ interface BulkRowState {
   place: string;
   status: BulkStatus;
   gender: 'M' | 'F';
-  language: 'en' | 'hi' | 'te' | 'kn' | 'mr';
+  language: 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta';
   dateOfBirth?: string; // YYYY-MM-DD or raw from sheet
   timeOfBirth?: string; // HH:MM or raw from sheet
   jobId?: string;
@@ -42,33 +43,313 @@ interface BulkRowState {
 }
 
 /** Read gender directly from CSV normalized columns — no API call, no guessing */
-function parseGenderFromNormalized(normalized: Record<string, string>): 'M' | 'F' {
-  const candidates = ['gender', 'sex', 'male_female', 'm_f', 'gender_code', 'linga'];
-  for (const key of candidates) {
-    const val = (normalized[key] || '').trim().toLowerCase();
-    if (!val) continue;
-    if (['f', 'female', 'woman', 'girl', 'महिला', 'स्त्री', 'స్త్రీ'].includes(val)) return 'F';
-    if (['m', 'male', 'man', 'boy', 'पुरुष', 'పురుషుడు'].includes(val)) return 'M';
-  }
-  return 'M'; // default if no gender column found
+/** Classify a cell value as Male / Female / unknown */
+function classifyGenderValue(val: string): 'M' | 'F' | null {
+  const v = val.trim().toLowerCase();
+  if (!v) return null;
+  if (['f', 'female', 'woman', 'girl'].includes(v)) return 'F';
+  if (['m', 'male', 'man', 'boy'].includes(v)) return 'M';
+  // Indic scripts
+  if (v === '\u092E\u0939\u093F\u0932\u093E' || v === '\u0938\u094D\u0924\u094D\u0930\u0940') return 'F'; // Hindi
+  if (v === '\u0C38\u0C4D\u0C24\u0C4D\u0C30\u0C40') return 'F'; // Telugu
+  if (v === '\u0CB9\u0CC6\u0CA3\u0CCD\u0CA3\u0CC1') return 'F'; // Kannada
+  if (v.startsWith('\u0BAA\u0BC6\u0BA3')) return 'F'; // Tamil
+  if (v === '\u092A\u0941\u0930\u0941\u0937' || v === '\u092A\u0941\u0930\u0941\u0938') return 'M'; // Hindi
+  if (v.startsWith('\u0C2A\u0C41\u0C30\u0C41\u0C37')) return 'M'; // Telugu
+  if (v === '\u0CAA\u0CC1\u0CB0\u0CC1\u0CB7') return 'M'; // Kannada
+  if (v.startsWith('\u0B86\u0BA3')) return 'M'; // Tamil
+  return null;
 }
 
-/** Read date-of-birth from CSV normalized columns */
+/** Is this column header a gender-related name? Works with original (un-normalized) headers. */
+function isGenderHeader(header: string): boolean {
+  const h = header.trim().toLowerCase();
+  if (/gender|sex|\bmale.?female\b|\bm.?f\b/i.test(h)) return true;
+  // Hindi/Marathi: \u0932\u093F\u0902\u0917
+  if (h.includes('\u0932\u093F\u0902\u0917')) return true;
+  // Telugu: \u0C32\u0C3F\u0C02\u0C17
+  if (h.includes('\u0C32\u0C3F\u0C02\u0C17')) return true;
+  // Kannada: \u0CB2\u0CBF\u0C82\u0C97
+  if (h.includes('\u0CB2\u0CBF\u0C82\u0C97')) return true;
+  // Tamil: \u0BAA\u0BBE\u0BB2\u0BBF\u0BA9
+  if (h.includes('\u0BAA\u0BBE\u0BB2\u0BBF\u0BA9')) return true;
+  return false;
+}
+
+function parseGenderFromNormalized(normalized: Record<string, string>, raw?: Record<string, string>): 'M' | 'F' {
+  const candidates = ['gender', 'sex', 'male_female', 'm_f', 'gender_code', 'linga'];
+  // Pass 1: Normalized keys - exact match
+  for (const key of candidates) {
+    const val = (normalized[key] || '').trim();
+    if (!val) continue;
+    const g1 = classifyGenderValue(val);
+    if (g1) { console.log(`[Gender] normalized key "${key}" = "${val}" -> ${g1}`); return g1; }
+  }
+
+  // Pass 2: Normalized keys - fuzzy (key contains "gender" or "sex")
+  for (const [key, rawVal] of Object.entries(normalized)) {
+    const k = key.toLowerCase();
+    if ((k.includes('gender') || k.includes('sex') || k === 'linga') && rawVal) {
+      const g = classifyGenderValue(rawVal);
+      if (g) { console.log(`[Gender] normalized fuzzy key "${key}" = "${rawVal}" -> ${g}`); return g; }
+    }
+  }
+
+  // Pass 3: Raw (original) headers - critical for Indic column names
+  // normalizeKey strips all non-Latin chars, so Hindi "\u0932\u093F\u0902\u0917" becomes empty in normalized
+  if (raw) {
+    for (const [header, val] of Object.entries(raw)) {
+      if (isGenderHeader(header) && val) {
+        const g = classifyGenderValue(val);
+        if (g) { console.log(`[Gender] raw header "${header}" = "${val}" -> ${g}`); return g; }
+      }
+    }
+  }
+
+  // Pass 4: Check ALL values for unambiguous female markers
+  const allEntries = raw ? Object.entries(raw) : Object.entries(normalized);
+  for (const [key, val] of allEntries) {
+    const v = val.trim().toLowerCase();
+    const g = classifyGenderValue(v);
+    if (g === 'F' && v.length > 1) {
+      console.log(`[Gender] value scan: key="${key}" val="${v}" -> F`);
+      return 'F';
+    }
+  }
+
+  console.log('[Gender] No gender column found, defaulting to M');
+  return 'M';
+}
+
+/** Convert an Excel serial date number to YYYY-MM-DD.
+ *  Excel epoch: 1 = Jan 1, 1900. Handles the Lotus 123 leap-year bug (serial 60 = Feb 29, 1900). */
+function excelSerialToYMD(serial: number): string | null {
+  if (!Number.isFinite(serial) || serial < 1 || serial > 100000) return null;
+  // Excel incorrectly treats 1900 as a leap year; serials > 60 are off by 1 day
+  const adjustedSerial = serial > 60 ? serial - 1 : serial;
+  // Excel epoch is Jan 1, 1900 = serial 1, but JS Date epoch is Jan 1, 1970.
+  // Jan 1, 1900 = -2208988800000 ms from Unix epoch (UTC).
+  const msPerDay = 86400000;
+  const excelEpochMs = -2209075200000; // Date.UTC(1900, 0, 1)
+  const dateMs = excelEpochMs + adjustedSerial * msPerDay;
+  const d = new Date(dateMs);
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth() + 1;
+  const day = d.getUTCDate();
+  if (y >= 1900 && y <= 2100) {
+    return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  }
+  return null;
+}
+
+/** Parse any date string into YYYY-MM-DD. Mirrors backend decipher-kundli-input parseDob(). */
+function normalizeDateToYMD(raw: string): string {
+  // Strip leading/trailing quotes that may come from CSV fields or Excel
+  const value = (raw || '').trim().replace(/^["']+|["']+$/g, '').trim();
+  if (!value) return '';
+
+  // Already YYYY-MM-DD? — also validate year is in sensible range
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const yr = Number(value.slice(0, 4));
+    if (yr >= 1900 && yr <= 2100) return value;
+    // Year like 0200 (=200) is suspicious — fix it
+    if (yr > 0 && yr < 100) {
+      const fixed = yr > 50 ? 1900 + yr : 2000 + yr;
+      return `${fixed}${value.slice(4)}`;
+    }
+    if (yr >= 100 && yr < 1900) {
+      const twoDigit = yr % 100;
+      const fixed = twoDigit > 50 ? 1900 + twoDigit : 2000 + twoDigit;
+      return `${fixed}${value.slice(4)}`;
+    }
+    return value; // year > 2100 — return as-is
+  }
+
+  // YYYY-M-D (no zero-padding) — common variant
+  const ymdLoose = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (ymdLoose) {
+    const y = Number(ymdLoose[1]);
+    const m = Number(ymdLoose[2]);
+    const d = Number(ymdLoose[3]);
+    if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  // Already YYYY-MM-DD with extra (e.g., "2002-07-05T00:00:00.000Z")?
+  const isoMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ]/);
+  if (isoMatch) {
+    const isoYear = Number(isoMatch[1]);
+    if (isoYear >= 1900 && isoYear <= 2100) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+    // Bad year — don't return, let other parsers try
+  }
+
+  // Excel serial date number (e.g., 37442 = July 5, 2002)
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue) && numericValue > 365 && numericValue < 100000 && /^\d+(\.\d+)?$/.test(value)) {
+    const converted = excelSerialToYMD(Math.floor(numericValue));
+    if (converted) return converted;
+  }
+
+  // Compact 8-digit: YYYYMMDD or DDMMYYYY
+  const compact = value.replace(/\D/g, '');
+  if (compact.length === 8) {
+    const yearFirst = Number(compact.slice(0, 4));
+    if (yearFirst >= 1900 && yearFirst <= 2100) {
+      const m = Number(compact.slice(4, 6));
+      const d = Number(compact.slice(6, 8));
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31)
+        return `${yearFirst}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    const d = Number(compact.slice(0, 2));
+    const m = Number(compact.slice(2, 4));
+    const y = Number(compact.slice(4, 8));
+    if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  // DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY (or with 2-digit year)
+  const sep = value.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{2,4})$/);
+  if (sep) {
+    const d = Number(sep[1]);
+    const m = Number(sep[2]);
+    let y = Number(sep[3]);
+    if (y < 100) y += y > 50 ? 1900 : 2000;
+    if (y >= 1900 && y <= 2100 && m >= 1 && m <= 12 && d >= 1 && d <= 31)
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  // DD-Mon-YY or DD-Mon-YYYY (e.g., "05-Jul-00", "5-Jul-2000")
+  const monthNames: Record<string, number> = {
+    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+    jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+  };
+  const monMatch = value.match(/^(\d{1,2})[\-/.\s]([A-Za-z]{3,9})[\-/.\s](\d{2,4})$/);
+  if (monMatch) {
+    const d = Number(monMatch[1]);
+    const mName = monMatch[2].slice(0, 3).toLowerCase();
+    let y = Number(monMatch[3]);
+    const m = monthNames[mName];
+    if (m) {
+      if (y < 100) y += y > 50 ? 1900 : 2000;
+      if (y >= 1900 && y <= 2100 && d >= 1 && d <= 31)
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+  }
+
+  // Strip ordinal suffixes ("5th July 2002" → "5 July 2002", "21st Aug 1984" → "21 Aug 1984")
+  const stripped = value.replace(/(\d+)(st|nd|rd|th)\b/gi, '$1');
+
+  // Natural language: "21 Aug 1984", "August 21, 1984", "5 July 2002", etc.
+  // Use the stripped version (without ordinals) for better Date parsing
+  const parsed = new Date(stripped);
+  if (!isNaN(parsed.getTime())) {
+    // Use UTC methods to avoid timezone-related off-by-one day errors
+    const y = parsed.getUTCFullYear();
+    const m = parsed.getUTCMonth() + 1;
+    const d = parsed.getUTCDate();
+    if (y >= 1900 && y <= 2100)
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  // Also try the original value (in case ordinal stripping broke something)
+  if (stripped !== value) {
+    const parsed2 = new Date(value);
+    if (!isNaN(parsed2.getTime())) {
+      const y = parsed2.getUTCFullYear();
+      const m = parsed2.getUTCMonth() + 1;
+      const d = parsed2.getUTCDate();
+      if (y >= 1900 && y <= 2100)
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+  }
+
+  // CRITICAL: Return '' (not the raw value) so the decipher fallback can be used.
+  // Returning the raw unparseable value would bypass the backend's smarter parsing.
+  console.warn('[normalizeDateToYMD] Could not parse date:', JSON.stringify(value));
+  return '';
+}
+
+/** Parse any time string into HH:MM (24h). Mirrors backend decipher-kundli-input parseTime(). */
+function normalizeTimeToHHMM(raw: string): string {
+  const value = (raw || '').trim().toLowerCase();
+  if (!value) return '';
+
+  // Already HH:MM or HH:MM:SS
+  const hhmm = value.match(/^([01]?\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?$/);
+  if (hhmm) return `${String(Number(hhmm[1])).padStart(2, '0')}:${hhmm[2]}`;
+
+  // 12h with AM/PM
+  const ampm = value.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+  if (ampm) {
+    let h = Number(ampm[1]) % 12;
+    const m = Number(ampm[2] || '0');
+    if (ampm[3].toLowerCase() === 'pm') h += 12;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  // Excel decimal (0.0 - 0.999)
+  const numeric = Number(value);
+  if (Number.isFinite(numeric) && numeric >= 0 && numeric < 1) {
+    const totalMinutes = Math.round(numeric * 24 * 60);
+    const h = Math.floor(totalMinutes / 60) % 24;
+    const m = totalMinutes % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  // 4-digit compact: 0830 → 08:30
+  const four = value.match(/^(\d{2})(\d{2})$/);
+  if (four) {
+    const h = Number(four[1]);
+    const m = Number(four[2]);
+    if (h <= 23 && m <= 59) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  return value; // return as-is if unparseable
+}
+
+/** Read date-of-birth from CSV normalized columns.
+ *  Mirrors backend decipher-kundli-input → extractDeterministic().
+ *  Generic 'date' is EXCLUDED — it matches puja/order date columns. */
 function parseDateOfBirthFromNormalized(normalized: Record<string, string>): string {
-  const candidates = ['date_of_birth', 'dob', 'birth_date', 'dateofbirth', 'date', 'janm_tithi', 'janma_tithi'];
+  const candidates = [
+    'dobyyyymmdd', 'dob_yyyymmdd',          // backend primary keys
+    'date_of_birth', 'dateofbirth',          // common explicit names
+    'birth_date', 'dob',                     // abbreviations
+    'janm_tithi', 'janma_tithi',             // Hindi
+  ];
   for (const key of candidates) {
     const val = (normalized[key] || '').trim();
     if (val) return val;
+  }
+  // Fuzzy fallback: any normalized key containing 'dob' or ('birth' + 'date')
+  for (const [key, val] of Object.entries(normalized)) {
+    const k = key.toLowerCase();
+    if ((k.includes('dob') || (k.includes('birth') && k.includes('date'))) && (val || '').trim()) {
+      return val.trim();
+    }
   }
   return '';
 }
 
-/** Read time-of-birth from CSV normalized columns */
+/** Read time-of-birth from CSV normalized columns.
+ *  Mirrors backend decipher-kundli-input → extractDeterministic().
+ *  Generic 'time' is EXCLUDED — it can match unrelated columns. */
 function parseTimeOfBirthFromNormalized(normalized: Record<string, string>): string {
-  const candidates = ['time_of_birth', 'tob', 'birth_time', 'timeofbirth', 'time', 'janm_samay', 'janma_samay'];
+  const candidates = [
+    'time_of_birth_in_24', 'time_of_birth',  // backend primary keys
+    'birth_time', 'timeofbirth', 'tob',       // common names
+    'janm_samay', 'janma_samay',              // Hindi
+  ];
   for (const key of candidates) {
     const val = (normalized[key] || '').trim();
     if (val) return val;
+  }
+  // Fuzzy fallback: any normalized key containing 'tob' or ('birth' + 'time')
+  for (const [key, val] of Object.entries(normalized)) {
+    const k = key.toLowerCase();
+    if ((k.includes('tob') || (k.includes('birth') && k.includes('time'))) && (val || '').trim()) {
+      return val.trim();
+    }
   }
   return '';
 }
@@ -80,6 +361,7 @@ const DEFAULT_SHEET_URL =
 const LS_SHEET_URL = 'bulk_sheetUrl';
 const LS_START_ROW = 'bulk_startRow';
 const LS_END_ROW = 'bulk_endRow';
+const LS_SPECIFIC_ROWS = 'bulk_specificRows';
 const LS_LANGUAGE = 'bulk_language';
 const LS_ALL_ROWS = 'bulk_allRows';
 const LS_BULK_ROWS = 'bulk_rows';
@@ -127,6 +409,7 @@ export default function BulkKundliRunner() {
   const [sheetUrl, setSheetUrl] = useState(DEFAULT_SHEET_URL);
   const [startRow, setStartRow] = useState('2');
   const [endRow, setEndRow] = useState('20');
+  const [specificRows, setSpecificRows] = useState('');
   const [allRows, setAllRows] = useState<LoadedSheetRow[]>([]);
   const [isLoadingSheet, setIsLoadingSheet] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -134,7 +417,7 @@ export default function BulkKundliRunner() {
   const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te' | 'kn' | 'mr'>('en');
 
   const stopRequestedRef = useRef(false);
-  const placeCacheRef = useRef<Map<string, { lat: number; lon: number; displayName: string }>>(new Map());
+  const placeCacheRef = useRef<Map<string, { lat: number; lon: number; displayName: string; country: string }>>(new Map());
   const blobUrlsRef = useRef<string[]>([]);
   const restoredRef = useRef(false);  // prevent double-restore
 
@@ -171,9 +454,12 @@ export default function BulkKundliRunner() {
         }
       }
 
+      const savedSpecific = localStorage.getItem(LS_SPECIFIC_ROWS);
+
       if (savedUrl) setSheetUrl(savedUrl);
       if (savedStart) setStartRow(savedStart);
       if (savedEnd) setEndRow(savedEnd);
+      if (savedSpecific) setSpecificRows(savedSpecific);
       if (savedLang && ['en', 'hi', 'te', 'kn', 'mr'].includes(savedLang)) {
         setBulkLanguage(savedLang as 'en' | 'hi' | 'te' | 'kn' | 'mr');
       }
@@ -207,14 +493,40 @@ export default function BulkKundliRunner() {
   useEffect(() => { localStorage.setItem(LS_SHEET_URL, sheetUrl); }, [sheetUrl]);
   useEffect(() => { localStorage.setItem(LS_START_ROW, startRow); }, [startRow]);
   useEffect(() => { localStorage.setItem(LS_END_ROW, endRow); }, [endRow]);
+  useEffect(() => { localStorage.setItem(LS_SPECIFIC_ROWS, specificRows); }, [specificRows]);
   useEffect(() => { localStorage.setItem(LS_LANGUAGE, bulkLanguage); }, [bulkLanguage]);
 
   const startRowNum = Math.max(2, Number(startRow) || 2);
   const endRowNum = Math.max(startRowNum, Number(endRow) || startRowNum);
 
+  /** Parse "2,5,8,12" or "2, 5, 8-12" into a Set of row numbers */
+  const specificRowNums = useMemo(() => {
+    const trimmed = specificRows.trim();
+    if (!trimmed) return null; // null = use range mode
+    const nums = new Set<number>();
+    for (const part of trimmed.split(',')) {
+      const p = part.trim();
+      const rangeMatch = p.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (rangeMatch) {
+        const a = Number(rangeMatch[1]);
+        const b = Number(rangeMatch[2]);
+        for (let i = Math.min(a, b); i <= Math.max(a, b); i++) nums.add(i);
+      } else {
+        const n = Number(p);
+        if (Number.isFinite(n) && n >= 2) nums.add(n);
+      }
+    }
+    return nums.size > 0 ? nums : null;
+  }, [specificRows]);
+
+  const useSpecificMode = specificRowNums !== null;
+
   const selectedRows = useMemo(() => {
+    if (specificRowNums) {
+      return allRows.filter((row) => specificRowNums.has(row.rowNumber));
+    }
     return allRows.filter((row) => row.rowNumber >= startRowNum && row.rowNumber <= endRowNum);
-  }, [allRows, startRowNum, endRowNum]);
+  }, [allRows, startRowNum, endRowNum, specificRowNums]);
 
   const clearPersistedData = () => {
     [LS_BULK_ROWS, LS_ALL_ROWS].forEach((k) => localStorage.removeItem(k));
@@ -273,17 +585,24 @@ export default function BulkKundliRunner() {
         : [];
 
       setAllRows(rows);
-      // Pre-populate bulkRows for the selected range only
+      // Debug: log normalized keys so we can see actual column names from the sheet
+      if (rows.length > 0) {
+        console.log('[BulkKundliRunner] Normalized keys:', Object.keys(rows[0].normalized));
+        console.log('[BulkKundliRunner] First row normalized:', rows[0].normalized);
+      }
+      // Pre-populate bulkRows for the selected range or specific rows
       const sNum = Math.max(2, Number(startRow) || 2);
       const eNum = Math.max(sNum, Number(endRow) || sNum);
-      const filteredRows = rows.filter((r) => r.rowNumber >= sNum && r.rowNumber <= eNum);
+      const filteredRows = specificRowNums
+        ? rows.filter((r) => specificRowNums.has(r.rowNumber))
+        : rows.filter((r) => r.rowNumber >= sNum && r.rowNumber <= eNum);
       setBulkRows(
         filteredRows.map((r) => ({
           rowNumber: r.rowNumber,
           name: r.normalized.offering_user_name || r.normalized.name || '',
           place: r.normalized.place_of_birth || '',
           status: 'pending' as BulkStatus,
-          gender: parseGenderFromNormalized(r.normalized),
+          gender: parseGenderFromNormalized(r.normalized, r.raw),
           language: bulkLanguage,
           dateOfBirth: parseDateOfBirthFromNormalized(r.normalized),
           timeOfBirth: parseTimeOfBirthFromNormalized(r.normalized),
@@ -407,6 +726,8 @@ export default function BulkKundliRunner() {
       }
 
       const report = payload.report;
+      // CRITICAL LOG: capture exactly what the backend returned for birth details
+      console.log(`[Bulk PDF] Row ${row.rowNumber} REPORT birthDetails:`, JSON.stringify(report.birthDetails));
       const [year, month, day] = String(report.birthDetails?.dateOfBirth || '').split('-').map(Number);
       const [hour, minute] = String(report.birthDetails?.timeOfBirth || '12:00').split(':').map(Number);
 
@@ -418,7 +739,9 @@ export default function BulkKundliRunner() {
         minute: Number.isFinite(minute) ? minute : 0,
         lat: Number(report.birthDetails?.latitude || 0),
         lon: Number(report.birthDetails?.longitude || 0),
-        tzone: Number(report.birthDetails?.timezone || 5.5),
+        tzone: (report.birthDetails?.timezone != null && Number.isFinite(Number(report.birthDetails.timezone)))
+          ? Number(report.birthDetails.timezone)
+          : 5.5,
       };
 
       const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te' | 'kn' | 'mr';
@@ -567,7 +890,7 @@ export default function BulkKundliRunner() {
     return { status: 'failed', error: 'Timed out while waiting for completion' };
   };
 
-  const resolveCoordinates = async (place: string): Promise<{ lat: number; lon: number; displayName: string }> => {
+  const resolveCoordinates = async (place: string): Promise<{ lat: number; lon: number; displayName: string; country: string }> => {
     const key = place.trim().toLowerCase();
     const cached = placeCacheRef.current.get(key);
     if (cached) return cached;
@@ -578,10 +901,12 @@ export default function BulkKundliRunner() {
     }
 
     const best = results[0];
+    const country = extractCountryFromPlace(best);
     const value = {
       lat: best.lat,
       lon: best.lon,
       displayName: best.display_name || place,
+      country: country || 'India', // Default to India for local DB results without explicit country
     };
     placeCacheRef.current.set(key, value);
     return value;
@@ -610,7 +935,7 @@ export default function BulkKundliRunner() {
       const existing = new Map(prev.map((r) => [r.rowNumber, r]));
       return selectedRows.map((row) => {
         const ex = existing.get(row.rowNumber);
-        const gender = ex?.gender || parseGenderFromNormalized(row.normalized);
+        const gender = ex?.gender || parseGenderFromNormalized(row.normalized, row.raw);
         const language = ex?.language || bulkLanguage;
         const dob = ex?.dateOfBirth || parseDateOfBirthFromNormalized(row.normalized);
         const tob = ex?.timeOfBirth || parseTimeOfBirthFromNormalized(row.normalized);
@@ -666,14 +991,21 @@ export default function BulkKundliRunner() {
         const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
         const source = String(decoded?.source || 'deterministic');
 
-        // Use user-edited DoB/ToB from snapshot if non-empty; else fall back to decipher output
+        // Use user-edited DoB/ToB from snapshot if non-empty; else fall back to decipher output.
+        // IMPORTANT: normalize to YYYY-MM-DD / HH:MM — backend strictly expects these formats.
         const userDob = dobSnapshot.get(row.rowNumber) || '';
         const userTob = tobSnapshot.get(row.rowNumber) || '';
-        const dateOfBirth = userDob || decipheredDob;
-        const timeOfBirth = userTob || decipheredTob;
+        const normalizedDob = normalizeDateToYMD(userDob);
+        const normalizedTob = normalizeTimeToHHMM(userTob);
+        const dateOfBirth = normalizedDob || decipheredDob;
+        const timeOfBirth = normalizedTob || decipheredTob;
+
+        // DETAILED LOGGING to debug date/gender issues
+        console.log(`[Bulk] Row ${row.rowNumber} DATE TRACE: userDob="${userDob}" → normalized="${normalizedDob}" | decipheredDob="${decipheredDob}" → FINAL="${dateOfBirth}"`);
+        console.log(`[Bulk] Row ${row.rowNumber} TIME TRACE: userTob="${userTob}" → normalized="${normalizedTob}" | decipheredTob="${decipheredTob}" → FINAL="${timeOfBirth}"`);
 
         if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
-          throw new Error('Missing normalized values after decipher step');
+          throw new Error(`Missing normalized values after decipher step: name="${name}" dob="${dateOfBirth}" tob="${timeOfBirth}" place="${placeOfBirth}"`);
         }
 
         // Use snapshots — NOT React state, NOT decipher API detection.
@@ -681,7 +1013,7 @@ export default function BulkKundliRunner() {
         const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
         const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
 
-        console.log(`[Bulk] Row ${row.rowNumber} GENDER=${finalGender} DOB=${dateOfBirth} TOB=${timeOfBirth}`);
+        console.log(`[Bulk] Row ${row.rowNumber} SENDING TO BACKEND: gender=${finalGender} dob=${dateOfBirth} tob=${timeOfBirth} lang=${finalLanguage}`);
 
         updateBulkRow(row.rowNumber, {
           name,
@@ -697,12 +1029,16 @@ export default function BulkKundliRunner() {
         const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
 
         const coords = hasExcelCoords
-          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth, country: n.country || 'India' }
           : await resolveCoordinates(placeOfBirth);
 
         if (hasExcelCoords) {
           console.log(`[Bulk] Row ${row.rowNumber}: using Excel lat/lon ${rawLat},${rawLon}`);
         }
+
+        // Detect timezone from country + coordinates
+        const tz = detectTimezone(coords.country, coords.lat, coords.lon, dateOfBirth, timeOfBirth);
+        console.log(`[Bulk] Row ${row.rowNumber} TIMEZONE: ${tz.displayLabel} (country="${coords.country}")`);
 
         updateBulkRow(row.rowNumber, { status: 'queued' });
 
@@ -714,7 +1050,7 @@ export default function BulkKundliRunner() {
             placeOfBirth: coords.displayName,
             latitude: coords.lat,
             longitude: coords.lon,
-            timezone: 5.5,
+            timezone: tz.utcOffsetHours,
             language: finalLanguage,
             gender: finalGender,
             visitorId,
@@ -771,9 +1107,15 @@ export default function BulkKundliRunner() {
           if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
 
           const name = String(decoded?.name || '').trim();
-          const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
-          const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+          const decipheredDob = String(decoded?.dateOfBirth || '').trim();
+          const decipheredTob = String(decoded?.timeOfBirth || '').trim();
           const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
+
+          // Use user's snapshot dates (same as first pass) — user's input is truth
+          const userDob = dobSnapshot.get(row.rowNumber) || '';
+          const userTob = tobSnapshot.get(row.rowNumber) || '';
+          const dateOfBirth = normalizeDateToYMD(userDob) || decipheredDob;
+          const timeOfBirth = normalizeTimeToHHMM(userTob) || decipheredTob;
 
           if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
             throw new Error('Missing normalized values after decipher step');
@@ -783,6 +1125,8 @@ export default function BulkKundliRunner() {
           const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
           const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
 
+          console.log(`[Bulk] RETRY Row ${row.rowNumber} DOB=${dateOfBirth} TOB=${timeOfBirth} (user snapshot used)`);
+
           updateBulkRow(row.rowNumber, { status: 'geocoding' });
 
           const rn = row.normalized;
@@ -790,8 +1134,11 @@ export default function BulkKundliRunner() {
           const rawLon = parseFloat(rn.longitude || rn.lng || rn.lon || '');
           const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
           const coords = hasExcelCoords
-            ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+            ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth, country: rn.country || 'India' }
             : await resolveCoordinates(placeOfBirth);
+
+          const tz = detectTimezone(coords.country, coords.lat, coords.lon, dateOfBirth, timeOfBirth);
+          console.log(`[Bulk] RETRY Row ${row.rowNumber} TIMEZONE: ${tz.displayLabel}`);
 
           updateBulkRow(row.rowNumber, { status: 'queued' });
 
@@ -800,7 +1147,7 @@ export default function BulkKundliRunner() {
               name, dateOfBirth, timeOfBirth,
               placeOfBirth: coords.displayName,
               latitude: coords.lat, longitude: coords.lon,
-              timezone: 5.5,
+              timezone: tz.utcOffsetHours,
               language: finalLanguage, gender: finalGender,
               visitorId, sessionId,
             },
@@ -868,9 +1215,11 @@ export default function BulkKundliRunner() {
     setIsRunning(true);
     restoredRef.current = true;
 
-    // Snapshot gender & language, reset only non-completed rows to pending
+    // Snapshot gender, language, dob & tob — reset only non-completed rows to pending
     const genderSnapshot = new Map<number, 'M' | 'F'>();
     const langSnapshot = new Map<number, 'en' | 'hi' | 'te' | 'kn' | 'mr'>();
+    const dobSnapshot = new Map<number, string>();
+    const tobSnapshot = new Map<number, string>();
 
     setBulkRows((prev) => {
       const existing = new Map(prev.map((r) => [r.rowNumber, r]));
@@ -879,11 +1228,15 @@ export default function BulkKundliRunner() {
       return Array.from(allRowNums).sort((a, b) => a - b).map((rowNum) => {
         const ex = existing.get(rowNum);
         const sheetRow = selectedRows.find((r) => r.rowNumber === rowNum);
-        const gender = ex?.gender || (sheetRow ? parseGenderFromNormalized(sheetRow.normalized) : 'M' as const);
+        const gender = ex?.gender || (sheetRow ? parseGenderFromNormalized(sheetRow.normalized, sheetRow.raw) : 'M' as const);
         const language = ex?.language || bulkLanguage;
+        const dob = ex?.dateOfBirth || (sheetRow ? parseDateOfBirthFromNormalized(sheetRow.normalized) : '');
+        const tob = ex?.timeOfBirth || (sheetRow ? parseTimeOfBirthFromNormalized(sheetRow.normalized) : '');
 
         genderSnapshot.set(rowNum, gender);
         langSnapshot.set(rowNum, language);
+        dobSnapshot.set(rowNum, dob);
+        tobSnapshot.set(rowNum, tob);
 
         // Keep completed rows exactly as they are
         if (ex?.status === 'completed') return ex;
@@ -919,17 +1272,29 @@ export default function BulkKundliRunner() {
         if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
 
         const name = String(decoded?.name || '').trim();
-        const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
-        const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+        const decipheredDob = String(decoded?.dateOfBirth || '').trim();
+        const decipheredTob = String(decoded?.timeOfBirth || '').trim();
         const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
         const source = String(decoded?.source || 'deterministic');
 
+        // Use user's snapshot dates — user's input field is the single source of truth
+        const userDob = dobSnapshot.get(row.rowNumber) || '';
+        const userTob = tobSnapshot.get(row.rowNumber) || '';
+        const normalizedDob = normalizeDateToYMD(userDob);
+        const normalizedTob = normalizeTimeToHHMM(userTob);
+        const dateOfBirth = normalizedDob || decipheredDob;
+        const timeOfBirth = normalizedTob || decipheredTob;
+
+        console.log(`[Bulk] CONTINUE Row ${row.rowNumber} DATE TRACE: userDob="${userDob}" → normalized="${normalizedDob}" | decipheredDob="${decipheredDob}" → FINAL="${dateOfBirth}"`);
+
         if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
-          throw new Error('Missing normalized values after decipher step');
+          throw new Error(`Missing normalized values after decipher step: name="${name}" dob="${dateOfBirth}" tob="${timeOfBirth}" place="${placeOfBirth}"`);
         }
 
         const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
         const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
+
+        console.log(`[Bulk] CONTINUE Row ${row.rowNumber} SENDING: gender=${finalGender} dob=${dateOfBirth} tob=${timeOfBirth} lang=${finalLanguage}`);
 
         updateBulkRow(row.rowNumber, { name, place: placeOfBirth, source, status: 'geocoding' });
 
@@ -939,8 +1304,11 @@ export default function BulkKundliRunner() {
         const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
 
         const coords = hasExcelCoords
-          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth }
+          ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth, country: n.country || 'India' }
           : await resolveCoordinates(placeOfBirth);
+
+        const tz = detectTimezone(coords.country, coords.lat, coords.lon, dateOfBirth, timeOfBirth);
+        console.log(`[Bulk] CONTINUE Row ${row.rowNumber} TIMEZONE: ${tz.displayLabel}`);
 
         updateBulkRow(row.rowNumber, { status: 'queued' });
 
@@ -949,7 +1317,7 @@ export default function BulkKundliRunner() {
             name, dateOfBirth, timeOfBirth,
             placeOfBirth: coords.displayName,
             latitude: coords.lat, longitude: coords.lon,
-            timezone: 5.5,
+            timezone: tz.utcOffsetHours,
             language: finalLanguage, gender: finalGender,
             visitorId, sessionId,
           },
@@ -987,21 +1355,29 @@ export default function BulkKundliRunner() {
           const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', { body: { row: row.normalized } });
           if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
           const name = String(decoded?.name || '').trim();
-          const dateOfBirth = String(decoded?.dateOfBirth || '').trim();
-          const timeOfBirth = String(decoded?.timeOfBirth || '').trim();
+          const decipheredDob2 = String(decoded?.dateOfBirth || '').trim();
+          const decipheredTob2 = String(decoded?.timeOfBirth || '').trim();
           const placeOfBirth = String(decoded?.placeOfBirth || '').trim();
+          // Use user's snapshot dates — consistent with first pass
+          const userDob2 = dobSnapshot.get(row.rowNumber) || '';
+          const userTob2 = tobSnapshot.get(row.rowNumber) || '';
+          const dateOfBirth = normalizeDateToYMD(userDob2) || decipheredDob2;
+          const timeOfBirth = normalizeTimeToHHMM(userTob2) || decipheredTob2;
           if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) throw new Error('Missing normalized values');
           const finalGender = genderSnapshot.get(row.rowNumber) || 'M';
           const finalLanguage = langSnapshot.get(row.rowNumber) || bulkLanguage;
+          console.log(`[Bulk] CONTINUE-RETRY Row ${row.rowNumber} DOB=${dateOfBirth} TOB=${timeOfBirth}`);
           updateBulkRow(row.rowNumber, { status: 'geocoding' });
           const rn = row.normalized;
           const rawLat = parseFloat(rn.latitude || rn.lat || '');
           const rawLon = parseFloat(rn.longitude || rn.lng || rn.lon || '');
           const hasExcelCoords = !isNaN(rawLat) && !isNaN(rawLon) && rawLat !== 0 && rawLon !== 0;
-          const coords = hasExcelCoords ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth } : await resolveCoordinates(placeOfBirth);
+          const coords = hasExcelCoords ? { lat: rawLat, lon: rawLon, displayName: placeOfBirth, country: rn.country || 'India' } : await resolveCoordinates(placeOfBirth);
+          const tz = detectTimezone(coords.country, coords.lat, coords.lon, dateOfBirth, timeOfBirth);
+          console.log(`[Bulk] CONTINUE-RETRY Row ${row.rowNumber} TIMEZONE: ${tz.displayLabel}`);
           updateBulkRow(row.rowNumber, { status: 'queued' });
           const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
-            body: { name, dateOfBirth, timeOfBirth, placeOfBirth: coords.displayName, latitude: coords.lat, longitude: coords.lon, timezone: 5.5, language: finalLanguage, gender: finalGender, visitorId, sessionId },
+            body: { name, dateOfBirth, timeOfBirth, placeOfBirth: coords.displayName, latitude: coords.lat, longitude: coords.lon, timezone: tz.utcOffsetHours, language: finalLanguage, gender: finalGender, visitorId, sessionId },
           });
           if (startError || !startData?.jobId) throw new Error(startError?.message || 'Failed to start row job');
           const jobId = String(startData.jobId);
@@ -1052,23 +1428,27 @@ export default function BulkKundliRunner() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="start-row">Start Row</Label>
+            <Label htmlFor="start-row" className={useSpecificMode ? 'opacity-40' : ''}>Start Row</Label>
             <Input
               id="start-row"
               type="number"
               min={2}
               value={startRow}
               onChange={(e) => setStartRow(e.target.value)}
+              disabled={useSpecificMode}
+              className={useSpecificMode ? 'opacity-40' : ''}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="end-row">End Row</Label>
+            <Label htmlFor="end-row" className={useSpecificMode ? 'opacity-40' : ''}>End Row</Label>
             <Input
               id="end-row"
               type="number"
               min={2}
               value={endRow}
               onChange={(e) => setEndRow(e.target.value)}
+              disabled={useSpecificMode}
+              className={useSpecificMode ? 'opacity-40' : ''}
             />
           </div>
           <div className="space-y-2">
@@ -1090,6 +1470,7 @@ export default function BulkKundliRunner() {
               <option value="te">Telugu</option>
               <option value="kn">Kannada</option>
               <option value="mr">Marathi</option>
+              <option value="ta">Tamil</option>
             </select>
           </div>
           <div className="flex items-end gap-2">
@@ -1098,10 +1479,24 @@ export default function BulkKundliRunner() {
               Load Rows
             </Button>
           </div>
+          <div className="md:col-span-4 space-y-2">
+            <Label htmlFor="specific-rows" className={useSpecificMode ? '' : 'opacity-60'}>
+              Specific Rows <span className="text-xs text-muted-foreground font-normal">(overrides range when filled, e.g. 2,5,8-12)</span>
+            </Label>
+            <Input
+              id="specific-rows"
+              value={specificRows}
+              onChange={(e) => setSpecificRows(e.target.value)}
+              placeholder="e.g. 2,5,8,12  or  3-7,10,15"
+            />
+          </div>
         </div>
 
         <div className="text-sm text-muted-foreground">
-          Selected rows: <strong>{selectedRows.length}</strong> (range {startRowNum}-{endRowNum})
+          Selected rows: <strong>{selectedRows.length}</strong>
+          {useSpecificMode
+            ? ` (specific: ${specificRows.trim()})`
+            : ` (range ${startRowNum}-${endRowNum})`}
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -1211,6 +1606,7 @@ export default function BulkKundliRunner() {
                             <option value="te">TE</option>
                             <option value="kn">KN</option>
                             <option value="mr">MR</option>
+                            <option value="ta">TA</option>
                           </select>
                         ) : (
                           <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : row.language === 'kn' ? 'KN' : row.language === 'mr' ? 'MR' : 'EN'}</span>

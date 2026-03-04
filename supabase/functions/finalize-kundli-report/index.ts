@@ -302,7 +302,40 @@ serve(async (req) => {
 
     let totalTokens = report.tokensUsed || 0;
     const [year, month, day] = String(job.date_of_birth).split("-").map(Number);
-    const { hour, min } = parseBirthTime(String(job.time_of_birth));
+    const { hour: localHour, min: localMin } = parseBirthTime(String(job.time_of_birth));
+
+    // Convert birth time from local timezone to IST (UTC+5:30) for chart API
+    // Seer chart API expects IST time (tzone field is ignored)
+    const istOffsetMinutes = 5.5 * 60; // IST is UTC+5:30
+    const localOffsetMinutes = (job.timezone || 0) * 60; // Local timezone offset in minutes
+    const offsetDiffMinutes = istOffsetMinutes - localOffsetMinutes;
+
+    let istHour = localHour;
+    let istMin = localMin + offsetDiffMinutes;
+    let istYear = year, istMonth = month, istDay = day;
+
+    if (istMin >= 60) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+    } else if (istMin < 0) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+      if (istMin < 0) istMin += 60;
+    }
+
+    if (istHour >= 24) {
+      istHour -= 24;
+      const nextDay = new Date(year, month - 1, day + 1);
+      istYear = nextDay.getFullYear();
+      istMonth = nextDay.getMonth() + 1;
+      istDay = nextDay.getDate();
+    } else if (istHour < 0) {
+      istHour += 24;
+      const prevDay = new Date(year, month - 1, day - 1);
+      istYear = prevDay.getFullYear();
+      istMonth = prevDay.getMonth() + 1;
+      istDay = prevDay.getDate();
+    }
 
     // ── QA Validation ──────────────────────────────────────────────────────
     await updateJobStatus(supabaseAdmin, jobId!, "processing", "Running quality checks", 92, "progress");
@@ -357,7 +390,7 @@ serve(async (req) => {
     // ── Chart Fetching ─────────────────────────────────────────────────────
     try {
       await updateJobStatus(supabaseAdmin, jobId!, "processing", "Fetching Kundali charts", 97, "progress");
-      const charts = await fetchKundaliCharts(day, month, year, hour, min, job.latitude, job.longitude, job.timezone, requestedLanguage);
+      const charts = await fetchKundaliCharts(istDay, istMonth, istYear, istHour, Math.floor(istMin), job.latitude, job.longitude, 5.5, requestedLanguage);
       report.charts = charts;
     } catch (chartErr) {
       console.warn("\u26A0\uFE0F [FINALIZE-JOB] Chart fetch failed (non-fatal):", chartErr);

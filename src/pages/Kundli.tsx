@@ -69,6 +69,10 @@ const Kundli = () => {
           </div>
         </div>
       </main>
+      {/* Build timestamp */}
+      <footer className="text-center text-xs text-muted-foreground/50 py-2">
+        Last updated: {new Date(__BUILD_TIME__).toLocaleString()}
+      </footer>
     </div>
   );
 };

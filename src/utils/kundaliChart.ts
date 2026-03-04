@@ -16,23 +16,26 @@ export type ChartType = 'North' | 'South';
 // Divisional chart types supported by Seer API
 export type DivisionalChart = 'D1' | 'D2' | 'D3' | 'D4' | 'D7' | 'D9' | 'D10' | 'D12' | 'D16' | 'D20' | 'D24' | 'D27' | 'D30' | 'D40' | 'D45' | 'D60';
 
-export const CHART_INFO: Record<DivisionalChart, { name: string; nameHindi: string; nameKannada: string; nameMarathi: string; purpose: string; purposeHindi: string; purposeTelugu?: string }> = {
-  D1: { name: 'Rashi (Birth Chart)', nameHindi: 'राशि चक्र', nameKannada: 'ಜನ್ಮ ಕುಂಡಲಿ', nameMarathi: 'जन्म कुंडली', purpose: 'Overall life assessment', purposeHindi: 'संपूर्ण जीवन आकलन' },
-  D2: { name: 'Hora', nameHindi: 'होरा', nameKannada: 'ಹೋರಾ ಕುಂಡಲಿ', nameMarathi: 'होरा कुंडली', purpose: 'Wealth and finances', purposeHindi: 'धन और वित्त' },
-  D3: { name: 'Drekkana', nameHindi: 'द्रेक्काण', nameKannada: 'ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ', nameMarathi: 'द्रेक्काण कुंडली', purpose: 'Siblings and courage', purposeHindi: 'भाई-बहन और साहस' },
-  D4: { name: 'Chaturthamsa', nameHindi: 'चतुर्थांश', nameKannada: 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'चतुर्थांश कुंडली', purpose: 'Fortune and property', purposeHindi: 'भाग्य और संपत्ति' },
-  D7: { name: 'Saptamsa', nameHindi: 'सप्तांश', nameKannada: 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'सप्तांश कुंडली', purpose: 'Children and progeny', purposeHindi: 'संतान और संतति' },
-  D9: { name: 'Navamsa', nameHindi: 'नवांश', nameKannada: 'ನವಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'नवांश कुंडली', purpose: 'Marriage and spouse', purposeHindi: 'विवाह और जीवनसाथी' },
-  D10: { name: 'Dasamsa', nameHindi: 'दशांश', nameKannada: 'ದಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'दशांश कुंडली', purpose: 'Career and profession', purposeHindi: 'करियर और व्यवसाय' },
-  D12: { name: 'Dwadasamsa', nameHindi: 'द्वादशांश', nameKannada: 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'द्वादशांश कुंडली', purpose: 'Parents and ancestry', purposeHindi: 'माता-पिता और वंश' },
-  D16: { name: 'Shodasamsa', nameHindi: 'षोडशांश', nameKannada: 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'षोडशांश कुंडली', purpose: 'Vehicles and comforts', purposeHindi: 'वाहन और सुविधाएं' },
-  D20: { name: 'Vimsamsa', nameHindi: 'विंशांश', nameKannada: 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'विंशांश कुंडली', purpose: 'Spiritual progress', purposeHindi: 'आध्यात्मिक प्रगति' },
-  D24: { name: 'Chaturvimsamsa', nameHindi: 'चतुर्विंशांश', nameKannada: 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'चतुर्विंशांश कुंडली', purpose: 'Education and learning', purposeHindi: 'शिक्षा और सीखना' },
-  D27: { name: 'Bhamsa', nameHindi: 'भांश', nameKannada: 'ಸಪ್ತವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'सप्तविंशांश कुंडली', purpose: 'Strength and weakness', purposeHindi: 'शक्ति और कमजोरी' },
-  D30: { name: 'Trimsamsa', nameHindi: 'त्रिंशांश', nameKannada: 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'त्रिंशांश कुंडली', purpose: 'Misfortune and evil', purposeHindi: 'दुर्भाग्य और बुराई' },
-  D40: { name: 'Khavedamsa', nameHindi: 'खवेदांश', nameKannada: 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'खवेदांश कुंडली', purpose: 'Auspiciousness', purposeHindi: 'शुभता' },
-  D45: { name: 'Akshavedamsa', nameHindi: 'अक्षवेदांश', nameKannada: 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'अक्षवेदांश कुंडली', purpose: 'Character and morals', purposeHindi: 'चरित्र और नैतिकता' },
-  D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', nameKannada: 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', nameMarathi: 'षष्ट्यंश कुंडली', purpose: 'Past life karma', purposeHindi: 'पूर्वजन्म कर्म' },
+export const CHART_INFO: Record<DivisionalChart, {
+  name: string; nameHindi: string; nameTelugu: string; nameKannada: string; nameMarathi: string; nameTamil: string;
+  purpose: string; purposeHindi: string; purposeTelugu: string; purposeTamil: string;
+}> = {
+  D1:  { name: 'Rashi (Birth Chart)', nameHindi: 'राशि चक्र', nameTelugu: 'జన్మ కుండలి', nameKannada: 'ಜನ್ಮ ಕುಂಡಲಿ', nameMarathi: 'जन्म कुंडली', nameTamil: 'ராசி குண்டலி', purpose: 'Overall life assessment', purposeHindi: 'संपूर्ण जीवन आकलन', purposeTelugu: 'సమగ్ర జీవిత అంచనా', purposeTamil: 'முழுமையான வாழ்க்கை மதிப்பீடு' },
+  D2:  { name: 'Hora', nameHindi: 'होरा', nameTelugu: 'హోరా కుండలి', nameKannada: 'ಹೋರಾ ಕುಂಡಲಿ', nameMarathi: 'होरा कुंडली', nameTamil: 'ஹோரா குண்டலி', purpose: 'Wealth and finances', purposeHindi: 'धन और वित्त', purposeTelugu: 'సంపద మరియు ఆర్థిక', purposeTamil: 'செல்வம் மற்றும் நிதி' },
+  D3:  { name: 'Drekkana', nameHindi: 'द्रेक्काण', nameTelugu: 'ద్రేక్కాణ కుండలి', nameKannada: 'ದ್ರೇಕ್ಕಾಣ ಕುಂಡಲಿ', nameMarathi: 'द्रेक्काण कुंडली', nameTamil: 'த்ரேக்காணம் குண்டலி', purpose: 'Siblings and courage', purposeHindi: 'भाई-बहन और साहस', purposeTelugu: 'తోబుట్టువులు మరియు ధైర్యం', purposeTamil: 'உடன்பிறப்புகள் மற்றும் தைரியம்' },
+  D4:  { name: 'Chaturthamsa', nameHindi: 'चतुर्थांश', nameTelugu: 'చతుర్థాంశ కుండలి', nameKannada: 'ಚತುರ್ಥಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'चतुर्थांश कुंडली', nameTamil: 'சதுர்த்தாம்சம் குண்டலி', purpose: 'Fortune and property', purposeHindi: 'भाग्य और संपत्ति', purposeTelugu: 'అదృష్టం మరియు ఆస్తి', purposeTamil: 'அதிர்ஷ்டம் மற்றும் சொத்து' },
+  D7:  { name: 'Saptamsa', nameHindi: 'सप्तांश', nameTelugu: 'సప్తాంశ కుండలి', nameKannada: 'ಸಪ್ತಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'सप्तांश कुंडली', nameTamil: 'சப்தாம்சம் குண்டலி', purpose: 'Children and progeny', purposeHindi: 'संतान और संतति', purposeTelugu: 'సంతానం మరియు వారసులు', purposeTamil: 'குழந்தைகள் மற்றும் சந்ததி' },
+  D9:  { name: 'Navamsa', nameHindi: 'नवांश', nameTelugu: 'నవాంశ కుండలి', nameKannada: 'ನವಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'नवांश कुंडली', nameTamil: 'நவாம்சம் குண்டலி', purpose: 'Marriage and spouse', purposeHindi: 'विवाह और जीवनसाथी', purposeTelugu: 'వివాహం మరియు జీవిత భాగస్వామి', purposeTamil: 'திருமணம் மற்றும் வாழ்க்கைத் துணை' },
+  D10: { name: 'Dasamsa', nameHindi: 'दशांश', nameTelugu: 'దశాంశ కుండలి', nameKannada: 'ದಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'दशांश कुंडली', nameTamil: 'தசாம்சம் குண்டலி', purpose: 'Career and profession', purposeHindi: 'करियर और व्यवसाय', purposeTelugu: 'వృత్తి మరియు వ్యాపారం', purposeTamil: 'தொழில் மற்றும் வணிகம்' },
+  D12: { name: 'Dwadasamsa', nameHindi: 'द्वादशांश', nameTelugu: 'ద్వాదశాంశ కుండలి', nameKannada: 'ದ್ವಾದಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'द्वादशांश कुंडली', nameTamil: 'த்வாதசாம்சம் குண்டலி', purpose: 'Parents and ancestry', purposeHindi: 'माता-पिता और वंश', purposeTelugu: 'తల్లిదండ్రులు మరియు వంశం', purposeTamil: 'பெற்றோர் மற்றும் வம்சம்' },
+  D16: { name: 'Shodasamsa', nameHindi: 'षोडशांश', nameTelugu: 'షోడశాంశ కుండలి', nameKannada: 'ಷೋಡಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'षोडशांश कुंडली', nameTamil: 'ஷோடசாம்சம் குண்டலி', purpose: 'Vehicles and comforts', purposeHindi: 'वाहन और सुविधाएं', purposeTelugu: 'వాహనాలు మరియు సౌకర్యాలు', purposeTamil: 'வாகனங்கள் மற்றும் வசதிகள்' },
+  D20: { name: 'Vimsamsa', nameHindi: 'विंशांश', nameTelugu: 'వింశాంశ కుండలి', nameKannada: 'ವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'विंशांश कुंडली', nameTamil: 'விம்சாம்சம் குண்டலி', purpose: 'Spiritual progress', purposeHindi: 'आध्यात्मिक प्रगति', purposeTelugu: 'ఆధ్యాత్మిక ప్రగతి', purposeTamil: 'ஆன்மீக முன்னேற்றம்' },
+  D24: { name: 'Chaturvimsamsa', nameHindi: 'चतुर्विंशांश', nameTelugu: 'చతుర్వింశాంశ కుండలి', nameKannada: 'ಚತುರ್ವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'चतुर्विंशांश कुंडली', nameTamil: 'சதுர்விம்சாம்சம் குண்டலி', purpose: 'Education and learning', purposeHindi: 'शिक्षा और सीखना', purposeTelugu: 'విద్య మరియు నేర్చుకోవడం', purposeTamil: 'கல்வி மற்றும் கற்றல்' },
+  D27: { name: 'Bhamsa', nameHindi: 'भांश', nameTelugu: 'సప్తవింశాంశ కుండలి', nameKannada: 'ಸಪ್ತವಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'सप्तविंशांश कुंडली', nameTamil: 'சப்தவிம்சாம்சம் குண்டலி', purpose: 'Strength and weakness', purposeHindi: 'शक्ति और कमजोरी', purposeTelugu: 'బలం మరియు బలహీనత', purposeTamil: 'பலம் மற்றும் பலவீனம்' },
+  D30: { name: 'Trimsamsa', nameHindi: 'त्रिंशांश', nameTelugu: 'త్రింశాంశ కుండలి', nameKannada: 'ತ್ರಿಂಶಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'त्रिंशांश कुंडली', nameTamil: 'த்ரிம்சாம்சம் குண்டலி', purpose: 'Misfortune and evil', purposeHindi: 'दुर्भाग्य और बुराई', purposeTelugu: 'దురదృష్టం మరియు చెడు', purposeTamil: 'துரதிர்ஷ்டம் மற்றும் தீமை' },
+  D40: { name: 'Khavedamsa', nameHindi: 'खवेदांश', nameTelugu: 'ఖవేదాంశ కుండలి', nameKannada: 'ಖವೇದಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'खवेदांश कुंडली', nameTamil: 'கவேதாம்சம் குண்டலி', purpose: 'Auspiciousness', purposeHindi: 'शुभता', purposeTelugu: 'శుభత్వం', purposeTamil: 'நற்பலன்' },
+  D45: { name: 'Akshavedamsa', nameHindi: 'अक्षवेदांश', nameTelugu: 'అక్షవేదాంశ కుండలి', nameKannada: 'ಅಕ್ಷವೇದಾಂಶ ಕುಂಡಲಿ', nameMarathi: 'अक्षवेदांश कुंडली', nameTamil: 'அக்ஷவேதாம்சம் குண்டலி', purpose: 'Character and morals', purposeHindi: 'चरित्र और नैतिकता', purposeTelugu: 'వ్యక్తిత్వం మరియు నైతికత', purposeTamil: 'குணநலன் மற்றும் நெறிமுறை' },
+  D60: { name: 'Shashtiamsa', nameHindi: 'षष्ट्यंश', nameTelugu: 'షష్ట్యంశ కుండలి', nameKannada: 'ಷಷ್ಟ್ಯಂಶ ಕುಂಡಲಿ', nameMarathi: 'षष्ट्यंश कुंडली', nameTamil: 'ஷஷ்ட்யாம்சம் குண்டலி', purpose: 'Past life karma', purposeHindi: 'पूर्वजन्म कर्म', purposeTelugu: 'పూర్వజన్మ కర్మ', purposeTamil: 'முற்பிறவி கர்மா' },
 };
 
 // Important charts for PDF report (12 key divisional charts)
@@ -222,8 +225,10 @@ export interface ChartData {
   type: DivisionalChart;
   name: string;
   nameHindi: string;
+  nameTelugu: string;
   nameKannada: string;
   nameMarathi: string;
+  nameTamil: string;
   purpose: string;
   svg: string;
   dataUrl?: string; // PNG data URL for PDF embedding (bypasses react-pdf SVG parser)
@@ -251,8 +256,10 @@ export async function fetchMultipleCharts(
         type: chart,
         name: info.name,
         nameHindi: info.nameHindi,
+        nameTelugu: info.nameTelugu,
         nameKannada: info.nameKannada,
         nameMarathi: info.nameMarathi,
+        nameTamil: info.nameTamil,
         purpose: info.purpose,
         svg
       };

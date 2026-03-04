@@ -241,8 +241,42 @@ serve(async (req) => {
 
     // Parse date and time
     const [year, month, day] = dateOfBirth.split("-").map(Number);
-    const { hour, min } = parseBirthTime(timeOfBirth);
-    const birthDate = new Date(year, month - 1, day, hour, min);
+    const { hour: localHour, min: localMin } = parseBirthTime(timeOfBirth);
+    const birthDate = new Date(year, month - 1, day, localHour, localMin);
+
+    // Convert birth time from local timezone to IST (UTC+5:30)
+    // Seer API expects IST and the tzone field is ignored
+    const istOffsetMinutes = 5.5 * 60; // IST is UTC+5:30
+    const localOffsetMinutes = (timezone || 0) * 60; // Local timezone offset in minutes
+    const offsetDiffMinutes = istOffsetMinutes - localOffsetMinutes;
+
+    // Convert local time to IST
+    let istHour = localHour;
+    let istMin = localMin + offsetDiffMinutes;
+    let istYear = year, istMonth = month, istDay = day;
+
+    if (istMin >= 60) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+    } else if (istMin < 0) {
+      istHour += Math.floor(istMin / 60);
+      istMin = istMin % 60;
+      if (istMin < 0) istMin += 60;
+    }
+
+    if (istHour >= 24) {
+      istHour -= 24;
+      const nextDay = new Date(year, month - 1, day + 1);
+      istYear = nextDay.getFullYear();
+      istMonth = nextDay.getMonth() + 1;
+      istDay = nextDay.getDate();
+    } else if (istHour < 0) {
+      istHour += 24;
+      const prevDay = new Date(year, month - 1, day - 1);
+      istYear = prevDay.getFullYear();
+      istMonth = prevDay.getMonth() + 1;
+      istDay = prevDay.getDate();
+    }
 
     // Normalize gender
     const normalizedGender = gender === "female" || gender === "F" ? "F" : gender === "other" || gender === "O" ? "O" : "M";
@@ -253,14 +287,16 @@ serve(async (req) => {
           ? "single"
           : "unknown";
 
-    // Step 1: Call Seer API with enforced minute interpolation
+    // Step 1: Call Seer API with IST time conversion
+    // Seer API expects IST time (tzone field is ignored). We convert to IST and always use tzone=5.5.
     const baseReq: SeerKundliRequest = {
-      day, month, year, hour,
+      day: istDay, month: istMonth, year: istYear,
+      hour: istHour,
       min: 0,
       lat: latitude,
       lon: longitude,
-      tzone: timezone,
-      user_id: 505,
+      tzone: 5.5,           // Always IST (tzone field is ignored by Seer)
+      user_id: 7160881,  // Must match chart API's x-afb-r-uid for consistent ayanamsa
       name,
       gender: normalizedGender,
     };
@@ -269,19 +305,19 @@ serve(async (req) => {
     let kundli;
     let seerRawResponse: Record<string, unknown> | null = null;
     let interpolationDiagnostics: Record<string, unknown> | null = null;
-    if (min === 0) {
-      console.log("🌐 [REPORT] Calling Seer API (exact hour, single call)...");
+    if (Math.floor(istMin) === 0) {
+      console.log("🌐 [REPORT] Calling Seer API (exact IST hour, single call)...");
       const { data: seerData } = await fetchSeerKundli(baseReq);
       seerRawResponse = (seerData as Record<string, unknown>) || null;
       kundli = adaptSeerResponse(seerData);
     } else {
-      const nh = nextHourParams(day, month, year, hour);
+      const nh = nextHourParams(istDay, istMonth, istYear, istHour);
       const nextReq: SeerKundliRequest = {
         ...baseReq,
         day: nh.day, month: nh.month, year: nh.year, hour: nh.hour,
       };
 
-      console.log(`🌐 [REPORT] Calling Seer API x2 for interpolation (${hour}:00 & ${nh.hour}:00)...`);
+      console.log(`🌐 [REPORT] Calling Seer API x2 for IST interpolation (${istHour}:00 & ${nh.hour}:00 IST, minute=${Math.floor(istMin)})...`);
       const [resH, resH1] = await Promise.all([
         fetchSeerKundli(baseReq),
         fetchSeerKundli(nextReq),
@@ -290,7 +326,8 @@ serve(async (req) => {
 
       const kundliH = adaptSeerResponse(resH.data);
       const kundliH1 = adaptSeerResponse(resH1.data);
-      kundli = interpolateKundli(kundliH, kundliH1, min);
+      const istMinInt = Math.floor(istMin);
+      kundli = interpolateKundli(kundliH, kundliH1, istMinInt);
 
       const moonH = kundliH.planets.find((p: any) => p.name === "Moon");
       const moonH1 = kundliH1.planets.find((p: any) => p.name === "Moon");

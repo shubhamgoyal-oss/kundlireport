@@ -71,9 +71,9 @@ const KundliReportGenerator = () => {
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
   const [jobProgress, setJobProgress] = useState(0);
   const [jobPhase, setJobPhase] = useState("");
-  // Derive report language from i18n (supports en, hi, te, kn, mr)
+  // Derive report language from i18n (supports en, hi, te, kn, mr, ta)
   const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
-  const reportLanguage: 'en' | 'hi' | 'te' | 'kn' | 'mr' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : langCode === 'kn' ? 'kn' : langCode === 'mr' ? 'mr' : 'en';
+  const reportLanguage: 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : langCode === 'kn' ? 'kn' : langCode === 'mr' ? 'mr' : langCode === 'ta' ? 'ta' : 'en';
   const isHindi = reportLanguage !== 'en'; // true for Hindi, Telugu, Kannada, Marathi — Indic UI labels
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -88,6 +88,7 @@ const KundliReportGenerator = () => {
     defaultValues: {
       unknownTime: false,
       place: "",
+      gender: "M",
     },
   });
 
@@ -438,6 +439,7 @@ const KundliReportGenerator = () => {
                     <option value="te">తెలుగు (Telugu)</option>
                     <option value="kn">ಕನ್ನಡ (Kannada)</option>
                     <option value="mr">मराठी (Marathi)</option>
+                    <option value="ta">தமிழ் (Tamil)</option>
                   </select>
                 </div>
 
@@ -471,17 +473,11 @@ const KundliReportGenerator = () => {
                 </div>
 
                 {/* Date of Birth */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm sm:text-base font-medium">
-                    <Calendar className="w-4 h-4 flex-shrink-0" />
-                    {isHindi ? 'जन्म तिथि' : 'Date of Birth'} <span className="text-destructive">*</span>
-                  </Label>
-                  <DateOfBirthPicker
-                    value={watch('date') || ''}
-                    onChange={(date) => setValue('date', date)}
-                    error={errors.date?.message}
-                  />
-                </div>
+                <DateOfBirthPicker
+                  value={watch('date') || ''}
+                  onChange={(date) => setValue('date', date)}
+                  error={errors.date?.message}
+                />
 
                 {/* Time of Birth */}
                 <div className="space-y-2">

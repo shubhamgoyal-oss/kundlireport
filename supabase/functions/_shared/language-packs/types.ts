@@ -1,4 +1,4 @@
-export type SupportedLanguage = "en" | "hi" | "te" | "kn" | "mr";
+export type SupportedLanguage = "en" | "hi" | "te" | "kn" | "mr" | "ta";
 
 export type LanguageSection =
   | "global"

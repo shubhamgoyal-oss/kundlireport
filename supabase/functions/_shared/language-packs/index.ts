@@ -40,6 +40,14 @@ import { MR_QC_RULES } from "./mr/qc.ts";
 import { MR_TEMPLATES } from "./mr/templates.ts";
 import { MR_SIGNIFICATIONS } from "./mr/significations.ts";
 
+import { TA_AGENT_PROMPTS } from "./ta/prompts.ts";
+import { TA_STATIC_LABELS } from "./ta/labels.ts";
+import { TA_TERM_MAPS } from "./ta/terms.ts";
+import { TA_TYPOGRAPHY } from "./ta/typography.ts";
+import { TA_QC_RULES } from "./ta/qc.ts";
+import { TA_TEMPLATES } from "./ta/templates.ts";
+import { TA_SIGNIFICATIONS } from "./ta/significations.ts";
+
 const REGISTRY: Record<SupportedLanguage, LanguagePack> = {
   en: {
     code: "en",
@@ -101,6 +109,18 @@ const REGISTRY: Record<SupportedLanguage, LanguagePack> = {
     typography: MR_TYPOGRAPHY,
     qcRules: MR_QC_RULES,
   },
+  ta: {
+    code: "ta",
+    version: "ta_v2",
+    generationMode: "native",
+    agentPrompts: TA_AGENT_PROMPTS,
+    staticLabels: TA_STATIC_LABELS,
+    termMaps: TA_TERM_MAPS,
+    templates: TA_TEMPLATES,
+    significations: TA_SIGNIFICATIONS,
+    typography: TA_TYPOGRAPHY,
+    qcRules: TA_QC_RULES,
+  },
 };
 
 export function normalizeLanguage(input: unknown): SupportedLanguage {
@@ -109,6 +129,7 @@ export function normalizeLanguage(input: unknown): SupportedLanguage {
   if (raw.startsWith("te")) return "te";
   if (raw.startsWith("kn") || raw.startsWith("kan")) return "kn";
   if (raw.startsWith("mr") || raw.startsWith("mar")) return "mr";
+  if (raw.startsWith("ta") || raw.startsWith("tam")) return "ta";
   return "en";
 }
 

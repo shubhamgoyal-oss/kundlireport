@@ -42,6 +42,7 @@ const FONT_CONFIG: Record<string, { family: string; src: string; fontSize: numbe
   mr: { family: 'NotoSansDevanagari', src: '/fonts/NotoSansDevanagari-Regular.ttf', fontSize: 11.2 },
   te: { family: 'NotoSansTelugu',     src: '/fonts/NotoSansTelugu-Regular.ttf',     fontSize: 11.2 },
   kn: { family: 'NotoSansKannada',    src: '/fonts/NotoSansKannada-Regular.ttf',    fontSize: 11.2 },
+  ta: { family: 'NotoSansTamil',      src: '/fonts/NotoSansTamil-Regular.ttf',      fontSize: 11.2 },
 };
 
 // Page layout constants (must match KundliPDFDocument.tsx styles)

@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, x-session-id, x-visitor-id",
 };
 
 const AI_OPENAI_URL = Deno.env.get("AI_OPENAI_URL")
@@ -342,10 +342,12 @@ serve(async (req) => {
     const name = String(ai?.name || deterministic.name || "").trim();
     const placeOfBirth = String(ai?.placeOfBirth || deterministic.placeOfBirth || "").trim();
     const dateOfBirth = parseDob(String(ai?.dateOfBirth || deterministic.dateOfBirth || ""));
-    const timeOfBirth = parseTime(String(ai?.timeOfBirth || deterministic.timeOfBirth || ""));
+    // If the original row had no time, always default to 00:00 (12 AM) — don't trust AI's guess
+    const deterministicTime = parseTime(String(deterministic.timeOfBirth || ""));
+    const timeOfBirth = deterministicTime || "00:00"; // Default to 12 AM if missing
     const gender = String(ai?.gender || deterministic.gender || "M").toUpperCase() === "F" ? "F" : "M";
 
-    if (!name || !placeOfBirth || !dateOfBirth || !timeOfBirth) {
+    if (!name || !placeOfBirth || !dateOfBirth) {
       throw new Error("Could not fully decipher row into Seer API inputs");
     }
 

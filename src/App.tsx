@@ -16,6 +16,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { trackTrafficSource } from "./utils/trafficTracking";
 import PdfTest from "./pages/PdfTest";
+import CoverTest from "./pages/CoverTest";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => {
 
               {/* Test route for PDF debugging */}
               <Route path="/pdf-test" element={<PdfTest />} />
+              <Route path="/cover-test" element={<CoverTest />} />
 
               {/* Admin login route */}
               <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,0 +1,21 @@
+{
+  "name": "kundli-report-cloud-run",
+  "version": "1.0.0",
+  "description": "Kundli Report Cloud Run Functions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "functions-framework --target=startKundliJob --debug --source=.",
+    "deploy": "gcloud functions deploy startKundliJob --runtime nodejs20 --trigger-http --allow-unauthenticated --region asia-southeast1"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "express": "^4.18.2",
+    "@google-cloud/functions-framework": "^3.5.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.0.0",
+    "@types/express": "^4.17.0"
+  }
+}

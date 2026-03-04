@@ -553,12 +553,109 @@ function replaceCommonLatin(value: string, language: string): string {
     [/\brespective\b/gi, "ಸಂಬಂಧಿತ"],
   ];
 
+  const taMap: Array<[RegExp, string]> = [
+    // ── Strength / severity / status ──
+    [/\bhigh\b/gi, "அதிகம்"], [/\bmedium\b/gi, "நடுத்தரம்"], [/\blow\b/gi, "குறைவு"],
+    [/\bnone\b/gi, "இல்லை"], [/\bpresent\b/gi, "உள்ளது"], [/\babsent\b/gi, "இல்லை"],
+    [/\bnullified\b/gi, "நீக்கப்பட்டது"], [/\bpartial\b/gi, "பகுதி"],
+    [/\bstrong\b/gi, "வலிமை"], [/\bmoderate\b/gi, "நடுத்தரம்"], [/\bweak\b/gi, "பலவீனம்"],
+    [/\bactive\b/gi, "செயலில்"], [/\bstrength\b/gi, "பலம்"], [/\bseverity\b/gi, "தீவிரம்"],
+    [/\bintensity\b/gi, "தீவிரம்"],
+    // ── Time / period ──
+    [/\bphase\b/gi, "நிலை"], [/\bperiod\b/gi, "காலம்"], [/\byears?\b/gi, "ஆண்டுகள்"],
+    [/\bmonths?\b/gi, "மாதங்கள்"], [/\bdays?\b/gi, "நாட்கள்"], [/\bcurrent\b/gi, "தற்போதைய"],
+    [/\bprevious\b/gi, "முந்தைய"], [/\bduration\b/gi, "காலம்"], [/\btiming\b/gi, "நேரம்"],
+    // ── Jyotish core terms ──
+    [/\bhouse\b/gi, "பாவம்"], [/\bhouses\b/gi, "பாவங்கள்"], [/\bsign\b/gi, "ராசி"],
+    [/\bsigns\b/gi, "ராசிகள்"], [/\bplanet\b/gi, "கிரகம்"], [/\bplanets\b/gi, "கிரகங்கள்"],
+    [/\bdosha\b/gi, "தோஷம்"], [/\byoga\b/gi, "யோகம்"], [/\byogas\b/gi, "யோகங்கள்"],
+    [/\bdasha\b/gi, "தசை"], [/\bnative\b/gi, "ஜாதகர்"], [/\bascendant\b/gi, "லக்னம்"],
+    [/\bnakshatra\b/gi, "நட்சத்திரம்"], [/\bcycle\b/gi, "சுழற்சி"], [/\bkarma\b/gi, "கர்மம்"],
+    [/\bvedic\b/gi, "வேத"], [/\bkundli\b/gi, "ஜாதகம்"], [/\bhoroscope\b/gi, "ஜாதகம்"],
+    [/\bjapa\b/gi, "ஜபம்"], [/\bmantra\b/gi, "மந்திரம்"], [/\bmantras\b/gi, "மந்திரங்கள்"],
+    // ── People / gender ──
+    [/\bmale\b/gi, "ஆண்"], [/\bfemale\b/gi, "பெண்"], [/\byoung\b/gi, "இளம்"],
+    [/\badult\b/gi, "வயது வந்தோர்"], [/\bsenior\b/gi, "மூத்தவர்"], [/\bminor\b/gi, "சிறுவயது"],
+    [/\bspouse\b/gi, "வாழ்க்கைத்துணை"], [/\bpartner\b/gi, "துணை"],
+    // ── Life areas & sections ──
+    [/\bhealth\b/gi, "ஆரோக்கியம்"], [/\bcareer\b/gi, "தொழில்"], [/\bmarriage\b/gi, "திருமணம்"],
+    [/\bguidance\b/gi, "வழிகாட்டுதல்"], [/\banalysis\b/gi, "விசலேஷணை"],
+    [/\bremedy\b/gi, "பரிகாரம்"], [/\bremedies\b/gi, "பரிகாரங்கள்"],
+    [/\bprediction\b/gi, "பலன்"], [/\bpredictions\b/gi, "பலன்கள்"],
+    [/\boverview\b/gi, "கண்ணோட்டம்"], [/\bsummary\b/gi, "சுருக்கம்"],
+    [/\bbenefits\b/gi, "நன்மைகள்"], [/\beffects\b/gi, "விளைவுகள்"],
+    [/\bimpact\b/gi, "தாக்கம்"], [/\binsight\b/gi, "உள்ளுணர்வு"],
+    [/\bdescription\b/gi, "விவரணை"], [/\binterpretation\b/gi, "விளக்கம்"],
+    [/\bexplanation\b/gi, "விளக்கம்"], [/\bsignificance\b/gi, "முக்கியத்துவம்"],
+    // ── Remedy-related terms ──
+    [/\bgemstones?\b/gi, "ரத்தினம்"], [/\brecommended\b/gi, "பரிந்துரைக்கப்பட்ட"],
+    [/\bpronunciation\b/gi, "உச்சரிப்பு"], [/\bfasting\b/gi, "விரதம்"],
+    [/\bdonation\b/gi, "தானம்"], [/\bcharity\b/gi, "தானம்"],
+    [/\brudraksha\b/gi, "ருத்ராக்ஷம்"], [/\byantra\b/gi, "யந்திரம்"],
+    [/\bworship\b/gi, "வழிபாடு"], [/\bpuja\b/gi, "பூஜை"],
+    [/\bprayer\b/gi, "பிரார்த்தனை"], [/\bmeditation\b/gi, "தியானம்"],
+    [/\bchanting\b/gi, "ஜபம்"], [/\brecitation\b/gi, "பாராயணம்"],
+    // ── Lucky / unlucky ──
+    [/\blucky\b/gi, "அதிர்ஷ்ட"], [/\bunlucky\b/gi, "துரதிர்ஷ்ட"],
+    [/\bcolou?rs?\b/gi, "நிறம்"], [/\bnumbers?\b/gi, "எண்"],
+    [/\bdirections?\b/gi, "திசை"],
+    // ── Yoga / marriage / career terms ──
+    [/\bdetected\b/gi, "கண்டறியப்பட்டது"], [/\bactivation\b/gi, "செயல்படுத்துதல்"],
+    [/\battraction\b/gi, "ஈர்ப்பு"], [/\blove\b/gi, "காதல்"],
+    [/\bswitch\b/gi, "மாற்றம்"], [/\bdue\b/gi, "எதிர்பார்க்கப்படும்"],
+    [/\btotal\b/gi, "மொத்தம்"], [/\benvironment\b/gi, "சூழல்"],
+    [/\bideal\b/gi, "சிறந்த"], [/\bwork\b/gi, "பணி"],
+    [/\bcompatibility\b/gi, "பொருத்தம்"], [/\brelationship\b/gi, "உறவு"],
+    [/\bprofession\b/gi, "தொழில்"], [/\boccupation\b/gi, "தொழில்"],
+    [/\bfinancial\b/gi, "நிதி"], [/\bwealth\b/gi, "செல்வம்"],
+    [/\bprosperity\b/gi, "செழிப்பு"], [/\bsuccess\b/gi, "வெற்றி"],
+    [/\bgrowth\b/gi, "வளர்ச்சி"], [/\bopportunity\b/gi, "வாய்ப்பு"],
+    [/\bopportunities\b/gi, "வாய்ப்புகள்"], [/\bchallenge\b/gi, "சவால்"],
+    [/\bchallenges\b/gi, "சவால்கள்"], [/\bfavorable\b/gi, "சாதகமான"],
+    [/\bunfavorable\b/gi, "பாதகமான"], [/\bauspicious\b/gi, "சுபம்"],
+    [/\binauspicious\b/gi, "அசுபம்"],
+    // ── Sade Sati / transit ──
+    [/\btransit\b/gi, "கோசரம்"], [/\brising\b/gi, "ஆரம்ப"], [/\bpeak\b/gi, "உச்ச"],
+    [/\bsetting\b/gi, "இறுதி"], [/\binfluence\b/gi, "தாக்கம்"],
+    [/\bexalted\b/gi, "உச்சம்"], [/\bdebilitated\b/gi, "நீசம்"],
+    [/\bretrograde\b/gi, "வக்கிரம்"], [/\bcombust\b/gi, "அஸ்தம்"],
+    [/\bdignity\b/gi, "பலம்"], [/\baspect\b/gi, "திருஷ்டி"], [/\bconjunction\b/gi, "சேர்க்கை"],
+    // ── Common adjectives / descriptors ──
+    [/\bpositive\b/gi, "நேர்மறை"], [/\bnegative\b/gi, "எதிர்மறை"],
+    [/\bnatural\b/gi, "இயற்கை"], [/\bspiritual\b/gi, "ஆன்மீக"],
+    [/\bmental\b/gi, "மன"], [/\bphysical\b/gi, "உடல்"],
+    [/\bemotional\b/gi, "உணர்ச்சி"], [/\bpractical\b/gi, "நடைமுறை"],
+    [/\bimportant\b/gi, "முக்கியமான"], [/\bsignificant\b/gi, "முக்கியமான"],
+    [/\bbeneficial\b/gi, "பயனுள்ள"], [/\bharmful\b/gi, "தீங்கான"],
+    [/\bprotective\b/gi, "பாதுகாப்பான"], [/\bpowerful\b/gi, "சக்திவாய்ந்த"],
+    // ── Misc common words ──
+    [/\bcharacteristics\b/gi, "குணநலன்கள்"], [/\bqualities\b/gi, "குணங்கள்"],
+    [/\bnature\b/gi, "இயல்பு"], [/\btype\b/gi, "வகை"],
+    [/\bresult\b/gi, "பலன்"], [/\bresults\b/gi, "பலன்கள்"],
+    [/\bcaution\b/gi, "எச்சரிக்கை"], [/\bwarning\b/gi, "எச்சரிக்கை"],
+    [/\badvice\b/gi, "ஆலோசனை"], [/\brecommendation\b/gi, "பரிந்துரை"],
+    [/\brecommendations\b/gi, "பரிந்துரைகள்"], [/\bformation\b/gi, "உருவாக்கம்"],
+    [/\bcriteria\b/gi, "அளவுகோல்"], [/\barea\b/gi, "பகுதி"], [/\bareas\b/gi, "பகுதிகள்"],
+    [/\bfocus\b/gi, "கவனம்"], [/\bpath\b/gi, "பாதை"],
+    [/\bgeneral\b/gi, "பொதுவான"], [/\bspecific\b/gi, "குறிப்பிட்ட"],
+    [/\boverall\b/gi, "ஒட்டுமொத்த"], [/\bdetailed\b/gi, "விரிவான"],
+    [/\bbased\b/gi, "அடிப்படையிலான"], [/\baccording\b/gi, "படி"],
+    [/\bthrough\b/gi, "மூலம்"], [/\brelated\b/gi, "தொடர்புடைய"],
+    [/\brespective\b/gi, "சம்பந்தமான"],
+    // ── Nitya yoga names ──
+    [/\bSiddha\b/g, "சித்த"], [/\bMangala\b/g, "மங்கள"],
+    [/\bPingala\b/g, "பிங்கள"], [/\bDhanya\b/g, "தன்ய"],
+    [/\bBhramari\b/g, "பிரமரி"], [/\bBhadrika\b/g, "பத்ரிகா"],
+    [/\bUlka\b/g, "உல்கா"], [/\bSankata\b/g, "சங்கட"],
+  ];
+
   let out = value;
   // Marathi uses Devanagari with vocabulary very close to Hindi — reuse hiMap.
-  // Kannada has its own script — use knMap.
+  // Kannada has its own script — use knMap. Tamil has its own script — use taMap.
   const rules = language === "hi" || language === "mr" ? hiMap
     : language === "te" ? teMap
     : language === "kn" ? knMap
+    : language === "ta" ? taMap
     : hiMap; // fallback
   for (const [re, to] of rules) {
     out = out.replace(re, to);

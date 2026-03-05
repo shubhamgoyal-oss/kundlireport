@@ -1,7 +1,8 @@
 /// <reference types="@types/google.maps" />
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCEsEBy-JYuu9SSITQrpYU3tpaq5HQOhi4';
+const GOOGLE_MAPS_API_KEY =
+  import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyAloADZONRgxV40nf6MoECrHSulOuyJOjs';
 
 interface PlacePrediction {
   place_id: string;
@@ -28,6 +29,10 @@ function loadGoogleMapsScript(): Promise<void> {
 
   if (window.google?.maps?.places) {
     return Promise.resolve();
+  }
+
+  if (!GOOGLE_MAPS_API_KEY) {
+    return Promise.reject(new Error('Missing Google Maps API key'));
   }
 
   googleMapsPromise = new Promise((resolve, reject) => {
@@ -101,8 +106,8 @@ export function useGooglePlacesAutocomplete() {
             sessionToken: sessionToken.current!,
           },
           (predictions, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-              resolve(predictions);
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+              resolve(Array.isArray(predictions) ? predictions : []);
             } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
               resolve([]);
             } else {
@@ -112,8 +117,9 @@ export function useGooglePlacesAutocomplete() {
         );
       });
 
+      const safeResponse = Array.isArray(response) ? response : [];
       setPredictions(
-        response.map((p) => ({
+        safeResponse.map((p) => ({
           place_id: p.place_id,
           description: p.description,
           structured_formatting: {

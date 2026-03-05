@@ -6,8 +6,9 @@ export const LanguageWrapper = () => {
   const { lang } = useParams<{ lang: string }>();
   const { i18n } = useTranslation();
 
-  // Only allow 'en' or 'hi'
-  if (lang !== 'en' && lang !== 'hi') {
+  // Only allow supported languages: en, hi, te, kn, mr, ta, gu
+  const supportedLangs = ['en', 'hi', 'te', 'kn', 'mr', 'ta', 'gu'];
+  if (!supportedLangs.includes(lang)) {
     return <Navigate to="/hi" replace />;
   }
 

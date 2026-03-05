@@ -1,16 +1,17 @@
 import type { PdfLanguage } from '../types';
 
-export const MONTH_NAMES_BY_LANGUAGE: Record<'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta', string[]> = {
+export const MONTH_NAMES_BY_LANGUAGE: Record<'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu', string[]> = {
   en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
   hi: ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'],
   te: ['జనవరి', 'ఫిబ్రవరి', 'మార్చి', 'ఏప్రిల్', 'మే', 'జూన్', 'జూలై', 'ఆగస్టు', 'సెప్టెంబర్', 'అక్టోబర్', 'నవంబర్', 'డిసెంబర్'],
   kn: ['ಜನವರಿ', 'ಫೆಬ್ರವರಿ', 'ಮಾರ್ಚ್', 'ಏಪ್ರಿಲ್', 'ಮೇ', 'ಜೂನ್', 'ಜುಲೈ', 'ಆಗಸ್ಟ್', 'ಸೆಪ್ಟೆಂಬರ್', 'ಅಕ್ಟೋಬರ್', 'ನವೆಂಬರ್', 'ಡಿಸೆಂಬರ್'],
   mr: ['जानेवारी', 'फेब्रुवारी', 'मार्च', 'एप्रिल', 'मे', 'जून', 'जुलै', 'ऑगस्ट', 'सप्टेंबर', 'ऑक्टोबर', 'नोव्हेंबर', 'डिसेंबर'],
   ta: ['ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்', 'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'],
+  gu: ['જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન', 'જુલાઈ', 'ઑગસ્ટ', 'સપ્ટેમ્બર', 'ઑક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર'],
 };
 
 
-export const PLACE_TRANSLIT: Record<string, Record<string, string>> = {
+export const PLACE_TRANSLIT: Record<'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu', Record<string, string>> = {
   hi: {
     // Country
     India: 'भारत',
@@ -204,6 +205,32 @@ export const PLACE_TRANSLIT: Record<string, Record<string, string>> = {
     Varanasi: 'வாரணாசி', Surat: 'சூரத்',
     Dehradun: 'டேராடூன்',
     Tirupati: 'திருப்பதி',
+  },
+  gu: {
+    India: 'ભારત',
+    'Andhra Pradesh': 'આંધ્રપ્રદેશ', 'Arunachal Pradesh': 'અરુણાચલ પ્રદેશ',
+    Assam: 'આસામ', Bihar: 'બિહાર', Chhattisgarh: 'છત્તીસગઢ',
+    Goa: 'ગોવા', Gujarat: 'ગુજરાત', Haryana: 'હરિયાણા',
+    'Himachal Pradesh': 'હિમાચલ પ્રદેશ', Jharkhand: 'ઝારખંડ',
+    Karnataka: 'કર્નાટક', Kerala: 'કેરલ',
+    'Madhya Pradesh': 'મધ્યપ્રદેશ', Maharashtra: 'મહારાષ્ટ્ર',
+    Manipur: 'મણિપુર', Meghalaya: 'મેઘાલય', Mizoram: 'મિઝોરામ',
+    Nagaland: 'નાગાલેન્ડ', Odisha: 'ઓડિશા', Punjab: 'પંજાબ',
+    Rajasthan: 'રાજસ્થાન', Sikkim: 'સિક્કિમ', 'Tamil Nadu': 'તમિલનાડુ',
+    Telangana: 'તેલંગાણા', Tripura: 'ત્રિપુરા',
+    'Uttar Pradesh': 'ઉત્તર પ્રદેશ', Uttarakhand: 'ઉત્તરાખંડ',
+    'West Bengal': 'પશ્ચિમ બંગાળ',
+    Delhi: 'દિલ્હી', 'New Delhi': 'નવી દિલ્હી',
+    Chandigarh: 'ચંડીગઢ', Puducherry: 'પુદુચ્છેરી',
+    Ladakh: 'લદાખ', Lakshadweep: 'લક્ષદ્વીપ',
+    'Jammu and Kashmir': 'જમ્મુ અને કાશ્મીર',
+    Mumbai: 'મુંબઈ', Pune: 'પુણે', Nagpur: 'નાગપુર',
+    Bangalore: 'બેંગલુરુ', Bengaluru: 'બેંગલુરુ',
+    Chennai: 'ચેન્નાઈ', Hyderabad: 'હૈદરાબાદ',
+    Kolkata: 'કોલકાતા', Ahmedabad: 'અમદાવાદ',
+    Jaipur: 'જયપુર', Lucknow: 'લખનઉ', Patna: 'પટણા',
+    Bhopal: 'ભોપાળ', Indore: 'ઈંદોર',
+    Noida: 'નોઈડા', Gurugram: 'ગુરુગ્રામ', Gurgaon: 'ગુરુગ્રામ',
   },
 };
 

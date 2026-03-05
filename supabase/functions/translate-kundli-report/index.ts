@@ -27,7 +27,7 @@ const corsHeaders = {
 };
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return true;
   if (language === "en") return false;
   return false;
 }

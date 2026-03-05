@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/tabs";
 
 const Kundli = () => {
-  const { t } = useTranslation();
-  const isHindi = (localStorage.getItem('i18nextLng') || 'en').toLowerCase().startsWith('hi');
+  const { t, i18n } = useTranslation();
+  const isHindi = (i18n.language || 'en').toLowerCase().startsWith('hi');
 
   useEffect(() => {
     trackEvent('page_view', { page: 'kundli' });

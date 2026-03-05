@@ -43,7 +43,7 @@ function isTruthyFlag(raw: string | undefined): boolean {
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
   // Hindi/Telugu/Kannada/Marathi must always run native pipeline to prevent silent English fallback.
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return true;
   // English remains flag-gated for stability lock rollout.
   if (language === "en") return isTruthyFlag(Deno.env.get("LANG_PIPELINE_V2_EN"));
   return false;
@@ -857,7 +857,7 @@ async function triggerStage2AndReturn(
  * the single-char श (Shani/Saturn) to avoid partial replacement.
  */
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return svg; // keep Hindi labels for non-English
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return svg; // keep Hindi labels for non-English
   // For English (and any other language), replace Hindi → English abbreviations
   const replacements: [string, string][] = [
     ["शु", "VE"],   // Shukra  → Venus

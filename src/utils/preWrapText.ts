@@ -43,6 +43,7 @@ const FONT_CONFIG: Record<string, { family: string; src: string; fontSize: numbe
   te: { family: 'NotoSansTelugu',     src: '/fonts/NotoSansTelugu-Regular.ttf',     fontSize: 11.2 },
   kn: { family: 'NotoSansKannada',    src: '/fonts/NotoSansKannada-Regular.ttf',    fontSize: 11.2 },
   ta: { family: 'NotoSansTamil',      src: '/fonts/NotoSansTamil-Regular.ttf',      fontSize: 11.2 },
+  gu: { family: 'KohinoorGujaratiBody', src: '/fonts/KohinoorGujarati-Light-Stripped.ttf', fontSize: 10.6 },
 };
 
 // Page layout constants (must match KundliPDFDocument.tsx styles)
@@ -56,6 +57,17 @@ const DEFAULT_MAX_WIDTH_PT = 475;
 const SAFETY_FACTOR = 0.97;
 
 /**
+ * Normalize all Unicode space variants into regular ASCII spaces so
+ * tokenization uses a single, deterministic space boundary.
+ */
+function normalizeWordSpacing(text: string): string {
+  return String(text || '')
+    .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\t\r\f\v]+/g, ' ')
+    .replace(/ {2,}/g, ' ')
+    .trim();
+}
+
+/**
  * Core line-wrapping logic (synchronous — assumes font already loaded in canvas).
  */
 function wrapWithCanvas(
@@ -63,8 +75,11 @@ function wrapWithCanvas(
   ctx: CanvasRenderingContext2D,
   effectiveMax: number,
 ): string {
+  const normalized = normalizeWordSpacing(text);
+  if (!normalized) return '';
+
   // Split ONLY at ASCII spaces — each token is a word or space run.
-  const tokens = text.split(/([ ]+)/g).filter(Boolean);
+  const tokens = normalized.split(/([ ]+)/g).filter(Boolean);
 
   const lines: string[] = [];
   let currentLine = '';
@@ -102,7 +117,7 @@ function wrapParagraph(
   effectiveMax: number,
 ): string {
   // Collapse any existing single-newline line breaks to spaces
-  const unwrapped = text.replace(/\n/g, ' ').replace(/  +/g, ' ').trim();
+  const unwrapped = normalizeWordSpacing(text.replace(/\n/g, ' '));
   if (unwrapped.length < 40) return unwrapped;
   return wrapWithCanvas(unwrapped, ctx, effectiveMax);
 }

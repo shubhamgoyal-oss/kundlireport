@@ -341,7 +341,8 @@ const styles = StyleSheet.create({
   },
   // Bold label inside highlight/card
   boldLabel: {
-    fontWeight: 'bold',
+    // Body emphasis should stay readable (not heavy-bold), while section headers remain bold.
+    fontWeight: 'normal',
     fontSize: 10.5,
     color: P.bodyText,
     lineHeight: 1.45,
@@ -879,6 +880,8 @@ const SriMandirFooter = () => (
               ? 'कॉल किंवा व्हॉट्सॲप: 080 711 74417'
               : getActivePdfLanguage() === 'ta'
                 ? 'அழைக்கவும் அல்லது வாட்ஸ்அப்: 080 711 74417'
+                : getActivePdfLanguage() === 'gu'
+                  ? 'કૉલ અથવા વોટ્સએપ: 080 711 74417'
                 : 'Call or WhatsApp: 080 711 74417'}
     </Text>
   </View>
@@ -937,6 +940,8 @@ const SectionDividerPage = ({ partNumber, title, subtitle }: { partNumber: strin
               ? 'ಶ್ರೀ ಮಂದಿರ — ಧರ್ಮ, ಕರ್ಮ, ಜ್ಯೋತಿಷ'
               : getActivePdfLanguage() === 'ta'
                 ? 'ஸ்ரீ மந்திர் — தர்மம், கர்மா, ஜோதிடம்'
+                : getActivePdfLanguage() === 'gu'
+                  ? 'શ્રી મંદિર — ધર્મ, કર્મ, જ્યોતિષ'
                 : 'Sri Mandir — Dharma, Karma, Jyotish'}
       </Text>
     </View>
@@ -950,20 +955,23 @@ const Card = ({ title, children }: { title: string; children: React.ReactNode })
   </View>
 );
 
-const BulletList = ({ items, maxWidth }: { items: string[]; maxWidth?: number }) => (
-  <View style={styles.list}>
-    {items
-      .map((item) => String(item ?? '').trim())
-      .filter((item) => item.length > 0)
-      .filter((item, idx, arr) => idx === 0 || item !== arr[idx - 1]) // dedup consecutive duplicates
-      .map((item, idx) => (
-        <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
-          <Text style={styles.bullet}>•</Text>
-          <Text style={[styles.bodyText, { flex: 1 }]}>{localizePdfUiText(item, maxWidth)}</Text>
-        </View>
-      ))}
-  </View>
-);
+const BulletList = ({ items, maxWidth }: { items?: unknown[] | null; maxWidth?: number }) => {
+  const safeItems = Array.isArray(items) ? items : [];
+  return (
+    <View style={styles.list}>
+      {safeItems
+        .map((item) => String(item ?? '').trim())
+        .filter((item) => item.length > 0)
+        .filter((item, idx, arr) => idx === 0 || item !== arr[idx - 1]) // dedup consecutive duplicates
+        .map((item, idx) => (
+          <View key={idx} style={{ flexDirection: 'row', marginBottom: 3, alignItems: 'flex-start' }} wrap={false}>
+            <Text style={styles.bullet}>•</Text>
+            <Text style={[styles.bodyText, { flex: 1 }]}>{localizePdfUiText(item, maxWidth)}</Text>
+          </View>
+        ))}
+    </View>
+  );
+};
 
 // SVG Parser - converts SVG string to react-pdf components
 const normalizeSvgCoordinate = (value: unknown): number | undefined => {
@@ -1103,21 +1111,157 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
   // StyleSheet.create() is static (module-level). For non-English we need larger
   // body text so the PDF rendering matches the Canvas measurement font size.
   // English keeps the original 10.2 pt; Indic languages use getActivePdfBodyFontSize() (11.2 pt).
-  if (getActivePdfLanguage() !== 'en') {
-    (styles as Record<string, Record<string, unknown>>).paragraph.fontSize = getActivePdfBodyFontSize();
-    (styles as Record<string, Record<string, unknown>>).paragraph.lineHeight = getActivePdfBodyLineHeight();
-    (styles as Record<string, Record<string, unknown>>).bodyText.fontSize = getActivePdfBodyFontSize();
-    (styles as Record<string, Record<string, unknown>>).bodyText.lineHeight = getActivePdfBodyLineHeight();
-    (styles as Record<string, Record<string, unknown>>).scriptural.fontSize = 10.2;
-    (styles as Record<string, Record<string, unknown>>).scriptural.lineHeight = 1.5;
+  const _s = styles as Record<string, Record<string, unknown>>;
+  const activePdfLanguage = getActivePdfLanguage();
+  if (activePdfLanguage !== 'en') {
+    _s.paragraph.fontSize = getActivePdfBodyFontSize();
+    _s.paragraph.lineHeight = getActivePdfBodyLineHeight();
+    _s.bodyText.fontSize = getActivePdfBodyFontSize();
+    _s.bodyText.lineHeight = getActivePdfBodyLineHeight();
+    _s.scriptural.fontSize = 10.2;
+    _s.scriptural.lineHeight = 1.5;
+    // ── Table font-size overrides for Indic scripts ──────────────────────────
+    // Tamil/Devanagari/Telugu/Kannada glyphs are wider & taller than Latin.
+    // Without this, table text overflows or clips in narrow cells.
+    _s.tableHeaderCell.fontSize = 10.5;
+    _s.tableCell.fontSize = 10.5;
+    _s.advancedTableHeaderCell.fontSize = 8.8;
+    _s.advancedCellText.fontSize = 8;
+    _s.advancedCellText.lineHeight = 1.3;
+    _s.tinyNote.fontSize = 8.8;
+    _s.cardTitle.fontSize = 11.5;
+
+    // Always reset font families for non-English renders to active language family.
+    // Prevent stale family mutations from previous render sessions.
+    const activeFamily = getActivePdfFontFamily();
+    _s.paragraph.fontFamily = activeFamily;
+    _s.bodyText.fontFamily = activeFamily;
+    _s.scriptural.fontFamily = activeFamily;
+    _s.value.fontFamily = activeFamily;
+    _s.tableCell.fontFamily = activeFamily;
+    _s.advancedCellText.fontFamily = activeFamily;
+    _s.tocSubtitle.fontFamily = activeFamily;
+    _s.tocSubtitleCompact.fontFamily = activeFamily;
+    _s.sectionIntro.fontFamily = activeFamily;
+    _s.nicknameFun.fontFamily = activeFamily;
+    _s.header.fontFamily = activeFamily;
+    _s.subHeader.fontFamily = activeFamily;
+    _s.subSubHeader.fontFamily = activeFamily;
+    _s.cardTitle.fontFamily = activeFamily;
+    _s.label.fontFamily = activeFamily;
+    _s.chartTitle.fontFamily = activeFamily;
+    _s.calloutTitle.fontFamily = activeFamily;
+    _s.tocTitle.fontFamily = activeFamily;
+    _s.tocTitleCompact.fontFamily = activeFamily;
+    _s.fixedHeaderTitle.fontFamily = activeFamily;
+    _s.dividerTitle.fontFamily = activeFamily;
+    _s.sriMandirBrandName.fontFamily = activeFamily;
+    _s.sriMandirContact.fontFamily = activeFamily;
+
+    if (activePdfLanguage === 'gu') {
+      // Gujarati typography:
+      // - Body text uses lighter family
+      // - Section/subsection headers keep a heavier family
+      const guBodyFamily = 'KohinoorGujaratiBody';
+      const guHeadFamily = 'KohinoorGujaratiHead';
+
+      _s.paragraph.fontFamily = guBodyFamily;
+      _s.bodyText.fontFamily = guBodyFamily;
+      _s.scriptural.fontFamily = guBodyFamily;
+      _s.value.fontFamily = guBodyFamily;
+      _s.tableCell.fontFamily = guBodyFamily;
+      _s.advancedCellText.fontFamily = guBodyFamily;
+      _s.tocSubtitle.fontFamily = guBodyFamily;
+      _s.tocSubtitleCompact.fontFamily = guBodyFamily;
+      _s.sectionIntro.fontFamily = guBodyFamily;
+      _s.nicknameFun.fontFamily = guBodyFamily;
+
+      _s.header.fontFamily = guHeadFamily;
+      _s.subHeader.fontFamily = guHeadFamily;
+      _s.subSubHeader.fontFamily = guHeadFamily;
+      _s.cardTitle.fontFamily = guHeadFamily;
+      _s.label.fontFamily = guHeadFamily;
+      _s.chartTitle.fontFamily = guHeadFamily;
+      _s.calloutTitle.fontFamily = guHeadFamily;
+      _s.tocTitle.fontFamily = guHeadFamily;
+      _s.tocTitleCompact.fontFamily = guHeadFamily;
+      _s.fixedHeaderTitle.fontFamily = guHeadFamily;
+      _s.dividerTitle.fontFamily = guHeadFamily;
+      _s.sriMandirBrandName.fontFamily = guHeadFamily;
+      _s.sriMandirContact.fontFamily = guHeadFamily;
+
+      _s.paragraph.fontWeight = 'normal';
+      _s.bodyText.fontWeight = 'normal';
+      _s.scriptural.fontWeight = 'normal';
+      _s.value.fontWeight = 'normal';
+      _s.tableCell.fontWeight = 'normal';
+      _s.advancedCellText.fontWeight = 'normal';
+      _s.tocSubtitle.fontWeight = 'normal';
+      _s.tocSubtitleCompact.fontWeight = 'normal';
+      _s.sectionIntro.fontWeight = 'normal';
+      _s.nicknameFun.fontWeight = 'normal';
+
+      _s.header.fontWeight = 'bold';
+      _s.subHeader.fontWeight = 'bold';
+      _s.subSubHeader.fontWeight = 'bold';
+      _s.cardTitle.fontWeight = 'bold';
+      _s.label.fontWeight = 'bold';
+      _s.chartTitle.fontWeight = 'bold';
+      _s.calloutTitle.fontWeight = 'bold';
+      _s.tocTitle.fontWeight = 'bold';
+      _s.tocTitleCompact.fontWeight = 'bold';
+      _s.fixedHeaderTitle.fontWeight = 'bold';
+      _s.dividerTitle.fontWeight = 'bold';
+      _s.sriMandirBrandName.fontWeight = 'bold';
+      _s.sriMandirContact.fontWeight = 'bold';
+    }
   } else {
     // Reset to English defaults in case a previous Indic render mutated them
-    (styles as Record<string, Record<string, unknown>>).paragraph.fontSize = 10.2;
-    (styles as Record<string, Record<string, unknown>>).paragraph.lineHeight = 1.45;
-    (styles as Record<string, Record<string, unknown>>).bodyText.fontSize = 10.2;
-    (styles as Record<string, Record<string, unknown>>).bodyText.lineHeight = 1.45;
-    (styles as Record<string, Record<string, unknown>>).scriptural.fontSize = 9.5;
-    (styles as Record<string, Record<string, unknown>>).scriptural.lineHeight = 1.4;
+    _s.paragraph.fontSize = 10.2;
+    _s.paragraph.lineHeight = 1.45;
+    _s.bodyText.fontSize = 10.2;
+    _s.bodyText.lineHeight = 1.45;
+    _s.scriptural.fontSize = 9.5;
+    _s.scriptural.lineHeight = 1.4;
+    _s.tableHeaderCell.fontSize = 10;
+    _s.tableCell.fontSize = 10;
+    _s.advancedTableHeaderCell.fontSize = 8.2;
+    _s.advancedCellText.fontSize = 7.6;
+    _s.advancedCellText.lineHeight = 1.2;
+    _s.tinyNote.fontSize = 8.2;
+    _s.cardTitle.fontSize = 11.2;
+
+    // Reset Gujarati-specific font overrides.
+    _s.paragraph.fontWeight = 'normal';
+    _s.bodyText.fontWeight = 'normal';
+    _s.scriptural.fontWeight = 'normal';
+    _s.value.fontWeight = 'normal';
+    _s.tableCell.fontWeight = 'normal';
+    _s.advancedCellText.fontWeight = 'normal';
+
+    _s.paragraph.fontFamily = getActivePdfFontFamily();
+    _s.bodyText.fontFamily = getActivePdfFontFamily();
+    _s.scriptural.fontFamily = getActivePdfFontFamily();
+    _s.value.fontFamily = getActivePdfFontFamily();
+    _s.tableCell.fontFamily = getActivePdfFontFamily();
+    _s.advancedCellText.fontFamily = getActivePdfFontFamily();
+    _s.tocSubtitle.fontFamily = getActivePdfFontFamily();
+    _s.tocSubtitleCompact.fontFamily = getActivePdfFontFamily();
+    _s.sectionIntro.fontFamily = getActivePdfFontFamily();
+    _s.nicknameFun.fontFamily = getActivePdfFontFamily();
+    _s.header.fontFamily = getActivePdfFontFamily();
+    _s.subHeader.fontFamily = getActivePdfFontFamily();
+    _s.subSubHeader.fontFamily = getActivePdfFontFamily();
+    _s.cardTitle.fontFamily = getActivePdfFontFamily();
+    _s.label.fontFamily = getActivePdfFontFamily();
+    _s.chartTitle.fontFamily = getActivePdfFontFamily();
+    _s.calloutTitle.fontFamily = getActivePdfFontFamily();
+    _s.tocTitle.fontFamily = getActivePdfFontFamily();
+    _s.tocTitleCompact.fontFamily = getActivePdfFontFamily();
+    _s.fixedHeaderTitle.fontFamily = getActivePdfFontFamily();
+    _s.dividerTitle.fontFamily = getActivePdfFontFamily();
+    _s.sriMandirBrandName.fontFamily = getActivePdfFontFamily();
+    _s.sriMandirContact.fontFamily = getActivePdfFontFamily();
   }
 
   const parseBirthTime = (rawTime: unknown): { hour: number; minute: number } | null => {
@@ -1508,12 +1652,12 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
     : formatUtcOffset(timezoneOffset);
   const genderRaw = String(birthDetails.gender || '').toUpperCase();
   const sex = genderRaw === 'F' || genderRaw === 'FEMALE'
-    ? (getActivePdfLanguage() === 'hi' ? 'महिला' : getActivePdfLanguage() === 'te' ? 'స్త్రీ' : getActivePdfLanguage() === 'kn' ? 'ಮಹಿಳೆ' : getActivePdfLanguage() === 'mr' ? 'स्त्री' : getActivePdfLanguage() === 'ta' ? 'பெண்' : 'Female')
+    ? (getActivePdfLanguage() === 'hi' ? 'महिला' : getActivePdfLanguage() === 'te' ? 'స్త్రీ' : getActivePdfLanguage() === 'kn' ? 'ಮಹಿಳೆ' : getActivePdfLanguage() === 'mr' ? 'स्त्री' : getActivePdfLanguage() === 'ta' ? 'பெண்' : getActivePdfLanguage() === 'gu' ? 'સ્ત્રી' : 'Female')
     : genderRaw === 'O' || genderRaw === 'OTHER'
-      ? (getActivePdfLanguage() === 'hi' ? 'अन्य' : getActivePdfLanguage() === 'te' ? 'ఇతర' : getActivePdfLanguage() === 'kn' ? 'ಇತರ' : getActivePdfLanguage() === 'mr' ? 'इतर' : getActivePdfLanguage() === 'ta' ? 'பிற' : 'Other')
+      ? (getActivePdfLanguage() === 'hi' ? 'अन्य' : getActivePdfLanguage() === 'te' ? 'ఇతర' : getActivePdfLanguage() === 'kn' ? 'ಇತರ' : getActivePdfLanguage() === 'mr' ? 'इतर' : getActivePdfLanguage() === 'ta' ? 'பிற' : getActivePdfLanguage() === 'gu' ? 'અન્ય' : 'Other')
       : genderRaw === 'M' || genderRaw === 'MALE'
-        ? (getActivePdfLanguage() === 'hi' ? 'पुरुष' : getActivePdfLanguage() === 'te' ? 'పురుషుడు' : getActivePdfLanguage() === 'kn' ? 'ಪುರುಷ' : getActivePdfLanguage() === 'mr' ? 'पुरुष' : getActivePdfLanguage() === 'ta' ? 'ஆண்' : 'Male')
-        : (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'లభ్యం కాదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : 'N/A');
+        ? (getActivePdfLanguage() === 'hi' ? 'पुरुष' : getActivePdfLanguage() === 'te' ? 'పురుషుడు' : getActivePdfLanguage() === 'kn' ? 'ಪುರುಷ' : getActivePdfLanguage() === 'mr' ? 'पुरुष' : getActivePdfLanguage() === 'ta' ? 'ஆண்' : getActivePdfLanguage() === 'gu' ? 'પુરુષ' : 'Male')
+        : (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'లభ్యం కాదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : getActivePdfLanguage() === 'gu' ? 'ઉપલબ્ધ નથી' : 'N/A');
   const birthDateValue = String(birthDetails.dateOfBirth || '');
   const sunPosition = report?.planetaryPositions?.find((planet: any) => planet?.name === 'Sun');
   const tithiName = report?.panchang?.tithi?.name || 'N/A';
@@ -1650,6 +1794,8 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               ? `${startMonth} ${startYear} पासून ${endMonth} ${endYear} पर्यंत`
               : getActivePdfLanguage() === 'ta'
                 ? `${startMonth} ${startYear} முதல் ${endMonth} ${endYear} வரை`
+                : getActivePdfLanguage() === 'gu'
+                  ? `${startMonth} ${startYear} થી ${endMonth} ${endYear} સુધી`
                 : `${startMonth} ${startYear} to ${endMonth} ${endYear}`,
     };
   });
@@ -1778,19 +1924,19 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
         </View>
 
         <View style={styles.coverIdentityCard}>
-          <Text style={styles.coverName}>{report.birthDetails.name}</Text>
+          <Text style={styles.coverName}>{String(birthDetails.name || 'Kundli')}</Text>
           <View style={styles.coverInfoBlock}>
             <View style={styles.coverInfoRow}>
               <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Date of Birth')}</Text>
-              <Text style={styles.coverInfoValue}>{formatBirthDate(report.birthDetails.dateOfBirth)}</Text>
+              <Text style={styles.coverInfoValue}>{formatBirthDate(String(birthDetails.dateOfBirth || ''))}</Text>
             </View>
             <View style={styles.coverInfoRow}>
               <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Time of Birth')}</Text>
-              <Text style={styles.coverInfoValue}>{report.birthDetails.unknownTime ? localizePdfUiText('Time not available') : report.birthDetails.timeOfBirth}</Text>
+              <Text style={styles.coverInfoValue}>{birthDetails.unknownTime ? localizePdfUiText('Time not available') : String(birthDetails.timeOfBirth || 'N/A')}</Text>
             </View>
             <View style={[styles.coverInfoRow, { marginBottom: 0 }]}>
               <Text style={[styles.coverInfoLabel, getActivePdfLanguage() !== 'en' ? { letterSpacing: 0 } : {}]}>{localizePdfUiText('Place of Birth')}</Text>
-              <Text style={styles.coverInfoValue}>{placeDetails.city || report.birthDetails.placeOfBirth || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : 'N/A')}</Text>
+              <Text style={styles.coverInfoValue}>{placeDetails.city || birthDetails.placeOfBirth || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : getActivePdfLanguage() === 'gu' ? 'ઉપલબ્ધ નથી' : 'N/A')}</Text>
             </View>
           </View>
         </View>
@@ -2023,11 +2169,12 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           : getActivePdfLanguage() === 'kn' && c.nameKannada ? c.nameKannada
           : getActivePdfLanguage() === 'mr' && c.nameMarathi ? c.nameMarathi
           : getActivePdfLanguage() === 'ta' && c.nameTamil ? c.nameTamil
+          : getActivePdfLanguage() === 'gu' && c.nameGujarati ? c.nameGujarati
           : c.name;
 
         const renderChartCell = (chart: ChartData, idx: number) => (
           <View key={idx} style={styles.chartItem} wrap={false}>
-            <Text style={styles.chartTitle}>{chart.type}: {chartName(chart)}</Text>
+            <Text style={styles.chartTitle}>{chart.type}: {localizePdfUiText(chartName(chart))}</Text>
             <View style={styles.chartContainer}>
               {chart.dataUrl ? (
                 <Image src={chart.dataUrl} style={{ width: 236, height: 236 }} />
@@ -2083,7 +2230,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                 <InfoRow label="Time of Birth" value={birthDetails.unknownTime ? localizePdfUiText('Time not available') : (birthDetails.timeOfBirth || 'N/A')} />
                 <InfoRow label="Place of Birth" value={(() => {
                   const raw = birthDetails.placeOfBirth || '';
-                  if (!raw) return placeDetails.city || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : 'N/A');
+                  if (!raw) return placeDetails.city || (getActivePdfLanguage() === 'hi' ? 'उपलब्ध नहीं' : getActivePdfLanguage() === 'te' ? 'అందుబాటులో లేదు' : getActivePdfLanguage() === 'kn' ? 'ಲಭ್ಯವಿಲ್ಲ' : getActivePdfLanguage() === 'mr' ? 'उपलब्ध नाही' : getActivePdfLanguage() === 'ta' ? 'கிடைக்கவில்லை' : getActivePdfLanguage() === 'gu' ? 'ઉપલબ્ધ નથી' : 'N/A');
                   // Transliterate each comma-separated segment of the place string
                   return raw.split(',').map((s: string) => translitPlace(s.trim())).join(', ');
                 })()} />
@@ -2122,7 +2269,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               <Text style={styles.tableHeaderCell}>{localizePdfUiText('Degree')}</Text>
               <Text style={styles.tableHeaderCell}>{localizePdfUiText('Status')}</Text>
             </View>
-            {report.planetaryPositions.map((planet: any, idx: number) => (
+            {(report.planetaryPositions || []).map((planet: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{localizePdfUiText(planet.name)}</Text>
                 <Text style={styles.tableCell}>{localizePdfUiText(planet.sign)}</Text>
@@ -2176,21 +2323,40 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{localizePdfUiText('Planetary Degree Matrix')}</Text>
+            {(() => {
+              // ── Indic-aware column layout for the advanced planetary table ──────
+              // Tamil/Devanagari/Telugu/Kannada glyphs are ~40% wider than Latin.
+              // For non-English: hide R/C columns (already shown in basic table),
+              // widen text-heavy columns, and abbreviate "N/A" to "—".
+              const isIndic = getActivePdfLanguage() !== 'en';
+              /** Abbreviate for narrow table cells: N/A → "—", truncate long Indic text */
+              const tblText = (raw: string): string => {
+                if (!raw || raw === 'N/A') return '—';
+                const localized = localizePdfUiText(raw);
+                if (!localized || localized === 'N/A') return '—';
+                return localized;
+              };
+              // Column flex values — wider for Indic scripts
+              const f = isIndic
+                ? { pl: 1.4, rasi: 1.4, deg: 1.3, spd: 0.8, nak: 2.2, pad: 0.6, no: 0.6, rl: 1.2, nl: 1.2, sub: 1.2, dig: 1.6 }
+                : { pl: 1.0, r: 0.45, c: 0.45, rasi: 1.0, deg: 1.3, spd: 1.2, nak: 1.8, pad: 0.7, no: 0.7, rl: 1.0, nl: 1.0, sub: 1.0, dig: 1.5 };
+              return (
+              <>
             <View style={styles.advancedTable}>
               <View style={styles.advancedTableHeader}>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Pl')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>R</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>C</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Rasi')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.3 }]}>{localizePdfUiText('Degree')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.2 }]}>{localizePdfUiText('Speed')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.8 }]}>{localizePdfUiText('Nak')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('Pad')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 0.7 }]}>{localizePdfUiText('No.')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('RL')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('NL')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.0 }]}>{localizePdfUiText('Sub')}</Text>
-                <Text style={[styles.advancedTableHeaderCell, { flex: 1.5 }]}>{localizePdfUiText('Dignity')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.pl }]}>{localizePdfUiText('Pl')}</Text>
+                {!isIndic && <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>R</Text>}
+                {!isIndic && <Text style={[styles.advancedTableHeaderCell, { flex: 0.45 }]}>C</Text>}
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.rasi }]}>{localizePdfUiText('Rasi')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.deg }]}>{localizePdfUiText('Degree')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.spd }]}>{localizePdfUiText('Speed')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.nak }]}>{localizePdfUiText('Nak')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.pad }]}>{localizePdfUiText('Pad')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.no }]}>{localizePdfUiText('No.')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.rl }]}>{localizePdfUiText('RL')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.nl }]}>{localizePdfUiText('NL')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.sub }]}>{localizePdfUiText('Sub')}</Text>
+                <Text style={[styles.advancedTableHeaderCell, { flex: f.dig }]}>{localizePdfUiText('Dignity')}</Text>
               </View>
               {detailedPlanetRows.map((row: any, idx: number) => (
                 <View
@@ -2198,25 +2364,28 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   style={idx % 2 === 0 ? styles.advancedTableRow : styles.advancedTableRowAlt}
                   wrap={false}
                 >
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.name)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.retro}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.combust}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.signShort)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.3 }]}>{row.degreeText}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.2 }]}>{row.speed}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.8 }]}>{localizePdfUiText(row.nakshatra)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.pada}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 0.7 }]}>{row.nakNo}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.rashiLord)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.nakLord)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.0 }]}>{localizePdfUiText(row.subLord)}</Text>
-                  <Text style={[styles.advancedCellText, { flex: 1.5 }]}>{localizePdfUiText(row.dignity)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.pl }]}>{tblText(row.name)}</Text>
+                  {!isIndic && <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.retro}</Text>}
+                  {!isIndic && <Text style={[styles.advancedCellText, { flex: 0.45 }]}>{row.combust}</Text>}
+                  <Text style={[styles.advancedCellText, { flex: f.rasi }]}>{tblText(row.signShort)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.deg }]}>{row.degreeText}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.spd }]}>{row.speed}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.nak }]}>{tblText(row.nakshatra)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.pad }]}>{row.pada}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.no }]}>{row.nakNo}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.rl }]}>{tblText(row.rashiLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.nl }]}>{tblText(row.nakLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.sub }]}>{tblText(row.subLord)}</Text>
+                  <Text style={[styles.advancedCellText, { flex: f.dig }]}>{tblText(row.dignity)}</Text>
                 </View>
               ))}
             </View>
             <Text style={styles.tinyNote}>
               {localizePdfUiText('R = Retrograde, C = Combust. Fields marked "if available" are shown when present in source astro data.')}
             </Text>
+              </>
+              );
+            })()}
           </View>
         </Section>
 
@@ -2228,7 +2397,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               <Text style={styles.tableHeaderCell}>{localizePdfUiText('Degree')}</Text>
               <Text style={styles.tableHeaderCell}>{localizePdfUiText('Signification')}</Text>
             </View>
-            {report.charaKarakas.map((karaka: any, idx: number) => (
+            {(report.charaKarakas || []).map((karaka: any, idx: number) => (
               <View key={idx} style={styles.tableRow}>
                 <Text style={styles.tableCell}>{localizePdfUiText(karaka.karaka)}</Text>
                 <Text style={styles.tableCell}>{localizePdfUiText(karaka.planet)}</Text>
@@ -2393,7 +2562,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   <Text style={styles.tableHeaderCell}>{localizePdfUiText('Lord in')}</Text>
                   <Text style={styles.tableHeaderCell}>{localizePdfUiText('Occupants')}</Text>
                 </View>
-                {report.houses.map((house: any, idx: number) => {
+                {(report.houses || []).map((house: any, idx: number) => {
                   const houseSign = localizePdfUiText(sanitizeText(String(house.sign || 'N/A')) || 'N/A');
                   const houseLord = localizePdfUiText(sanitizeText(String(house.lord || 'N/A')) || 'N/A');
                   const occupantsText = Array.isArray(house.occupants)
@@ -2416,14 +2585,10 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             </Section>
           </ContentPage>
 
-          {report.houses.map((house: any, idx: number) => {
-            // Build localized house title: for non-English use local name (e.g., "முதல் பாவம்")
-            const localHouseTitle = getActivePdfLanguage() !== 'en' && house.houseHindi
-              ? sanitizeText(house.houseHindi)
-              : `House ${house.house}`;
-            const sectionLabel = getActivePdfLanguage() !== 'en' && house.houseHindi
-              ? sanitizeText(house.houseHindi)
-              : `House ${house.house}`;
+          {(report.houses || []).map((house: any, idx: number) => {
+            // Build localized house title from static phrase map (not AI-generated houseHindi which can be garbled)
+            const localHouseTitle = localizePdfUiText(`House ${house.house}`);
+            const sectionLabel = localHouseTitle;
             return (
             <ContentPage key={idx} sectionName={sectionLabel}>
               <Section title={localHouseTitle}>
@@ -2991,15 +3156,15 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
       {report.dasha?.upcomingMahadashaAntardashaPredictions && report.dasha.upcomingMahadashaAntardashaPredictions.length > 0 && (
         <>
           {report.dasha.upcomingMahadashaAntardashaPredictions.map((mdGroup: any, mdIdx: number) => (
-            <ContentPage key={`upcoming-md-ad-${mdIdx}`} sectionName={`${mdGroup.mahadasha} Antardashas`}>
-              <Section title={`${mdGroup.mahadasha} Mahadasha - Antardasha Predictions`}>
+            <ContentPage key={`upcoming-md-ad-${mdIdx}`} sectionName={`${localizePdfUiText(mdGroup.mahadasha)} ${localizePdfUiText('Antardashas')}`}>
+              <Section title={`${localizePdfUiText(mdGroup.mahadasha)} ${localizePdfUiText('Mahadasha')} - ${localizePdfUiText('Antardasha Predictions')}`}>
                 <View style={styles.card}>
                   <InfoRow label="Mahadasha Period" value={`${mdGroup.startDate || ''} to ${mdGroup.endDate || ''}`} />
                 </View>
                 <Text style={styles.paragraph}>{localizePdfUiText(mdGroup.overview || '')}</Text>
 
                 {(mdGroup.antardashas || []).map((ad: any, idx: number) => (
-                  <Card key={idx} title={`${mdGroup.mahadasha}/${ad.antardasha} (${ad.duration || ''})`}>
+                  <Card key={idx} title={`${localizePdfUiText(mdGroup.mahadasha)}/${localizePdfUiText(ad.antardasha)} (${ad.duration || ''})`}>
                     <InfoRow label="Period" value={`${ad.startDate || ''} to ${ad.endDate || ''}`} />
                     <Text style={styles.paragraph}>{localizePdfUiText(ad.interpretation || '')}</Text>
 
@@ -3599,7 +3764,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             <Section title="Sade Sati — Detailed Analysis">
               {/* Current / Past Sade Sati */}
               {report.sadeSati.currentSadeSati && (
-                <SubSection title={`Current Sade Sati: ${report.sadeSati.currentSadeSati.period}`}>
+                <SubSection title={`${localizePdfUiText('Current Sade Sati')}: ${localizePdfUiText(report.sadeSati.currentSadeSati.period)}`}>
                   <Text style={styles.paragraph}>{localizePdfUiText(report.sadeSati.currentSadeSati.overallTheme || '')}</Text>
                   <Text style={styles.subSubHeader}>{localizePdfUiText('Phase 1 — The Rising (Building Pressure)')}</Text>
                   <Text style={styles.paragraph}>{localizePdfUiText(report.sadeSati.currentSadeSati.phase1 || '')}</Text>
@@ -3637,14 +3802,14 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
               )}
 
               {report.sadeSati.pastSadeSati && !report.sadeSati.currentSadeSati && (
-                <SubSection title={`Past Sade Sati: ${report.sadeSati.pastSadeSati.period}`}>
+                <SubSection title={`${localizePdfUiText('Past Sade Sati')}: ${localizePdfUiText(report.sadeSati.pastSadeSati.period)}`}>
                   <Text style={styles.paragraph}>{localizePdfUiText(report.sadeSati.pastSadeSati.keyLessons || '')}</Text>
                   <Text style={styles.paragraph}>{localizePdfUiText(report.sadeSati.pastSadeSati.lifeEvents || '')}</Text>
                 </SubSection>
               )}
 
               {report.sadeSati.nextSadeSati && (
-                <SubSection title={`Next Sade Sati: ${report.sadeSati.nextSadeSati.period}`}>
+                <SubSection title={`${localizePdfUiText('Next Sade Sati')}: ${localizePdfUiText(report.sadeSati.nextSadeSati.period)}`}>
                   <InfoRow label="Approximate Start" value={report.sadeSati.nextSadeSati.approximateStart || 'N/A'} />
                   <Text style={styles.paragraph}>{localizePdfUiText(report.sadeSati.nextSadeSati.preparationAdvice || '')}</Text>
                 </SubSection>
@@ -4151,7 +4316,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           {/* Atmakaraka Special Analysis */}
           {report.charaKarakasDetailed.atmakarakaSpecial && (
             <ContentPage sectionName="Atmakaraka Analysis">
-              <Section title={`${localizePdfUiText('Atmakaraka')}: ${report.charaKarakasDetailed.atmakarakaSpecial.planet} - ${localizePdfUiText('Soul Significator')}`}>
+              <Section title={`${localizePdfUiText('Atmakaraka')}: ${localizePdfUiText(report.charaKarakasDetailed.atmakarakaSpecial.planet || 'N/A')} - ${localizePdfUiText('Soul Significator')}`}>
                 <View style={styles.card}>
                   <Text style={[styles.boldLabel, { color: '#c2410c', marginBottom: 4 }]}>
                     {localizePdfUiText('The Atmakaraka is the most important planet in Jaimini astrology, representing your soul\'s purpose.')}
@@ -4175,7 +4340,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
 
               {/* Darakaraka Special Analysis */}
               {report.charaKarakasDetailed.darakarakaSpecial && (
-                <Section title={`${localizePdfUiText('Darakaraka')}: ${report.charaKarakasDetailed.darakarakaSpecial.planet} - ${localizePdfUiText('Spouse Significator')}`}>
+                <Section title={`${localizePdfUiText('Darakaraka')}: ${localizePdfUiText(report.charaKarakasDetailed.darakarakaSpecial.planet || 'N/A')} - ${localizePdfUiText('Spouse Significator')}`}>
                   <SubSection title="Spouse Characteristics">
                     <Text style={styles.paragraph}>{localizePdfUiText(report.charaKarakasDetailed.darakarakaSpecial.spouseCharacteristics || '')}</Text>
                   </SubSection>
@@ -4197,7 +4362,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           {/* Amatyakaraka and Karaka Details */}
           <ContentPage sectionName="Amatyakaraka Analysis">
             {report.charaKarakasDetailed.amatyakarakaSpecial && (
-              <Section title={`${localizePdfUiText('Amatyakaraka')}: ${report.charaKarakasDetailed.amatyakarakaSpecial.planet} - ${localizePdfUiText('Career Significator')}`}>
+              <Section title={`${localizePdfUiText('Amatyakaraka')}: ${localizePdfUiText(report.charaKarakasDetailed.amatyakarakaSpecial.planet || 'N/A')} - ${localizePdfUiText('Career Significator')}`}>
                 <SubSection title="Career Direction">
                   <Text style={styles.paragraph}>{localizePdfUiText(report.charaKarakasDetailed.amatyakarakaSpecial.careerDirection || '')}</Text>
                 </SubSection>
@@ -4219,7 +4384,7 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
             {report.charaKarakasDetailed.karakaInteractions && report.charaKarakasDetailed.karakaInteractions.length > 0 && (
               <Section title="Karaka Interactions">
                 {report.charaKarakasDetailed.karakaInteractions.map((interaction: any, idx: number) => (
-                  <Card key={idx} title={interaction.karakas?.join(' + ') || ''}>
+                  <Card key={idx} title={(interaction.karakas || []).map((k: string) => localizePdfUiText(k)).join(' + ') || ''}>
                     <Text style={styles.paragraph}>{localizePdfUiText(interaction.interaction)}</Text>
                     <View style={styles.highlight}>
                       <Text style={styles.bodyText}>{localizePdfUiText('Effect')}: {localizePdfUiText(interaction.effect)}</Text>
@@ -4319,11 +4484,11 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
           {/* Glossary Sections */}
           {(report.glossary.sections || []).map((section: any, sIdx: number) => (
             <ContentPage key={`glossary-${sIdx}`} sectionName="Glossary">
-              <Section title={section.category}>
+              <Section title={localizePdfUiText(section.category || '')}>
                 <Text style={styles.paragraph}>{localizePdfUiText(section.categoryDescription || '')}</Text>
 
                 {(section.terms || []).map((term: any, tIdx: number) => (
-                  <Card key={tIdx} title={`${term.term}${term.termSanskrit && (getActivePdfLanguage() === 'hi' || getActivePdfLanguage() === 'mr') ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
+                  <Card key={tIdx} title={`${localizePdfUiText(term.term || '')}${term.termSanskrit && (getActivePdfLanguage() === 'hi' || getActivePdfLanguage() === 'mr') ? ' (' + sanitizeText(term.termSanskrit) + ')' : ''}`}>
                     <Text style={[styles.scriptural, { marginBottom: 4 }]}>{localizePdfUiText('Pronunciation')}: {term.pronunciation}</Text>
 
                     <Text style={[styles.boldLabel, { marginBottom: 3 }]}>{localizePdfUiText(term.definition)}</Text>
@@ -4415,6 +4580,8 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                     ? 'कॉल किंवा व्हॉट्सॲप: 080 711 74417'
                     : getActivePdfLanguage() === 'ta'
                       ? 'அழைக்கவும் அல்லது வாட்ஸ்அப்: 080 711 74417'
+                      : getActivePdfLanguage() === 'gu'
+                        ? 'કૉલ અથવા વોટ્સએપ: 080 711 74417'
                       : 'Call or WhatsApp: 080 711 74417'}
           </Text>
         </View>
@@ -4452,6 +4619,8 @@ export const KundliPDFDocument = ({ report, language }: KundliPDFProps) => {
                   ? 'ಶ್ರೀ ಮಂದಿರ — ಧರ್ಮ, ಕರ್ಮ, ಜ್ಯೋತಿಷ'
                   : getActivePdfLanguage() === 'ta'
                     ? 'ஸ்ரீ மந்திர் — தர்மம், கர்மா, ஜோதிடம்'
+                    : getActivePdfLanguage() === 'gu'
+                      ? 'શ્રી મંદિર — ધર્મ, કર્મ, જ્યોતિષ'
                     : 'Sri Mandir — Dharma, Karma, Jyotish'}
           </Text>
         </View>

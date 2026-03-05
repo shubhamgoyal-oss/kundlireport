@@ -48,6 +48,14 @@ import { TA_QC_RULES } from "./ta/qc";
 import { TA_TEMPLATES } from "./ta/templates";
 import { TA_SIGNIFICATIONS } from "./ta/significations";
 
+import { GU_AGENT_PROMPTS } from "./gu/prompts";
+import { GU_STATIC_LABELS } from "./gu/labels";
+import { GU_TERM_MAPS } from "./gu/terms";
+import { GU_TYPOGRAPHY } from "./gu/typography";
+import { GU_QC_RULES } from "./gu/qc";
+import { GU_TEMPLATES } from "./gu/templates";
+import { GU_SIGNIFICATIONS } from "./gu/significations";
+
 const REGISTRY: Record<SupportedLanguage, LanguagePack> = {
   en: {
     code: "en",
@@ -121,6 +129,18 @@ const REGISTRY: Record<SupportedLanguage, LanguagePack> = {
     typography: TA_TYPOGRAPHY,
     qcRules: TA_QC_RULES,
   },
+  gu: {
+    code: "gu",
+    version: "gu_v2",
+    generationMode: "native",
+    agentPrompts: GU_AGENT_PROMPTS,
+    staticLabels: GU_STATIC_LABELS,
+    termMaps: GU_TERM_MAPS,
+    templates: GU_TEMPLATES,
+    significations: GU_SIGNIFICATIONS,
+    typography: GU_TYPOGRAPHY,
+    qcRules: GU_QC_RULES,
+  },
 };
 
 export function normalizeLanguage(input: unknown): SupportedLanguage {
@@ -130,6 +150,7 @@ export function normalizeLanguage(input: unknown): SupportedLanguage {
   if (raw.startsWith("kn") || raw.startsWith("kan")) return "kn";
   if (raw.startsWith("mr") || raw.startsWith("mar")) return "mr";
   if (raw.startsWith("ta") || raw.startsWith("tam")) return "ta";
+  if (raw.startsWith("gu") || raw.startsWith("guj")) return "gu";
   return "en";
 }
 

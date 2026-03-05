@@ -83,3 +83,37 @@ Font.register({
     { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
   ],
 });
+
+// Register Gujarati fonts for native-script rendering
+Font.register({
+  family: 'NotoSansGujarati',
+  fonts: [
+    { src: '/fonts/NotoSansGujarati-Regular.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansGujarati-Bold.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/NotoSansGujarati-Regular.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/NotoSansGujarati-Bold.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+});
+
+// Register lighter Gujarati body + stronger Gujarati heading families.
+// This keeps body text readable while preserving bold section headers.
+Font.register({
+  family: 'KohinoorGujaratiBody',
+  fonts: [
+    { src: '/fonts/KohinoorGujarati-Light-Stripped.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    // No true italic file available; map italic to regular/bold to keep react-pdf font resolution stable.
+    { src: '/fonts/KohinoorGujarati-Light-Stripped.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+});
+
+Font.register({
+  family: 'KohinoorGujaratiHead',
+  fonts: [
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'normal', fontStyle: 'normal' },
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'bold', fontStyle: 'normal' },
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'normal', fontStyle: 'italic' },
+    { src: '/fonts/KohinoorGujarati-Bold-Stripped.ttf', fontWeight: 'bold', fontStyle: 'italic' },
+  ],
+});

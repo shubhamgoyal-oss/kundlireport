@@ -40,7 +40,7 @@ function isTruthyFlag(raw: string | undefined): boolean {
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
   // Hindi/Telugu/Kannada/Marathi must always run native pipeline to prevent silent English fallback.
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return true;
   // English remains flag-gated for stability lock rollout.
   if (language === "en") return isTruthyFlag(process.env.LANG_PIPELINE_V2_EN);
   return false;
@@ -796,7 +796,7 @@ async function handleAgentRetry(
   console.log(`📊 [RETRY] Summary: ${succeededRetries.length} succeeded, ${failedRetries.length} still failed`);
 
   // Save merged report
-  await supabase
+  const { error: updateError } = await supabase
     .from("kundli_report_jobs")
     .update({
       status: "processing",
@@ -806,6 +806,11 @@ async function handleAgentRetry(
       heartbeat_at: new Date().toISOString(),
     })
     .eq("id", jobId);
+
+  if (updateError) {
+    console.error(`❌ [PROCESS-JOB] Failed to save report_data: ${updateError.message}`);
+    throw new Error(`Database update failed: ${updateError.message}`);
+  }
 
   // Trigger Stage 2: translate
   triggerStage2AndReturn(supabase, jobId, res);
@@ -846,7 +851,7 @@ function triggerStage2AndReturn(
  * the single-char श (Shani/Saturn) to avoid partial replacement.
  */
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return svg; // keep Hindi labels for non-English
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return svg; // keep Hindi labels for non-English
   // For English (and any other language), replace Hindi → English abbreviations
   const replacements: [string, string][] = [
     ["शु", "VE"],   // Shukra  → Venus

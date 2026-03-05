@@ -11,7 +11,7 @@ interface JobRequest {
   latitude: number;
   longitude: number;
   timezone: number;
-  language?: "en" | "hi" | "te" | "kn" | "mr" | "ta";
+  language?: "en" | "hi" | "te" | "kn" | "mr" | "ta" | "gu";
   gender?: "M" | "F" | "O";
   hasTime?: boolean;
   visitorId: string;

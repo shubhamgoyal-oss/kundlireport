@@ -24,7 +24,7 @@ import { createJobEvent, touchJobHeartbeat } from '../_shared/job-events';
 const router = Router();
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return true;
   if (language === "en") return false;
   return false;
 }
@@ -258,10 +258,15 @@ async function saveAndTriggerFinalize(
       updatePayload.report_data = report;
     }
 
-    await supabase
+    const { error: updateError } = await supabase
       .from("kundli_report_jobs")
       .update(updatePayload)
       .eq("id", jobId);
+
+    if (updateError) {
+      console.error(`❌ [TRANSLATE-JOB] Failed to save translated report: ${updateError.message}`);
+      throw new Error(`Database update failed: ${updateError.message}`);
+    }
 
     // Trigger Stage 3: finalize-kundli-report
     const stage3Url = `http://localhost:${process.env.PORT || 8080}/finalize-kundli-report`;

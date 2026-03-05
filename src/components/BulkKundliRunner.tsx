@@ -13,6 +13,8 @@ import { pdf } from '@react-pdf/renderer';
 import { KundliPDFDocument } from './KundliPDFDocument';
 import { fetchMultipleCharts, PDF_CHARTS, BirthDetails } from '@/utils/kundaliChart';
 import { detectTimezone, extractCountryFromPlace } from '@/utils/timezone';
+import { PipelineSelector } from './PipelineSelector';
+import { kundliApiInvoke, kundliApiFetch, type Pipeline } from '@/lib/kundliApi';
 
 type BulkStatus = 'pending' | 'normalizing' | 'geocoding' | 'queued' | 'processing' | 'completed' | 'failed';
 
@@ -28,7 +30,7 @@ interface BulkRowState {
   place: string;
   status: BulkStatus;
   gender: 'M' | 'F';
-  language: 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta';
+  language: 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu';
   dateOfBirth?: string; // YYYY-MM-DD or raw from sheet
   timeOfBirth?: string; // HH:MM or raw from sheet
   unknownTime?: boolean; // true when CSV had no time data
@@ -55,10 +57,12 @@ function classifyGenderValue(val: string): 'M' | 'F' | null {
   if (v === '\u0C38\u0C4D\u0C24\u0C4D\u0C30\u0C40') return 'F'; // Telugu
   if (v === '\u0CB9\u0CC6\u0CA3\u0CCD\u0CA3\u0CC1') return 'F'; // Kannada
   if (v.startsWith('\u0BAA\u0BC6\u0BA3')) return 'F'; // Tamil
+  if (v === '\u0AAE\u0AB9\u0ABF\u0AB2\u0ABE') return 'F'; // Gujarati (મહિલા)
   if (v === '\u092A\u0941\u0930\u0941\u0937' || v === '\u092A\u0941\u0930\u0941\u0938') return 'M'; // Hindi
   if (v.startsWith('\u0C2A\u0C41\u0C30\u0C41\u0C37')) return 'M'; // Telugu
   if (v === '\u0CAA\u0CC1\u0CB0\u0CC1\u0CB7') return 'M'; // Kannada
   if (v.startsWith('\u0B86\u0BA3')) return 'M'; // Tamil
+  if (v === '\u0AAA\u0AC1\u0AB0\u0AC1\u0AB7' || v === '\u0A86\u0AA3') return 'M'; // Gujarati (પુરુષ/આણ)
   return null;
 }
 
@@ -74,6 +78,8 @@ function isGenderHeader(header: string): boolean {
   if (h.includes('\u0CB2\u0CBF\u0C82\u0C97')) return true;
   // Tamil: \u0BAA\u0BBE\u0BB2\u0BBF\u0BA9
   if (h.includes('\u0BAA\u0BBE\u0BB2\u0BBF\u0BA9')) return true;
+  // Gujarati: \u0AB2\u0ABF\u0A82\u0A97 (લિંગ)
+  if (h.includes('\u0AB2\u0ABF\u0A82\u0A97')) return true;
   return false;
 }
 
@@ -393,6 +399,105 @@ function sanitizeRestoredRows(rows: BulkRowState[]): BulkRowState[] {
   }));
 }
 
+const asArray = <T = unknown>(value: unknown): T[] => (Array.isArray(value) ? value as T[] : []);
+const asObject = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+
+/**
+ * Bulk path receives heterogeneous report payloads; normalize nested collections
+ * so PDF rendering never calls `.map` on undefined.
+ */
+function normalizeReportForPdf(rawReport: unknown): Record<string, unknown> {
+  const report = asObject(rawReport);
+  const dasha = asObject(report.dasha);
+  const yoginiDasha = asObject(dasha.yoginiDasha);
+  const rajYogs = asObject(report.rajYogs);
+  const yogaEnhancement = asObject(rajYogs.yogaEnhancement);
+  const remedies = asObject(report.remedies);
+  const charaKarakasDetailed = asObject(report.charaKarakasDetailed);
+  const glossary = asObject(report.glossary);
+
+  return {
+    ...report,
+    birthDetails: asObject(report.birthDetails),
+    planetaryPositions: asArray(report.planetaryPositions),
+    charaKarakas: asArray(report.charaKarakas),
+    aspects: asArray(report.aspects),
+    conjunctions: asArray(report.conjunctions),
+    planets: asArray<unknown>(report.planets).map((planet) => {
+      const p = asObject(planet);
+      return {
+        ...p,
+        aspects: asArray(p.aspects),
+        remedies: asArray(p.remedies),
+      };
+    }),
+    houses: asArray(report.houses),
+    errors: asArray(report.errors),
+    dasha: report.dasha == null ? null : {
+      ...dasha,
+      mahadashaPredictions: asArray(dasha.mahadashaPredictions),
+      antardashaPredictions: asArray(dasha.antardashaPredictions),
+      upcomingMahadashaAntardashaPredictions: asArray<unknown>(dasha.upcomingMahadashaAntardashaPredictions).map((group) => {
+        const g = asObject(group);
+        return {
+          ...g,
+          antardashas: asArray(g.antardashas),
+        };
+      }),
+      upcomingDashas: asArray(dasha.upcomingDashas),
+      dashaSequence: asArray(dasha.dashaSequence),
+      periodRecommendations: asArray(dasha.periodRecommendations),
+      yoginiDasha: dasha.yoginiDasha == null ? null : {
+        ...yoginiDasha,
+        upcomingYoginis: asArray(yoginiDasha.upcomingYoginis),
+        yoginiSequence: asArray(yoginiDasha.yoginiSequence),
+      },
+    },
+    rajYogs: report.rajYogs == null ? null : {
+      ...rajYogs,
+      rajYogas: asArray(rajYogs.rajYogas),
+      dhanaYogas: asArray(rajYogs.dhanaYogas),
+      challengingYogas: asArray(rajYogs.challengingYogas),
+      yogaEnhancement: rajYogs.yogaEnhancement == null ? null : {
+        ...yogaEnhancement,
+        practices: asArray(yogaEnhancement.practices),
+        mantras: asArray(yogaEnhancement.mantras),
+        gemstones: asArray(yogaEnhancement.gemstones),
+        favorablePeriods: asArray(yogaEnhancement.favorablePeriods),
+      },
+    },
+    remedies: report.remedies == null ? null : {
+      ...remedies,
+      rudrakshaRecommendations: asArray(remedies.rudrakshaRecommendations),
+      mantras: asArray(remedies.mantras),
+      yantras: asArray(remedies.yantras),
+      pujaRecommendations: asArray(remedies.pujaRecommendations),
+      fasting: asArray(remedies.fasting),
+      donations: asArray(remedies.donations),
+      weakPlanets: asArray(remedies.weakPlanets),
+      dailyRoutine: asArray(remedies.dailyRoutine),
+      spiritualPractices: asArray(remedies.spiritualPractices),
+    },
+    charaKarakasDetailed: report.charaKarakasDetailed == null ? null : {
+      ...charaKarakasDetailed,
+      karakaInterpretations: asArray(charaKarakasDetailed.karakaInterpretations),
+      karakaInteractions: asArray(charaKarakasDetailed.karakaInteractions),
+    },
+    glossary: report.glossary == null ? null : {
+      ...glossary,
+      quickReference: asArray(glossary.quickReference),
+      sections: asArray<unknown>(glossary.sections).map((section) => {
+        const s = asObject(section);
+        return {
+          ...s,
+          terms: asArray(s.terms),
+        };
+      }),
+    },
+  };
+}
+
 const STATUS_COLORS: Record<BulkStatus, string> = {
   pending: 'bg-muted text-muted-foreground',
   normalizing: 'bg-amber-100 text-amber-800',
@@ -422,7 +527,8 @@ export default function BulkKundliRunner() {
   const [isLoadingSheet, setIsLoadingSheet] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [bulkRows, setBulkRows] = useState<BulkRowState[]>([]);
-  const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta'>('en');
+  const [bulkLanguage, setBulkLanguage] = useState<'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu'>('en');
+  const [pipeline, setPipeline] = useState<Pipeline>('supabase');
 
   const stopRequestedRef = useRef(false);
   const placeCacheRef = useRef<Map<string, { lat: number; lon: number; displayName: string; country: string }>>(new Map());
@@ -468,8 +574,8 @@ export default function BulkKundliRunner() {
       if (savedStart) setStartRow(savedStart);
       if (savedEnd) setEndRow(savedEnd);
       if (savedSpecific) setSpecificRows(savedSpecific);
-      if (savedLang && ['en', 'hi', 'te', 'kn', 'mr', 'ta'].includes(savedLang)) {
-        setBulkLanguage(savedLang as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta');
+      if (savedLang && ['en', 'hi', 'te', 'kn', 'mr', 'ta', 'gu'].includes(savedLang)) {
+        setBulkLanguage(savedLang as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu');
       }
     } catch (err) {
       console.warn('[BulkKundliRunner] Failed to restore from localStorage:', err);
@@ -576,7 +682,7 @@ export default function BulkKundliRunner() {
     clearPersistedData();
     restoredRef.current = true; // allow saving the new data
     try {
-      const { data, error } = await supabase.functions.invoke('load-kundli-sheet', {
+      const { data, error } = await kundliApiInvoke(pipeline, 'load-kundli-sheet', {
         body: { sheetUrl },
       });
 
@@ -699,19 +805,24 @@ export default function BulkKundliRunner() {
   };
 
   const fetchJobPayload = async (jobId: string, sessionId: string, visitorId: string): Promise<any> => {
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          'x-session-id': sessionId,
-          'x-visitor-id': visitorId,
-        },
+    const response = await kundliApiFetch(pipeline, 'get-kundli-job', {
+      method: 'GET',
+      query: { jobId },
+      headers: {
+        'x-session-id': sessionId,
+        'x-visitor-id': visitorId,
       },
-    );
+    });
     if (!response.ok) throw new Error(`Failed to fetch job payload (${response.status})`);
     return response.json();
+  };
+
+  const normalizeJobStatus = (status: unknown): string =>
+    String(status ?? '').trim().toLowerCase();
+
+  const isPayloadPdfReady = (payload: any): boolean => {
+    const status = normalizeJobStatus(payload?.status);
+    return status === 'completed' && Boolean(payload?.report);
   };
 
   // Mutex to prevent concurrent PDF generation which corrupts global language state
@@ -728,20 +839,39 @@ export default function BulkKundliRunner() {
     updateBulkRow(row.rowNumber, { isPreparingPdf: true, error: undefined });
 
     try {
-      const payload = await fetchJobPayload(row.jobId, sessionId, visitorId);
-      if (payload.status !== 'completed' || !payload.report) {
+      let payload = await fetchJobPayload(row.jobId, sessionId, visitorId);
+      if (!isPayloadPdfReady(payload)) {
+        // Guard against transient read lag where UI/poller sees completed first.
+        for (let attempt = 0; attempt < 4; attempt++) {
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 1200 * (attempt + 1)));
+          // eslint-disable-next-line no-await-in-loop
+          payload = await fetchJobPayload(row.jobId, sessionId, visitorId);
+          if (isPayloadPdfReady(payload)) break;
+        }
+      }
+      if (!isPayloadPdfReady(payload)) {
+        const normalizedStatus = normalizeJobStatus(payload?.status);
+        if (normalizedStatus === 'completed' && !payload?.report) {
+          throw new Error(`Job ${row.jobId} marked completed but report payload is not available yet`);
+        }
         throw new Error(`Job ${row.jobId} is not completed yet`);
       }
 
-      const report = payload.report;
+      const rawReport = asObject(payload?.report);
       // Mark unknown time so PDF shows "Time not available" instead of raw time
-      if (row.unknownTime && report?.birthDetails) {
-        report.birthDetails.unknownTime = true;
+      if (row.unknownTime && rawReport?.birthDetails && typeof rawReport.birthDetails === 'object') {
+        (rawReport.birthDetails as Record<string, unknown>).unknownTime = true;
       }
       // CRITICAL LOG: capture exactly what the backend returned for birth details
-      console.log(`[Bulk PDF] Row ${row.rowNumber} REPORT birthDetails:`, JSON.stringify(report.birthDetails), `unknownTime=${row.unknownTime}`);
-      const [year, month, day] = String(report.birthDetails?.dateOfBirth || '').split('-').map(Number);
-      const [hour, minute] = String(report.birthDetails?.timeOfBirth || '12:00').split(':').map(Number);
+      console.log(
+        `[Bulk PDF] Row ${row.rowNumber} REPORT birthDetails:`,
+        JSON.stringify(rawReport.birthDetails || {}),
+        `unknownTime=${row.unknownTime}`,
+      );
+      const rawBirth = asObject(rawReport.birthDetails);
+      const [year, month, day] = String(rawBirth.dateOfBirth || '').split('-').map(Number);
+      const [hour, minute] = String(rawBirth.timeOfBirth || '12:00').split(':').map(Number);
 
       const birthDetails: BirthDetails = {
         day: Number.isFinite(day) ? day : 1,
@@ -749,23 +879,32 @@ export default function BulkKundliRunner() {
         year: Number.isFinite(year) ? year : 1990,
         hour: Number.isFinite(hour) ? hour : 12,
         minute: Number.isFinite(minute) ? minute : 0,
-        lat: Number(report.birthDetails?.latitude || 0),
-        lon: Number(report.birthDetails?.longitude || 0),
-        tzone: (report.birthDetails?.timezone != null && Number.isFinite(Number(report.birthDetails.timezone)))
-          ? Number(report.birthDetails.timezone)
+        lat: Number(rawBirth.latitude || 0),
+        lon: Number(rawBirth.longitude || 0),
+        tzone: ((rawBirth.timezone) != null
+            && Number.isFinite(Number(rawBirth.timezone)))
+          ? Number(rawBirth.timezone)
           : 5.5,
       };
 
-      const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta';
+      const rowLang = (row.language || bulkLanguage) as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu';
       const charts = await fetchMultipleCharts(birthDetails, 'North', rowLang === 'te' ? 'en' : rowLang, PDF_CHARTS);
-      const reportWithCharts = { ...report, charts };
       // Pre-wrap Indic text to prevent mid-word line breaks in PDF.
       await ensurePreWrapFontsLoaded(rowLang);
+
+      // Always normalize before rendering to prevent "Cannot read properties of undefined (reading 'map')"
+      const normalizedReport = normalizeReportForPdf(rawReport);
+      const normalizedBirth = asObject(normalizedReport.birthDetails);
+      if (row.unknownTime) {
+        normalizedBirth.unknownTime = true;
+        normalizedReport.birthDetails = normalizedBirth;
+      }
+      const reportWithCharts = { ...normalizedReport, charts };
       const wrappedReport = preWrapReportTexts(reportWithCharts as Record<string, unknown>, rowLang);
       // Serialize PDF generation via mutex — global ACTIVE_PDF_LANGUAGE must not be
       // corrupted by concurrent renders (e.g., Hindi overwriting Telugu mid-render).
-      const blob = await (pdfMutexRef.current = pdfMutexRef.current.then(() =>
-        pdf(<KundliPDFDocument report={wrappedReport} language={rowLang} />).toBlob()
+      const blob: Blob = await (pdfMutexRef.current = pdfMutexRef.current.then(() =>
+        pdf(<KundliPDFDocument report={wrappedReport} language={rowLang} />).toBlob(),
       ));
       const downloadUrl = URL.createObjectURL(blob);
       blobUrlsRef.current.push(downloadUrl);
@@ -776,7 +915,7 @@ export default function BulkKundliRunner() {
       let pdfStoragePath: string | undefined;
       try {
         const pdfBase64 = await blobToBase64Data(blob);
-        const { data: storeData, error: storeError } = await supabase.functions.invoke('store-kundli-pdf', {
+        const { data: storeData, error: storeError } = await kundliApiInvoke(pipeline, 'store-kundli-pdf', {
           body: {
             jobId: row.jobId,
             fileName,
@@ -839,23 +978,35 @@ export default function BulkKundliRunner() {
     let retriesAttempted = 0;
     const maxRetries = 2;
     const stallThresholdMs = 90_000; // 90s without progress change = stalled
+    const getRetryFunctionName = (phase: string) => {
+      const normalizedPhase = String(phase || '').toLowerCase();
+      if (normalizedPhase.includes('translat')) {
+        return 'translate-kundli-report';
+      }
+      if (
+        normalizedPhase.includes('finaliz')
+        || normalizedPhase.includes('quality')
+        || normalizedPhase.includes('chart')
+        || normalizedPhase.includes('complete')
+      ) {
+        return 'finalize-kundli-report';
+      }
+      return 'process-kundli-job';
+    };
 
     for (let i = 0; i < maxPolls; i++) {
       if (stopRequestedRef.current) {
         return { status: 'failed', error: 'Stopped by user' };
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            'x-session-id': sessionId,
-            'x-visitor-id': visitorId,
-          },
+      const response = await kundliApiFetch(pipeline, 'get-kundli-job', {
+        method: 'GET',
+        query: { jobId },
+        headers: {
+          'x-session-id': sessionId,
+          'x-visitor-id': visitorId,
         },
-      );
+      });
 
       if (!response.ok) {
         await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
@@ -881,16 +1032,11 @@ export default function BulkKundliRunner() {
       if (stallDuration > stallThresholdMs && retriesAttempted < maxRetries && payload.status === 'processing') {
         retriesAttempted++;
         const phase = (payload.currentPhase || '').toLowerCase();
-        let functionName = 'translate-kundli-report';
-        if (phase.includes('finaliz') || phase.includes('quality') || phase.includes('chart')) {
-          functionName = 'finalize-kundli-report';
-        }
+        const functionName = getRetryFunctionName(phase);
         console.log(`🔄 [BulkRunner] Job ${jobId} stalled at "${payload.currentPhase}" — auto-retrigger ${retriesAttempted}/${maxRetries}: ${functionName}`);
         try {
-          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-            body: JSON.stringify({ jobId }),
+          await kundliApiFetch(pipeline, functionName, {
+            body: { jobId },
           });
         } catch (e) { console.warn('[BulkRunner] Retrigger failed:', e); }
         lastProgressChangeTime = Date.now(); // reset stall timer
@@ -989,7 +1135,7 @@ export default function BulkKundliRunner() {
       try {
         updateBulkRow(row.rowNumber, { status: 'normalizing' });
 
-        const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', {
+        const { data: decoded, error: decodeError } = await kundliApiInvoke(pipeline, 'decipher-kundli-input', {
           body: { row: row.normalized },
         });
 
@@ -1057,7 +1203,7 @@ export default function BulkKundliRunner() {
 
         updateBulkRow(row.rowNumber, { status: 'queued' });
 
-        const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+        const { data: startData, error: startError } = await kundliApiInvoke(pipeline, 'start-kundli-job', {
           body: {
             name,
             dateOfBirth,
@@ -1116,7 +1262,7 @@ export default function BulkKundliRunner() {
         try {
           updateBulkRow(row.rowNumber, { status: 'normalizing', error: undefined, jobId: undefined });
 
-          const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', {
+          const { data: decoded, error: decodeError } = await kundliApiInvoke(pipeline, 'decipher-kundli-input', {
             body: { row: row.normalized },
           });
 
@@ -1161,7 +1307,7 @@ export default function BulkKundliRunner() {
 
           updateBulkRow(row.rowNumber, { status: 'queued' });
 
-          const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+          const { data: startData, error: startError } = await kundliApiInvoke(pipeline, 'start-kundli-job', {
             body: {
               name, dateOfBirth, timeOfBirth,
               placeOfBirth: coords.displayName,
@@ -1184,7 +1330,7 @@ export default function BulkKundliRunner() {
           if (result.status === 'completed') {
             updateBulkRow(row.rowNumber, { status: 'completed', error: undefined });
             // Auto-prepare PDF for retried row
-            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta', jobId };
+            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu', jobId };
             await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep (retry) failed for row ${row.rowNumber}:`, e));
           } else {
             updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${result.error || 'Job failed'}` });
@@ -1285,7 +1431,7 @@ export default function BulkKundliRunner() {
       try {
         updateBulkRow(row.rowNumber, { status: 'normalizing' });
 
-        const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', {
+        const { data: decoded, error: decodeError } = await kundliApiInvoke(pipeline, 'decipher-kundli-input', {
           body: { row: row.normalized },
         });
 
@@ -1335,7 +1481,7 @@ export default function BulkKundliRunner() {
 
         updateBulkRow(row.rowNumber, { status: 'queued' });
 
-        const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+        const { data: startData, error: startError } = await kundliApiInvoke(pipeline, 'start-kundli-job', {
           body: {
             name, dateOfBirth, timeOfBirth,
             placeOfBirth: coords.displayName,
@@ -1376,7 +1522,7 @@ export default function BulkKundliRunner() {
         if (stopRequestedRef.current) break;
         try {
           updateBulkRow(row.rowNumber, { status: 'normalizing', error: undefined, jobId: undefined });
-          const { data: decoded, error: decodeError } = await supabase.functions.invoke('decipher-kundli-input', { body: { row: row.normalized } });
+          const { data: decoded, error: decodeError } = await kundliApiInvoke(pipeline, 'decipher-kundli-input', { body: { row: row.normalized } });
           if (decodeError) throw new Error(decodeError.message || 'Failed to normalize row');
           const name = String(decoded?.name || '').trim();
           const decipheredDob2 = String(decoded?.dateOfBirth || '').trim();
@@ -1404,7 +1550,7 @@ export default function BulkKundliRunner() {
           const tz = detectTimezone(coords.country, coords.lat, coords.lon, dateOfBirth, timeOfBirth);
           console.log(`[Bulk] CONTINUE-RETRY Row ${row.rowNumber} TIMEZONE: ${tz.displayLabel}`);
           updateBulkRow(row.rowNumber, { status: 'queued' });
-          const { data: startData, error: startError } = await supabase.functions.invoke('start-kundli-job', {
+          const { data: startData, error: startError } = await kundliApiInvoke(pipeline, 'start-kundli-job', {
             body: { name, dateOfBirth, timeOfBirth, placeOfBirth: coords.displayName, latitude: coords.lat, longitude: coords.lon, timezone: tz.utcOffsetHours, language: finalLanguage, gender: finalGender, hasTime: !isTimeUnknown, visitorId, sessionId },
           });
           if (startError || !startData?.jobId) throw new Error(startError?.message || 'Failed to start row job');
@@ -1413,7 +1559,7 @@ export default function BulkKundliRunner() {
           const result = await pollJobUntilDone(jobId, sessionId, visitorId);
           if (result.status === 'completed') {
             updateBulkRow(row.rowNumber, { status: 'completed', error: undefined });
-            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta', jobId };
+            const completedRow = { rowNumber: row.rowNumber, name, place: placeOfBirth, status: 'completed' as BulkStatus, gender: finalGender as 'M' | 'F', language: finalLanguage as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu', jobId };
             await preparePdfForRow(completedRow).catch((e) => console.warn(`[Bulk] Auto PDF prep (retry) failed for row ${row.rowNumber}:`, e));
           } else {
             updateBulkRow(row.rowNumber, { status: 'failed', error: `Retry failed: ${result.error || 'Job failed'}` });
@@ -1485,7 +1631,7 @@ export default function BulkKundliRunner() {
               id="bulk-language"
               value={bulkLanguage}
               onChange={(e) => {
-                const lang = e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta';
+                const lang = e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu';
                 setBulkLanguage(lang);
                 // Update all pending rows to the new default language
                 setBulkRows((prev) => prev.map((r) => r.status === 'pending' ? { ...r, language: lang } : r));
@@ -1494,12 +1640,16 @@ export default function BulkKundliRunner() {
               className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
             >
               <option value="en">English</option>
-              <option value="hi">Hindi</option>
-              <option value="te">Telugu</option>
-              <option value="kn">Kannada</option>
-              <option value="mr">Marathi</option>
-              <option value="ta">Tamil</option>
+              <option value="hi">हिंदी (Hindi)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="mr">मराठी (Marathi)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="gu">ગુજરાતી (Gujarati)</option>
             </select>
+          </div>
+          <div className="space-y-2">
+            <PipelineSelector value={pipeline} onChange={setPipeline} disabled={isRunning} />
           </div>
           <div className="flex items-end gap-2">
             <Button type="button" variant="outline" onClick={loadSheetRows} disabled={isLoadingSheet || isRunning} className="w-full">
@@ -1634,7 +1784,7 @@ export default function BulkKundliRunner() {
                         {row.status === 'pending' ? (
                           <select
                             value={row.language}
-                            onChange={(e) => updateBulkRow(row.rowNumber, { language: e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' })}
+                            onChange={(e) => updateBulkRow(row.rowNumber, { language: e.target.value as 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu' })}
                             className="px-1 py-0.5 border border-input bg-background rounded text-xs w-18"
                           >
                             <option value="en">EN</option>
@@ -1643,9 +1793,10 @@ export default function BulkKundliRunner() {
                             <option value="kn">KN</option>
                             <option value="mr">MR</option>
                             <option value="ta">TA</option>
+                            <option value="gu">GU</option>
                           </select>
                         ) : (
-                          <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : row.language === 'kn' ? 'KN' : row.language === 'mr' ? 'MR' : row.language === 'ta' ? 'TA' : 'EN'}</span>
+                          <span className="text-xs">{row.language === 'hi' ? 'HI' : row.language === 'te' ? 'TE' : row.language === 'kn' ? 'KN' : row.language === 'mr' ? 'MR' : row.language === 'ta' ? 'TA' : row.language === 'gu' ? 'GU' : 'EN'}</span>
                         )}
                       </td>
                       <td className="p-2">

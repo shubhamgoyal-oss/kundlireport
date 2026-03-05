@@ -23,7 +23,7 @@ import { upsertKundliGeneratedReport } from '../_shared/kundli-audit';
 const router = Router();
 
 function isLanguagePipelineV2Enabled(language: SupportedLanguage): boolean {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return true;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return true;
   if (language === "en") return false;
   return false;
 }
@@ -159,7 +159,7 @@ function cleanReportTexts<T>(value: T, parentKey = ""): T {
 // ── Chart SVG fetching ──────────────────────────────────────────────────────
 
 function localizeChartSvgText(svg: string, language: string): string {
-  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta") return svg;
+  if (language === "hi" || language === "te" || language === "kn" || language === "mr" || language === "ta" || language === "gu") return svg;
   const replacements: [string, string][] = [
     ["\u0936\u0941", "VE"], ["\u092C\u0941", "ME"], ["\u092E\u0902", "MA"],
     ["\u091A\u0902", "MO"], ["\u0938\u0942", "SU"], ["\u0917\u0941", "JU"],
@@ -285,7 +285,71 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     let report = job.report_data as Record<string, any>;
-    if (!report) throw new Error("No report_data found — earlier stages may not have completed");
+    if (!report) {
+      const nowIso = new Date().toISOString();
+      const existingDebugSummary =
+        job.debug_summary && typeof job.debug_summary === "object"
+          ? { ...(job.debug_summary as Record<string, any>) }
+          : {};
+      const priorRequeueAttempts = Number(existingDebugSummary.missingReportDataRequeueAttempts || 0);
+      const canRequeueTranslation = priorRequeueAttempts < 1;
+      const waitingPhase = canRequeueTranslation
+        ? "Waiting for report data — requeueing translation"
+        : "Waiting for report data — awaiting prior stage";
+
+      existingDebugSummary.missingReportDataRequeueAttempts = canRequeueTranslation
+        ? priorRequeueAttempts + 1
+        : priorRequeueAttempts;
+      existingDebugSummary.lastMissingReportDataAt = nowIso;
+      existingDebugSummary.lastMissingReportDataPhase = String(job.current_phase || "");
+
+      const nextProgress = Math.max(Number(job.progress_percent || 0), 85);
+
+      const { error: waitingUpdateError } = await supabaseAdmin
+        .from("kundli_report_jobs")
+        .update({
+          status: "processing",
+          current_phase: waitingPhase,
+          progress_percent: nextProgress,
+          heartbeat_at: nowIso,
+          debug_summary: existingDebugSummary,
+        })
+        .eq("id", jobId);
+      if (waitingUpdateError) {
+        console.warn("[FINALIZE-JOB] Failed to mark waiting state for missing report_data:", waitingUpdateError.message);
+      }
+
+      await createJobEvent(supabaseAdmin, {
+        jobId,
+        phase: "Finalize waiting for report_data",
+        eventType: "info",
+        message: canRequeueTranslation
+          ? "Missing report_data in finalize; requeued translation stage once"
+          : "Missing report_data in finalize; requeue limit reached",
+        metrics: { progress: nextProgress, requeueAttempt: priorRequeueAttempts + (canRequeueTranslation ? 1 : 0) },
+      });
+
+      if (canRequeueTranslation) {
+        const stage2Url = `http://localhost:${process.env.PORT || 8080}/translate-kundli-report`;
+        fetch(stage2Url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ jobId }),
+        }).catch((err) => {
+          console.error("[FINALIZE-JOB] Failed to requeue translation stage:", err);
+        });
+      }
+
+      return res.status(202).json({
+        success: true,
+        accepted: true,
+        waitingForReportData: true,
+        requeued: canRequeueTranslation,
+        jobId,
+      });
+    }
 
     const requestedLanguage = normalizeLanguage(job.language || "en");
     const useLanguagePipelineV2 = isLanguagePipelineV2Enabled(requestedLanguage);

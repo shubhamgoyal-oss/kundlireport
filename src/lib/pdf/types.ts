@@ -1,4 +1,4 @@
-export type PdfLanguage = 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta';
+export type PdfLanguage = 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu';
 
 export interface ChartData {
   type: string;
@@ -8,6 +8,7 @@ export interface ChartData {
   nameKannada?: string;
   nameMarathi?: string;
   nameTamil?: string;
+  nameGujarati?: string;
   purpose: string;
   svg: string;
   dataUrl?: string | null;

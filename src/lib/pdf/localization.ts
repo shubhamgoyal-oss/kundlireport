@@ -65,6 +65,15 @@ export const applyLanguageTypography = (language: string | null | undefined) => 
     ACTIVE_PDF_BODY_LINE_HEIGHT = 1.62;
     return;
   }
+  if (code.startsWith('gu') || code.startsWith('guj')) {
+    ACTIVE_PDF_LANGUAGE = 'gu';
+    // Gujarati: keep body text on the lighter Kohinoor family to avoid heavy output.
+    // Headings are switched to a bolder family in KundliPDFDocument.tsx.
+    ACTIVE_PDF_FONT_FAMILY = 'KohinoorGujaratiBody';
+    ACTIVE_PDF_BODY_FONT_SIZE = 10.6;
+    ACTIVE_PDF_BODY_LINE_HEIGHT = 1.64;
+    return;
+  }
   ACTIVE_PDF_LANGUAGE = 'en';
   ACTIVE_PDF_FONT_FAMILY = 'NotoSans';
   ACTIVE_PDF_BODY_FONT_SIZE = 10.5;

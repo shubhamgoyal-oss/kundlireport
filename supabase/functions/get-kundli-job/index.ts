@@ -41,19 +41,78 @@ serve(async (req) => {
       );
     }
 
+    const normalizedStatus = String(job.status || '').trim().toLowerCase();
+    const reportData = job.report_data ?? null;
+    const completedWithoutReport = (normalizedStatus === 'completed' || Boolean(job.completed_at)) && !reportData;
+
+    let responseStatus = normalizedStatus || job.status;
+    let responsePhase = job.current_phase;
+    let responseProgress = job.progress_percent;
+    let responseCompletedAt = job.completed_at;
+    let responseError = job.error_message;
+
+    if (completedWithoutReport) {
+      const waitingPhase = "Report data missing — requeueing finalize";
+      const nextProgress = Math.max(Number(job.progress_percent || 0), 90);
+      const nowIso = new Date().toISOString();
+
+      const { error: healError } = await supabaseAdmin
+        .from("kundli_report_jobs")
+        .update({
+          status: "processing",
+          current_phase: waitingPhase,
+          progress_percent: nextProgress,
+          heartbeat_at: nowIso,
+          error_message: null,
+          completed_at: null,
+        })
+        .eq("id", jobId);
+
+      if (healError) {
+        console.warn("⚠️ [GET-JOB] Failed to requeue finalize for missing report_data:", healError.message);
+      } else {
+        const stage3Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/finalize-kundli-report`;
+        const stage3Promise = fetch(stage3Url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ jobId }),
+        }).catch((err) => {
+          console.error("⚠️ [GET-JOB] Failed to trigger finalize requeue:", err);
+        });
+
+        // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+        if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+          // @ts-ignore
+          EdgeRuntime.waitUntil(stage3Promise);
+        }
+      }
+
+      responseStatus = "processing";
+      responsePhase = waitingPhase;
+      responseProgress = nextProgress;
+      responseCompletedAt = null;
+      responseError = null;
+    }
+
+    const reportReady = responseStatus === 'completed' && Boolean(reportData);
+
     // Return job status and data
     return new Response(
       JSON.stringify({
         jobId: job.id,
-        status: job.status,
-        currentPhase: job.current_phase,
-        progressPercent: job.progress_percent,
-        report: job.status === "completed" ? job.report_data : null,
-        error: job.error_message,
+        status: responseStatus,
+        currentPhase: responsePhase,
+        progressPercent: responseProgress,
+        report: reportReady ? reportData : null,
+        error: responseError,
         createdAt: job.created_at,
-        completedAt: job.completed_at,
+        completedAt: responseCompletedAt,
         heartbeatAt: job.heartbeat_at,
         name: job.name,
+        waitingForReportData: completedWithoutReport,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Download, FileText, Eye } from 'lucide-react';
@@ -179,8 +179,187 @@ interface KundliReportViewerProps {
   isLoading?: boolean;
 }
 
+const deepCompactValue = (value: unknown): unknown => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => deepCompactValue(entry))
+      .filter((entry) => entry !== undefined && entry !== null);
+  }
+
+  if (typeof value === 'object') {
+    const compacted: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      const cleaned = deepCompactValue(nested);
+      if (cleaned !== undefined) compacted[key] = cleaned;
+    }
+    return compacted;
+  }
+
+  return value;
+};
+
+const asArray = <T = unknown>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+const asObject = (value: unknown): Record<string, any> | null =>
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, any>) : null;
+
+const normalizeKundliReportForPdf = (input: unknown): KundliReport => {
+  const base = (deepCompactValue(input) as Partial<KundliReport>) || {};
+  const birth = (base.birthDetails || {}) as Partial<KundliReport['birthDetails']>;
+  const ascendantRaw = (base.ascendant || {}) as Partial<KundliReport['ascendant']>;
+  const planets = asArray<any>(base.planets).map((planet) => {
+    const normalized = asObject(planet) || {};
+    return {
+      ...normalized,
+      aspects: asArray(normalized.aspects),
+      remedies: asArray(normalized.remedies),
+    };
+  });
+
+  const dashaRaw = asObject(base.dasha);
+  const yoginiRaw = asObject(dashaRaw?.yoginiDasha);
+  const dashaNormalized = dashaRaw
+    ? {
+        ...dashaRaw,
+        mahadashaPredictions: asArray(dashaRaw.mahadashaPredictions),
+        antardashaPredictions: asArray(dashaRaw.antardashaPredictions),
+        upcomingMahadashaAntardashaPredictions: asArray<any>(dashaRaw.upcomingMahadashaAntardashaPredictions).map((group) => {
+          const normalizedGroup = asObject(group) || {};
+          return {
+            ...normalizedGroup,
+            antardashas: asArray(normalizedGroup.antardashas),
+          };
+        }),
+        upcomingDashas: asArray(dashaRaw.upcomingDashas),
+        dashaSequence: asArray(dashaRaw.dashaSequence),
+        periodRecommendations: asArray(dashaRaw.periodRecommendations),
+        yoginiDasha: yoginiRaw
+          ? {
+              ...yoginiRaw,
+              upcomingYoginis: asArray(yoginiRaw.upcomingYoginis),
+              yoginiSequence: asArray(yoginiRaw.yoginiSequence),
+            }
+          : null,
+      }
+    : null;
+
+  const rajYogsRaw = asObject(base.rajYogs);
+  const yogaEnhancementRaw = asObject(rajYogsRaw?.yogaEnhancement);
+  const rajYogsNormalized = rajYogsRaw
+    ? {
+        ...rajYogsRaw,
+        rajYogas: asArray(rajYogsRaw.rajYogas),
+        dhanaYogas: asArray(rajYogsRaw.dhanaYogas),
+        challengingYogas: asArray(rajYogsRaw.challengingYogas),
+        yogaEnhancement: yogaEnhancementRaw
+          ? {
+              ...yogaEnhancementRaw,
+              practices: asArray(yogaEnhancementRaw.practices),
+              mantras: asArray(yogaEnhancementRaw.mantras),
+              gemstones: asArray(yogaEnhancementRaw.gemstones),
+              favorablePeriods: asArray(yogaEnhancementRaw.favorablePeriods),
+            }
+          : null,
+      }
+    : null;
+
+  const remediesRaw = asObject(base.remedies);
+  const remediesNormalized = remediesRaw
+    ? {
+        ...remediesRaw,
+        rudrakshaRecommendations: asArray(remediesRaw.rudrakshaRecommendations),
+        mantras: asArray(remediesRaw.mantras),
+        yantras: asArray(remediesRaw.yantras),
+        pujaRecommendations: asArray(remediesRaw.pujaRecommendations),
+        fasting: asArray(remediesRaw.fasting),
+        donations: asArray(remediesRaw.donations),
+        weakPlanets: asArray(remediesRaw.weakPlanets),
+        dailyRoutine: asArray(remediesRaw.dailyRoutine),
+        spiritualPractices: asArray(remediesRaw.spiritualPractices),
+      }
+    : null;
+
+  const charaKarakasDetailedRaw = asObject(base.charaKarakasDetailed);
+  const charaKarakasDetailedNormalized = charaKarakasDetailedRaw
+    ? {
+        ...charaKarakasDetailedRaw,
+        karakaInterpretations: asArray(charaKarakasDetailedRaw.karakaInterpretations),
+        karakaInteractions: asArray<any>(charaKarakasDetailedRaw.karakaInteractions).map((interaction) => {
+          const normalizedInteraction = asObject(interaction) || {};
+          return {
+            ...normalizedInteraction,
+            karakas: asArray(normalizedInteraction.karakas),
+          };
+        }),
+      }
+    : null;
+
+  const glossaryRaw = asObject(base.glossary);
+  const glossaryNormalized = glossaryRaw
+    ? {
+        ...glossaryRaw,
+        quickReference: asArray(glossaryRaw.quickReference),
+        sections: asArray<any>(glossaryRaw.sections).map((section) => {
+          const normalizedSection = asObject(section) || {};
+          return {
+            ...normalizedSection,
+            terms: asArray(normalizedSection.terms),
+          };
+        }),
+      }
+    : null;
+
+  return {
+    ...base,
+    birthDetails: {
+      name: String(birth.name || 'Kundli'),
+      dateOfBirth: String(birth.dateOfBirth || ''),
+      timeOfBirth: String(birth.timeOfBirth || '12:00'),
+      placeOfBirth: String(birth.placeOfBirth || ''),
+      latitude: Number.isFinite(Number(birth.latitude)) ? Number(birth.latitude) : 0,
+      longitude: Number.isFinite(Number(birth.longitude)) ? Number(birth.longitude) : 0,
+      timezone: Number.isFinite(Number(birth.timezone)) ? Number(birth.timezone) : 5.5,
+    },
+    planetaryPositions: asArray(base.planetaryPositions),
+    ascendant: {
+      sign: String(ascendantRaw.sign || ''),
+      degree: Number.isFinite(Number(ascendantRaw.degree)) ? Number(ascendantRaw.degree) : 0,
+    },
+    charaKarakas: asArray(base.charaKarakas),
+    aspects: asArray(base.aspects),
+    conjunctions: asArray(base.conjunctions),
+    panchang: base.panchang || null,
+    pillars: base.pillars || null,
+    planets,
+    houses: asArray(base.houses),
+    career: base.career || null,
+    marriage: base.marriage || null,
+    dasha: dashaNormalized,
+    rahuKetu: base.rahuKetu || null,
+    doshas: base.doshas || null,
+    rajYogs: rajYogsNormalized,
+    remedies: remediesNormalized,
+    numerology: base.numerology || null,
+    spiritual: base.spiritual || null,
+    charaKarakasDetailed: charaKarakasDetailedNormalized,
+    glossary: glossaryNormalized,
+    generatedAt: String(base.generatedAt || new Date().toISOString()),
+    language: String(base.language || 'en'),
+    errors: Array.isArray(base.errors)
+      ? base.errors.map((entry) => String(entry)).filter(Boolean)
+      : [],
+    tokensUsed: Number.isFinite(Number(base.tokensUsed)) ? Number(base.tokensUsed) : 0,
+    qa: base.qa || null,
+    charts: asArray(base.charts),
+  };
+};
+
 export const KundliReportViewer = ({ report, isLoading = false }: KundliReportViewerProps) => {
   const { i18n } = useTranslation();
+  const safeReport = useMemo(() => normalizeKundliReportForPdf(report), [report]);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -192,29 +371,30 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
   const pdfBlobUrlRef = useRef<string | null>(null);
   const chartsFetchedRef = useRef(false);
   const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
-  const SUPPORTED_LANGS: Record<string, string> = { hi: 'hi', te: 'te', kn: 'kn', mr: 'mr' };
+  const SUPPORTED_LANGS: Record<string, string> = { hi: 'hi', te: 'te', kn: 'kn', mr: 'mr', ta: 'ta', gu: 'gu' };
   const reportLang = SUPPORTED_LANGS[langCode] || 'en';
   const isHindi = reportLang !== 'en';
   const supportsFolderSave = hasLocalFolderSupport();
+  const birthDetails = safeReport.birthDetails;
 
   const buildPdfFileName = useCallback(() => {
-    const safeName = String(report.birthDetails.name || 'Kundli')
+    const safeName = String(birthDetails.name || 'Kundli')
       .trim()
       .replace(/[^a-zA-Z0-9_-]+/g, '_')
       .replace(/_+/g, '_')
       .replace(/^_+|_+$/g, '');
-    const timestamp = new Date(report.generatedAt || Date.now())
+    const timestamp = new Date(safeReport.generatedAt || Date.now())
       .toISOString()
       .replace(/[:.]/g, '-');
     return `Kundli_Report_${safeName || 'Kundli'}_${timestamp}.pdf`;
-  }, [report.birthDetails.name, report.generatedAt]);
+  }, [birthDetails.name, safeReport.generatedAt]);
 
   const createPdfBlob = useCallback(async () => {
     // Convert SVG charts to PNG data URLs to avoid @react-pdf/renderer's SVG path parser bug
     // (crashes with "Cannot read properties of null (reading 'xCoordinate')")
     const convertedCharts = await chartsWithDataUrls(charts);
-    const reportWithCharts = { ...report, charts: convertedCharts };
-    const pdfLang = report.language || reportLang;
+    const reportWithCharts = { ...safeReport, charts: convertedCharts };
+    const pdfLang = safeReport.language || reportLang;
 
     // Pre-wrap Indic text using browser canvas (HarfBuzz) to prevent mid-word line breaks.
     // react-pdf's Knuth-Plass line breaker can't handle Devanagari/Telugu/Kannada correctly.
@@ -222,7 +402,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     const wrappedReport = preWrapReportTexts(reportWithCharts as Record<string, unknown>, pdfLang);
 
     return pdf(<KundliPDFDocument report={wrappedReport} language={pdfLang} />).toBlob();
-  }, [report, charts]);
+  }, [safeReport, charts, reportLang]);
 
   const saveBlobToConfiguredFolder = useCallback(async (blob: Blob, fileName: string) => {
     if (!pdfFolderHandle) return false;
@@ -278,13 +458,13 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
 
   // Use charts from report or fetch if not available
   useEffect(() => {
-    if (!isLoading && report && !chartsFetchedRef.current) {
+    if (!isLoading && safeReport && !chartsFetchedRef.current) {
       chartsFetchedRef.current = true;
 
       // If charts are already in the report (from backend), use them
-      if (report.charts && report.charts.length > 0) {
-        console.log('[KundliReportViewer] Using charts from backend report:', report.charts.length, 'charts');
-        setCharts(report.charts);
+      if (safeReport.charts && safeReport.charts.length > 0) {
+        console.log('[KundliReportViewer] Using charts from backend report:', safeReport.charts.length, 'charts');
+        setCharts(safeReport.charts);
         return;
       }
 
@@ -292,23 +472,30 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
       setIsFetchingCharts(true);
 
       // Parse birth details for chart fetching
-      const [year, month, day] = report.birthDetails.dateOfBirth.split('-').map(Number);
-      const [hour, minute] = report.birthDetails.timeOfBirth.split(':').map(Number);
+      const dateRaw = String(birthDetails.dateOfBirth || '');
+      const timeRaw = String(birthDetails.timeOfBirth || '');
+      if (!dateRaw.includes('-') || !timeRaw.includes(':')) {
+        console.warn('[KundliReportViewer] Skipping chart fetch: incomplete birth details in report payload');
+        setIsFetchingCharts(false);
+        return;
+      }
+      const [year, month, day] = dateRaw.split('-').map(Number);
+      const [hour, minute] = timeRaw.split(':').map(Number);
 
-      const birthDetails: BirthDetails = {
+      const chartBirthDetails: BirthDetails = {
         day,
         month,
         year,
         hour,
         minute,
-        lat: report.birthDetails.latitude,
-        lon: report.birthDetails.longitude,
-        tzone: report.birthDetails.timezone
+        lat: Number(birthDetails.latitude ?? 0),
+        lon: Number(birthDetails.longitude ?? 0),
+        tzone: Number(birthDetails.timezone ?? 5.5)
       };
 
       // Force English chart labels for PDF to avoid SVG font glyph issues in react-pdf.
       console.log('[KundliReportViewer] Fetching charts from API...');
-      fetchMultipleCharts(birthDetails, 'North', 'en', PDF_CHARTS)
+      fetchMultipleCharts(chartBirthDetails, 'North', 'en', PDF_CHARTS)
         .then(fetchedCharts => {
           console.log('[KundliReportViewer] Fetched', fetchedCharts.length, 'charts from API');
           setCharts(fetchedCharts);
@@ -320,7 +507,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
           setIsFetchingCharts(false);
         });
     }
-  }, [isLoading, report, isHindi]);
+  }, [isLoading, safeReport, isHindi, birthDetails.dateOfBirth, birthDetails.timeOfBirth, birthDetails.latitude, birthDetails.longitude, birthDetails.timezone]);
 
   // Generate PDF blob for preview
   const generatePdfBlob = useCallback(async () => {
@@ -334,7 +521,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     setIsGeneratingPdf(true);
     setPdfError(null);
     try {
-      console.log('[KundliReportViewer] Creating PDF document with report:', report?.birthDetails?.name, 'and', charts.length, 'charts');
+      console.log('[KundliReportViewer] Creating PDF document with report:', safeReport?.birthDetails?.name, 'and', charts.length, 'charts');
       const blob = await createPdfBlob();
       console.log('[KundliReportViewer] PDF blob created, size:', blob.size);
       const url = URL.createObjectURL(blob);
@@ -370,7 +557,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [buildPdfFileName, charts.length, createPdfBlob, isHindi, pdfFolderHandle, report?.birthDetails?.name, saveBlobToConfiguredFolder]);
+  }, [buildPdfFileName, charts.length, createPdfBlob, isHindi, pdfFolderHandle, safeReport?.birthDetails?.name, saveBlobToConfiguredFolder]);
 
   // Cleanup blob URL
   useEffect(() => {
@@ -414,12 +601,12 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
 
   // Generate PDF after charts are fetched (or after a short delay if charts fail)
   useEffect(() => {
-    console.log('[KundliReportViewer] useEffect triggered, isLoading:', isLoading, 'hasReport:', !!report, 'hasBlobUrl:', !!pdfBlobUrl, 'isFetchingCharts:', isFetchingCharts);
-    if (!isLoading && report && !pdfBlobUrl && !isFetchingCharts) {
+    console.log('[KundliReportViewer] useEffect triggered, isLoading:', isLoading, 'hasReport:', !!safeReport, 'hasBlobUrl:', !!pdfBlobUrl, 'isFetchingCharts:', isFetchingCharts);
+    if (!isLoading && safeReport && !pdfBlobUrl && !isFetchingCharts) {
       console.log('[KundliReportViewer] Triggering PDF generation from useEffect');
       generatePdfBlob();
     }
-  }, [isLoading, report, pdfBlobUrl, isFetchingCharts, generatePdfBlob]);
+  }, [isLoading, safeReport, pdfBlobUrl, isFetchingCharts, generatePdfBlob]);
   if (isLoading) {
     return (
       <Card className="w-full max-w-5xl mx-auto">
@@ -445,37 +632,37 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
 
   // Count successful sections
   const sectionCount = [
-    report.panchang,
-    report.pillars,
-    report.planets?.length > 0,
-    report.houses?.length > 0,
-    report.career,
-    report.marriage,
-    report.dasha,
-    report.rahuKetu,
-    report.doshas,
-    report.rajYogs,
-    report.remedies,
-    report.numerology,
-    report.spiritual,
+    safeReport.panchang,
+    safeReport.pillars,
+    safeReport.planets?.length > 0,
+    safeReport.houses?.length > 0,
+    safeReport.career,
+    safeReport.marriage,
+    safeReport.dasha,
+    safeReport.rahuKetu,
+    safeReport.doshas,
+    safeReport.rajYogs,
+    safeReport.remedies,
+    safeReport.numerology,
+    safeReport.spiritual,
   ].filter(Boolean).length;
 
   const estimatedPages = 
     2 + // Cover + birth details
-    (report.panchang ? 1 : 0) +
-    (report.pillars ? 1 : 0) +
-    (report.planets?.length || 0) +
+    (safeReport.panchang ? 1 : 0) +
+    (safeReport.pillars ? 1 : 0) +
+    (safeReport.planets?.length || 0) +
     1 + // Houses overview
-    (report.houses?.length || 0) +
-    (report.career ? 1 : 0) +
-    (report.marriage ? 1 : 0) +
-    (report.dasha ? 1 : 0) +
-    (report.rahuKetu ? 1 : 0) +
-    (report.doshas ? 3 : 0) + // Doshas analysis (major, minor, remedies)
-    (report.rajYogs ? 4 : 0) + // Raj Yogs (raja, dhana, life predictions, challenging)
-    (report.numerology ? 1 : 0) +
-    (report.spiritual ? 1 : 0) +
-    (report.remedies ? 2 : 0) +
+    (safeReport.houses?.length || 0) +
+    (safeReport.career ? 1 : 0) +
+    (safeReport.marriage ? 1 : 0) +
+    (safeReport.dasha ? 1 : 0) +
+    (safeReport.rahuKetu ? 1 : 0) +
+    (safeReport.doshas ? 3 : 0) + // Doshas analysis (major, minor, remedies)
+    (safeReport.rajYogs ? 4 : 0) + // Raj Yogs (raja, dhana, life predictions, challenging)
+    (safeReport.numerology ? 1 : 0) +
+    (safeReport.spiritual ? 1 : 0) +
+    (safeReport.remedies ? 2 : 0) +
     1; // Summary
 
   return (
@@ -488,7 +675,7 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
               {isHindi ? 'कुंडली रिपोर्ट' : 'Kundli Report'}
             </CardTitle>
             <p className="text-muted-foreground mt-1">
-              {report.birthDetails.name} • {report.birthDetails.dateOfBirth}
+              {String(birthDetails.name || 'Kundli')} • {String(birthDetails.dateOfBirth || 'N/A')}
             </p>
             <div className="flex flex-wrap gap-2 mt-2 text-xs">
               <span className="bg-primary/10 text-primary px-2 py-1 rounded">
@@ -498,10 +685,10 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
                 ~{estimatedPages} pages
               </span>
               <span className="bg-primary/10 text-primary px-2 py-1 rounded">
-                {report.planets?.length || 0} planet analyses
+                {safeReport.planets?.length || 0} planet analyses
               </span>
               <span className="bg-primary/10 text-primary px-2 py-1 rounded">
-                {report.houses?.length || 0} house analyses
+                {safeReport.houses?.length || 0} house analyses
               </span>
             </div>
           </div>
@@ -632,80 +819,80 @@ export const KundliReportViewer = ({ report, isLoading = false }: KundliReportVi
                 {isHindi ? 'रिपोर्ट में शामिल' : 'Report Contents'}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
-                {report.panchang && (
+                {safeReport.panchang && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Panchang Analysis
                   </div>
                 )}
-                {report.pillars && (
+                {safeReport.pillars && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Three Pillars
                   </div>
                 )}
-                {report.planets?.length > 0 && (
+                {safeReport.planets?.length > 0 && (
                   <div className="flex items-center gap-2 text-green-600">
-                    <span>✓</span> {report.planets.length} Planet Profiles
+                    <span>✓</span> {safeReport.planets.length} Planet Profiles
                   </div>
                 )}
-                {report.houses?.length > 0 && (
+                {safeReport.houses?.length > 0 && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> 12 House Analysis
                   </div>
                 )}
-                {report.career && (
+                {safeReport.career && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Career Predictions
                   </div>
                 )}
-                {report.marriage && (
+                {safeReport.marriage && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Marriage Analysis
                   </div>
                 )}
-                {report.dasha && (
+                {safeReport.dasha && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Dasha Predictions
                   </div>
                 )}
-                {report.rahuKetu && (
+                {safeReport.rahuKetu && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Rahu-Ketu Analysis
                   </div>
                 )}
-                {report.doshas && (
+                {safeReport.doshas && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Dosha Analysis
                   </div>
                 )}
-                {report.rajYogs && (
+                {safeReport.rajYogs && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Raja Yogas
                   </div>
                 )}
-                {report.numerology && (
+                {safeReport.numerology && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Numerology
                   </div>
                 )}
-                {report.spiritual && (
+                {safeReport.spiritual && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Spiritual Guidance
                   </div>
                 )}
-                {report.remedies && (
+                {safeReport.remedies && (
                   <div className="flex items-center gap-2 text-green-600">
                     <span>✓</span> Remedies & Mantras
                   </div>
                 )}
               </div>
 
-              {report.errors.length > 0 && (
+              {safeReport.errors.length > 0 && (
                 <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                   <p className="text-amber-800 text-sm font-medium mb-1">
                     {isHindi ? 'कुछ खंड उत्पन्न नहीं हो सके:' : 'Some sections could not be generated:'}
                   </p>
                   <ul className="text-amber-700 text-xs list-disc list-inside">
-                    {report.errors.map((err, idx) => (
+                    {safeReport.errors.map((err, idx) => (
                       <li key={idx}>{err}</li>
                     ))}
                   </ul>

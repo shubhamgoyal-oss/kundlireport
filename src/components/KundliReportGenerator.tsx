@@ -17,6 +17,8 @@ import i18n from '@/i18n';
 import { trackEvent } from '@/lib/analytics';
 import { supabase } from '@/integrations/supabase/client';
 import { useGooglePlacesAutocomplete } from '@/hooks/useGooglePlacesAutocomplete';
+import { PipelineSelector } from './PipelineSelector';
+import { kundliApiInvoke, kundliApiFetch, type Pipeline } from '@/lib/kundliApi';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { mirrorJobStartToFirebase, updateJobStatusInFirebaseFromPolling } from '@/integrations/firebase/dual-write-hook';
 import { getJobFromFirebase } from '@/integrations/firebase/client';
@@ -62,10 +64,33 @@ const birthInputSchema = z
   });
 
 type BirthInput = z.infer<typeof birthInputSchema>;
+type ReportLanguage = 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' | 'gu';
+
+const toReportLanguage = (langCode: string): ReportLanguage =>
+  langCode === 'hi'
+    ? 'hi'
+    : langCode === 'te'
+      ? 'te'
+      : langCode === 'kn'
+        ? 'kn'
+        : langCode === 'mr'
+          ? 'mr'
+          : langCode === 'ta'
+            ? 'ta'
+            : langCode === 'gu'
+              ? 'gu'
+              : 'en';
 
 const KundliReportGenerator = () => {
   const { t: _t } = useTranslation();
-  const { predictions, searchPlaces, getPlaceDetails, clearPredictions } = useGooglePlacesAutocomplete();
+  const {
+    isLoaded: isGooglePlacesLoaded,
+    isSearching: isGooglePlacesSearching,
+    predictions,
+    searchPlaces,
+    getPlaceDetails,
+    clearPredictions,
+  } = useGooglePlacesAutocomplete();
   const [showPlaceResults, setShowPlaceResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [kundliReport, setKundliReport] = useState<any>(null);
@@ -74,10 +99,12 @@ const KundliReportGenerator = () => {
   const [searchTimer, setSearchTimer] = useState<NodeJS.Timeout | null>(null);
   const [jobProgress, setJobProgress] = useState(0);
   const [jobPhase, setJobPhase] = useState("");
-  // Derive report language from i18n (supports en, hi, te, kn, mr, ta)
-  const langCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
-  const reportLanguage: 'en' | 'hi' | 'te' | 'kn' | 'mr' | 'ta' = langCode === 'hi' ? 'hi' : langCode === 'te' ? 'te' : langCode === 'kn' ? 'kn' : langCode === 'mr' ? 'mr' : langCode === 'ta' ? 'ta' : 'en';
-  const isHindi = reportLanguage !== 'en'; // true for Hindi, Telugu, Kannada, Marathi — Indic UI labels
+  const [pipeline, setPipeline] = useState<Pipeline>('supabase');
+  // UI language follows route/i18n. Report language is user-selected independently.
+  const uiLangCode = (i18n.language || 'en').toLowerCase().slice(0, 2);
+  const uiLanguage: ReportLanguage = toReportLanguage(uiLangCode);
+  const [reportLanguage, setReportLanguage] = useState<ReportLanguage>(uiLanguage);
+  const isHindi = uiLanguage !== 'en'; // true for Indic UI labels
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -104,6 +131,11 @@ const KundliReportGenerator = () => {
 
     if (searchTerm.length < 2) {
       clearPredictions();
+      setShowPlaceResults(false);
+      return;
+    }
+
+    if (!isGooglePlacesLoaded) {
       setShowPlaceResults(false);
       return;
     }
@@ -200,7 +232,7 @@ const KundliReportGenerator = () => {
       let jobData: any = null;
       let startError: any = null;
       for (let attempt = 0; attempt < 3; attempt++) {
-        const result = await supabase.functions.invoke('start-kundli-job', {
+        const result = await kundliApiInvoke(pipeline, 'start-kundli-job', {
           body: {
             name: data.name.trim(),
             dateOfBirth: data.date,
@@ -276,29 +308,29 @@ const KundliReportGenerator = () => {
       const maxRetries = 2;         // max number of auto-retriggers
       const stallThresholdMs = 90_000; // 90s without progress change = stalled
 
-      const retriggerStalledStage = async (phase: string) => {
-        retriesAttempted++;
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const serviceKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-
-        // Determine which stage to re-trigger based on current phase/progress
-        let functionName = 'translate-kundli-report'; // default: re-trigger translation
-        if (phase?.toLowerCase().includes('finaliz') || phase?.toLowerCase().includes('quality') || phase?.toLowerCase().includes('chart')) {
-          functionName = 'finalize-kundli-report';
-        } else if (phase?.toLowerCase().includes('translat')) {
-          functionName = 'translate-kundli-report';
+      const getRetryFunctionName = (phase: string) => {
+        const normalizedPhase = String(phase || '').toLowerCase();
+        if (normalizedPhase.includes('translat')) {
+          return 'translate-kundli-report';
         }
+        if (
+          normalizedPhase.includes('finaliz')
+          || normalizedPhase.includes('quality')
+          || normalizedPhase.includes('chart')
+          || normalizedPhase.includes('complete')
+        ) {
+          return 'finalize-kundli-report';
+        }
+        return 'process-kundli-job';
+      };
+
+      const retriggerStalledStage = async (phase: string, progress: number) => {
+        retriesAttempted++;
+        const functionName = getRetryFunctionName(phase);
 
         console.log(`🔄 [KundliReportGenerator] Job stalled at "${phase}" — auto-retrigger ${retriesAttempted}/${maxRetries}: ${functionName}`);
         try {
-          await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({ jobId }),
-          });
+          await kundliApiFetch(pipeline, functionName, { body: { jobId } });
         } catch (retriggerErr) {
           console.warn('[KundliReportGenerator] Auto-retrigger failed:', retriggerErr);
         }
@@ -308,15 +340,10 @@ const KundliReportGenerator = () => {
       const pollJob = async (): Promise<any> => {
         pollCount++;
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-kundli-job?jobId=${jobId}`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-          }
-        );
+        const response = await kundliApiFetch(pipeline, 'get-kundli-job', {
+          method: 'GET',
+          query: { jobId },
+        });
 
         if (!response.ok) {
           // Try Firebase fallback if Supabase is down
@@ -387,7 +414,7 @@ const KundliReportGenerator = () => {
           retriesAttempted < maxRetries &&
           jobStatus.status === 'processing'
         ) {
-          await retriggerStalledStage(jobStatus.currentPhase || '');
+          await retriggerStalledStage(jobStatus.currentPhase || '', currentProgress);
           lastProgressChangeTime = Date.now(); // reset stall timer after retrigger
         }
         // ────────────────────────────────────────────────────────────────────
@@ -495,8 +522,8 @@ const KundliReportGenerator = () => {
                     {isHindi ? 'रिपोर्ट भाषा' : 'Report Language'} <span className="text-destructive">*</span>
                   </Label>
                   <select
-                    onChange={(e) => i18n.changeLanguage(e.target.value)}
-                    defaultValue={i18n.language || 'en'}
+                    value={reportLanguage}
+                    onChange={(e) => setReportLanguage(e.target.value as ReportLanguage)}
                     className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm"
                   >
                     <option value="en">English</option>
@@ -505,6 +532,7 @@ const KundliReportGenerator = () => {
                     <option value="kn">ಕನ್ನಡ (Kannada)</option>
                     <option value="mr">मराठी (Marathi)</option>
                     <option value="ta">தமிழ் (Tamil)</option>
+                    <option value="gu">ગુજરાતી (Gujarati)</option>
                   </select>
                 </div>
 
@@ -536,6 +564,9 @@ const KundliReportGenerator = () => {
                     <p className="text-xs text-destructive">{errors.gender.message}</p>
                   )}
                 </div>
+
+                {/* Pipeline Selector */}
+                <PipelineSelector value={pipeline} onChange={setPipeline} disabled={isGenerating} isHindi={isHindi} />
 
                 {/* Date of Birth */}
                 <DateOfBirthPicker
@@ -586,12 +617,21 @@ const KundliReportGenerator = () => {
                       placeholder={isHindi ? 'शहर खोजें...' : 'Search for a city...'}
                       onChange={(e) => {
                         register('place').onChange(e);
+                        // Force fresh place selection for every edit (avoid stale lat/lon/tz)
+                        setValue('lat', undefined);
+                        setValue('lon', undefined);
+                        setValue('tz', undefined);
                         handlePlaceSearch(e.target.value);
                       }}
                       onKeyDown={handlePlaceKeyDown}
                       autoComplete="off"
                       className={`bg-input min-h-[44px] text-base ${errors.place ? 'border-destructive' : ''}`}
                     />
+                    {isGooglePlacesSearching && (
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      </div>
+                    )}
                     {showPlaceResults && predictions.length > 0 && (
                       <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {predictions.map((prediction, idx) => (
@@ -608,6 +648,11 @@ const KundliReportGenerator = () => {
                           </button>
                         ))}
                       </div>
+                    )}
+                    {!isGooglePlacesLoaded && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {isHindi ? 'स्थान सुझाव लोड हो रहे हैं...' : 'Loading place suggestions...'}
+                      </p>
                     )}
                   </div>
                   {errors.place && (

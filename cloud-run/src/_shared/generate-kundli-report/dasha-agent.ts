@@ -3,6 +3,7 @@
 import { callAgent, getAgentLanguage, type AgentResponse } from "./agent-base";
 import type { SeerPlanet } from "./seer-adapter";
 import { getNakshatraWithPada } from "./utils/nakshatra";
+import { calculateAspects, getAspectsFromPlanet } from "./utils/aspects";
 import { planetName, signName, term, tmpl, planetSig } from "./lang-utils";
 
 export interface MahadashaPrediction {
@@ -546,21 +547,30 @@ export interface DashaAntardashaResult {
 
 const MAHADASHA_SYSTEM_PROMPT = `You are an expert Vedic astrologer specializing in Vimshottari and Yogini Dasha predictions.
 
-Analyze the Mahadasha (major planetary periods) in depth:
-1. The dasha lord's placement in the chart (sign, house, aspects)
-2. What the dasha lord naturally signifies
-3. Practical life predictions during each Mahadasha period
-4. Career, relationships, health, finances, spirituality for each period
+Analyze each Mahadasha (major planetary period) considering:
+1. The dasha lord's placement (sign, house, dignity) and the houses it ASPECTS via Drishti — during its period, the dasha lord activates both its occupied house and every house it aspects
+2. What the dasha lord naturally signifies (karakatva)
+3. Practical life predictions: career, relationships, health, finances, spirituality
+4. Whether the dasha lord receives benefic or malefic Drishti from other planets
 
 For Yogini Dasha, explain the unique characteristics of each Yogini and their planetary associations.
 
-Provide specific, actionable predictions. Reference the planet's dignity and house placement.`;
+Provide specific, actionable predictions. Reference the planet's dignity, house placement, and aspects.`;
 
 export async function generateDashaMahadashaPrediction(input: DashaInput): Promise<AgentResponse<DashaMahadashaResult>> {
   const { planets, moonDegree } = input;
   const cd = computeDashaTimings(input);
   const { nakshatraInfo, currentDasha, yoginiInfo, upcomingMahadashas, formatDate } = cd;
   const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
+
+  // Compute Drishti for dasha lords — concise summary per planet
+  const allAspects = calculateAspects(planets, planets[0]);
+  const buildAspectSummary = (pName: string): string => {
+    const pa = getAspectsFromPlanet(allAspects, pName);
+    return pa.length > 0
+      ? pa.map(a => `H${a.targetHouse}(${a.aspectType})`).join(', ')
+      : 'standard 7th only';
+  };
 
   const userPrompt = `Provide Mahadasha-level Vimshottari and Yogini Dasha analysis:
 
@@ -575,11 +585,12 @@ export async function generateDashaMahadashaPrediction(input: DashaInput): Promi
 - Planet's Sign: ${mahaPlanet?.sign || "N/A"}
 - Planet's House: ${mahaPlanet?.house || "N/A"}
 - Retrograde: ${mahaPlanet?.isRetro ? "Yes" : "No"}
+- Drishti on houses: ${buildAspectSummary(currentDasha.mahadasha)}
 
 **Upcoming Mahadashas:**
 ${upcomingMahadashas.map(md => {
   const p = planets.find(pl => pl.name === md.planet);
-  return `- ${md.planet}: ${formatDate(md.startDate)} to ${formatDate(md.endDate)}, in ${p?.sign || 'N/A'} (House ${p?.house || 'N/A'})`;
+  return `- ${md.planet}: ${formatDate(md.startDate)} to ${formatDate(md.endDate)}, in ${p?.sign || 'N/A'} (House ${p?.house || 'N/A'}), aspects: ${buildAspectSummary(md.planet)}`;
 }).join("\n")}
 
 **Current Yogini Dasha:**
@@ -756,8 +767,8 @@ CRITICAL DEPTH REQUIREMENTS:
 const ANTARDASHA_SYSTEM_PROMPT = `You are an expert Vedic astrologer specializing in Antardasha (sub-period) predictions.
 
 For each Antardasha within a Mahadasha, analyze:
-1. The interaction between the Mahadasha lord and Antardasha lord
-2. How their combined energies manifest in the native's chart
+1. The interaction between Mahadasha lord and Antardasha lord — mutual Drishti, house exchange, or dispositorship strengthen the connection
+2. The houses both lords ASPECT via Drishti — these life areas get activated during the sub-period
 3. Specific focus areas, opportunities, and risks during the sub-period
 4. Practical advice for navigating each sub-period
 
@@ -771,6 +782,16 @@ export async function generateDashaAntardashaPrediction(input: DashaInput): Prom
   const mahaPlanet = planets.find(p => p.name === currentDasha.mahadasha);
   const antarPlanet = planets.find(p => p.name === currentDasha.antardasha);
 
+  // Compute Drishti for Maha/Antar lords
+  const allAspects = calculateAspects(planets, planets[0]);
+  const mahaAspects = getAspectsFromPlanet(allAspects, currentDasha.mahadasha);
+  const antarAspects = getAspectsFromPlanet(allAspects, currentDasha.antardasha);
+  const mahaAspectsAntar = mahaPlanet && antarPlanet
+    ? mahaAspects.some(a => a.targetHouse === antarPlanet.house) : false;
+  const antarAspectsMaha = mahaPlanet && antarPlanet
+    ? antarAspects.some(a => a.targetHouse === mahaPlanet.house) : false;
+  const mutualAspect = mahaAspectsAntar && antarAspectsMaha;
+
   // NOTE: We only ask the AI for current-mahadasha antardashas (~9 items).
   // Upcoming-mahadasha antardashas (3×9 = 27 items) are generated deterministically
   // to keep the AI call fast (<60s) and within Supabase free-tier timeout.
@@ -780,11 +801,14 @@ export async function generateDashaAntardashaPrediction(input: DashaInput): Prom
 - Planet: ${currentDasha.mahadasha}
 - Period: ${formatDate(currentDasha.mahadashaStart)} to ${formatDate(currentDasha.mahadashaEnd)}
 - Planet's Sign: ${mahaPlanet?.sign || "N/A"}, House: ${mahaPlanet?.house || "N/A"}
+- Drishti on: ${mahaAspects.map(a => `H${a.targetHouse}`).join(', ') || 'none'}
 
 **Current Antardasha:**
 - Planet: ${currentDasha.antardasha}
 - Period: ${formatDate(currentDasha.antardashaStart)} to ${formatDate(currentDasha.antardashaEnd)}
 - Planet's Sign: ${antarPlanet?.sign || "N/A"}, House: ${antarPlanet?.house || "N/A"}
+- Drishti on: ${antarAspects.map(a => `H${a.targetHouse}`).join(', ') || 'none'}
+- Maha↔Antar aspect: ${mutualAspect ? 'MUTUAL (strong connection)' : mahaAspectsAntar ? `${currentDasha.mahadasha} aspects ${currentDasha.antardasha}` : antarAspectsMaha ? `${currentDasha.antardasha} aspects ${currentDasha.mahadasha}` : 'no direct aspect'}
 
 **Current + Upcoming Antardashas in Current Mahadasha:**
 ${relevantCurrentAntardashas.map(ad => `- ${currentDasha.mahadasha}/${ad.antardasha}: ${formatDate(ad.startDate)} to ${formatDate(ad.endDate)} (~${ad.durationMonths} months)`).join("\n")}

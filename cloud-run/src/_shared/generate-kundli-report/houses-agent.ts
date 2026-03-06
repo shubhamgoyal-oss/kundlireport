@@ -2,6 +2,7 @@
 
 import { callAgent, type AgentResponse } from "./agent-base";
 import { getSignLord } from "./utils/dignity";
+import { calculateAspects, getAspectsOnHouse, type Aspect } from "./utils/aspects";
 import type { SeerPlanet } from "./seer-adapter";
 import { planetName, signName, houseName } from "./lang-utils";
 
@@ -46,16 +47,17 @@ const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "
 
 const HOUSES_SYSTEM_PROMPT = `You are an expert Vedic astrologer providing comprehensive Bhavphal (house) analysis.
 
-For each house, provide a detailed 3-4 paragraph interpretation covering:
-1. The significance of the sign placed in this house and its elemental nature
-2. The placement and condition of the house lord - where it sits and what that means
-3. Any planets occupying this house and their combined effect
-4. Practical life predictions based on this house's significations
-5. Timing indications for when results may manifest
+For each house, give proper weightage to ALL of the following factors:
+1. **Sign & element**: The sign placed in this house and its elemental/modal nature
+2. **House lord placement**: Where the lord sits, its dignity, and the axis it creates
+3. **Occupants**: Planets physically sitting in the house — their nature, dignity, conjunctions
+4. **Drishti (planetary aspects)**: Which planets cast Drishti on this house (7th aspect from all planets; special aspects — Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th). Benefic Drishti (Jupiter, Venus, well-placed Mercury/Moon) strengthens a house; malefic Drishti (Saturn, Mars, Rahu) creates challenges. Mutual aspects and aspect strength matter.
+5. **Practical predictions**: Synthesize all factors into specific life predictions with timing
+
+Do NOT treat occupants alone as the whole picture — Drishti often matters more than occupancy. A house with no planets but Jupiter's 5th aspect and Saturn's 10th aspect has very different results from an empty unaspected house.
 
 Be specific, reference planetary combinations, and provide actionable insights.
-Use a warm but authoritative tone. Reference classical texts naturally.
-Each prediction should be 2-3 sentences with clear guidance.`;
+Use a warm but authoritative tone. Each prediction should be 2-3 sentences.`;
 
 interface HouseInput {
   houseNumber: number;
@@ -67,11 +69,18 @@ interface HouseInput {
 
 export async function generateHouseAnalysis(input: HouseInput): Promise<AgentResponse<HouseAnalysis>> {
   const { houseNumber, sign, signIdx, planets, allPlanets } = input;
-  
+
   const lord = getSignLord(signIdx);
   const lordPlanet = allPlanets.find(p => p.name === lord);
   const occupantNames = planets.map(p => p.name);
   const houseInfo = HOUSE_SIGNIFICATIONS[houseNumber];
+
+  // Compute Drishti (aspects) on this house
+  const allAspects = calculateAspects(allPlanets, allPlanets[0]); // asc not needed for aspect calc
+  const aspectsOnHouse = getAspectsOnHouse(allAspects, houseNumber);
+  // Exclude self-aspects (planets already IN this house)
+  const occupantSet = new Set(occupantNames);
+  const externalAspects = aspectsOnHouse.filter(a => !occupantSet.has(a.fromPlanet));
 
   const localHouseName = houseName(houseNumber);
   const localSignName = signName(sign);
@@ -89,17 +98,22 @@ export async function generateHouseAnalysis(input: HouseInput): Promise<AgentRes
 **Occupants in House ${houseNumber}:**
 ${occupantNames.length > 0 ? occupantNames.map(p => `- ${p} (${planetName(p)})`).join("\n") : "- Empty (no planets)"}
 
+**Drishti (Aspects) on House ${houseNumber}:**
+${externalAspects.length > 0
+  ? externalAspects.map(a => `- ${a.fromPlanet} (from House ${a.fromHouse}) casts ${a.aspectType} aspect`).join("\n")
+  : "- No external planetary aspects on this house"}
+
 **House Significations:**
 - Name: ${houseInfo.name}
 - Nature: ${houseInfo.nature}
 - Areas of Life: ${houseInfo.areas}
 
-Provide comprehensive Bhavphal analysis with:
-1. Deep interpretation of sign + lord placement
-2. Effect of any occupants
-3. 4-5 specific life predictions
-4. Strengths and challenges
-5. Timing guidance for results`;
+Provide comprehensive Bhavphal analysis giving due weightage to ALL factors:
+1. Sign + lord placement interpretation
+2. Effect of occupants (if any)
+3. **Impact of Drishti** — how aspecting planets modify this house's results
+4. 4-5 specific life predictions synthesizing all factors
+5. Strengths, challenges, and timing guidance`;
 
   const toolSchema = {
     type: "object",
@@ -141,7 +155,7 @@ export async function generateAllHouseAnalyses(
   ascSignIdx: number
 ): Promise<HouseAnalysis[]> {
   const results: HouseAnalysis[] = [];
-  
+
   // Build house data
   const houseData: HouseInput[] = [];
   for (let h = 1; h <= 12; h++) {
@@ -156,20 +170,20 @@ export async function generateAllHouseAnalyses(
       allPlanets: planets
     });
   }
-  
+
   // Process in batches of 4 to avoid rate limits
   for (let i = 0; i < houseData.length; i += 4) {
     const batch = houseData.slice(i, i + 4);
     const batchResults = await Promise.all(
       batch.map(house => generateHouseAnalysis(house))
     );
-    
+
     for (const result of batchResults) {
       if (result.success && result.data) {
         results.push(result.data);
       }
     }
   }
-  
+
   return results.sort((a, b) => a.house - b.house);
 }

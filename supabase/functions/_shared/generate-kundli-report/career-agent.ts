@@ -2,6 +2,7 @@
 
 import { callAgent, type AgentResponse } from "./agent-base.ts";
 import { getSignLord } from "./utils/dignity.ts";
+import { calculateAspects, getAspectsOnHouse } from "./utils/aspects.ts";
 import type { SeerPlanet } from "./seer-adapter.ts";
 import type { CharaKaraka } from "./utils/chara-karakas.ts";
 
@@ -88,7 +89,10 @@ export async function generateCareerPrediction(input: CareerInput): Promise<Agen
   const tenthLord = getSignLord(tenthHouseSignIdx);
   const tenthLordPlanet = planets.find(p => p.name === tenthLord);
   const tenthHouseOccupants = planets.filter(p => p.house === 10);
-  
+  const allAspects = calculateAspects(planets, planets[0]);
+  const tenthHouseAspects = getAspectsOnHouse(allAspects, 10)
+    .filter(a => !tenthHouseOccupants.some(p => p.name === a.fromPlanet));
+
   const amatyakaraka = charaKarakas.find(k => k.karaka === "Amatyakaraka");
   const amatyakarakaPlanet = amatyakaraka ? planets.find(p => p.name === amatyakaraka.planet) : null;
   
@@ -105,6 +109,7 @@ export async function generateCareerPrediction(input: CareerInput): Promise<Agen
 - Lord: ${tenthLord}
 - Lord's Position: House ${tenthLordPlanet?.house || "N/A"} in ${tenthLordPlanet?.sign || "N/A"}
 - Occupants: ${tenthHouseOccupants.map(p => p.name).join(", ") || "Empty"}
+- Aspected by: ${tenthHouseAspects.length > 0 ? tenthHouseAspects.map(a => `${a.fromPlanet}(${a.aspectType})`).join(", ") : "None"}
 
 **Sun (Authority & Status):**
 - Sign: ${sun?.sign || "N/A"}

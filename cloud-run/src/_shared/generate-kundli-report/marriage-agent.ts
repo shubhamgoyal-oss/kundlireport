@@ -2,6 +2,7 @@
 
 import { callAgent, type AgentResponse } from "./agent-base";
 import { getSignLord } from "./utils/dignity";
+import { calculateAspects, getAspectsOnHouse } from "./utils/aspects";
 import type { SeerPlanet } from "./seer-adapter";
 import type { CharaKaraka } from "./utils/chara-karakas";
 
@@ -135,6 +136,13 @@ export async function generateMarriagePrediction(input: MarriageInput): Promise<
   const darakaraka = charaKarakas.find(k => k.karaka === "Darakaraka");
   const darakarakaPlanet = darakaraka ? planets.find(p => p.name === darakaraka.planet) : null;
   
+  // Aspects on 5th and 7th houses
+  const allAspects = calculateAspects(planets, planets[0]);
+  const fifthAspects = getAspectsOnHouse(allAspects, 5)
+    .filter(a => !fifthHouseOccupants.some(p => p.name === a.fromPlanet));
+  const seventhAspects = getAspectsOnHouse(allAspects, 7)
+    .filter(a => !seventhHouseOccupants.some(p => p.name === a.fromPlanet));
+
   // Mangal Dosha check (basic)
   const mangalDosha = mars && [1, 2, 4, 7, 8, 12].includes(mars.house);
   const now = generatedAt || new Date();
@@ -149,12 +157,14 @@ export async function generateMarriagePrediction(input: MarriageInput): Promise<
 - Lord: ${fifthLord}
 - Lord's Position: House ${fifthLordPlanet?.house || "N/A"} in ${fifthLordPlanet?.sign || "N/A"}
 - Occupants: ${fifthHouseOccupants.map(p => p.name).join(", ") || "Empty"}
+- Aspected by: ${fifthAspects.length > 0 ? fifthAspects.map(a => `${a.fromPlanet}(${a.aspectType})`).join(", ") : "None"}
 
 **7th House (Marriage):**
 - Sign: ${SIGNS[seventhHouseSignIdx]}
 - Lord: ${seventhLord}
 - Lord's Position: House ${seventhLordPlanet?.house || "N/A"} in ${seventhLordPlanet?.sign || "N/A"}
 - Occupants: ${seventhHouseOccupants.map(p => p.name).join(", ") || "Empty"}
+- Aspected by: ${seventhAspects.length > 0 ? seventhAspects.map(a => `${a.fromPlanet}(${a.aspectType})`).join(", ") : "None"}
 
 **Venus (Love & Relationships):**
 - Sign: ${venus?.sign || "N/A"}

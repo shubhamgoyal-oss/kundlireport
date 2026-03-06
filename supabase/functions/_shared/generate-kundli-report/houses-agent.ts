@@ -47,15 +47,14 @@ const SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "
 
 const HOUSES_SYSTEM_PROMPT = `You are an expert Vedic astrologer providing comprehensive Bhavphal (house) analysis.
 
-For each house, give proper weightage to ALL of the following factors:
-1. **Sign & element**: The sign placed in this house and its elemental/modal nature
-2. **House lord placement**: Where the lord sits, its dignity, and the axis it creates
-3. **Occupants**: Planets physically sitting in the house — their nature, dignity, conjunctions
-4. **Drishti (planetary aspects)**: Which planets cast Drishti on this house (7th aspect from all planets; special aspects — Mars 4th/8th, Jupiter 5th/9th, Saturn 3rd/10th). Benefic Drishti (Jupiter, Venus, well-placed Mercury/Moon) strengthens a house; malefic Drishti (Saturn, Mars, Rahu) creates challenges. Mutual aspects and aspect strength matter.
-5. **Practical predictions**: Synthesize all factors into specific life predictions with timing
+For each house, synthesize ALL relevant factors holistically:
+- The sign placed in this house and its elemental nature
+- House lord placement, dignity, and the axis it creates
+- Planets occupying the house — their nature, dignity, conjunctions
+- Planetary aspects (Drishti) on this house — who aspects it and how that modifies results
+- Practical life predictions with timing
 
-Do NOT treat occupants alone as the whole picture — Drishti often matters more than occupancy. A house with no planets but Jupiter's 5th aspect and Saturn's 10th aspect has very different results from an empty unaspected house.
-
+Weave these factors together naturally into a cohesive interpretation.
 Be specific, reference planetary combinations, and provide actionable insights.
 Use a warm but authoritative tone. Each prediction should be 2-3 sentences.`;
 
@@ -108,12 +107,11 @@ ${externalAspects.length > 0
 - Nature: ${houseInfo.nature}
 - Areas of Life: ${houseInfo.areas}
 
-Provide comprehensive Bhavphal analysis giving due weightage to ALL factors:
+Provide comprehensive Bhavphal analysis synthesizing all factors above:
 1. Sign + lord placement interpretation
-2. Effect of occupants (if any)
-3. **Impact of Drishti** — how aspecting planets modify this house's results
-4. 4-5 specific life predictions synthesizing all factors
-5. Strengths, challenges, and timing guidance`;
+2. Effect of occupants and aspecting planets
+3. 4-5 specific life predictions
+4. Strengths, challenges, and timing guidance`;
 
   const toolSchema = {
     type: "object",

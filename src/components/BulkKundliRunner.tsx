@@ -43,6 +43,7 @@ interface BulkRowState {
   bucketSignedUrl?: string;
   pdfStorageBucket?: string;
   pdfStoragePath?: string;
+  pdfSizeBytes?: number;
 }
 
 /** Read gender directly from CSV normalized columns — no API call, no guessing */
@@ -949,6 +950,7 @@ export default function BulkKundliRunner() {
         bucketSignedUrl,
         pdfStorageBucket,
         pdfStoragePath,
+        pdfSizeBytes: blob.size,
       });
     } catch (err) {
       updateBulkRow(row.rowNumber, {
@@ -1751,6 +1753,7 @@ export default function BulkKundliRunner() {
                     <th className="text-left p-2">Status</th>
                     <th className="text-left p-2">Job ID</th>
                     <th className="text-left p-2">Save PDF</th>
+                    <th className="text-right p-2">PDF Size</th>
                     <th className="text-left p-2">Download Link (7 days)</th>
                     <th className="text-left p-2">Error</th>
                   </tr>
@@ -1860,6 +1863,13 @@ export default function BulkKundliRunner() {
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
+                      </td>
+                      <td className="p-2 text-right font-mono text-xs">
+                        {row.pdfSizeBytes
+                          ? row.pdfSizeBytes >= 1_048_576
+                            ? `${(row.pdfSizeBytes / 1_048_576).toFixed(1)} MB`
+                            : `${Math.round(row.pdfSizeBytes / 1024)} KB`
+                          : '-'}
                       </td>
                       <td className="p-2">
                         {row.bucketSignedUrl ? (

@@ -822,7 +822,16 @@ export default function BulkKundliRunner() {
 
   const isPayloadPdfReady = (payload: any): boolean => {
     const status = normalizeJobStatus(payload?.status);
-    return status === 'completed' && Boolean(payload?.report);
+    if (status !== 'completed' || !payload?.report) return false;
+    // Verify critical sections are populated — a report that went through the
+    // full pipeline (including retry) should have planets, houses, and dasha.
+    // If these are missing, the report was likely built from a partial first-pass
+    // before the retry completed (race condition with stall detection).
+    const r = payload.report;
+    if (!Array.isArray(r.planets) || r.planets.length === 0) return false;
+    if (!Array.isArray(r.houses) || r.houses.length === 0) return false;
+    if (!r.dasha) return false;
+    return true;
   };
 
   // Mutex to prevent concurrent PDF generation which corrupts global language state
@@ -980,6 +989,12 @@ export default function BulkKundliRunner() {
     const stallThresholdMs = 90_000; // 90s without progress change = stalled
     const getRetryFunctionName = (phase: string) => {
       const normalizedPhase = String(phase || '').toLowerCase();
+      // CRITICAL: If the backend is retrying failed agents, do NOT trigger
+      // translate/finalize — that would process partial data. Re-trigger
+      // process-kundli-job instead so the retry can finish.
+      if (normalizedPhase.includes('retry')) {
+        return 'process-kundli-job';
+      }
       if (normalizedPhase.includes('translat')) {
         return 'translate-kundli-report';
       }
@@ -1015,6 +1030,20 @@ export default function BulkKundliRunner() {
 
       const payload = await response.json();
       if (payload.status === 'completed') {
+        // Verify the report has critical sections before declaring ready.
+        // If process-kundli-job had agent timeouts and is retrying, the stall
+        // detector could trigger translate on partial data → premature completion.
+        // Wait for the report to have actual content before proceeding.
+        const r = payload.report;
+        const reportLooksComplete = r
+          && Array.isArray(r.planets) && r.planets.length > 0
+          && Array.isArray(r.houses) && r.houses.length > 0
+          && r.dasha;
+        if (!reportLooksComplete) {
+          console.warn(`⚠️ [BulkRunner] Job ${jobId} status=completed but report is incomplete — waiting for retry to finish`);
+          await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+          continue; // keep polling instead of returning
+        }
         return { status: 'completed' };
       }
       if (payload.status === 'failed') {

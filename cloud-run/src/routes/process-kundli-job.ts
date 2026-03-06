@@ -1455,15 +1455,24 @@ router.post('/', async (req: Request, res: Response) => {
 
     report = enforceGlobalPredictionSafety(report, birthDate, reportGeneratedAt, normalizedMaritalStatus);
 
-    // ── Stage 1 complete: save partial report → trigger translate-kundli-report
+    // ── Stage 1 complete: save partial report → trigger translate or retry
     report.tokensUsed = totalTokens;
-    console.log(`📦 [PROCESS-JOB] Stage 1 done. Saving partial report and triggering Stage 2 (translate)...`);
+
+    // CRITICAL: Set phase BASED on whether we need to retry. The frontend's stall
+    // detector maps phases containing "translat" → translate-kundli-report. If we
+    // save "starting translation" but then trigger a retry, the stall detector can
+    // fire translate on PARTIAL data before the retry completes → truncated PDFs.
+    const needsRetry = agentsTimedOut && timedOutAgents.length > 0;
+    const stage1Phase = needsRetry
+      ? `Retrying ${timedOutAgents.length} failed agents — ${timedOutAgents.join(', ')}`
+      : "Agents complete — starting translation";
+    console.log(`📦 [PROCESS-JOB] Stage 1 done. Phase: "${stage1Phase}"`);
 
     await supabaseAdmin
       .from("kundli_report_jobs")
       .update({
         status: "processing",
-        current_phase: "Agents complete — starting translation",
+        current_phase: stage1Phase,
         progress_percent: 80,
         report_data: report,
         heartbeat_at: new Date().toISOString(),
@@ -1471,7 +1480,7 @@ router.post('/', async (req: Request, res: Response) => {
       .eq("id", jobId);
 
     // ── Decide next step: self-retry failed agents OR proceed to Stage 2 ──
-    if (agentsTimedOut && timedOutAgents.length > 0) {
+    if (needsRetry) {
       // Self-invoke for retry: gives failed agents a fresh time budget to complete.
       // Only 1 retry attempt — retryPass:2 prevents infinite loops.
       console.log(`🔄 [PROCESS-JOB] Triggering RETRY PASS for ${timedOutAgents.length} failed agents: ${timedOutAgents.join(', ')}`);

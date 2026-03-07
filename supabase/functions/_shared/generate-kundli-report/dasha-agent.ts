@@ -770,6 +770,7 @@ For each Antardasha within a Mahadasha, analyze:
 2. The houses and life areas both lords influence through placement and aspects
 3. Specific focus areas, opportunities, and risks during the sub-period
 4. Practical advice for navigating each sub-period
+5. In every Antardasha entry, explicitly ground interpretation in the parent Mahadasha baseline context.
 
 Provide specific, chart-linked predictions. Each interpretation must be a developed paragraph.`;
 
@@ -790,6 +791,14 @@ export async function generateDashaAntardashaPrediction(input: DashaInput): Prom
   const antarAspectsMaha = mahaPlanet && antarPlanet
     ? antarAspects.some(a => a.targetHouse === mahaPlanet.house) : false;
   const mutualAspect = mahaAspectsAntar && antarAspectsMaha;
+  const mahaSig = planetSig(currentDasha.mahadasha);
+  const mahaCtx = planetContext(currentDasha.mahadasha, planets);
+  const mahadashaBaselineContext = [
+    `- Core themes: ${mahaSig.themes}`,
+    `- Key strengths: ${mahaSig.strengths}`,
+    `- Key caution: ${mahaSig.caution}`,
+    `- Chart expression: ${mahaCtx}`,
+  ].join("\n");
 
   // NOTE: We only ask the AI for current-mahadasha antardashas (~9 items).
   // Upcoming-mahadasha antardashas (3×9 = 27 items) are generated deterministically
@@ -801,6 +810,9 @@ export async function generateDashaAntardashaPrediction(input: DashaInput): Prom
 - Period: ${formatDate(currentDasha.mahadashaStart)} to ${formatDate(currentDasha.mahadashaEnd)}
 - Planet's Sign: ${mahaPlanet?.sign || "N/A"}, House: ${mahaPlanet?.house || "N/A"}
 - Drishti on: ${mahaAspects.map(a => `H${a.targetHouse}`).join(', ') || 'none'}
+
+**Mahadasha Baseline Context (apply to EVERY Antardasha below):**
+${mahadashaBaselineContext}
 
 **Current Antardasha:**
 - Planet: ${currentDasha.antardasha}
@@ -818,6 +830,7 @@ ${planets.map(p => `- ${p.name}: ${p.sign} (House ${p.house})${p.isRetro ? " [R]
 Focus on:
 1. Current antardasha effects in detail
 2. Predictions for EACH remaining antardasha within current mahadasha
+3. For EACH antardasha item, first state how the parent Mahadasha baseline modifies that sub-period, then give sub-period specifics
 - Each interpretation must be a substantial paragraph, not a one-liner.`;
 
   const toolSchema = {

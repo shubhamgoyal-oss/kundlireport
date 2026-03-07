@@ -200,6 +200,28 @@ function stripAiDisclosure<T>(value: T): T {
   return value;
 }
 
+function removeStaleTimeoutErrors(rawErrors: unknown, retrySucceededAgents: string[]): string[] {
+  const input = Array.isArray(rawErrors)
+    ? rawErrors.filter((item): item is string => typeof item === "string")
+    : [];
+
+  if (retrySucceededAgents.length === 0) return input;
+
+  const succeeded = new Set(retrySucceededAgents.map((name) => String(name || "").trim().toLowerCase()));
+  return input.filter((message) => {
+    const normalized = message.toLowerCase();
+    if (normalized.includes("stage1 timeout") || normalized.startsWith("retry timeout")) {
+      return false;
+    }
+
+    const agentPrefix = message.split(":")[0]?.trim().toLowerCase();
+    if (agentPrefix && succeeded.has(agentPrefix) && /(timed out|timeout)/i.test(message)) {
+      return false;
+    }
+    return true;
+  });
+}
+
 function enforceCareerSafety(
   career: CareerPrediction | null,
   birthDate: Date,
@@ -799,11 +821,23 @@ async function handleAgentRetry(
 
   // Update metadata
   updatedReport.tokensUsed = (updatedReport.tokensUsed || 0) + retryTokens;
-  // Remove the timeout error from errors since we retried
+  // Remove stale timeout errors when retry succeeded so QA/content checks are not polluted.
+  const normalizedErrors = removeStaleTimeoutErrors(updatedReport.errors, succeededRetries);
   updatedReport.errors = [
-    ...(updatedReport.errors || []).filter((e: string) => !e.startsWith("Stage1 timeout")),
-    ...(failedRetries.length > 0 ? [`Retry failed for: ${failedRetries.join(', ')}`] : []),
+    ...normalizedErrors,
+    ...(failedRetries.length > 0 ? [`Retry failed for: ${failedRetries.join(", ")}`] : []),
   ];
+  const existingRevisionRaw = Number(updatedReport?.finalization?.revision ?? updatedReport?.revision ?? 0);
+  const existingRevision = Number.isFinite(existingRevisionRaw) && existingRevisionRaw > 0 ? Math.floor(existingRevisionRaw) : 0;
+  updatedReport.isFinal = false;
+  updatedReport.revision = existingRevision;
+  updatedReport.finalizedAt = null;
+  updatedReport.finalization = {
+    ...(updatedReport.finalization && typeof updatedReport.finalization === "object" ? updatedReport.finalization : {}),
+    isFinal: false,
+    revision: existingRevision,
+    finalizedAt: null,
+  };
   updatedReport.computationMeta = {
     ...updatedReport.computationMeta,
     retryPass: 2,
@@ -1437,6 +1471,14 @@ router.post('/', async (req: Request, res: Response) => {
       qa: null,
       generatedAt: reportGeneratedAt.toISOString(),
       language: requestedLanguage,
+      isFinal: false,
+      revision: 0,
+      finalizedAt: null,
+      finalization: {
+        isFinal: false,
+        revision: 0,
+        finalizedAt: null,
+      },
       errors,
       tokensUsed: totalTokens,
       computationMeta: {

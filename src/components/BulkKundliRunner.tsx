@@ -823,7 +823,14 @@ export default function BulkKundliRunner() {
 
   const isPayloadPdfReady = (payload: any): boolean => {
     const status = normalizeJobStatus(payload?.status);
-    if (status !== 'completed' || !payload?.report) return false;
+    const isFinal = Boolean(
+      payload?.isFinal === true
+      || payload?.report?.isFinal === true
+      || payload?.report?.is_final === true
+      || payload?.report?.finalization?.isFinal === true
+      || payload?.report?.finalization?.is_final === true
+    );
+    if (status !== 'completed' || !payload?.report || !isFinal) return false;
     // Verify critical sections are populated — a report that went through the
     // full pipeline (including retry) should have planets, houses, and dasha.
     // If these are missing, the report was likely built from a partial first-pass
@@ -982,6 +989,9 @@ export default function BulkKundliRunner() {
   ): Promise<{ status: 'completed' | 'failed'; error?: string }> => {
     const pollIntervalMs = 3000;
     const maxPolls = 360; // ~18 minutes
+    const completedStablePollsRequired = 3;
+    let completedStablePolls = 0;
+    let completedStableRevision: number | null = null;
 
     // ── Stall detection & auto-retry ──────────────────────────────────────
     let lastProgress = -1;
@@ -1037,17 +1047,47 @@ export default function BulkKundliRunner() {
         // detector could trigger translate on partial data → premature completion.
         // Wait for the report to have actual content before proceeding.
         const r = payload.report;
+        const payloadIsFinal = Boolean(
+          payload?.isFinal === true
+          || r?.isFinal === true
+          || r?.is_final === true
+          || r?.finalization?.isFinal === true
+          || r?.finalization?.is_final === true
+        );
         const reportLooksComplete = r
           && Array.isArray(r.planets) && r.planets.length > 0
           && Array.isArray(r.houses) && r.houses.length > 0
           && r.dasha;
-        if (!reportLooksComplete) {
+        if (!reportLooksComplete || !payloadIsFinal) {
           console.warn(`⚠️ [BulkRunner] Job ${jobId} status=completed but report is incomplete — waiting for retry to finish`);
+          completedStablePolls = 0;
+          completedStableRevision = null;
           await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
           continue; // keep polling instead of returning
         }
-        return { status: 'completed' };
+        const revisionRaw = Number(
+          payload?.reportRevision
+          ?? r?.revision
+          ?? r?.finalization?.revision
+          ?? 0
+        );
+        const revision = Number.isFinite(revisionRaw) ? Math.max(0, Math.floor(revisionRaw)) : 0;
+        if (completedStableRevision !== revision) {
+          completedStableRevision = revision;
+          completedStablePolls = 1;
+        } else {
+          completedStablePolls += 1;
+        }
+
+        if (completedStablePolls >= completedStablePollsRequired) {
+          return { status: 'completed' };
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+        continue;
       }
+      completedStablePolls = 0;
+      completedStableRevision = null;
       if (payload.status === 'failed') {
         return { status: 'failed', error: payload.error || 'Job failed' };
       }

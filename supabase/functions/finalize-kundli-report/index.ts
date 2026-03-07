@@ -371,6 +371,95 @@ serve(async (req) => {
       );
     }
 
+    const computationMeta =
+      report?.computationMeta && typeof report.computationMeta === "object"
+        ? (report.computationMeta as Record<string, any>)
+        : {};
+    const retryPass = Number(computationMeta.retryPass || 0);
+    const pendingRetryAgents = Array.isArray(computationMeta.failedAgents)
+      ? computationMeta.failedAgents.map((v: unknown) => String(v || "")).filter(Boolean)
+      : [];
+
+    // Monotonic completion guard:
+    // if finalize sees pending failed agents before retry pass executed, requeue retry
+    // and never mark the job complete from this stale partial payload.
+    if (pendingRetryAgents.length > 0 && retryPass < 2) {
+      const nowIso = new Date().toISOString();
+      const existingDebugSummary =
+        job.debug_summary && typeof job.debug_summary === "object"
+          ? { ...(job.debug_summary as Record<string, any>) }
+          : {};
+      const priorRetryRequeueAttempts = Number(existingDebugSummary.retryPassRequeueAttempts || 0);
+      const canRequeueRetryPass = priorRetryRequeueAttempts < 1;
+
+      existingDebugSummary.retryPassRequeueAttempts = canRequeueRetryPass
+        ? priorRetryRequeueAttempts + 1
+        : priorRetryRequeueAttempts;
+      existingDebugSummary.lastRetryPassRequeueAt = nowIso;
+      existingDebugSummary.lastRetryPassRequeuePhase = String(job.current_phase || "");
+      existingDebugSummary.pendingRetryAgents = pendingRetryAgents;
+
+      const waitingPhase = canRequeueRetryPass
+        ? "Waiting for retry pass completion"
+        : "Retry pass pending — awaiting prior stage";
+      const nextProgress = Math.max(Number(job.progress_percent || 0), 84);
+
+      await supabaseAdmin
+        .from("kundli_report_jobs")
+        .update({
+          status: "processing",
+          current_phase: waitingPhase,
+          progress_percent: nextProgress,
+          heartbeat_at: nowIso,
+          debug_summary: existingDebugSummary,
+        })
+        .eq("id", jobId);
+
+      await createJobEvent(supabaseAdmin, {
+        jobId,
+        phase: "Finalize waiting for retry pass",
+        eventType: "info",
+        message: canRequeueRetryPass
+          ? `Pending retry agents detected in finalize; requeued process retry (${pendingRetryAgents.join(", ")})`
+          : "Pending retry agents detected in finalize; requeue limit reached",
+        metrics: { progress: nextProgress, retryPendingCount: pendingRetryAgents.length },
+      });
+
+      if (canRequeueRetryPass) {
+        const retryUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/process-kundli-job`;
+        const retryPromise = fetch(retryUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({ jobId, retryPass: 2 }),
+        }).catch((err) => {
+          console.error("[FINALIZE-JOB] Failed to requeue retry pass:", err);
+        });
+
+        // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+        if (typeof EdgeRuntime !== "undefined" && EdgeRuntime.waitUntil) {
+          // @ts-ignore
+          EdgeRuntime.waitUntil(retryPromise);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          accepted: true,
+          waitingForRetryPass: true,
+          requeued: canRequeueRetryPass,
+          jobId,
+        }),
+        {
+          status: 202,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const requestedLanguage = normalizeLanguage(job.language || "en");
     const useLanguagePipelineV2 = isLanguagePipelineV2Enabled(requestedLanguage);
     const effectiveGenLang: SupportedLanguage = useLanguagePipelineV2 ? requestedLanguage : "en";
@@ -516,6 +605,22 @@ serve(async (req) => {
 
     // ── Save completed report ──────────────────────────────────────────────
     report.tokensUsed = totalTokens;
+    const previousRevisionRaw = Number(report?.finalization?.revision ?? report?.revision ?? 0);
+    const previousRevision = Number.isFinite(previousRevisionRaw) && previousRevisionRaw > 0
+      ? Math.floor(previousRevisionRaw)
+      : 0;
+    const finalizedAt = new Date().toISOString();
+    const nextRevision = previousRevision + 1;
+    report.isFinal = true;
+    report.revision = nextRevision;
+    report.finalizedAt = finalizedAt;
+    report.finalization = {
+      ...(report.finalization && typeof report.finalization === "object" ? report.finalization : {}),
+      isFinal: true,
+      revision: nextRevision,
+      finalizedAt,
+      finalizedBy: "finalize-kundli-report",
+    };
 
     const extendedCompletion = await supabaseAdmin
       .from("kundli_report_jobs")
@@ -533,8 +638,10 @@ serve(async (req) => {
           generationMode: useLanguagePipelineV2 ? "native" : "legacy",
           tokensUsed: totalTokens,
           qaScore: report.qa?.overallScore || null,
+          isFinal: true,
+          revision: nextRevision,
         },
-        completed_at: new Date().toISOString(),
+        completed_at: finalizedAt,
       })
       .eq("id", jobId);
 
@@ -547,7 +654,7 @@ serve(async (req) => {
           current_phase: "Complete",
           progress_percent: 100,
           report_data: report,
-          completed_at: new Date().toISOString(),
+          completed_at: finalizedAt,
         })
         .eq("id", jobId);
     }

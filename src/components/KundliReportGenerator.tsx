@@ -300,6 +300,9 @@ const KundliReportGenerator = () => {
       let pollCount = 0;
       let consecutiveErrors = 0;
       const maxConsecutiveErrors = 5;
+      const completedStablePollsRequired = 3;
+      let completedStablePolls = 0;
+      let completedStableRevision: number | null = null;
 
       // ── Stall detection & auto-retry ──────────────────────────────────────
       let lastProgressValue = -1;
@@ -397,11 +400,42 @@ const KundliReportGenerator = () => {
         setJobProgress(jobStatus.progressPercent || 0);
         setJobPhase(jobStatus.currentPhase || '');
 
-        if (jobStatus.status === 'completed' && jobStatus.report) {
-          setJobProgress(100);
-          setJobPhase('Complete');
-          return jobStatus.report;
+        const responseIsFinal = Boolean(
+          jobStatus?.isFinal === true
+          || jobStatus?.report?.isFinal === true
+          || jobStatus?.report?.is_final === true
+          || jobStatus?.report?.finalization?.isFinal === true
+          || jobStatus?.report?.finalization?.is_final === true
+        );
+        const revisionRaw = Number(
+          jobStatus?.reportRevision
+          ?? jobStatus?.report?.revision
+          ?? jobStatus?.report?.finalization?.revision
+          ?? 0
+        );
+        const reportRevision = Number.isFinite(revisionRaw) ? Math.max(0, Math.floor(revisionRaw)) : 0;
+
+        if (jobStatus.status === 'completed' && jobStatus.report && responseIsFinal) {
+          if (completedStableRevision !== reportRevision) {
+            completedStableRevision = reportRevision;
+            completedStablePolls = 1;
+          } else {
+            completedStablePolls += 1;
+          }
+
+          if (completedStablePolls >= completedStablePollsRequired) {
+            setJobProgress(100);
+            setJobPhase('Complete');
+            return jobStatus.report;
+          }
+
+          setJobPhase(`Final check (${completedStablePolls}/${completedStablePollsRequired})`);
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          return pollJob();
         }
+
+        completedStablePolls = 0;
+        completedStableRevision = null;
 
         if (jobStatus.status === 'failed') {
           throw new Error(jobStatus.error || 'Report generation failed');

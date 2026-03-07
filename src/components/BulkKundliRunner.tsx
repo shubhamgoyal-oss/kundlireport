@@ -989,9 +989,11 @@ export default function BulkKundliRunner() {
   ): Promise<{ status: 'completed' | 'failed'; error?: string }> => {
     const pollIntervalMs = 3000;
     const maxPolls = 360; // ~18 minutes
+    const maxConsecutivePollErrors = 8;
     const completedStablePollsRequired = 3;
     let completedStablePolls = 0;
     let completedStableRevision: number | null = null;
+    let consecutivePollErrors = 0;
 
     // ── Stall detection & auto-retry ──────────────────────────────────────
     let lastProgress = -1;
@@ -1026,14 +1028,28 @@ export default function BulkKundliRunner() {
         return { status: 'failed', error: 'Stopped by user' };
       }
 
-      const response = await kundliApiFetch(pipeline, 'get-kundli-job', {
-        method: 'GET',
-        query: { jobId },
-        headers: {
-          'x-session-id': sessionId,
-          'x-visitor-id': visitorId,
-        },
-      });
+      let response: Response;
+      try {
+        response = await kundliApiFetch(pipeline, 'get-kundli-job', {
+          method: 'GET',
+          query: { jobId },
+          headers: {
+            'x-session-id': sessionId,
+            'x-visitor-id': visitorId,
+          },
+        });
+      } catch (err) {
+        consecutivePollErrors += 1;
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`⚠️ [BulkRunner] Poll fetch error ${consecutivePollErrors}/${maxConsecutivePollErrors} for job ${jobId}: ${errMsg}`);
+        if (consecutivePollErrors >= maxConsecutivePollErrors) {
+          return { status: 'failed', error: `Network polling failed repeatedly: ${errMsg}` };
+        }
+        await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+        continue;
+      }
+
+      consecutivePollErrors = 0;
 
       if (!response.ok) {
         await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));

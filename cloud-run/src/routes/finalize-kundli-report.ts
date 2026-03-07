@@ -287,15 +287,25 @@ router.post('/', async (req: Request, res: Response) => {
     let report = job.report_data as Record<string, any>;
     if (!report) {
       const nowIso = new Date().toISOString();
+      const currentPhaseLower = String(job.current_phase || "").toLowerCase();
+      const stage1InProgress = (
+        currentPhaseLower.includes("initial")
+        || currentPhaseLower.includes("fetching planetary")
+        || currentPhaseLower.includes("analyzing")
+        || currentPhaseLower.includes("retry")
+        || currentPhaseLower.includes("stage 1")
+      );
       const existingDebugSummary =
         job.debug_summary && typeof job.debug_summary === "object"
           ? { ...(job.debug_summary as Record<string, any>) }
           : {};
       const priorRequeueAttempts = Number(existingDebugSummary.missingReportDataRequeueAttempts || 0);
-      const canRequeueTranslation = priorRequeueAttempts < 1;
+      const canRequeueTranslation = !stage1InProgress && priorRequeueAttempts < 1;
       const waitingPhase = canRequeueTranslation
         ? "Waiting for report data — requeueing translation"
-        : "Waiting for report data — awaiting prior stage";
+        : stage1InProgress
+          ? "Waiting for Stage 1 completion"
+          : "Waiting for report data — awaiting prior stage";
 
       existingDebugSummary.missingReportDataRequeueAttempts = canRequeueTranslation
         ? priorRequeueAttempts + 1
@@ -349,6 +359,17 @@ router.post('/', async (req: Request, res: Response) => {
         requeued: canRequeueTranslation,
         jobId,
       });
+    }
+
+    const reportAlreadyFinal = Boolean(
+      report?.isFinal === true
+      || report?.is_final === true
+      || report?.finalization?.isFinal === true
+      || report?.finalization?.is_final === true
+    );
+    if (job.status === "completed" && reportAlreadyFinal) {
+      console.log(`⏭️ [FINALIZE-JOB] Job ${jobId} already finalized — skipping duplicate finalize call`);
+      return res.json({ success: true, jobId, alreadyFinal: true });
     }
 
     const computationMeta =

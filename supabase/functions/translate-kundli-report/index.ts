@@ -72,8 +72,53 @@ serve(async (req) => {
 
     report = job.report_data as Record<string, any>;
     if (!report) {
-      console.error("❌ [TRANSLATE-JOB] No report_data — Stage 1 incomplete, skipping to finalize");
-      report = {};
+      const phase = String(job.current_phase || "").toLowerCase();
+      const stage1InProgress = (
+        phase.includes("initial")
+        || phase.includes("fetching planetary")
+        || phase.includes("analyzing")
+        || phase.includes("retry")
+        || phase.includes("stage 1")
+      );
+      const waitingPhase = stage1InProgress
+        ? "Waiting for Stage 1 completion"
+        : "Waiting for report_data before translation";
+      const waitingProgress = Math.max(Number(job.progress_percent || 0), 80);
+
+      await supabaseAdmin
+        .from("kundli_report_jobs")
+        .update({
+          status: "processing",
+          current_phase: waitingPhase,
+          progress_percent: waitingProgress,
+          heartbeat_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+
+      console.warn(`⚠️ [TRANSLATE-JOB] No report_data for ${jobId} (phase="${job.current_phase || ""}") — deferring translation`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          accepted: true,
+          waitingForReportData: true,
+          jobId,
+        }),
+        { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const reportAlreadyFinal = Boolean(
+      report?.isFinal === true
+      || report?.is_final === true
+      || report?.finalization?.isFinal === true
+      || report?.finalization?.is_final === true
+    );
+    if (job.status === "completed" && reportAlreadyFinal) {
+      console.log(`⏭️ [TRANSLATE-JOB] Job ${jobId} already finalized — skipping duplicate translate`);
+      return new Response(
+        JSON.stringify({ success: true, jobId, stage: "translate_skipped_already_final" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const requestedLanguage = normalizeLanguage(job.language || "en");
@@ -273,6 +318,36 @@ async function saveAndTriggerFinalize(
   phase: string,
 ) {
   try {
+    const { data: currentJob } = await supabase
+      .from("kundli_report_jobs")
+      .select("status, current_phase, report_data")
+      .eq("id", jobId)
+      .single();
+
+    const currentPhase = String(currentJob?.current_phase || "").toLowerCase();
+    const currentReport = currentJob?.report_data || {};
+    const alreadyFinal = Boolean(
+      currentJob?.status === "completed" && (
+        currentReport?.isFinal === true
+        || currentReport?.is_final === true
+        || currentReport?.finalization?.isFinal === true
+        || currentReport?.finalization?.is_final === true
+        || currentPhase.includes("complete")
+      )
+    );
+    const finalizeLikelyRunning = (
+      currentPhase.includes("finaliz")
+      || currentPhase.includes("quality")
+      || currentPhase.includes("cleaning report text")
+      || currentPhase.includes("fetching kundali charts")
+      || currentPhase.includes("complete")
+    );
+
+    if (alreadyFinal || finalizeLikelyRunning) {
+      console.log(`⏭️ [TRANSLATE-JOB] Stage 3 already active/final for ${jobId} (phase="${currentJob?.current_phase || ""}") — skipping duplicate trigger`);
+      return;
+    }
+
     // Save whatever report data we have
     const updatePayload: Record<string, any> = {
       status: "processing",
@@ -284,10 +359,14 @@ async function saveAndTriggerFinalize(
       updatePayload.report_data = report;
     }
 
-    await supabase
+    const { error: saveError } = await supabase
       .from("kundli_report_jobs")
       .update(updatePayload)
       .eq("id", jobId);
+    if (saveError) {
+      console.error(`❌ [TRANSLATE-JOB] Failed to save translated report before finalize: ${saveError.message}`);
+      return;
+    }
 
     // Trigger Stage 3: finalize-kundli-report
     const stage3Url = `${Deno.env.get("SUPABASE_URL")}/functions/v1/finalize-kundli-report`;

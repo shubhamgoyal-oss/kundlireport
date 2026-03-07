@@ -349,10 +349,22 @@ const KundliReportGenerator = () => {
       const pollJob = async (): Promise<any> => {
         pollCount++;
 
-        const response = await kundliApiFetch(pipeline, 'get-kundli-job', {
-          method: 'GET',
-          query: { jobId },
-        });
+        let response: Response;
+        try {
+          response = await kundliApiFetch(pipeline, 'get-kundli-job', {
+            method: 'GET',
+            query: { jobId },
+          });
+        } catch (fetchError) {
+          consecutiveErrors++;
+          const errMsg = fetchError instanceof Error ? fetchError.message : String(fetchError);
+          console.warn(`[KundliReportGenerator] Poll fetch error (${consecutiveErrors}/${maxConsecutiveErrors}):`, errMsg);
+          if (consecutiveErrors >= maxConsecutiveErrors) {
+            throw new Error(`Failed to check job status after repeated network errors: ${errMsg}`);
+          }
+          await new Promise(resolve => setTimeout(resolve, pollInterval));
+          return pollJob();
+        }
 
         if (!response.ok) {
           // Try Firebase fallback if Supabase is down

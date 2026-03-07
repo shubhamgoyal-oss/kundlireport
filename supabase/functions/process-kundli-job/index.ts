@@ -681,6 +681,25 @@ async function handleAgentRetry(
 
   console.log(`🤖 [RETRY] Launching ${retryTasks.length} agents in parallel...`);
 
+  // ── Heartbeat interval: bump progress every 20s so frontend stall detector
+  // (90s threshold) never fires while retry is running. Progress: 82→83→84→85.
+  let retryProgressBump = 0;
+  const RETRY_HEARTBEAT_MS = 20_000;
+  const retryHeartbeatInterval = setInterval(async () => {
+    retryProgressBump = Math.min(retryProgressBump + 1, 3); // cap at 85%
+    const pct = 82 + retryProgressBump;
+    try {
+      await supabase
+        .from("kundli_report_jobs")
+        .update({
+          heartbeat_at: new Date().toISOString(),
+          progress_percent: pct,
+          current_phase: `Retrying ${failedAgentNames.length} timed-out agents (${Math.round((Date.now() - retryStart) / 1000)}s)`,
+        })
+        .eq("id", jobId);
+    } catch (_) { /* heartbeat is best-effort */ }
+  }, RETRY_HEARTBEAT_MS);
+
   // Generous timeout for retry (130s) since we only run a few agents
   const RETRY_TIMEOUT_MS = 130_000;
   const retryPromise = Promise.all(
@@ -694,6 +713,7 @@ async function handleAgentRetry(
   );
 
   const retryRace = await Promise.race([retryPromise, retryTimeoutPromise]);
+  clearInterval(retryHeartbeatInterval); // stop heartbeat once retry resolves
   const retryDuration = ((Date.now() - retryStart) / 1000).toFixed(1);
 
   let retryResults: Array<{ name: string; result: any }> = [];

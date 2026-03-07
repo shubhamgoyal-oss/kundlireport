@@ -310,6 +310,12 @@ const KundliReportGenerator = () => {
 
       const getRetryFunctionName = (phase: string) => {
         const normalizedPhase = String(phase || '').toLowerCase();
+        // CRITICAL: If the backend is retrying failed agents, do NOT trigger
+        // translate/finalize — that would process partial data. Re-trigger
+        // process-kundli-job instead so the retry can finish.
+        if (normalizedPhase.includes('retry')) {
+          return 'process-kundli-job';
+        }
         if (normalizedPhase.includes('translat')) {
           return 'translate-kundli-report';
         }

@@ -396,7 +396,47 @@ router.post('/', async (req: Request, res: Response) => {
 
     // ── QA Validation ──────────────────────────────────────────────────────
     await updateJobStatus(supabaseAdmin, jobId!, "processing", "Running quality checks", 92, "progress");
-    const qaResult = await runQaWithTimeout(report);
+    let qaResult = await runQaWithTimeout(report);
+
+    // ── QA Gate: if score is critically low, the report_data we have may be
+    // stale (e.g. retry handler wrote fresher data after translate triggered).
+    // Wait 15s, re-read the latest report_data, and re-run QA once.
+    const qaScore = Number(qaResult.overallScore || 0);
+    if (qaScore < 6 && qaResult.approved === false) {
+      console.warn(`⚠️ [FINALIZE-JOB] QA score ${qaScore}/10 — re-reading latest report_data from DB and retrying QA`);
+      await updateJobStatus(supabaseAdmin, jobId!, "processing", "Low QA score — refreshing report data", 93, "progress");
+      await new Promise(resolve => setTimeout(resolve, 15_000)); // wait for any in-flight retry to finish
+
+      const { data: freshJob } = await supabaseAdmin
+        .from("kundli_report_jobs")
+        .select("report_data")
+        .eq("id", jobId)
+        .single();
+
+      if (freshJob?.report_data) {
+        const freshReport = freshJob.report_data as Record<string, any>;
+        // Check if fresh data has more content (retry may have filled sections)
+        const freshTextLen = JSON.stringify(freshReport).length;
+        const staleTextLen = JSON.stringify(report).length;
+        if (freshTextLen > staleTextLen * 1.05) {
+          console.log(`📦 [FINALIZE-JOB] Fresh report_data is ${((freshTextLen / staleTextLen - 1) * 100).toFixed(0)}% larger — using updated data`);
+          // Preserve finalize-stage work (localization, text cleanup) but merge fresh agent outputs
+          const agentSections = ["planets", "houses", "career", "marriage", "dasha", "doshas",
+            "remedies", "spiritual", "rahuKetu", "rajYogs", "sadeSati", "numerology",
+            "charaKarakasDetailed", "panchang", "pillars", "glossary"];
+          for (const section of agentSections) {
+            if (freshReport[section]) report[section] = freshReport[section];
+          }
+          // Re-apply text cleanup on merged sections
+          report = cleanReportTexts(report);
+        }
+        // Re-run QA on the refreshed report
+        qaResult = await runQaWithTimeout(report);
+        const retryQaScore = Number(qaResult.overallScore || 0);
+        console.log(`🔄 [FINALIZE-JOB] QA re-run: score ${retryQaScore}/10 (was ${qaScore}/10)`);
+      }
+    }
+
     if (qaResult.blockedContent.length > 0 || qaResult.issues.some((i: any) => i.severity === "critical")) {
       report = sanitizeReportContent(report);
     }
